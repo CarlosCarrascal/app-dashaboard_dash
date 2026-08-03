@@ -14,13 +14,16 @@
 >
 > Igual que en `01_AUDITORIA.md`, toda cifra publicada aquí proviene de una consulta ejecutada.
 
+**Alcance real del origen:** 18 tablas y **654.598 filas** — no las 683.180 que publican los
+cuatro documentos, cuyos recuentos por tabla son correctos pero cuya suma no lo es (N-10).
+
 ---
 
 ## 1 · Resumen
 
 | Bloque | Qué cambia |
 |---|---|
-| **A · Datos** (N-1…N-9) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, y los códigos de lote no están normalizados entre fuentes |
+| **A · Datos** (N-1…N-10) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, y el total de filas de la base está mal sumado |
 | **B · BI** (B-1…B-6) | El consumo real de Power BI no es el que midió el linaje: hay dimensiones inventadas con DAX, un mapeo de fundo incorrecto, una medida mal calculada y lógica de negocio que solo vive en Power Query |
 | **C · Decisiones** | D-4 (correspondencia de vocabularios) queda **resuelta por los datos**; D-1, D-2 y D-3 se implementan con supuesto parametrizado |
 
@@ -279,6 +282,38 @@ Cortina, Hilera, Planta)` → 3.385 = total · `M_Poda` `(Campaña, Fundo, Modul
 
 ---
 
+### N-10 · El total de filas de la base está mal sumado · **Medio**
+
+Los cuatro documentos abren con la misma cifra: **683.180 filas**. Aparece en el encabezado de
+alcance de `01_AUDITORIA.md`, en su resumen ejecutivo, en el anexo de cifras de control §7, en
+`02_LOGICA_NEGOCIO.md`, en `04_PLAN_MIGRACION.md` y en
+`evidencia\04_metricas_validacion.txt` §1, donde figura como `TOTAL 683.180 (suma)`.
+
+**Los recuentos tabla por tabla son todos correctos** — se verificaron uno a uno contra la base
+y coinciden exactamente con los publicados. Lo que no cuadra es la suma:
+
+| Grupo | Tablas | Filas |
+|---|---|---|
+| Evaluaciones `E0x` | E01 94.236 · E02 43.490 · E03 18.714 · E04 3.385 · E05 4.193 | 164.018 |
+| Cosecha, packing y clima `H0x` | H00 30.812 · H01 30.626 · H02 117.536 · H05 155.588 | 334.562 |
+| Maestros `M_x` | M_Lotes 860 · M_Time 2.189 · M_Poda 2.159 · M_nMuestra 681 · M_Evaluadores 31 · M_EquivalenciaElifab 15 | 5.935 |
+| Forecast `R0x` | R08 101.715 · R09 48.368 | 150.083 |
+| `Errores de pegado` | — | 0 |
+| **TOTAL** | **18 tablas** | **654.598** |
+
+La diferencia es de **28.582 filas (4,4%)** y no corresponde a ninguna tabla ni a ninguna
+combinación de ellas: es un error aritmético, no un recuento omitido.
+
+**Por qué importa aunque no cambie ningún dato.** Es la cifra que encabeza los cuatro
+documentos y la que se usará para decir "la migración está completa". Si el ETL carga 654.598
+filas y alguien la compara contra 683.180, la conclusión inmediata será que faltan 28.582
+filas y que la migración perdió datos. El contrato de aceptación de `raw` se fija en
+**654.598**, y el ETL lo tiene como constante con la explicación al lado
+(`etl/src/aquanqa_etl/catalogo.py::TOTAL_FILAS_ORIGEN`), con una prueba que impide
+"corregirlo" hacia la cifra publicada.
+
+---
+
 ## 3 · Bloque B · Hallazgos sobre el BI en producción
 
 Verificados en el TMDL de `pbi/` (`SEGUIMIENTO DE CAMPAÑA`, `SEGUIMIENTO DE PERSONAL`).
@@ -435,6 +470,7 @@ Sustituyen o complementan a `01_AUDITORIA.md` §7 y `04_PLAN_MIGRACION.md` §7.
 
 | Métrica | Valor publicado | Motivo |
 |---|---|---|
+| **Total de filas de la base** | **683.180** | **La suma de las 18 tablas es 654.598 (N-10)** |
 | `E01 SUM([# Ramas])` | 730.318 | Suma de índices de rama, no un total de ramas (N-1) |
 | `E01` filas únicas por clave de planta | 71.095 | La cifra es correcta, la clave no: son filas completas distintas (N-1) |
 | `dim.variedad` ≈ 5 filas | — | `M_Lotes` tiene 1 variedad; los hechos tienen ~14 grafías (N-6) |
@@ -443,6 +479,7 @@ Sustituyen o complementan a `01_AUDITORIA.md` §7 y `04_PLAN_MIGRACION.md` §7.
 
 | Métrica | Valor verificado |
 |---|---|
+| **Total de filas de las 18 tablas del origen** | **654.598** |
 | `E01` total de ramas declaradas (`Max<5 + Max>5` por planta) | **110.095** |
 | `E01` cabeceras de planta evaluada | **5.384** |
 | `E01` filas completas distintas *(objetivo de `rama_medicion`)* | **71.095** |

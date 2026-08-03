@@ -2,7 +2,10 @@
 name = "aquanqa-etl"
 version = "0.1.0"
 description = "Extracción y carga de BD_AQUANQA_26.accdb y del maestro de lotes hacia PostgreSQL"
-requires-python = ">=3.11"
+# 3.12+ por csv.QUOTE_NOTNULL, que es lo que permite distinguir NULL de cadena vacía en el
+# CSV intermedio. Esa distinción importa: las filas de subtotal de H-06 se detectan
+# precisamente por tener los identificadores nulos.
+requires-python = ">=3.12"
 dependencies = [
     "pyodbc>=5.1",        # lectura del .accdb vía el driver ODBC de Access de 64 bits
     "psycopg[binary]>=3.2",
@@ -26,7 +29,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
