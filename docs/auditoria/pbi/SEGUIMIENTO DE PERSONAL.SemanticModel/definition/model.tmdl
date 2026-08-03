@@ -1,0 +1,39 @@
+model Model
+	culture: es-ES
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-PE
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["E02_ConteoFlores","E03_ConteoEstados","E05_DiametrosBayas","2026","RESUM_FLORES","RESUM_FRUTOS","TAB RESUM_FL","TAB RESUM_FR"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table E02_ConteoFlores
+ref table DateTableTemplate_a65d8878-b276-42ec-950a-25c1f2b713c9
+ref table LocalDateTable_276b03a1-f00f-4d76-9d04-14c3f90bda6b
+ref table E03_ConteoEstados
+ref table E05_DiametrosBayas
+ref table 2026
+ref table LocalDateTable_8182b126-b4f8-45bc-81a7-38e22cd563e4
+ref table DNI
+ref table EMPRESA
+ref table MODULO
+ref table LOTE
+ref table BD_Calendario
+ref table LocalDateTable_69e120ac-e3c6-40db-a5f5-be1b6e146efb
+ref table 'Resumen Evaluadores'
+ref table RESUM_FLORES
+ref table LocalDateTable_390adc36-fe17-4c7e-a547-d61852e6e041
+ref table RESUM_FRUTOS
+ref table LocalDateTable_e03defe1-bef7-4950-8196-0c20f1b61632
+ref table 'TAB RESUM_FL'
+ref table LocalDateTable_41f70fd9-7d69-4f7e-8986-93f610ea0ad6
+ref table 'TAB RESUM_FR'
+ref table LocalDateTable_b24f4cc1-dc62-492c-9eb1-65dde72fb939
+
+ref cultureInfo es-ES
+

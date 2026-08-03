@@ -1,0 +1,49 @@
+table RESUM_FLORES
+	lineageTag: d537e944-a755-4bc0-ad0a-51071cc09834
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 7d746658-34f6-42ad-b366-2121147867dd
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		variation Variación
+			isDefault
+			relationship: e3c058df-3e98-461d-9e4c-c7bbb183aad4
+			defaultHierarchy: LocalDateTable_390adc36-fe17-4c7e-a547-d61852e6e041.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: 3c795b5c-f377-4cf1-96e1-45be17526c9a
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Recuento
+		dataType: double
+		lineageTag: 5043aa0d-13c9-4d4c-a097-4395083852f8
+		summarizeBy: sum
+		sourceColumn: Recuento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition RESUM_FLORES = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E02_ConteoFlores"]}[Data],
+				    #"Filas agrupadas" = Table.Group(#"Navegación 1", {"Fecha", "Evaluador"}, {{"Recuento", each List.Sum([nFlores]), type nullable number}})
+				in
+				    #"Filas agrupadas"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

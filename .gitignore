@@ -1,0 +1,46 @@
+# Secretos
+.env
+.env.local
+*.pgpass
+
+# Datos: el repositorio versiona código y contratos, no datos
+data/entrada/*
+data/salida/*
+!data/entrada/.gitkeep
+!data/salida/.gitkeep
+*.accdb
+*.laccdb
+*.mdb
+
+# Power BI: el .pbix es binario; se versiona el TMDL de bi/semantic-model/
+*.pbix
+*.pbit
+**/.pbi/cache.abf
+**/.pbi/localSettings.json
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Herramientas
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*

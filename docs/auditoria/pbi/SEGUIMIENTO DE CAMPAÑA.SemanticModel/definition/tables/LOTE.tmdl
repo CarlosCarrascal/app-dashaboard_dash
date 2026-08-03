@@ -1,0 +1,17 @@
+table LOTE
+	lineageTag: fe0d7790-5ec7-4b3e-9a86-ce3167bde8a9
+
+	column Lote
+		lineageTag: 510392bd-0cdf-4b77-985b-4c0af53b617a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: H0101_ResumenHistoricos[Lote]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition LOTE = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Lote])
+
+	annotation PBI_Id = a6608f3a438148238661604fec9e5978
+

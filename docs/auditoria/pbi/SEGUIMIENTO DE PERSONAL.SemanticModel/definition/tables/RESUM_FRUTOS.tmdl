@@ -1,0 +1,58 @@
+table RESUM_FRUTOS
+	lineageTag: 3c46a61c-f395-4dc7-9ecc-98c69acd5ed8
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 1653cfd3-9a4d-46c1-8fc8-15d56d4f9c2b
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		variation Variación
+			isDefault
+			relationship: 86b78882-bf06-4170-8383-9021a66596fd
+			defaultHierarchy: LocalDateTable_e03defe1-bef7-4950-8196-0c20f1b61632.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: 03a77f8b-a969-4492-bf91-4470694654d7
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column PLANTAS
+		dataType: int64
+		formatString: 0
+		lineageTag: 8fc278bf-f3ec-48be-8cbe-479e329a8eaf
+		summarizeBy: sum
+		sourceColumn: PLANTAS
+
+		annotation SummarizationSetBy = Automatic
+
+	column FRUTOS
+		dataType: double
+		lineageTag: 9ad92c4c-d16a-4bf3-bbd7-23580168f6c2
+		summarizeBy: sum
+		sourceColumn: FRUTOS
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition RESUM_FRUTOS = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E03_ConteoEstados"]}[Data],
+				    #"Filas agrupadas" = Table.Group(#"Navegación 1", {"Fecha", "Evaluador"}, {{"PLANTAS", each Table.RowCount(_), Int64.Type}, {"FRUTOS", each List.Sum([Total]), type nullable number}})
+				in
+				  #"Filas agrupadas"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

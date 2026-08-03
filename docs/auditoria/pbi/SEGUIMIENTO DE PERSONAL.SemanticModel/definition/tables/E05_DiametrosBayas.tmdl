@@ -1,0 +1,91 @@
+table E05_DiametrosBayas
+	lineageTag: bc60b400-2d37-4ccc-9a8a-2f33746d58a3
+
+	column Modulo
+		dataType: string
+		lineageTag: 97fae2c7-9e89-425c-a5b4-74f030db319f
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Turno
+		dataType: string
+		lineageTag: 9c77c224-04a0-43b5-8284-23339048cc3a
+		summarizeBy: none
+		sourceColumn: Turno
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 48bfee7f-c88d-4f60-91f3-3563fb492b69
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ebcdf6b-90de-475d-be7f-3c0d2d54f7cb
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: 9a9b1e8a-6c3b-46dd-b05b-2b50db1d0297
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Diametro
+		dataType: double
+		lineageTag: a0d093df-1e9e-41e4-a070-4c7676c93816
+		summarizeBy: sum
+		sourceColumn: Diametro
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 1c7fd3b1-24a6-4ce3-b698-38a9d1b53040
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column FUNDO =
+			
+			COALESCE(
+			    LOOKUPVALUE(
+			        E02_ConteoFlores[Fundo],
+			        E02_ConteoFlores[Modulo], E05_DiametrosBayas[Modulo]
+			    ),
+			    "Aqu Anqa II"
+			)
+		lineageTag: b65f2e7d-fd6c-43c1-9b9c-fb53ca782cd6
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition E05_DiametrosBayas = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E05_DiametrosBayas"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

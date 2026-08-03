@@ -1,0 +1,274 @@
+table E02_ConteoFlores
+	lineageTag: fa619554-ca32-4ed0-99e7-fc119bced246
+
+	measure '# FLORES' = SUM(E02_ConteoFlores[nFlores])
+		formatString: 0
+		lineageTag: e5225c84-b5e1-4783-acdb-64d57617a803
+
+	measure 'Total Flores' =
+			
+			SUM(E02_ConteoFlores[nFlores])
+		formatString: #,0
+		lineageTag: c5187e7b-a520-42fb-a225-cc83f1d675db
+
+	measure 'Total Plantas' =
+			
+			COUNTROWS (
+			    SUMMARIZE (
+			        E02_ConteoFlores,
+			        E02_ConteoFlores[Fecha],
+			        E02_ConteoFlores[Evaluador],
+			        E02_ConteoFlores[Fundo],
+			        E02_ConteoFlores[Modulo],
+			        E02_ConteoFlores[Lote],
+			        E02_ConteoFlores[Cortina],
+			        E02_ConteoFlores[Hilera],
+			        E02_ConteoFlores[Planta]
+			    )
+			)
+		formatString: #,0
+		lineageTag: fc3e554f-de0d-42ac-b987-4534e231416f
+
+	measure 'Flores por Hora' =
+			
+			DIVIDE(
+			    [Total Flores],
+			    [Horas Hombre Flores]
+			)
+		lineageTag: 3e7c72f6-746a-457c-b3ce-0f8ed76928b7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Evaluadores Activos' =
+			
+			DISTINCTCOUNT(E02_ConteoFlores[Evaluador])
+		formatString: 0
+		lineageTag: cbfbd9c8-141a-43c1-af05-7abb480442c0
+
+	measure 'Flores por Evaluador' =
+			
+			DIVIDE(
+			    [Total Flores],
+			    [Evaluadores Activos]
+			)
+		lineageTag: 8ce898ae-97bc-42c2-aa0d-652a8e23af1d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Jornadas Evaluador' =
+			
+			COUNTROWS(
+			    SUMMARIZE(
+			        E02_ConteoFlores,
+			        E02_ConteoFlores[Evaluador],
+			        E02_ConteoFlores[Fecha]
+			    )
+			)
+		formatString: 0
+		lineageTag: cbd2adc3-73e3-4d53-8212-40b891b49e93
+
+	measure 'Flores por Evaluador Día' =
+			
+			DIVIDE(
+			    [Total Flores],
+			    [Jornadas Evaluador]
+			)
+		lineageTag: b4118f8f-b162-4cbb-8379-856e1d5a0f6b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Frutos por Evaluador Día' =
+			
+			DIVIDE(
+			    [Total Frutos],
+			    [Jornadas Evaluador]
+			)
+		lineageTag: fef84420-e2fb-448c-ad85-b5793fed838e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Plantas por Evaluador Día' =
+			
+			DIVIDE(
+			    [Total Plantas],
+			    [Jornadas Evaluador]
+			)
+		lineageTag: 90a75147-8e8f-48df-8f1a-50aa4d858be1
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Promedio Evaluador' =
+			
+			AVERAGE(E02_ConteoFlores[nFlores])
+		lineageTag: 054f3bbd-975b-4758-bfee-220d0b930dd8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Desv Std Evaluador' =
+			
+			STDEV.P(E02_ConteoFlores[nFlores])
+		lineageTag: 3d78da47-cce9-4232-9786-c0e50a9f88db
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'CV Evaluador' =
+			
+			DIVIDE(
+			    [Desv Std Evaluador],
+			    [Promedio Evaluador]
+			)
+		lineageTag: 36f79eb3-2437-4dc4-addc-10190180c081
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Item
+		dataType: string
+		lineageTag: 0941146f-b039-4104-8a39-fa56f02d003d
+		summarizeBy: none
+		sourceColumn: Item
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: cd111149-5226-4ad8-a293-4ccfee1296fb
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: d0ea23cc-9baa-40b9-9998-e8f6f28a6c45
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		dataType: string
+		lineageTag: 4fc60a5a-631d-40b1-bfdf-111e6f06fac6
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: a81f7b09-3744-4b26-a1a6-35f72c9d8e3a
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 03a42fcf-0cb2-470b-8f21-9e1c85ca9e15
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: 22482817-73cb-47c4-8d4c-5bb3a191b946
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: 196fe93a-19e0-4f68-9dbd-d00d95d050eb
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Planta
+		dataType: int64
+		formatString: 0
+		lineageTag: 775c04f4-81ce-4413-8410-58b639a194a0
+		summarizeBy: sum
+		sourceColumn: Planta
+
+		annotation SummarizationSetBy = Automatic
+
+	column nFlores
+		dataType: int64
+		formatString: 0
+		lineageTag: e5d82c29-2b69-412c-84bb-663c182ed12c
+		summarizeBy: sum
+		sourceColumn: nFlores
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cuajo
+		dataType: int64
+		formatString: 0
+		lineageTag: fff691fc-71e2-48c3-b775-cbedb6d2b029
+		summarizeBy: sum
+		sourceColumn: Cuajo
+
+		annotation SummarizationSetBy = Automatic
+
+	column YA
+		dataType: int64
+		formatString: 0
+		lineageTag: 9f62560b-aa6a-41ce-a23d-cc5eb2c91c44
+		summarizeBy: sum
+		sourceColumn: YA
+
+		annotation SummarizationSetBy = Automatic
+
+	column YP
+		dataType: int64
+		formatString: 0
+		lineageTag: b11e9b6d-5797-4043-a918-6d4ca2b61d4a
+		summarizeBy: sum
+		sourceColumn: YP
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hora
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 99d68a5c-6860-4bfa-b170-ba51aa6087e9
+		summarizeBy: none
+		sourceColumn: Hora
+
+		variation Variación
+			isDefault
+			relationship: 20e48d82-bd45-4862-8994-0a97a45e9afd
+			defaultHierarchy: LocalDateTable_276b03a1-f00f-4d76-9d04-14c3f90bda6b.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nombre Corto' =
+			
+			LOOKUPVALUE(
+			    '2026'[Nombre Corto],
+			    '2026'[Documento],
+			    FORMAT(E02_ConteoFlores[Evaluador], "0")
+			)
+		lineageTag: a59f8c2f-dc51-491d-955c-3a090c8c6b75
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition E02_ConteoFlores = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E02_ConteoFlores"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

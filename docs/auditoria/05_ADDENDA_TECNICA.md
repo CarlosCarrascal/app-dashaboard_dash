@@ -1,0 +1,481 @@
+# Addenda técnica · verificación previa a la migración
+
+**Fecha:** 2026-08-03
+**Origen:** `BD_AQUANQA_26.accdb` · `M_Lotes.xlsx` (maestro vigente) · TMDL de los dos informes Power BI
+**Acceso:** solo lectura, vía `Microsoft.ACE.OLEDB.16.0` (`Mode=Read`)
+**Para:** TI / equipo de datos — **leer antes de aplicar el DDL de `04_PLAN_MIGRACION.md` §3**
+
+> **Por qué existe este documento.** Antes de escribir el DDL, cada afirmación de los cuatro
+> documentos que fija una clave, un grano o una cifra de aceptación se verificó contra los
+> datos reales. El diagnóstico de la auditoría se confirma en lo esencial: los 12 hallazgos
+> existen y las cifras de control son reproducibles. Pero aparecen **quince hechos nuevos**, y
+> nueve de ellos obligan a cambiar el DDL propuesto: aplicarlo tal como está **destruiría
+> datos**.
+>
+> Igual que en `01_AUDITORIA.md`, toda cifra publicada aquí proviene de una consulta ejecutada.
+
+---
+
+## 1 · Resumen
+
+| Bloque | Qué cambia |
+|---|---|
+| **A · Datos** (N-1…N-9) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, y los códigos de lote no están normalizados entre fuentes |
+| **B · BI** (B-1…B-6) | El consumo real de Power BI no es el que midió el linaje: hay dimensiones inventadas con DAX, un mapeo de fundo incorrecto, una medida mal calculada y lógica de negocio que solo vive en Power Query |
+| **C · Decisiones** | D-4 (correspondencia de vocabularios) queda **resuelta por los datos**; D-1, D-2 y D-3 se implementan con supuesto parametrizado |
+
+**El hallazgo más importante es N-1.** El `UNIQUE` que `04_PLAN_MIGRACION.md` §3.4 declara para
+`fact.ramas` rechazaría **88.852 de las 94.236 filas de `E01_Ramas` — el 94%**.
+
+---
+
+## 2 · Bloque A · Hallazgos sobre los datos
+
+### N-1 · El grano de `E01_Ramas` es la rama, no la planta · **Crítico**
+
+**Lo que dicen los documentos.** `01_AUDITORIA.md` §5 describe el grano como "una planta
+evaluada en una fecha", presenta `# Ramas` como "total; `SUM` = 730.318", y fija como filas
+únicas 71.095 "por `(Fecha, Fundo, Modulo, Lote, Cortina, Hilera, Planta)`". El DDL declara
+`UNIQUE (lote_id, fecha, cortina, hilera, planta)`.
+
+**Lo que muestran los datos.** Esa clave tiene **5.384 combinaciones**, no 71.095:
+
+| Clave probada | Combinaciones |
+|---|---|
+| `Fecha, Fundo, Modulo, Lote` | 825 |
+| `+ Cortina` | 1.964 |
+| `+ Hilera` | 5.373 |
+| `+ Planta` | **5.384** |
+| `+ Actividad` | 5.384 *(`Actividad` tiene un solo valor: `ConteoRamas`)* |
+| `+ Id` | 63.709 |
+| **las 14 columnas completas** | **71.095** |
+
+Un grupo cualquiera, extraído tal cual (lote M01/L001, 2026-08-01, cortina 1, hilera 4,
+planta 15):
+
+```
+ Id  | Actividad   | Evaluador | Fecha      | Fundo      | Mod | Lote | C | H | P  | <5 | >5 | # Ramas | Diametro
+1099 | ConteoRamas | 73681272  | 2026-08-01 | Quri Allpa | M01 | L001 | 1 | 4 | 15 |  7 | 21 |    1    |   8,52
+1100 | ConteoRamas | 73681272  | 2026-08-01 | Quri Allpa | M01 | L001 | 1 | 4 | 15 |  7 | 21 |    2    |   6,69
+1101 | ConteoRamas | 73681272  | 2026-08-01 | Quri Allpa | M01 | L001 | 1 | 4 | 15 |  7 | 21 |    3    |   7,25
+ ...    (21 filas consecutivas, # Ramas de 1 a 22, un diámetro distinto en cada una)
+1120 | ConteoRamas | 73681272  | 2026-08-01 | Quri Allpa | M01 | L001 | 1 | 4 | 15 |  7 | 21 |   22    |  10,64
+```
+
+La lectura es inequívoca:
+
+- **`# Ramas` es el número de la rama medida**, no un total. Su rango es **1 a 33**.
+- **`Diametro` es el diámetro de esa rama concreta**, no de la planta.
+- **`Ramas <5` y `Ramas >5` son atributos de la planta** (los conteos declarados por el
+  evaluador) y se repiten idénticos en todas las filas del grupo.
+- `Id` es un contador secuencial del registro de campo (1.099…1.120 en este grupo), reiniciado
+  por lote y fecha: 15.043 valores para 94.236 filas.
+
+**Consecuencias.**
+
+1. **La clave del DDL es inviable.** `UNIQUE (lote_id, fecha, cortina, hilera, planta)` admitiría
+   5.384 filas y rechazaría 88.852. Hay que separar en dos entidades: cabecera por planta
+   (5.384) y detalle por rama medida.
+2. **La clave (punto físico + `# Ramas`) tampoco es única**: da 66.538 combinaciones. Quedan
+   4.557 filas donde la misma rama del mismo punto y fecha aparece con **diámetro distinto** —
+   eso no es una recarga, es un conflicto de captura y necesita revisión agronómica.
+3. **La cifra de aceptación 71.095 sí es correcta**, pero corresponde a *filas completas
+   distintas*. La deduplicación de H-03 debe definirse como **fila exactamente idéntica**, que
+   es además coherente con las 23.141 de exceso que publica la auditoría (94.236 − 71.095).
+4. **`SUM([# Ramas]) = 730.318` no significa nada**: es la suma de los índices de rama. Debe
+   retirarse como métrica de control. El total de ramas realmente declarado es
+   **110.095** (`SUM` de `Max(Ramas <5) + Max(Ramas >5)` por planta).
+5. `Ramas <5 + Ramas >5` **no coincide** con el número de filas medidas en 5.363 de los 5.384
+   grupos: se declaran más ramas de las que se miden. Es esperable —se mide una submuestra—
+   pero confirma que ambas cifras son conceptos distintos y que no se puede derivar una de otra.
+
+**Efecto en Power BI.** Cualquier medida que hoy sume `# Ramas` está reportando una suma de
+índices bajo la etiqueta "total de ramas".
+
+**Corrección adoptada.** Ver [ADR-0002](../adr/0002-grano-evaluacion-ramas.md).
+
+---
+
+### N-2 · `H02_BDElifab` no baja a lote · **Alto**
+
+`04_PLAN_MIGRACION.md` §4.7 carga `fact.packing` con `lote_id`. No es posible:
+
+| Columna | Lo que contiene realmente | Valores más frecuentes |
+|---|---|---|
+| `Lote` | identificador de **nota de packing / pallet**, no un lote de campo | `NP`=3.464 · *(vacío)*=1.254 · `NP  910`=366 · `NP  212`=285 |
+| `Modulo` | el módulo **sin prefijo ni relleno** | `2`=18.275 · `4`=18.139 · `3`=17.334 · `1`=15.887 |
+| `Módulo` | el mismo módulo con otra grafía | `Módulo 02`=18.275 · `Módulo 04`=18.139 |
+| `Turno` | **turno de proceso de la empacadora**, no el turno de riego | `DÍA`=90.702 · `NOCHE`=19.126 · *(vacío)*=7.708 |
+
+Resolver `(Modulo, Lote)` contra el maestro deja **117.536 filas huérfanas — el 100%**, en
+2.363 combinaciones inexistentes.
+
+**Consecuencias.** `fact_packing` referencia **módulo**, no lote. `turno_packing` (DÍA/NOCHE) es
+un dominio distinto de `turno` (T00–T12): **son dos conceptos con el mismo nombre de columna**,
+y mezclarlos en una sola dimensión rompería ambos. `dim_modulo` se resuelve con
+`'M' || lpad(modulo, 2, '0')`.
+
+Además, `Mercado` tiene valores que la auditoría no recoge: además de `USA`=44.134,
+`DESCARTE`=12.305, `CHINA`=11.827 y `ÁCIDO`=7.167, hay **`'0'`=41.428 y `'-'`=675**. Un tercio
+de la tabla no tiene mercado asignable, y `01_AUDITORIA.md` describe la distribución entre los
+cuatro valores como "el indicador de rentabilidad de la campaña".
+
+---
+
+### N-3 · Códigos de lote sin normalizar entre fuentes · **Alto**
+
+El maestro escribe `L011B`; los hechos escriben `L11B`. Sin normalizar, esas filas quedan
+huérfanas aunque el lote exista. Normalizando a `L` + 3 dígitos + sufijo:
+
+| Tabla | Huérfanos sin normalizar | Huérfanos normalizando |
+|---|---|---|
+| `M_Lotes` (Access) | 4 | **0** |
+| `E02_ConteoFlores` | 167 | **21** |
+| `E03_ConteoEstados` | 172 | **6** |
+| `H00_VolumenCampo` | 318 | **276** |
+| `H01_ProdHistorica` | 132 | **90** |
+| `M_Poda` | 16 | **12** |
+| `R09_Forecast_Semanal` | 392 | **23** |
+| `E05_DiametrosBayas` | 304 | **304** |
+| `E01_Ramas`, `E04_Brotes` | 0 | **0** |
+
+La normalización es lo que lleva el maestro histórico de Access a **cobertura total** y deja los
+huérfanos en **~732 filas de ~280.000 (0,26%)**, todos identificables uno por uno:
+`M04/L078`, `M04/L079`, `M04/L080`, `M04/L061A`, `M04/L078A` (lotes retirados del maestro),
+`M10/L191`, `M10/L195`, `M10B/L194` (módulo `M10` sin sufijo A/B), `M16/L000`, `M17/L042`,
+`M17/L056B`, `M18/L077`, `M07/L031`, y las 3 filas de subtotal de H-06.
+
+---
+
+### N-4 · `(Modulo, Lote)` no identifica un lote · **Alto**
+
+El maestro vigente tiene 879 filas y **870** combinaciones distintas de `(Modulo, Lote)`: hay
+**9 pares que existen en las dos empresas a la vez**.
+
+```
+M01|L000 · M02|L000 · M03|L000 · M04|L000   → Aqu Anqa 1 (T00)  y  Aqu Anqa 2 (T00)
+M02|L037 · M02|L038 · M02|L040 · M02|L041 · M02|L042
+                                            → Aqu Anqa 1  y  Aqu Anqa 2, con turnos distintos
+```
+
+La causa es que **los módulos M01 a M04 pertenecen a dos fundos simultáneamente**:
+
+| Módulo | Fundos a los que pertenece |
+|---|---|
+| M01 – M04 | `Aqu Anqa 1` (empresa `Aqu Anqa`) **y** `Aqu Anqa 2` (empresa `Aqu Anqa II`) |
+| M05 | `Aqu Anqa 2` |
+| M06 – M10B | `Aqu Anqa 3` |
+| M12 – M15 | `Aqu Anqa 4` |
+| M11, M16 – M18 | `Aqu Anqa 5` |
+| M19 – M24 | `Aqu Anqa 6` |
+
+**Consecuencia sobre el patrón de ETL propuesto.** `04_PLAN_MIGRACION.md` §4.2 resuelve así:
+
+```sql
+JOIN dim.fundo_alias fa ON fa.alias = trim(s.fundo)
+JOIN dim.modulo m ON m.fundo_id = fa.fundo_id AND m.codigo = trim(s.modulo)
+```
+
+No funciona, porque el alias no determina el fundo: `Aqu Anqa II - Kawsay Allpa` corresponde a
+`Aqu Anqa 3` en 211 lotes **y** a `Aqu Anqa 5` en 44. Un join por alias duplicaría filas.
+
+**Corrección adoptada.** La identidad se resuelve por `(empresa, módulo, lote)` y el alias queda
+como atributo informativo, nunca como clave. Ver
+[ADR-0003](../adr/0003-identidad-de-lote.md).
+
+---
+
+### N-5 · `R08` tiene invertida la semántica de sus columnas de fundo · **Medio**
+
+| Columna | Contenido real | Valores |
+|---|---|---|
+| `R08.Fundo` | **la empresa** (vocabulario B) | `Aqu Anqa II`=86.081 · `Aqu Anqa`=15.633 |
+| `R08.FundoPPto` | **el fundo físico nuevo**, mezclado con alias antiguos | `Aqu Anqa 3`=24.786 · `Aqu Anqa 4`=21.435 · `Aqu Anqa 2`=20.055 · `Aqu Anqa 5`=15.255 · `Aqu Anqa 1`=15.111 · `Aqu Anqa 6`=1.380 · `Aqu Anqa II - Ayllu Allpa`=1.332 · `Aqu Anqa II - Kawsay Allpa`=1.014 · `Aqu Anqa II - Quri Allpa`=824 · `Aqu Anqa - Arena Azul`=522 |
+
+Es exactamente lo contrario de `M_Lotes`, donde `Fundo` es el fundo y `FundoPPto` la empresa.
+`R09` presenta el mismo problema mezclado dentro de una sola columna: `R09.Fundo` contiene a la
+vez alias operativos (`Aqu Anqa II - Kawsay Allpa`=11.539) y fundos físicos nuevos
+(`Aqu Anqa 4`=7.660, `Aqu Anqa 2`=7.425…), y `R09.FundPPTo` mezcla empresa con alias
+(`Aqu Anqa II - Ampliación`=3.844).
+
+**El lado bueno de este hallazgo: resuelve D-4.** El 96% de las filas de `R08` ya usa la
+nomenclatura nueva, y la correspondencia alias ↔ fundo físico que se observa coincide exacta con
+la del maestro vigente. **No hace falta preguntar a Agronomía** por el mapeo de `Ampliacion`,
+`Vivadis` y `Sta.Teresa`: el maestro nuevo los sustituye y los datos confirman la equivalencia.
+
+---
+
+### N-6 · La variedad vive en los hechos, no en el maestro · **Medio**
+
+`04_PLAN_MIGRACION.md` §2 deriva `dim.variedad` de `M_Lotes` y estima "~5 filas". En realidad
+**`M_Lotes` tiene una sola variedad** — `Sekoya pop` en las 860 filas de Access y en las 879 del
+maestro nuevo. Las variedades reales están en los hechos:
+
+| `H00_VolumenCampo.Variedad` | Filas | | `M_Poda.Variedad` | Filas |
+|---|---|---|---|---|
+| `POP` | 30.545 | | `Sekoya pop` | 2.156 |
+| `SEKOYA POP` | 98 | | `Variedades` | 2 |
+| `AZRA BLUE` | 33 | | `TEST PLOT` | 1 |
+| `ATLAS BLUE` | 31 | | | |
+| `FCM15-005` | 27 | | | |
+| `FCM14-057` | 26 | | | |
+| `FCM17-132` | 25 | | | |
+| `SEKOYA BEAUTY` | 17 | | | |
+| `FCM-15`, `FCM-17` | 3 c/u | | | |
+| `BIANCA`, `FCM-14`, `FCM 17-132` | 1 c/u | | | |
+
+`POP` y `SEKOYA POP` son la misma variedad con dos grafías. `dim_variedad` se construye desde
+los hechos con una tabla de alias, igual que el fundo.
+
+---
+
+### N-7 · `E05_DiametrosBayas`: una fila es una baya · **Medio**
+
+`01_AUDITORIA.md` §5 describe el grano como "una medición en una hilera y fecha". Los datos
+dicen otra cosa: 4.193 filas en **43** combinaciones de
+`(Fecha, Modulo, Turno, Lote, Cortina, Hilera)` — unas **97 filas por combinación**. Coincide con
+los conteos de los huérfanos, que aparecen en bloques de ~100 (`M10/L191`=100,
+`M10/L195`=102, `M10B/L194`=102).
+
+Una fila es **una baya medida**, y no hay columna que la identifique. No admite clave natural:
+clave sustituta más un `nro_muestra` asignado en la carga por orden estable.
+
+---
+
+### N-8 · `E03_ConteoEstados` sí tiene clave natural, y no es la del DDL · **Medio**
+
+| Clave | Combinaciones | Total |
+|---|---|---|
+| `Fecha, Fundo, Modulo, Lote, Cortina, Hilera, Planta` *(la del DDL)* | 18.502 | 18.714 |
+| **`Item, Fecha, Modulo, Lote, Cortina, Hilera, Planta`** | **18.714** | 18.714 |
+
+La clave del DDL rechazaría 212 filas; incluyendo `Item` la clave es exacta. Y como el
+`DISTINCT` de las 16 columnas también da 18.714, **`E03` no tiene ni un duplicado exacto**: esas
+212 filas son mediciones distintas del mismo punto, no recargas.
+
+---
+
+### N-9 · Claves que no existen: `E02` y `H00` · **Medio**
+
+**`E02_ConteoFlores` no tiene ninguna clave natural única** (43.490 filas):
+
+| Clave | Combinaciones |
+|---|---|
+| `Fecha, Fundo, Modulo, Lote, Cortina, Hilera, Planta` | 42.790 |
+| `+ Hora` | 43.138 |
+| `Item, Fecha, Modulo, Lote, Cortina, Hilera, Planta` | 43.329 |
+
+Como el plan espera conservar las 43.490 filas, se carga con clave sustituta y las 161 filas que
+colisionan por la mejor clave disponible se registran en cuarentena para revisión, sin bloquear.
+
+**`H00_VolumenCampo` tiene 151 filas de exceso** en 34 grupos por
+`(Campaña, Fecha, Fundo, Modulo, Lote)`; `H01_ProdHistorica` solo 1 por su clave equivalente.
+Relevante porque §4.5 designa H00 como referencia de KG: la reconciliación debe agregar por la
+clave, no asumir unicidad.
+
+Otras claves verificadas, todas correctas: `E04_Brotes` `(Fecha, Piso, Fundo, Modulo, Lote,
+Cortina, Hilera, Planta)` → 3.385 = total · `M_Poda` `(Campaña, Fundo, Modulo, Turno, Lote)` →
+2.159 = total · `M_Lotes` `(Fundo, Modulo, Lote)` → 860 = total.
+
+---
+
+## 3 · Bloque B · Hallazgos sobre el BI en producción
+
+Verificados en el TMDL de `pbi/` (`SEGUIMIENTO DE CAMPAÑA`, `SEGUIMIENTO DE PERSONAL`).
+
+### B-1 · El reporting depende de un archivo en una carpeta de descargas · **Crítico**
+
+Las particiones de **ambos** informes leen:
+
+```
+Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"))
+```
+
+`SEGUIMIENTO DE PERSONAL` lee además un Excel de tareo en una biblioteca SharePoint del mismo
+usuario:
+
+```
+Excel.Workbook(File.Contents("C:\Users\gsanchez\AQUANQA\Oficinas Prize Peru - Cosecha y
+  Operaciones\Gi Cosecha y Operaciones\Dt_Querys\AGRITRAICER\Query Tareo 2026.xlsx"))
+```
+
+Los tableros de gerencia dependen de dos archivos en el equipo personal de un usuario. No hay
+servidor, ni copia, ni control de acceso. Es el argumento operativo más fuerte de la migración,
+y no aparece en ninguno de los cuatro documentos.
+
+### B-2 · Las dimensiones están fabricadas desde las tablas de hechos · **Alto**
+
+`SEGUIMIENTO DE CAMPAÑA` no tiene dimensiones: las deriva con DAX de los propios hechos.
+
+| Dimensión | Definición real | Problema |
+|---|---|---|
+| `LOTE` | `SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Lote])` | **una sola columna, sin módulo**: `L001` de M01 y `L001` de M05 son la misma fila. Filtrar por lote mezcla lotes físicos distintos |
+| `MODULO` | `SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Modulo])` | sin fundo: M01–M04 pertenecen a dos fundos (N-4) y se colapsan |
+| `TURNO` | `SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Turno])` | igual: el turno solo tiene sentido dentro de un módulo |
+| `EMPRESA` | `SUMMARIZECOLUMNS('0305_Brotes_Ramas'[Empresa])` | se deriva de una consulta que desciende de `0101_Diametros`, la del join roto de H-01 |
+| `FUNDO_CAMPO` | `SUMMARIZECOLUMNS('0201_Flores'[FUNDO_CAMPO])` | columna calculada en Power Query, ver B-3 |
+
+Las relaciones cruzan hechos contra dimensiones derivadas de **otro** hecho: `0201_Flores.Modulo
+→ MODULO.Modulo`, donde `MODULO` sale de `H0101_ResumenHistoricos`. Un módulo que aparezca en
+flores pero no en cosecha histórica queda fuera del filtro sin señal alguna.
+
+Es H-02 manifestándose en producción: sin dimensiones ni claves declaradas en el origen, el
+analista tuvo que inventarlas, y las inventó con el grano equivocado.
+
+### B-3 · El mapeo módulo → fundo es incorrecto · **Alto**
+
+Columna calculada presente en `0201_Flores` y `0301_ConteoEstados`:
+
+```dax
+SWITCH(TRUE(),
+    [Modulo] IN {"M01","M02","M03","M04"},                          "Arena Azul",
+    [Modulo] = "M05",                                               "Quri Allpa",
+    [Modulo] IN {"M06","M07","M08","M09","M10A","M10B","M11","M16"},"Kawsay Allpa",
+    [Modulo] IN {"M12","M13","M14","M15"},                          "Ayllu Allpa",
+    BLANK())
+```
+
+Contra el maestro vigente:
+
+| Módulos | Asigna | Correcto | Estado |
+|---|---|---|---|
+| M01–M04 | Arena Azul | **repartidos entre `Aqu Anqa 1`/Arena Azul y `Aqu Anqa 2`/Quri Allpa** | ✗ |
+| M05 | Quri Allpa | Quri Allpa | ✓ |
+| M06–M10B | Kawsay Allpa | Kawsay Allpa (`Aqu Anqa 3`) | ✓ |
+| M11, M16 | Kawsay Allpa | Kawsay Allpa **ii** (`Aqu Anqa 5`) | ✗ (coincide solo porque se colapsan, ver abajo) |
+| M12–M15 | Ayllu Allpa | Ayllu Allpa | ✓ |
+| **M17, M18** | `BLANK()` | `Aqu Anqa 5` | ✗ |
+| **M19–M24** | `BLANK()` | `Aqu Anqa 6` | ✗ |
+
+Y en Power Query, `FUNDO_CAMPO` se obtiene partiendo `Fundo_pptom5` por `-` y aplicando cinco
+`Table.ReplaceValue`, uno de los cuales colapsa dos fundos distintos:
+
+```m
+Table.ReplaceValue(..., "Kawsay Allpa ii", "Kawsay Allpa", ...)   // Aqu Anqa 5 → Aqu Anqa 3
+```
+
+**Efecto en el tablero:** los lotes de M01–M04 de la empresa `Aqu Anqa II` se reportan como
+Arena Azul; `Aqu Anqa 5` no existe como categoría; y los cinco módulos M17–M24 aparecen en
+blanco. Corregirlo **cambiará lo que ve gerencia**, y conviene anticiparlo igual que los cambios
+del §5 de `03_GUIA_REPORTES.md`.
+
+### B-4 · `KG/HA` está mal calculado · **Alto**
+
+```dax
+KG/HA = SUM(H0101_ResumenHistoricos[KG]) / SUM(H0101_ResumenHistoricos[Area])
+```
+
+`Area` es un atributo del lote que `H0101_ResumenHistoricos` trae repetido en cada fila de
+cosecha (una por fecha y paña). `SUM(Area)` suma la superficie del lote tantas veces como
+cosechas tenga: **el denominador se multiplica por el número de pañas y el rendimiento por
+hectárea sale subestimado en la misma proporción**.
+
+El área debe tomarse de la dimensión de lote —una vez por lote—, no sumarse desde el hecho.
+
+### B-5 · El linaje de la auditoría no midió el consumo real · **Medio**
+
+`01_AUDITORIA.md` H-12 y `02_LOGICA_NEGOCIO.md` §6 concluyen que `E05_DiametrosBayas`,
+`M_Evaluadores` y `M_nMuestra` "no llegan a ningún tablero", y §7 plantea como preguntas sin
+responder la predicción de calibre y la consistencia entre evaluadores.
+
+`SEGUIMIENTO DE PERSONAL` **sí lee `E05_DiametrosBayas`**, directamente desde la tabla, y **sí
+mide la consistencia entre evaluadores**, con medidas propias:
+
+```
+CV Evaluador · Desv Std Evaluador · Promedio Evaluador · Flores por Hora · Frutos por Hora
+Plantas por Hora · Flores por Evaluador Día · Jornadas Evaluador · Evaluadores Activos
+Horas Hombre Flores · HORAS TRABAJADAS
+```
+
+La conclusión de la auditoría es correcta **dentro de Access** —ninguna de las 40 consultas las
+usa— pero incorrecta sobre el consumo real: Power BI lee tablas crudas, no solo consultas. El
+linaje del modelo destino debe medirse sobre los dos informes, no sobre el `.accdb`.
+
+### B-6 · Hay lógica de negocio que solo existe en Power Query · **Medio**
+
+Cuatro tablas del modelo de PERSONAL no corresponden a ningún objeto de la base —se verificó:
+la base tiene exactamente 18 tablas y 41 consultas, y ninguna se llama así—. Son
+transformaciones definidas en Power Query:
+
+| Tabla del modelo | Qué hace |
+|---|---|
+| `RESUM_FLORES` | `Table.Group(E02_ConteoFlores, {Fecha, Evaluador}, sum(nFlores))` |
+| `RESUM_FRUTOS` | `Table.Group(E03_ConteoEstados, {Fecha, Evaluador}, count(*) as PLANTAS, sum(Total) as FRUTOS)` |
+| `TAB RESUM_FL` | une ambas y filtra `PLANTAS = null and FLORES <> 0`: **jornadas con flores contadas y sin frutos registrados** — un control de calidad de captura que no existe en ningún otro sitio |
+| `TAB RESUM_FR` | el simétrico |
+
+Esa lógica debe bajar a `reporting` para no vivir en tres capas a la vez. `TAB RESUM_FL` merece
+atención especial: es una regla de validación de negocio que hoy solo conoce un archivo `.pbix`.
+
+Además, ambos informes tienen `__PBI_TimeIntelligenceEnabled = 1`, lo que genera **10 tablas
+`LocalDateTable_*` automáticas** conviviendo con un `BD_Calendario` propio. Ese `BD_Calendario`
+ya aporta el `Trimestre` que a `M_Time` le falta (H-04 caso 5) y las columnas `Año-Semana`,
+`AñoMes`, `Día Semana` que `dim_tiempo` debe ofrecer para que el reapuntado no pierda nada.
+
+---
+
+## 4 · Bloque C · Efecto sobre las decisiones pendientes
+
+| Decisión | Estado en `04_PLAN_MIGRACION.md` | Estado tras verificar |
+|---|---|---|
+| **D-1** · qué kilos compara `R0902` | Pendiente de Planeamiento | Se implementa con `[KG Exp]` (precedente de `R0801_ResCampaña`), parametrizado en `core.config_decision`. Cambiarlo es un `UPDATE` |
+| **D-2** · fechas de corte de campaña | Pendiente de Planeamiento | Se deriva del rango real observado por campaña en `H00`/`H01`/`M_Poda`, marcado como provisional |
+| **D-3** · reconciliación H00/H01 | H00 como referencia de KG | Se mantiene, con el ajuste de N-9: agregar por clave, no asumir unicidad |
+| **D-4** · correspondencia del vocabulario A | *"bloquea todo lo demás"* en la versión original | **Resuelta por los datos** (N-5): el maestro vigente sustituye el vocabulario A y R08/R09 confirman la equivalencia |
+| **D-5** · los 5 lotes duplicados | Obsoleto | Confirmado obsoleto: `(Fundo, Modulo, Lote)` es único en las 860 filas de Access |
+| **D-6** · filtros fijos de campaña | Regla de diseño | Sin cambios |
+
+---
+
+## 5 · Cifras de control corregidas
+
+Sustituyen o complementan a `01_AUDITORIA.md` §7 y `04_PLAN_MIGRACION.md` §7.
+
+### Se retiran
+
+| Métrica | Valor publicado | Motivo |
+|---|---|---|
+| `E01 SUM([# Ramas])` | 730.318 | Suma de índices de rama, no un total de ramas (N-1) |
+| `E01` filas únicas por clave de planta | 71.095 | La cifra es correcta, la clave no: son filas completas distintas (N-1) |
+| `dim.variedad` ≈ 5 filas | — | `M_Lotes` tiene 1 variedad; los hechos tienen ~14 grafías (N-6) |
+
+### Se incorporan
+
+| Métrica | Valor verificado |
+|---|---|
+| `E01` total de ramas declaradas (`Max<5 + Max>5` por planta) | **110.095** |
+| `E01` cabeceras de planta evaluada | **5.384** |
+| `E01` filas completas distintas *(objetivo de `rama_medicion`)* | **71.095** |
+| `E01 AVG(Diametro)` sobre filas distintas | **10,8869165079781** |
+| `E01` conflictos (punto + nro de rama con diámetro distinto) | **4.557** |
+| `E05` bayas por combinación hilera/fecha | ~97 (43 combinaciones) |
+| Maestro vigente: lotes · módulos · fundos · turnos | **879 · 25 · 6 · 13** |
+| Huérfanos totales tras normalizar códigos | **~732 filas (0,26%)** |
+
+> **Nota sobre `AVG(Diametro)`.** La auditoría publica 10,8870645965645 y la verificación da
+> 10,8869165079781: difieren en el sexto decimal, probablemente por la precisión de `Single` en
+> el promedio intermedio. El contrato de aceptación fija tolerancia **±1e-4** en esta métrica en
+> lugar de igualdad exacta.
+
+---
+
+## 6 · Lo que la verificación confirma sin cambios
+
+Para que quede constancia de qué parte de la auditoría se sostuvo íntegra:
+
+- **H-01** · los cuatro vocabularios de fundo, tal como se describen, con sus conteos exactos.
+- **H-02** · 0 FK, 4 índices, las tres PK y su evaluación.
+- **H-03** · 23.141 filas de exceso en `E01_Ramas` y 5.383 grupos con duplicados (la
+  verificación da 5.384 combinaciones totales, de las cuales 5.383 tienen más de una fila:
+  coincide).
+- **H-04** · las 6 consultas rotas y la causa de cada una.
+- **H-05** · 9.040 → 487.368 filas y el grano diario de `M_Time`.
+- **H-06** · las 3 filas de subtotal y sus 1.925.995 kg, aisladas de nuevo por su
+  `(Modulo, Lote)` vacío.
+- **H-07** · el desfase de 187 filas entre `H00` y `H01`, campaña por campaña.
+- **H-08** · 2.079 grupos de clima duplicados.
+- **H-09** · el enlace de evaluadores por DNI y los 2 sin maestro.
+- **H-10** · el tipado de `H02_BDElifab` y sus 5 pares de columnas duplicadas.
+- Todas las cifras de `evidencia\04_metricas_validacion.txt` §1 a §6.
+
+El diagnóstico era sólido. Lo que faltaba era medir el grano antes de declarar las claves.

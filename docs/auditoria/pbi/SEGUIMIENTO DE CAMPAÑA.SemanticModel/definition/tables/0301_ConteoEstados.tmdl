@@ -1,0 +1,246 @@
+table 0301_ConteoEstados
+	lineageTag: 704a1b81-61d4-4f7b-9d54-1d0a25e5535e
+
+	column Evaluador
+		dataType: string
+		lineageTag: 2eec8464-12ba-4eab-bfd0-556d750e50ff
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		dataType: string
+		lineageTag: ccab6e7c-203a-46c3-afbf-ba9ccba8fa3d
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: 77f45576-3d1a-4d9c-baf7-e606eb35f360
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Turno
+		dataType: string
+		lineageTag: d2fea1ef-52ee-499d-985b-9894a5090059
+		summarizeBy: none
+		sourceColumn: Turno
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: c745f01e-c2ae-4607-b7ec-a34616869bdc
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Area
+		dataType: double
+		lineageTag: d93f6470-638e-4b0c-9beb-8dda620bc580
+		summarizeBy: sum
+		sourceColumn: Area
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NPlantas
+		dataType: int64
+		formatString: 0
+		lineageTag: 100641e8-1c09-4a29-8841-59df4e58ea4b
+		summarizeBy: sum
+		sourceColumn: NPlantas
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: 8225c509-eb71-4bc4-8e79-2f1a00602f56
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: bf4ce64b-d137-40cd-bbba-07cf9d8ca3cc
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Planta
+		dataType: int64
+		formatString: 0
+		lineageTag: 75a83fd3-18ac-4ca6-af93-f9f57451208a
+		summarizeBy: sum
+		sourceColumn: Planta
+
+		annotation SummarizationSetBy = Automatic
+
+	column E1
+		dataType: int64
+		formatString: 0
+		lineageTag: e4b34906-0a32-4a87-96db-110e4341cf12
+		summarizeBy: sum
+		sourceColumn: E1
+
+		annotation SummarizationSetBy = Automatic
+
+	column E2
+		dataType: int64
+		formatString: 0
+		lineageTag: 69e74208-4fda-4f38-9d6a-21f956068214
+		summarizeBy: sum
+		sourceColumn: E2
+
+		annotation SummarizationSetBy = Automatic
+
+	column E3
+		dataType: int64
+		formatString: 0
+		lineageTag: a7e31c47-6dd8-4801-9138-121bd3f93418
+		summarizeBy: sum
+		sourceColumn: E3
+
+		annotation SummarizationSetBy = Automatic
+
+	column E4
+		dataType: int64
+		formatString: 0
+		lineageTag: 752cd2a9-6a5d-4d0c-95e7-6ab816074a4d
+		summarizeBy: sum
+		sourceColumn: E4
+
+		annotation SummarizationSetBy = Automatic
+
+	column E5
+		dataType: int64
+		formatString: 0
+		lineageTag: 75fcea63-4834-4486-9e04-5e0eaa5b1b27
+		summarizeBy: sum
+		sourceColumn: E5
+
+		annotation SummarizationSetBy = Automatic
+
+	column Total
+		dataType: int64
+		formatString: 0
+		lineageTag: 95edca75-7464-4b26-ae1c-3d7f6f54c021
+		summarizeBy: sum
+		sourceColumn: Total
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f713c8e7-39ba-4b80-9a9d-51a91fb4b42b
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column codPlt
+		dataType: string
+		lineageTag: 907d25a6-baf6-4a46-a658-4d898cef2ba2
+		summarizeBy: none
+		sourceColumn: codPlt
+
+		annotation SummarizationSetBy = Automatic
+
+	column Key1
+		dataType: string
+		lineageTag: 14a23820-07f1-4458-a48e-bcd66c4737b1
+		summarizeBy: none
+		sourceColumn: Key1
+
+		annotation SummarizationSetBy = Automatic
+
+	column KeyMap
+		dataType: string
+		lineageTag: 7d746db7-e51a-401e-ac52-cc5e78b3188f
+		summarizeBy: none
+		sourceColumn: KeyMap
+
+		annotation SummarizationSetBy = Automatic
+
+	column FundoPPto
+		dataType: string
+		lineageTag: 2a166e36-2857-4fd9-b683-bdb71c014b43
+		summarizeBy: none
+		sourceColumn: FundoPPto
+
+		annotation SummarizationSetBy = Automatic
+
+	column Año
+		dataType: int64
+		formatString: 0
+		lineageTag: f1cdc4fd-3263-4f2b-b2e8-5850598d80ba
+		summarizeBy: sum
+		sourceColumn: Año
+
+		annotation SummarizationSetBy = Automatic
+
+	column Sem
+		dataType: int64
+		formatString: 0
+		lineageTag: 2c0b8d55-8f5c-4900-aa1c-5e188c65d67b
+		summarizeBy: sum
+		sourceColumn: Sem
+
+		annotation SummarizationSetBy = Automatic
+
+	column SEvConteo
+		dataType: int64
+		formatString: 0
+		lineageTag: 11aa42cb-60dd-4fe3-a2e2-ca68721d7029
+		summarizeBy: sum
+		sourceColumn: SEvConteo
+
+		annotation SummarizationSetBy = Automatic
+
+	column FUNDO_CAMPO =
+			
+			SWITCH(
+			    TRUE(),
+			
+			    '0301_ConteoEstados'[Modulo] IN {"M01","M02","M03","M04"},
+			        "Arena Azul",
+			
+			    '0301_ConteoEstados'[Modulo] = "M05",
+			        "Quri Allpa",
+			
+			    '0301_ConteoEstados'[Modulo] IN {"M06","M07","M08","M09","M10A","M10B","M11","M16"},
+			        "Kawsay Allpa",
+			
+			    '0301_ConteoEstados'[Modulo] IN {"M12","M13","M14","M15"},
+			        "Ayllu Allpa",
+			
+			    BLANK()
+			)
+		lineageTag: 4549e532-d478-4e5a-813f-9b4f6f5f437e
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 0301_ConteoEstados = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "0301_ConteoEstados"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_ResultType = Table
+

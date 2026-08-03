@@ -1,0 +1,103 @@
+relationship 7267b8c4-593a-4830-a5c2-1ed4d557f1aa
+	joinOnDateBehavior: datePartOnly
+	fromColumn: H0101_ResumenHistoricos.FInicio
+	toColumn: LocalDateTable_e1704d8b-ff4a-448b-8c8b-ef7129249e96.Date
+
+relationship a32e0a46-4742-4218-8854-406dfeaa761d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: BD_Calendario.Date
+	toColumn: LocalDateTable_d781e800-e42f-4c79-8ba3-eda805f40a9d.Date
+
+relationship 7e6e6e93-4f1d-53f4-f967-fb8adb3a74f1
+	fromColumn: 0301_ConteoEstados.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 43dc9b61-7cdc-f967-58b0-9402da66929a
+	fromColumn: 0305_Brotes_Ramas.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 29caa2fb-02d6-9edf-21d4-d3bf1e8df941
+	fromColumn: H0101_ResumenHistoricos.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 7820564d-52c0-9069-0256-1034574893b8
+	fromColumn: 0201_Flores.FundoPPto
+	toColumn: EMPRESA.Empresa
+
+relationship 44a5e967-82dd-2e8f-41bd-90ff46a19a6a
+	fromColumn: 0301_ConteoEstados.FundoPPto
+	toColumn: EMPRESA.Empresa
+
+relationship f74da35f-c783-c0fa-2365-3ce382891089
+	fromColumn: 0305_Brotes_Ramas.Empresa
+	toColumn: EMPRESA.Empresa
+
+relationship 7135de59-8b87-f58a-d386-3faacc8496bd
+	fromColumn: H0101_ResumenHistoricos.Fundo
+	toColumn: EMPRESA.Empresa
+
+relationship 4d474b62-1f21-43f5-8124-f0ea63b804db
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 0201_Flores.FInicio
+	toColumn: LocalDateTable_60f028c4-ced2-4200-a423-63682cb8ff7b.Date
+
+relationship 7ebf995e-4846-e8cf-ed80-e9d940b7c0d8
+	fromColumn: 0201_Flores.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship fed3345e-c188-d328-1c8f-e31ceaba9f98
+	fromColumn: 0201_Flores.FUNDO_CAMPO
+	toColumn: FUNDO_CAMPO.FUNDO_CAMPO
+
+relationship 72180bdd-3ff8-0250-1346-094689999524
+	fromColumn: 0301_ConteoEstados.FUNDO_CAMPO
+	toColumn: FUNDO_CAMPO.FUNDO_CAMPO
+
+relationship 84260660-dfeb-4f68-4aa5-a5f200664cfc
+	fromColumn: H0101_ResumenHistoricos.FUNDO_CAMPO
+	toColumn: FUNDO_CAMPO.FUNDO_CAMPO
+
+relationship 4c14f653-795e-84bd-cce2-1ed303dc756c
+	fromColumn: 0201_Flores.Modulo
+	toColumn: MODULO.Modulo
+
+relationship 6f53ab93-4d66-1512-6948-30f504d3857f
+	fromColumn: 0301_ConteoEstados.Modulo
+	toColumn: MODULO.Modulo
+
+relationship e81ddb4e-5ff6-8d39-b808-1647b494a540
+	fromColumn: H0101_ResumenHistoricos.Modulo
+	toColumn: MODULO.Modulo
+
+relationship 41359be0-89e8-24de-84ad-da132bcc0ca6
+	fromColumn: 0305_Brotes_Ramas.Modulo
+	toColumn: MODULO.Modulo
+
+relationship 294480aa-0a2d-f306-95a1-5056332f9bbc
+	fromColumn: 0201_Flores.Lote
+	toColumn: LOTE.Lote
+
+relationship 575895cc-84de-4214-ac24-968940f7e0c6
+	fromColumn: 0301_ConteoEstados.Lote
+	toColumn: LOTE.Lote
+
+relationship e35ba1b5-f78e-d160-29bc-6c35c67a7506
+	fromColumn: 0305_Brotes_Ramas.Lote
+	toColumn: LOTE.Lote
+
+relationship 2ecc7245-20d2-e29b-1ca5-c8f476a6de4d
+	fromColumn: H0101_ResumenHistoricos.Lote
+	toColumn: LOTE.Lote
+
+relationship a5253e9e-510d-cac4-5df3-075ec8ae0f83
+	fromColumn: 0201_Flores.Turno
+	toColumn: TURNO.Turno
+
+relationship 3b923154-9626-831c-6cfd-e3ccfdd4284e
+	fromColumn: 0301_ConteoEstados.Turno
+	toColumn: TURNO.Turno
+
+relationship 70e95487-2a17-0893-0197-1180090eaa2f
+	fromColumn: H0101_ResumenHistoricos.Turno
+	toColumn: TURNO.Turno
+

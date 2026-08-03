@@ -1,0 +1,127 @@
+table 2026
+	lineageTag: 0c53d832-777f-4dc8-8dcd-126dc4f7a4c9
+
+	measure 'HORAS TRABAJADAS' = SUM('2026'[Hrs])
+		formatString: "S/"\ #,0.###############;-"S/"\ #,0.###############;"S/"\ #,0.###############
+		lineageTag: 821f15ae-9b63-4ce6-869c-756c4aef4c4e
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+	measure 'Horas Hombre Flores' =
+			
+			VAR Jornadas =
+			    SUMMARIZE (
+			        E02_ConteoFlores,
+			        E02_ConteoFlores[Evaluador],
+			        E02_ConteoFlores[Fecha]
+			    )
+			RETURN
+			SUMX (
+			    Jornadas,
+			    CALCULATE (
+			        MAX ( '2026'[Hrs] ),
+			        TREATAS ( VALUES ( E02_ConteoFlores[Evaluador] ), '2026'[Documento] ),
+			        TREATAS ( VALUES ( E02_ConteoFlores[Fecha] ), '2026'[Fecha] )
+			    )
+			)
+		formatString: #,0.00
+		lineageTag: 1f237e4f-cdd7-47bd-b450-4822a7910876
+
+	column Documento
+		dataType: string
+		lineageTag: ffd073c4-326f-46c1-badd-ca6e28d31749
+		summarizeBy: none
+		sourceColumn: Documento
+
+		annotation SummarizationSetBy = Automatic
+
+	column Trabajador
+		dataType: string
+		lineageTag: 46684b15-318a-49c4-9971-a97b47dd7fb0
+		summarizeBy: none
+		sourceColumn: Trabajador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 1510a78f-6b59-4764-a3d2-603682ba648b
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Total Horas'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 7a9ce3aa-6d73-4404-b217-2480dbb2f27a
+		summarizeBy: none
+		sourceColumn: Total Horas
+
+		variation Variación
+			isDefault
+			relationship: 60ab6242-6366-419f-b5fa-221d603c2311
+			defaultHierarchy: LocalDateTable_8182b126-b4f8-45bc-81a7-38e22cd563e4.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hrs
+		dataType: decimal
+		formatString: #,0.00
+		lineageTag: 67443935-355f-4402-9043-be815bba179e
+		summarizeBy: sum
+		sourceColumn: Hrs
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nombre Corto' =
+			
+			VAR NombreCompleto = '2026'[Trabajador]
+			VAR Palabras =
+			    SUBSTITUTE(NombreCompleto, " ", "|")
+			VAR P1 = PATHITEM(Palabras, 1, TEXT)
+			VAR P3 = PATHITEM(Palabras, 3, TEXT)
+			
+			RETURN
+			P1 & " " & P3
+		lineageTag: bbb0d141-099f-4191-a005-5766ba2d5ffa
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nombre Corto 2L' =
+			
+			VAR Pos = SEARCH(" ", '2026'[Nombre Corto],1)
+			RETURN
+			LEFT('2026'[Nombre Corto],Pos-1)
+			&
+			UNICHAR(10)
+			&
+			MID('2026'[Nombre Corto],Pos+1,LEN('2026'[Nombre Corto]))
+		lineageTag: 5a71ff13-1183-41f0-93f0-9438050391da
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 2026 = m
+		mode: import
+		source =
+				let
+				  Origen = Excel.Workbook(File.Contents("C:\Users\gsanchez\AQUANQA\Oficinas Prize Peru - Cosecha y Operaciones\Gi Cosecha y Operaciones\Dt_Querys\AGRITRAICER\Query Tareo 2026.xlsx"), null, true),
+				  #"Navegación 1" = Origen{[Item = "2026", Kind = "Sheet"]}[Data],
+				  #"Encabezados promovidos" = Table.PromoteHeaders(#"Navegación 1", [PromoteAllScalars = true]),
+				  #"Tipo de columna cambiado" = Table.TransformColumnTypes(#"Encabezados promovidos", {{"Source.Name", type text}, {"Empresa", type text}, {"Código Trabajador", Int64.Type}, {"Documento", Int64.Type}, {"Trabajador", type text}, {"Tipo de Planilla", type text}, {"Contratista", type text}, {"F. Ingreso", type date}, {"F. Cese", type text}, {"Grupo Actividad", type text}, {"Cod. Act", type text}, {"Actividad", type text}, {"Fundo", type text}, {"Módulo", type text}, {"Turno", type text}, {"Variedad", type text}, {"Cultivo", type text}, {"Unidad de Medida", Int64.Type}, {"Ceco", type text}, {"Cód. Supervisor", Int64.Type}, {"Supervisor", type text}, {"Código Grupo", type text}, {"Fecha", type date}, {"Hora Inicio Real", type datetime}, {"Hora Fin Real", type datetime}, {"Hora Inicio", type datetime}, {"Hora Fin", type datetime}, {"Total Horas", type datetime}, {"Productividad", Int64.Type}, {"Objetivo", type text}, {"Copia", type text}, {"Observaciones", type text}}, "es"),
+				    #"Filas filtradas" = Table.SelectRows(#"Tipo de columna cambiado", each ([Grupo Actividad] = "PLANIFICACIÓN")),
+				    #"Columnas quitadas" = Table.RemoveColumns(#"Filas filtradas",{"Productividad", "Objetivo", "Copia", "Observaciones", "Hora Inicio Real", "Hora Fin Real", "Hora Inicio", "Hora Fin", "Tipo de Planilla", "Contratista", "F. Ingreso", "F. Cese", "Grupo Actividad", "Cod. Act", "Actividad", "Fundo", "Módulo", "Turno", "Variedad", "Cultivo", "Unidad de Medida", "Ceco", "Cód. Supervisor", "Supervisor", "Código Grupo", "Source.Name", "Empresa", "Código Trabajador"}),
+				    #"Personalizada agregada" = Table.AddColumn(#"Columnas quitadas", "Hrs", each Duration.TotalHours([Total Horas] - #datetime(1899,12,31,0,0,0))),
+				    #"Tipo cambiado" = Table.TransformColumnTypes(#"Personalizada agregada",{{"Hrs", Currency.Type}, {"Documento", type text}})
+				in
+				  #"Tipo cambiado"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,230 @@
+table H0101_ResumenHistoricos
+	lineageTag: e4b371d7-eb19-4f9d-a030-e1f9d4faa7de
+
+	measure KG/HA = SUM(H0101_ResumenHistoricos[KG])/SUM(H0101_ResumenHistoricos[Area])
+		lineageTag: 90404600-7a58-49c4-92ad-709b700d78f4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Fundo
+		dataType: string
+		lineageTag: f107afce-2e10-4ba2-8046-7f7ddc2b205f
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Campaña
+		dataType: string
+		lineageTag: 9c7cb65e-1a81-476f-8705-09b67c6a588a
+		summarizeBy: none
+		sourceColumn: Campaña
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: f681dcbe-ba75-4e7e-bed8-55bc44bb2c79
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Turno
+		dataType: string
+		lineageTag: f619d7aa-0be5-45e3-beea-bc3eb9b478dd
+		summarizeBy: none
+		sourceColumn: Turno
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 9e36706e-6238-4d55-ab49-f4db66e6c14f
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Area
+		dataType: double
+		lineageTag: d53e91f5-a156-4c71-93e6-15f1b1b3e71b
+		summarizeBy: sum
+		sourceColumn: Area
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NPlantas
+		dataType: int64
+		formatString: 0
+		lineageTag: d1571b0b-d361-40f5-b6af-65cc62d83591
+		summarizeBy: sum
+		sourceColumn: NPlantas
+
+		annotation SummarizationSetBy = Automatic
+
+	column KG
+		dataType: double
+		lineageTag: 801f0b54-af14-4fc0-b77a-d1c2e965952f
+		summarizeBy: sum
+		sourceColumn: KG
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Paña
+		dataType: double
+		lineageTag: df23565f-3e5d-4194-bde1-75c8c9efd7f2
+		summarizeBy: sum
+		sourceColumn: Paña
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FrutosT
+		dataType: double
+		lineageTag: 9b7a1c52-9161-4a2d-a47c-007aab3012fb
+		summarizeBy: sum
+		sourceColumn: FrutosT
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FecPon
+		dataType: double
+		lineageTag: 268e4f65-e53f-432c-8120-9e168543f921
+		summarizeBy: sum
+		sourceColumn: FecPon
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FInicio
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e30f68fc-f7b5-40c7-bf97-1fe40229d7de
+		summarizeBy: none
+		sourceColumn: FInicio
+
+		variation Variación
+			isDefault
+			relationship: 7267b8c4-593a-4830-a5c2-1ed4d557f1aa
+			defaultHierarchy: LocalDateTable_e1704d8b-ff4a-448b-8c8b-ef7129249e96.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 4dde9af1-733d-4dbc-9bf5-58b0cc8fb985
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column Semana
+		dataType: int64
+		formatString: 0
+		lineageTag: 2e648b16-3873-4d0b-8436-eaac41e64944
+		summarizeBy: sum
+		sourceColumn: Semana
+
+		annotation SummarizationSetBy = Automatic
+
+	column anio
+		dataType: int64
+		formatString: 0
+		lineageTag: 8c8cf4d7-42a7-4561-b834-fa500b63c461
+		summarizeBy: sum
+		sourceColumn: anio
+
+		annotation SummarizationSetBy = Automatic
+
+	column ModTur
+		dataType: string
+		lineageTag: 61a251f8-f03b-4162-a1cf-ed1ca4f5b712
+		summarizeBy: none
+		sourceColumn: ModTur
+
+		annotation SummarizationSetBy = Automatic
+
+	column TipoFibra
+		dataType: string
+		lineageTag: 8993df4e-76c6-4842-b1cc-087b4017b35d
+		summarizeBy: none
+		sourceColumn: TipoFibra
+
+		annotation SummarizationSetBy = Automatic
+
+	column FundoPPto
+		dataType: string
+		lineageTag: c0bef2ce-0224-4680-a1f5-d9844c3bd912
+		summarizeBy: none
+		sourceColumn: FundoPPto
+
+		annotation SummarizationSetBy = Automatic
+
+	column MesSem
+		dataType: string
+		lineageTag: 21b2c937-487b-4f19-a58f-ca98db3bae62
+		summarizeBy: none
+		sourceColumn: MesSem
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fundo_pptom5.1'
+		dataType: string
+		lineageTag: d2c2afa2-9fb3-4c36-9e7c-e140d37c29dd
+		summarizeBy: none
+		sourceColumn: Fundo_pptom5.1
+
+		annotation SummarizationSetBy = Automatic
+
+	column FUNDO_CAMPO
+		dataType: string
+		lineageTag: 55d014d3-8116-431c-bb60-6d91657c4d4f
+		summarizeBy: none
+		sourceColumn: FUNDO_CAMPO
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'PESO DE BAYA' =
+			
+			DIVIDE(
+			    H0101_ResumenHistoricos[KG] * 1000,
+			    H0101_ResumenHistoricos[FrutosT]
+			)
+		lineageTag: d3275912-0fe7-4e38-a154-bd82f6982b68
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition H0101_ResumenHistoricos = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "H0101_ResumenHistoricos"]}[Data],
+				    #"Dividir columna por delimitador" = Table.SplitColumn(#"Navegación 1", "Fundo_pptom5", Splitter.SplitTextByDelimiter("-", QuoteStyle.None), {"Fundo_pptom5.1", "Fundo_pptom5.2"}),
+				    #"Tipo cambiado" = Table.TransformColumnTypes(#"Dividir columna por delimitador",{{"Fundo_pptom5.1", type text}, {"Fundo_pptom5.2", type text}}),
+				    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Tipo cambiado",{{"Fundo_pptom5.2", "FUNDO_CAMPO"}}),
+				    #"Valor reemplazado" = Table.ReplaceValue(#"Columnas con nombre cambiado","Kawsay Allpa ii","Kawsay Allpa",Replacer.ReplaceText,{"FUNDO_CAMPO"}),
+				    #"Valor reemplazado1" = Table.ReplaceValue(#"Valor reemplazado"," Arena Azul","Arena Azul",Replacer.ReplaceText,{"FUNDO_CAMPO"}),
+				    #"Valor reemplazado2" = Table.ReplaceValue(#"Valor reemplazado1"," Quri Allpa","Quri Allpa",Replacer.ReplaceText,{"FUNDO_CAMPO"}),
+				    #"Valor reemplazado3" = Table.ReplaceValue(#"Valor reemplazado2"," Kawsay Allpa","Kawsay Allpa",Replacer.ReplaceText,{"FUNDO_CAMPO"}),
+				    #"Valor reemplazado4" = Table.ReplaceValue(#"Valor reemplazado3"," Ayllu Allpa","Ayllu Allpa",Replacer.ReplaceText,{"FUNDO_CAMPO"})
+				in
+				    #"Valor reemplazado4"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

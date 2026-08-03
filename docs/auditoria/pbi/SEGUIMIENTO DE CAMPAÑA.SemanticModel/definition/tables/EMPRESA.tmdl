@@ -1,0 +1,17 @@
+table EMPRESA
+	lineageTag: 56467c78-6117-4bf5-b3d2-f8cc501d42a9
+
+	column Empresa
+		lineageTag: cc1474ff-e0c8-4502-aa9c-759a68f4bc0b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: 0305_Brotes_Ramas[Empresa]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition EMPRESA = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS('0305_Brotes_Ramas'[Empresa])
+
+	annotation PBI_Id = a6f473bf702c4ade95eccd68cca048c1
+

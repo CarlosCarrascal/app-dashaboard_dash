@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "SEGUIMIENTO DE CAMPAÑA"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "66e24dda-5411-4d87-b523-bd8ec1bb38b4"
+  }
+}

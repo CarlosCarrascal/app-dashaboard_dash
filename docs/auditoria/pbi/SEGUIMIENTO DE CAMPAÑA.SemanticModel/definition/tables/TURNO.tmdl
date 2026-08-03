@@ -1,0 +1,17 @@
+table TURNO
+	lineageTag: 542e64ef-4bc6-47f1-a6f5-e1d7e25c5a46
+
+	column Turno
+		lineageTag: 44d7c36a-fb5a-4160-9c14-968e98530732
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: H0101_ResumenHistoricos[Turno]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition TURNO = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Turno])
+
+	annotation PBI_Id = c7cd7f16105c44b99abfaaa53e802d98
+

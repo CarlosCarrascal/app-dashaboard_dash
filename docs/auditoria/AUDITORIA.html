@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoría · BD_AQUANQA_26</title>
+<style>
+:root{
+  --bg:#fafaf8;
+  --ink:#1a1a1a;
+  --ink-2:#3d3d3b;
+  --ink-3:#6b6b68;
+  --ink-4:#96968f;
+  --rule:#d8d8d2;
+  --rule-2:#e8e8e3;
+  --panel:#f2f2ee;
+  --panel-2:#ececE6;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:16px/1.65 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+}
+.wrap{display:flex;max-width:1400px;margin:0 auto;gap:0}
+
+/* ---------- navegación lateral ---------- */
+nav{
+  width:250px;flex:0 0 250px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  padding:44px 26px 60px 32px;
+  border-right:1px solid var(--rule);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:12.5px;line-height:1.5;
+}
+nav .navtitle{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-4);margin:0 0 20px;font-weight:600;
+}
+nav a{
+  display:block;color:var(--ink-3);text-decoration:none;
+  padding:3.5px 0;border-left:2px solid transparent;padding-left:11px;margin-left:-13px;
+}
+nav a:hover{color:var(--ink);border-left-color:var(--ink-4)}
+nav a.lvl1{color:var(--ink-2);font-weight:600;margin-top:17px;font-size:13px}
+nav a.lvl1:first-of-type{margin-top:0}
+nav a.lvl2{padding-left:22px;font-size:12px}
+
+/* ---------- contenido ---------- */
+main{flex:1;min-width:0;padding:52px 62px 130px;max-width:1000px}
+
+header.doc{border-bottom:2px solid var(--ink);padding-bottom:26px;margin-bottom:38px}
+header.doc h1{
+  font-size:34px;line-height:1.15;margin:0 0 14px;font-weight:600;letter-spacing:-.015em;
+}
+header.doc .meta{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:12.5px;color:var(--ink-3);line-height:1.85;
+}
+header.doc .meta b{color:var(--ink-2);font-weight:600}
+
+h2{
+  font-size:23px;font-weight:600;letter-spacing:-.01em;
+  margin:52px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--rule);
+}
+h3{font-size:18px;font-weight:600;margin:34px 0 11px}
+h4{font-size:15.5px;font-weight:600;margin:26px 0 8px;color:var(--ink-2)}
+p{margin:0 0 13px}
+ul,ol{margin:0 0 13px;padding-left:22px}
+li{margin-bottom:5px}
+strong{font-weight:600}
+a{color:var(--ink)}
+code{
+  font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  font-size:.855em;background:var(--panel);padding:1.5px 5px;border-radius:2px;
+  color:var(--ink-2);
+}
+pre{
+  background:var(--panel);border:1px solid var(--rule-2);border-left:3px solid var(--ink-4);
+  padding:15px 18px;overflow-x:auto;margin:0 0 17px;border-radius:2px;
+}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6}
+
+/* ---------- tablas ---------- */
+table{
+  width:100%;border-collapse:collapse;margin:0 0 20px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px;line-height:1.45;
+}
+th{
+  text-align:left;font-weight:600;color:var(--ink-2);
+  border-bottom:1.5px solid var(--ink-3);padding:8px 11px 7px;
+  font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+}
+td{padding:7px 11px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+tr:last-child td{border-bottom:1px solid var(--rule)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--panel)}
+
+/* ---------- severidad: peso y gris, sin color ---------- */
+.sev{
+  display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  padding:2px 7px;border-radius:2px;white-space:nowrap;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+.sev-c{background:var(--ink);color:var(--bg);font-weight:700}
+.sev-a{background:var(--ink-3);color:var(--bg);font-weight:600}
+.sev-m{background:var(--panel-2);color:var(--ink-2);font-weight:600;border:1px solid var(--rule)}
+.sev-b{background:none;color:var(--ink-4);font-weight:500;border:1px solid var(--rule)}
+
+/* ---------- bloques ---------- */
+.callout{
+  border-left:3px solid var(--ink);background:var(--panel);
+  padding:15px 19px;margin:0 0 20px;
+}
+.callout.soft{background:none;border:1px solid var(--rule);border-left:3px solid var(--ink-4)}
+.callout p:last-child{margin-bottom:0}
+.callout .lbl{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;display:block;margin-bottom:7px;
+}
+
+.finding{margin:0 0 40px;padding-top:6px}
+.finding-h{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:5px}
+.finding-h .id{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);
+}
+.finding-h h3{margin:0;font-size:18px}
+
+/* ---------- métricas ---------- */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;
+  background:var(--rule-2);border:1px solid var(--rule-2);margin:0 0 22px}
+.metric{background:var(--bg);padding:15px 16px}
+.metric .v{
+  font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1.1;
+  font-variant-numeric:tabular-nums;display:block;
+}
+.metric .k{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:10.5px;color:var(--ink-3);line-height:1.4;margin-top:5px;display:block;
+}
+
+.chain{
+  font-family:"SF Mono",SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.9;
+  background:var(--panel);border:1px solid var(--rule-2);padding:17px 20px;margin:0 0 20px;
+  overflow-x:auto;white-space:pre;
+}
+
+hr{border:0;border-top:1px solid var(--rule);margin:40px 0}
+.note{font-size:13.5px;color:var(--ink-3);font-style:italic}
+.foot{
+  margin-top:60px;padding-top:20px;border-top:1px solid var(--rule);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:12px;color:var(--ink-4);line-height:1.7;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .wrap{flex-direction:column}
+  nav{position:static;width:auto;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:26px 24px}
+  main{padding:32px 24px 80px}
+  header.doc h1{font-size:27px}
+}
+
+/* ---------- impresión ---------- */
+@media print{
+  :root{--bg:#fff;--panel:#f6f6f4;--panel-2:#eee}
+  body{font-size:10.5pt;line-height:1.45}
+  nav{display:none}
+  .wrap{display:block;max-width:none}
+  main{padding:0;max-width:none}
+  h2{font-size:15pt;margin:22pt 0 8pt;page-break-after:avoid}
+  h3,h4{page-break-after:avoid}
+  .finding{page-break-inside:avoid}
+  table{font-size:8.5pt;page-break-inside:avoid}
+  pre,.callout,.metrics,.chain{page-break-inside:avoid}
+  .sev-c{background:#1a1a1a!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sev-a{background:#6b6b68!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  a{color:inherit;text-decoration:none}
+  @page{margin:16mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <p class="navtitle">Auditoría</p>
+  <a href="#resumen" class="lvl1">1 · Resumen ejecutivo</a>
+  <a href="#metodo" class="lvl1">2 · Método y alcance</a>
+  <a href="#maestra" class="lvl1">3 · Tabla de hallazgos</a>
+  <a href="#hallazgos" class="lvl1">4 · Hallazgos en detalle</a>
+  <a href="#h01" class="lvl2">H-01 · Vocabularios de fundo</a>
+  <a href="#h02" class="lvl2">H-02 · Sin integridad referencial</a>
+  <a href="#h03" class="lvl2">H-03 · Duplicados en E01</a>
+  <a href="#h04" class="lvl2">H-04 · Seis consultas rotas</a>
+  <a href="#h05" class="lvl2">H-05 · Explosión cartesiana</a>
+  <a href="#h06" class="lvl2">H-06 · Filas de subtotal</a>
+  <a href="#h07" class="lvl2">H-07 · H00 vs H01</a>
+  <a href="#h08" class="lvl2">H-08 · Clima duplicado</a>
+  <a href="#h09" class="lvl2">H-09 · Evaluadores</a>
+  <a href="#h10" class="lvl2">H-10 · Packing sin tipar</a>
+  <a href="#h11" class="lvl2">H-11 · Lógica redundante</a>
+  <a href="#h12" class="lvl2">H-12 · Restos de Excel</a>
+  <a href="#modelo" class="lvl1">5 · Modelo de negocio</a>
+  <a href="#reportes" class="lvl1">6 · Impacto en Power BI</a>
+  <a href="#migracion" class="lvl1">7 · Ruta de migración</a>
+  <a href="#control" class="lvl1">8 · Cifras de control</a>
+  <a href="#conclusion" class="lvl1">9 · Conclusión</a>
+</nav>
+
+<main>
+
+<header class="doc">
+  <h1>Auditoría técnica<br>BD_AQUANQA_26</h1>
+  <div class="meta">
+    <b>Fecha</b> · 2026-08-02<br>
+    <b>Origen</b> · BD_AQUANQA_26.accdb — 140.115.968 bytes<br>
+    <b>Acceso</b> · solo lectura · Microsoft.ACE.OLEDB.16.0 · DAO.DBEngine.120<br>
+    <b>Alcance</b> · 18 tablas · 40 consultas · 683.180 filas
+  </div>
+</header>
+
+<div class="callout">
+  <span class="lbl">Regla de este documento</span>
+  <p>Toda cifra publicada proviene de una consulta ejecutada sobre los datos reales.
+  Ninguna es estimación. Cuando un dato no se pudo verificar, se marca explícitamente
+  como <em>no verificado</em>.</p>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2 id="resumen">1 · Resumen ejecutivo</h2>
+
+<p><code>BD_AQUANQA_26.accdb</code> es la base operativa del cultivo de arándano de Aqu Anqa.
+Registra la cadena fenológica completa —poda, brotes, ramas, flores, estados de fruto,
+diámetro de baya, cosecha y packing— más clima y dos sistemas de forecast.</p>
+
+<p>El área de Reportes <strong>consume esta base directamente desde Power BI</strong>,
+apuntando a las consultas guardadas de Access por su nombre. Esto convierte cada defecto
+estructural en un problema de negocio: no se queda en la base, se propaga silenciosamente
+a los tableros de gerencia.</p>
+
+<div class="metrics">
+  <div class="metric"><span class="v">12</span><span class="k">hallazgos, 3 críticos</span></div>
+  <div class="metric"><span class="v">6</span><span class="k">de 40 consultas rotas</span></div>
+  <div class="metric"><span class="v">0</span><span class="k">claves foráneas en 18 tablas</span></div>
+  <div class="metric"><span class="v">×54</span><span class="k">inflado en 01_Flores_C2025</span></div>
+  <div class="metric"><span class="v">1,93 M</span><span class="k">kg en filas sin identificar</span></div>
+  <div class="metric"><span class="v">24,6 %</span><span class="k">de E01_Ramas duplicada</span></div>
+</div>
+
+<h3>Los tres problemas de fondo</h3>
+
+<p><strong>1 · No hay integridad referencial declarada.</strong> Las 18 tablas tienen
+<strong>0 claves foráneas</strong>. De las 3 claves primarias existentes, 2 son incorrectas.
+Nada impide que se cargue un lote que no existe en el maestro, y de hecho ocurre: 94.236
+filas de <code>E01_Ramas</code> (el 100%) no enlazan con <code>M_Lotes</code>.</p>
+
+<p><strong>2 · El campo «fundo» se escribe de cuatro formas incompatibles.</strong> No es un
+problema de mayúsculas ni de acentos: son cuatro vocabularios distintos que nombran las
+mismas entidades físicas. Ninguna conversión automática los reconcilia. Es la causa raíz
+del hallazgo anterior.</p>
+
+<p><strong>3 · Seis consultas están rotas.</strong> Están caídas en la base y, si un reporte
+de Power BI las consume, ese reporte está mostrando datos en caché o directamente vacíos.
+La cifra correcta es <strong>6 de 40</strong>, no 5 — la sexta
+(<code>R0902_Forecast_Sem_vs_Camp</code>) se detectó al re-ejecutar todas las consultas una
+por una en la verificación final.</p>
+
+<h3>Impacto cuantificado sobre los tableros</h3>
+
+<table>
+<thead><tr><th>Efecto</th><th class="num">Magnitud verificada</th></tr></thead>
+<tbody>
+<tr><td>Kilos de cosecha en filas sin identificar (subtotales huérfanos)</td><td class="num"><strong>1.925.995 kg</strong> · ~5,6%</td></tr>
+<tr><td>Inflado de <code>01_Flores_C2025</code> por join defectuoso</td><td class="num"><strong>×54</strong> · 9.040 → 487.368</td></tr>
+<tr><td>Filas duplicadas en <code>E01_Ramas</code> por recarga</td><td class="num"><strong>23.141</strong> · 24,6%</td></tr>
+<tr><td>Grupos de clima duplicados exactos</td><td class="num"><strong>2.079</strong></td></tr>
+<tr><td>Consultas caídas</td><td class="num"><strong>6 de 40</strong></td></tr>
+<tr><td>Tablas que se capturan pero nadie consume</td><td class="num"><strong>4 de 18</strong></td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <span class="lbl">Recomendación</span>
+  <p><strong>No replicar el modelo actual en PostgreSQL.</strong> Migrar la estructura tal
+  cual implica migrar también los defectos, y perder la única oportunidad natural de
+  corregirlos. El plan propuesto reconstruye el modelo en esquema estrella con claves
+  foráneas reales, resolviendo H-01 mediante una tabla de alias de fundo que preserva los
+  cuatro vocabularios como sinónimos de una entidad única.</p>
+  <p><strong>Compromiso con el área de Reportes:</strong> los nombres de las 40 consultas se
+  preservan como vistas en PostgreSQL. Power BI seguirá encontrando lo que busca. Los casos
+  donde el resultado <em>debe</em> cambiar —porque hoy es incorrecto— están enumerados uno
+  por uno en la guía de reportes.</p>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="metodo">2 · Método y alcance</h2>
+
+<h3>Cómo se obtuvo cada cifra</h3>
+<table>
+<thead><tr><th>Aspecto</th><th>Herramienta</th><th>Qué se extrajo</th></tr></thead>
+<tbody>
+<tr><td>Estructura de tablas</td><td><code>ACE.OLEDB.16.0</code></td><td>columnas, tipos, longitudes</td></tr>
+<tr><td>Nulos por columna</td><td>SQL <code>COUNT</code> con <code>IS NULL</code></td><td>conteo real, columna por columna</td></tr>
+<tr><td>SQL de las consultas</td><td><code>DAO</code> → <code>QueryDefs.SQL</code></td><td>texto SQL completo de las 40</td></tr>
+<tr><td>Relaciones e índices</td><td><code>DAO</code> → <code>Relations</code></td><td>0 FK de usuario, 4 índices</td></tr>
+<tr><td>Estado de cada consulta</td><td><code>QueryDef.OpenRecordset()</code></td><td>ejecución real, una por una</td></tr>
+<tr><td>Métricas de control</td><td>SQL agregado</td><td><code>COUNT</code>, <code>SUM</code>, <code>AVG</code></td></tr>
+</tbody>
+</table>
+
+<div class="callout soft">
+  <span class="lbl">Nota metodológica · por qué son 6 y no 5</span>
+  <p>Un primer barrido usó <code>QueryDef.Fields.Count</code> para detectar consultas
+  inválidas. <strong>Ese método es insuficiente</strong>: no lanza excepción, devuelve
+  <code>0</code> en silencio. Detectó 3 de las 6.</p>
+  <p>El método correcto —y el que sustenta este documento— es <strong>ejecutar cada
+  consulta</strong> con <code>OpenRecordset()</code> y capturar la excepción. Solo así
+  aparecieron las 6. Se documenta porque afecta la reproducibilidad: quien repita la
+  auditoría con el primer método obtendrá un número distinto.</p>
+</div>
+
+<h3>Restricciones respetadas</h3>
+<ul>
+<li>La base <strong>no fue modificada</strong>. Todo acceso fue de solo lectura.</li>
+<li>Existe <code>BD_AQUANQA_26.laccdb</code> (archivo de bloqueo de Access). No se tocó.</li>
+<li>Las consultas con <code>ñ</code> o acentos requieren construir el string con
+<code>[char]0xF1</code> en PowerShell — el heredoc de bash corrompe la codificación y
+produce falsos «objeto no encontrado».</li>
+</ul>
+
+<h3>Evidencia reproducible</h3>
+<table>
+<thead><tr><th>Archivo</th><th>Contenido</th></tr></thead>
+<tbody>
+<tr><td><code>01_sql_consultas.txt</code></td><td>SQL completo de las 40 consultas + relaciones + índices</td></tr>
+<tr><td><code>02_esquema_tablas.txt</code></td><td>18 tablas: columnas, tipos OLEDB, longitudes, nulos</td></tr>
+<tr><td><code>03_relaciones_indices.txt</code></td><td>PK/FK/índices declarados y su evaluación</td></tr>
+<tr><td><code>04_metricas_validacion.txt</code></td><td>cifras de control congeladas — contrato de aceptación</td></tr>
+<tr><td><code>05_linaje_dependencias.txt</code></td><td>grafo consulta→tabla, impacto inverso, cierre transitivo</td></tr>
+</tbody>
+</table>
+
+<!-- ============ 3 ============ -->
+<h2 id="maestra">3 · Tabla maestra de hallazgos</h2>
+
+<table>
+<thead><tr><th>ID</th><th>Hallazgo</th><th>Evidencia verificada</th><th>Sev.</th></tr></thead>
+<tbody>
+<tr><td><a href="#h01"><strong>H-01</strong></a></td><td>Cuatro vocabularios de fundo incompatibles</td><td>94.236 NULL · 100% de <code>0101_Diametros</code></td><td><span class="sev sev-c">Crítica</span></td></tr>
+<tr><td><a href="#h02"><strong>H-02</strong></a></td><td>Cero FK declaradas; 2 de 3 PK erróneas</td><td>0 FK en 18 tablas; 4 índices</td><td><span class="sev sev-c">Crítica</span></td></tr>
+<tr><td><a href="#h03"><strong>H-03</strong></a></td><td><code>E01_Ramas</code> duplicada por recarga</td><td>23.141 filas de exceso · 24,6%</td><td><span class="sev sev-c">Crítica</span></td></tr>
+<tr><td><a href="#h04"><strong>H-04</strong></a></td><td>Seis consultas rotas</td><td>6 / 40</td><td><span class="sev sev-a">Alta</span></td></tr>
+<tr><td><a href="#h05"><strong>H-05</strong></a></td><td>Explosión cartesiana en <code>01_Flores_C2025</code></td><td>×54 · 9.040 → 487.368</td><td><span class="sev sev-a">Alta</span></td></tr>
+<tr><td><a href="#h06"><strong>H-06</strong></a></td><td>Filas de subtotal huérfanas</td><td>1.925.995 kg · ~5,6%</td><td><span class="sev sev-a">Alta</span></td></tr>
+<tr><td><a href="#h07"><strong>H-07</strong></a></td><td><code>H00</code>/<code>H01</code> sin reconciliar</td><td>187 filas de diferencia</td><td><span class="sev sev-a">Alta</span></td></tr>
+<tr><td><a href="#h08"><strong>H-08</strong></a></td><td><code>H05_Clima</code> con recargas exactas</td><td>2.079 grupos duplicados</td><td><span class="sev sev-a">Alta</span></td></tr>
+<tr><td><a href="#h09"><strong>H-09</strong></a></td><td><code>M_Evaluadores</code> nunca enlaza</td><td>0 consultas lo consumen</td><td><span class="sev sev-m">Media</span></td></tr>
+<tr><td><a href="#h10"><strong>H-10</strong></a></td><td><code>H02_BDElifab</code> sin tipar</td><td>34 de 35 columnas en texto</td><td><span class="sev sev-m">Media</span></td></tr>
+<tr><td><a href="#h11"><strong>H-11</strong></a></td><td>Lógica redundante entre consultas</td><td>6 patrones duplicados</td><td><span class="sev sev-m">Media</span></td></tr>
+<tr><td><a href="#h12"><strong>H-12</strong></a></td><td>Restos de importación de Excel</td><td>4 tablas sin consumidor</td><td><span class="sev sev-b">Baja</span></td></tr>
+</tbody>
+</table>
+
+<p class="note">Criterio de severidad — <strong>Crítica</strong>: corrompe cifras que ya se
+publican en tableros de gerencia, de forma silenciosa. <strong>Alta</strong>: produce
+resultados incorrectos o inaccesibles en un ámbito acotado. <strong>Media</strong>: impide
+análisis o duplica esfuerzo, sin corromper cifras publicadas. <strong>Baja</strong>: deuda
+técnica sin impacto en resultados.</p>
+
+<!-- ============ 4 ============ -->
+<h2 id="hallazgos">4 · Hallazgos en detalle</h2>
+
+<!-- H-01 -->
+<div class="finding" id="h01">
+<div class="finding-h"><span class="id">H-01</span><h3>Cuatro vocabularios de fundo incompatibles</h3><span class="sev sev-c">Crítica</span></div>
+
+<p>El campo que identifica el fundo se escribe de cuatro formas distintas según la tabla. No
+es una diferencia de mayúsculas, acentos ni espacios: son <strong>cuatro nomenclaturas que
+nombran las mismas entidades con palabras diferentes</strong>. Ningún <code>TRIM</code>,
+<code>UPPER</code> ni normalización de acentos las reconcilia.</p>
+
+<h4>Los cuatro vocabularios, verificados uno por uno</h4>
+
+<table>
+<thead><tr><th>Voc.</th><th>Columna de origen</th><th>Valores</th><th class="num">Filas</th></tr></thead>
+<tbody>
+<tr><td rowspan="4"><strong>A</strong></td><td rowspan="4"><code>M_Lotes.Fundo</code><br><span class="note">comercial</span></td><td>Aqu Anqa II - Ampliacion</td><td class="num">404</td></tr>
+<tr><td>Aqu Anqa II - Vivadis</td><td class="num">190</td></tr>
+<tr><td>Aqu Anqa II - Sta.Teresa</td><td class="num">181</td></tr>
+<tr><td>Aqu Anqa - ArenaAzul</td><td class="num">85</td></tr>
+<tr><td rowspan="2"><strong>B</strong></td><td rowspan="2"><code>M_Lotes.FundoPPto</code><br><span class="note">presupuestal</span></td><td>Aqu Anqa II</td><td class="num">775</td></tr>
+<tr><td>Aqu Anqa</td><td class="num">85</td></tr>
+<tr><td rowspan="5"><strong>C</strong></td><td rowspan="5"><code>M_Lotes.Fundo_pptom5</code><br><span class="note">quechua con prefijo</span></td><td>Aqu Anqa II - Kawsay Allpa</td><td class="num">251</td></tr>
+<tr><td>Aqu Anqa II - Ayllu Allpa</td><td class="num">213</td></tr>
+<tr><td>Aqu Anqa II - Quri Allpa</td><td class="num">190</td></tr>
+<tr><td>Aqu Anqa II - Kawsay Allpa ii</td><td class="num">121</td></tr>
+<tr><td>Aqu Anqa - Arena Azul</td><td class="num">85</td></tr>
+<tr><td rowspan="4"><strong>D</strong></td><td rowspan="4"><code>E01_Ramas.Fundo</code><br><span class="note">quechua sin prefijo</span></td><td>Kawsay Allpa</td><td class="num">40.523</td></tr>
+<tr><td>Ayllu Allpa</td><td class="num">21.549</td></tr>
+<tr><td>Quri Allpa</td><td class="num">20.643</td></tr>
+<tr><td>Arena Azul</td><td class="num">11.521</td></tr>
+</tbody>
+</table>
+
+<h4>Qué vocabulario usa cada tabla</h4>
+<table>
+<thead><tr><th>Tabla</th><th>Vocabulario</th><th>Ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>E01_Ramas</code></td><td><strong>D</strong></td><td>Kawsay Allpa</td></tr>
+<tr><td><code>E04_Brotes</code></td><td><strong>D</strong></td><td>Quri Allpa</td></tr>
+<tr><td><code>E02_ConteoFlores</code></td><td><strong>B</strong></td><td>Aqu Anqa II</td></tr>
+<tr><td><code>H00_VolumenCampo</code></td><td><strong>B</strong></td><td>Aqu Anqa II</td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td><strong>B</strong></td><td>Aqu Anqa II</td></tr>
+<tr><td><code>M_Poda</code></td><td><strong>B</strong></td><td>Aqu Anqa II</td></tr>
+<tr><td><code>M_Lotes</code></td><td><strong>A, B y C</strong></td><td>tres columnas distintas</td></tr>
+</tbody>
+</table>
+
+<h4>La consecuencia medida</h4>
+<p>La consulta <code>0101_Diametros</code> une <code>E01_Ramas</code> (vocabulario D) contra
+<code>M_Lotes.FundoPPto</code> (vocabulario B):</p>
+
+<pre><code>FROM M_Lotes RIGHT JOIN E01_Ramas
+  ON (M_Lotes.Modulo = E01_Ramas.Modulo)
+ AND (M_Lotes.Lote   = E01_Ramas.Lote)
+ AND (M_Lotes.FundoPPto = E01_Ramas.Fundo)   -- 'Aqu Anqa II' vs 'Kawsay Allpa'</code></pre>
+
+<p><code>'Aqu Anqa II' = 'Kawsay Allpa'</code> es <strong>siempre falso</strong>. El
+<code>RIGHT JOIN</code> conserva las 94.236 filas, pero <strong>todas las columnas de
+<code>M_Lotes</code> quedan NULL</strong>: <code>Turno</code>, <code>KeyMap</code>,
+<code>NPlantas</code>, <code>Area</code>.</p>
+
+<p>Verificado: <strong>94.236 de 94.236 filas</strong> de <code>0101_Diametros</code> tienen
+<code>Turno = NULL</code>. El 100%.</p>
+
+<h4>Huérfanos verificados</h4>
+<table>
+<thead><tr><th>Tabla</th><th class="num">Filas sin enlace a M_Lotes</th><th class="num">%</th></tr></thead>
+<tbody>
+<tr><td><code>E01_Ramas</code></td><td class="num">94.236</td><td class="num">100%</td></tr>
+<tr><td><code>E04_Brotes</code></td><td class="num">3.385</td><td class="num">100%</td></tr>
+<tr><td><code>H00_VolumenCampo</code></td><td class="num">366</td><td class="num">1,2%</td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td class="num">180</td><td class="num">0,6%</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<span class="lbl">Impacto en Power BI</span>
+<p>Cualquier tablero que segmente por turno usando esta consulta —o alguna de las 4 que
+descienden de ella— muestra una única categoría vacía. El dato de ramas y diámetro
+<strong>no es analizable por turno hoy</strong>, aunque el tablero aparente funcionar.</p>
+<p><code>0108_diam</code> devuelve <strong>0 filas</strong>, coherente con esto: usa
+<code>INNER JOIN</code> sobre el mismo par incompatible.</p>
+</div>
+
+<p><strong>Acción correctiva.</strong> Crear <code>dim_fundo</code> con clave sustituta y
+<code>dim_fundo_alias</code> que registre los cuatro vocabularios como sinónimos de la misma
+entidad física. El ETL resuelve cualquier grafía contra esa tabla antes de cargar.</p>
+</div>
+
+<hr>
+
+<!-- H-02 -->
+<div class="finding" id="h02">
+<div class="finding-h"><span class="id">H-02</span><h3>Cero claves foráneas; 2 de 3 claves primarias erróneas</h3><span class="sev sev-c">Crítica</span></div>
+
+<p>No existe <strong>ninguna</strong> relación declarada entre las 18 tablas de datos. Las
+únicas 2 presentes son internas de Access (<code>MSysNavPane*</code>). Solo 4 índices en
+total.</p>
+
+<pre><code>TOTAL RELACIONES DE USUARIO: 0</code></pre>
+
+<table>
+<thead><tr><th>Tabla</th><th>Índice</th><th>Único</th><th>PK</th><th>Campos</th></tr></thead>
+<tbody>
+<tr><td><code>E01_Ramas</code></td><td>Id</td><td>No</td><td>No</td><td><code>[Id]</code></td></tr>
+<tr><td><code>E03_ConteoEstados</code></td><td>PrimaryKey</td><td>Sí</td><td>Sí</td><td><code>[Modulo, Lote, Cortina, Hilera, Planta, E1, Fecha]</code></td></tr>
+<tr><td><code>E04_Brotes</code></td><td>PrimaryKey</td><td>Sí</td><td>Sí</td><td><code>[Piso, Fundo, Modulo, Lote, Cortina, Hilera, Planta]</code></td></tr>
+<tr><td><code>M_Time</code></td><td>PrimaryKey</td><td>Sí</td><td>Sí</td><td><code>[Fecha]</code></td></tr>
+<tr><td colspan="5"><em>las otras 14 tablas — sin índices</em></td></tr>
+</tbody>
+</table>
+
+<h4>Evaluación de cada clave primaria</h4>
+
+<p><strong><code>M_Time.PrimaryKey [Fecha]</code> → CORRECTA.</strong> Una fila por fecha.
+Es la única bien definida de la base.</p>
+
+<p><strong><code>E03_ConteoEstados.PrimaryKey [... E1 ...]</code> → ERRÓNEA.</strong> La
+clave incluye <code>E1</code>, que es una <em>medida</em>, no un identificador. Si un
+evaluador corrige el conteo de E1 de una planta, la fila corregida <strong>no
+reemplaza</strong> a la original —cambia la clave— y ambas coexisten. La corrección duplica
+el registro en lugar de sustituirlo.</p>
+
+<p><strong><code>E04_Brotes.PrimaryKey [sin Fecha]</code> → ERRÓNEA.</strong> La clave no
+incluye <code>Fecha</code>, así que el mismo punto físico <strong>solo puede evaluarse una
+vez en toda la historia</strong>. Esto explica por qué <code>E04_Brotes</code> tiene apenas
+3.385 filas frente a las 94.236 de <code>E01_Ramas</code>: <strong>la clave está limitando la
+captura de datos</strong>, no protegiéndola.</p>
+
+<p><strong><code>E01_Ramas.Id</code> → INSUFICIENTE.</strong> No es único: hay
+<strong>15.043 valores distintos para 94.236 filas</strong>. No identifica nada. Es la causa
+mecánica de H-03.</p>
+
+<div class="callout">
+<span class="lbl">Impacto en Power BI</span>
+<p>Power BI infiere relaciones por nombre de columna al importar. Sin FK declaradas, esa
+inferencia es una conjetura: puede crear relaciones incorrectas o ninguna. El modelo
+semántico depende de que cada analista lo reconstruya a mano, sin garantía de que dos
+analistas lo hagan igual.</p>
+</div>
+</div>
+
+<hr>
+
+<!-- H-03 -->
+<div class="finding" id="h03">
+<div class="finding-h"><span class="id">H-03</span><h3>E01_Ramas duplicada por recarga</h3><span class="sev sev-c">Crítica</span></div>
+
+<p>La tabla contiene 94.236 filas, pero solo 71.095 son evaluaciones distintas. Hay
+<strong>23.141 filas de exceso — el 24,6%</strong>. El patrón es el de una importación
+ejecutada más de una vez sobre datos ya cargados.</p>
+
+<div class="metrics">
+  <div class="metric"><span class="v">94.236</span><span class="k">filas totales</span></div>
+  <div class="metric"><span class="v">71.095</span><span class="k">filas únicas</span></div>
+  <div class="metric"><span class="v">23.141</span><span class="k">filas de exceso · 24,6%</span></div>
+  <div class="metric"><span class="v">5.383</span><span class="k">grupos con duplicados</span></div>
+</div>
+
+<div class="callout soft">
+<span class="lbl">Cómo se distingue una recarga de una re-evaluación legítima</span>
+<p>Un mismo punto físico <em>puede</em> evaluarse dos veces en fechas distintas — eso es
+normal y no es duplicado. Lo que aquí se cuenta como exceso son filas con <strong>la misma
+fecha y el mismo punto físico</strong>. No hay lectura agronómica que justifique medir la
+planta 7 de la hilera 3 dos veces el mismo día con idéntico resultado.</p>
+</div>
+
+<h4>Impacto medido sobre los indicadores</h4>
+<table>
+<thead><tr><th>Indicador</th><th class="num">Con duplicados</th><th class="num">Solo únicas</th><th class="num">Sesgo</th></tr></thead>
+<tbody>
+<tr><td><code>AVG(Diametro)</code></td><td class="num">10,9776538610781</td><td class="num">10,8870645965645</td><td class="num"><strong>+0,83%</strong></td></tr>
+<tr><td><code>SUM([# Ramas])</code></td><td class="num">730.318</td><td class="num"><em>inflado</em></td><td class="num">~+24%</td></tr>
+</tbody>
+</table>
+
+<p>El sesgo del promedio es pequeño en porcentaje pero <strong>sistemático</strong>: no se
+cancela con más datos. Toda medida <code>SUM</code> sobre <code>E01_Ramas</code> está
+inflada ~24% — un tablero de «ramas totales por módulo» muestra un cuarto más de ramas de
+las que se contaron en campo.</p>
+</div>
+
+<hr>
+
+<!-- H-04 -->
+<div class="finding" id="h04">
+<div class="finding-h"><span class="id">H-04</span><h3>Seis consultas rotas</h3><span class="sev sev-a">Alta</span></div>
+
+<p>De las 40 consultas guardadas, <strong>6 no se ejecutan</strong>. Lanzan error al abrirse.
+Cualquier reporte de Power BI que las consuma está mostrando caché o nada.</p>
+
+<div class="callout soft">
+<span class="lbl">Las dos causas</span>
+<p><strong>Tipo A — objeto inexistente</strong> (3 casos). Referencian una tabla o consulta
+que no existe. Error: <em>«no puede encontrar la tabla o consulta de entrada X»</em>.</p>
+<p><strong>Tipo B — columna inexistente</strong> (3 casos). El objeto existe, pero se pide una
+columna que no tiene. Access interpreta el nombre desconocido como parámetro. Error:
+<em>«Pocos parámetros. Se esperaba N»</em>. <strong>Este error es engañoso</strong>: parece
+que falta un parámetro, cuando falta una columna.</p>
+</div>
+
+<table>
+<thead><tr><th>Consulta</th><th>Tipo</th><th>Rota por</th><th>Objeto real verificado</th><th>¿Decisión?</th></tr></thead>
+<tbody>
+<tr><td><code>0402_ConteoBrotes</code></td><td>A</td><td><code>E04_ConteoBrotes</code></td><td><code>E04_Brotes</code> · 3.385 filas</td><td>No</td></tr>
+<tr><td><code>R0101_KgCosecha</code></td><td>A</td><td><code>R01_VolumenCampo</code></td><td><code>H00_VolumenCampo</code> · 30.812 filas</td><td>No</td></tr>
+<tr><td><code>R0802_ResumenAño</code></td><td>A</td><td><code>R0901_ResCampaña</code></td><td><code>R0801_ResCampaña</code> · 29 filas</td><td>No</td></tr>
+<tr><td><code>E</code></td><td>B</td><td><code>Actividad</code> en E02/E03</td><td>solo existe en <code>E01_Ramas</code></td><td>No · borrador</td></tr>
+<tr><td><code>R0801_Forecast_Campaña_SemMes</code></td><td>B</td><td><code>M_Time.CampProAra</code>, <code>.Trimestre</code></td><td>ninguna existe</td><td><strong>Sí</strong></td></tr>
+<tr><td><code>R0902_Forecast_Sem_vs_Camp</code></td><td>B</td><td><code>R08...KG</code></td><td>hay <code>[KG Exp]</code>, <code>[Kg Des]</code>, <code>[Kg Con]</code></td><td><strong>Sí</strong></td></tr>
+</tbody>
+</table>
+
+<h4>Verificación de cada reemplazo</h4>
+<ul>
+<li><code>SELECT Count(*) FROM E04_ConteoBrotes</code> → falla · <code>FROM E04_Brotes</code> → <strong>3.385</strong></li>
+<li><code>FROM R01_VolumenCampo</code> → falla · <code>FROM H00_VolumenCampo</code> → <strong>30.812</strong></li>
+<li><code>FROM R0901_ResCampaña</code> → falla · <code>FROM R0801_ResCampaña</code> → <strong>29</strong>. Además expone exactamente las 8 columnas que el <code>UNION ALL</code> pide</li>
+<li><code>Count(Actividad)</code> en <code>E02</code> y <code>E03</code> → falla · en <code>E01_Ramas</code> → <strong>94.236</strong></li>
+<li><code>Count(CampProAra)</code> y <code>Count(Trimestre)</code> en <code>M_Time</code> → ambas fallan. La tabla tiene 7 columnas: <code>Fecha, Sem, Mes, Año, SEvConteo, AQII, MesSem</code></li>
+<li><code>Count([KG])</code> en <code>R08</code> → falla · <code>Count([KG Exp])</code> → <strong>101.715</strong></li>
+</ul>
+
+<h4>La sexta requiere decisión de negocio</h4>
+<p><code>R0902_Forecast_Sem_vs_Camp</code> pide un <code>KG</code> genérico que nunca
+existió. Hay tres lecturas posibles con resultados distintos:</p>
+
+<table>
+<thead><tr><th>Interpretación</th><th>Expresión</th><th class="num">SUM resultante</th></tr></thead>
+<tbody>
+<tr><td>Solo exportable</td><td><code>[KG Exp]</code></td><td class="num">648.044.713,14</td></tr>
+<tr><td>Exportable + consumo</td><td><code>[KG Exp] + [Kg Con]</code></td><td class="num">657.404.158,58</td></tr>
+<tr><td>Total cosechado</td><td>los tres</td><td class="num">689.684.707,86</td></tr>
+</tbody>
+</table>
+
+<p><code>SUM(R09.Kg)</code> = 51.083.049,92 — dos órdenes de magnitud por debajo de
+cualquiera de las tres. Esa diferencia de escala indica que las tablas <strong>no están en el
+mismo alcance</strong>: probablemente <code>R08</code> acumula todas las versiones de
+proyección y <code>R09</code> solo la vigente. <strong>Requiere confirmación de
+Planeamiento.</strong></p>
+</div>
+
+<hr>
+
+<!-- H-05 -->
+<div class="finding" id="h05">
+<div class="finding-h"><span class="id">H-05</span><h3>Explosión cartesiana en 01_Flores_C2025</h3><span class="sev sev-a">Alta</span></div>
+
+<p>La consulta devuelve <strong>487.368 filas</strong> a partir de un origen de
+<strong>9.040</strong>. Un factor de <strong>×54</strong>. No es un error de sintaxis: se
+ejecuta correctamente, pero cada fila de origen aparece multiplicada.</p>
+
+<pre><code>INNER JOIN M_Time ON [0104_PromFlores].Sem = M_Time.SEvConteo;</code></pre>
+
+<p>Se une <strong>el número de semana contra la columna <code>SEvConteo</code> de
+<code>M_Time</code></strong>. Pero <code>M_Time</code> tiene grano de <strong>día</strong>,
+no de semana: 2.189 filas, una por fecha, del 2022-03-01 al 2027-12-31.</p>
+
+<p>Cada valor de <code>SEvConteo</code> se repite en todos los días de esa semana. Al unir por
+semana contra una tabla de días, <strong>cada fila se empareja con todos los días de la
+semana</strong>.</p>
+
+<table>
+<thead><tr><th>Métrica de <code>M_Time</code></th><th class="num">Valor</th></tr></thead>
+<tbody>
+<tr><td>Filas totales</td><td class="num">2.189</td></tr>
+<tr><td>Rango de fechas</td><td class="num">2022-03-01 → 2027-12-31</td></tr>
+<tr><td><code>SEvConteo</code> poblados</td><td class="num">1.224 · 965 nulos</td></tr>
+<tr><td>Rango de <code>SEvConteo</code></td><td class="num">1 a 53</td></tr>
+<tr><td><strong>Días donde <code>Sem ≠ SEvConteo</code></strong></td><td class="num"><strong>527</strong></td></tr>
+</tbody>
+</table>
+
+<div class="callout soft">
+<span class="lbl">Por qué SEvConteo no es igual a Sem</span>
+<p>Son dos conceptos distintos. <code>Sem</code> es la semana calendario ISO;
+<code>SEvConteo</code> es la <strong>semana de evaluación de conteo</strong>, desplazada
+porque el corte de la evaluación agronómica no cae en domingo. Difieren en
+<strong>527 días</strong>.</p>
+</div>
+
+<div class="callout">
+<span class="lbl">Por qué es el defecto más peligroso de la base</span>
+<p>Cualquier medida <code>SUM</code> está inflada ~54 veces. Pero <strong>los promedios
+siguen siendo correctos</strong> —el promedio de un valor repetido es el mismo valor— así que
+el tablero no se ve obviamente roto. Solo los totales son absurdos: mostraría casi medio
+millón de evaluaciones donde hubo nueve mil.</p>
+</div>
+</div>
+
+<hr>
+
+<!-- H-06 -->
+<div class="finding" id="h06">
+<div class="finding-h"><span class="id">H-06</span><h3>Filas de subtotal huérfanas mezcladas con los datos</h3><span class="sev sev-a">Alta</span></div>
+
+<p>Las tablas de cosecha contienen filas donde <strong>todos los campos identificadores están
+vacíos pero <code>KG</code> tiene un valor grande</strong>. Son totales de Excel copiados
+junto con los datos. El motor las trata como registros normales de cosecha.</p>
+
+<h4>Las 3 filas, extraídas una por una</h4>
+<table>
+<thead><tr><th>Tabla</th><th>Campaña</th><th>Fecha</th><th>Fundo</th><th>Módulo</th><th>Lote</th><th class="num">KG</th></tr></thead>
+<tbody>
+<tr><td><code>H00_VolumenCampo</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="num"><strong>930.662,1</strong></td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="num"><strong>786.655,8</strong></td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="num"><strong>208.677,4</strong></td></tr>
+</tbody>
+</table>
+
+<table>
+<thead><tr><th>Métrica</th><th class="num">Valor</th></tr></thead>
+<tbody>
+<tr><td><code>H00 SUM(KG)</code> crudo</td><td class="num">33.381.134,66</td></tr>
+<tr><td><code>H00 SUM(KG)</code> sin fila basura</td><td class="num">32.450.472,60</td></tr>
+<tr><td><code>H01 SUM(KG)</code> crudo</td><td class="num">33.441.319,22</td></tr>
+<tr><td><code>H01 SUM(KG)</code> sin filas basura</td><td class="num">32.445.986,02</td></tr>
+<tr><td><strong>KG total en filas basura</strong></td><td class="num"><strong>1.925.995</strong> · ~5,6%</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<span class="lbl">Por qué el defecto es difícil de ver</span>
+<p>Estas filas <strong>solo aparecen en el total general</strong>. En cuanto un tablero
+segmenta por fundo, módulo, campaña o fecha, caen fuera de todas las categorías —sus campos
+son nulos— y desaparecen del gráfico.</p>
+<p>El resultado: <strong>el total general no coincide con la suma de las partes</strong>, y la
+diferencia no tiene categoría a la que atribuirse. Es exactamente el tipo de discrepancia
+que genera desconfianza sin que nadie pueda explicarla.</p>
+</div>
+
+<h4>Confirmación de que son subtotales y no datos reales</h4>
+<ol>
+<li>Todos los identificadores son nulos simultáneamente — no ocurre en ninguna otra fila.</li>
+<li>Los valores son de magnitud agregada (930 mil, 786 mil, 208 mil kg), órdenes por encima de cualquier registro individual.</li>
+<li><code>930.662,1</code> en H00 es cercano —no idéntico— a <code>786.655,8 + 208.677,4 = 995.333,2</code> en H01: coherente con dos subtotales de cortes distintos del mismo Excel.</li>
+</ol>
+</div>
+
+<hr>
+
+<!-- H-07 -->
+<div class="finding" id="h07">
+<div class="finding-h"><span class="id">H-07</span><h3>H00_VolumenCampo y H01_ProdHistorica sin reconciliar</h3><span class="sev sev-a">Alta</span></div>
+
+<p>Ambas tablas registran la misma cosecha. Deberían coincidir, y en tres de las cinco
+campañas coinciden exactamente — pero en dos hay diferencia.</p>
+
+<div class="callout soft">
+<span class="lbl">Corrección respecto a un análisis preliminar</span>
+<p>Un primer barrido reportó este hallazgo como un desfase de <strong>importes</strong>. Al
+verificar campaña por campaña, <strong>el desfase es de filas, no de kilos</strong>. Se
+corrige aquí porque la lectura cambia: no es que los kilos estén mal, es que
+<code>H01</code> tiene menos registros que <code>H00</code> en dos campañas.</p>
+</div>
+
+<table>
+<thead><tr><th>Campaña</th><th class="num">Filas H00</th><th class="num">Filas H01</th><th class="num">Δ filas</th><th class="num">SUM(KG) H00</th><th class="num">SUM(KG) H01</th><th class="num">Δ kg</th></tr></thead>
+<tbody>
+<tr><td>C2022</td><td class="num">1.691</td><td class="num">1.691</td><td class="num">0</td><td class="num">1.631.073,49</td><td class="num">1.631.073,49</td><td class="num">~0</td></tr>
+<tr><td>C2023</td><td class="num">2.389</td><td class="num">2.261</td><td class="num"><strong>−128</strong></td><td class="num">2.322.936,08</td><td class="num">2.319.623,82</td><td class="num"><strong>−3.312,27</strong></td></tr>
+<tr><td>C2024</td><td class="num">10.590</td><td class="num">10.531</td><td class="num"><strong>−59</strong></td><td class="num">10.615.334,83</td><td class="num">10.614.160,51</td><td class="num"><strong>−1.174,32</strong></td></tr>
+<tr><td>C2025</td><td class="num">13.356</td><td class="num">13.356</td><td class="num">0</td><td class="num">15.654.825,86</td><td class="num">15.654.825,86</td><td class="num">0</td></tr>
+<tr><td>C2026</td><td class="num">2.785</td><td class="num">2.785</td><td class="num">0</td><td class="num">2.226.302,34</td><td class="num">2.226.302,34</td><td class="num">0</td></tr>
+<tr><td><strong>Total</strong></td><td class="num"><strong>30.811</strong></td><td class="num"><strong>30.624</strong></td><td class="num"><strong>−187</strong></td><td class="num"></td><td class="num"></td><td class="num"><strong>−4.486,59</strong></td></tr>
+</tbody>
+</table>
+
+<h4>Interpretación argumentada</h4>
+<p>Las 187 filas ausentes representan solo 4.486,59 kg — un promedio de <strong>24 kg por
+fila</strong>, muy por debajo del promedio general (~1.060 kg/fila). Las filas faltantes son
+<strong>registros de volumen muy pequeño</strong>, no cosechas completas omitidas.</p>
+
+<p>La lectura más consistente es que <code>H01_ProdHistorica</code> aplica algún criterio de
+consolidación —un umbral mínimo, o un agrupamiento de registros menores— que <code>H00</code>
+no aplica. <strong>No está documentado en ninguna parte de la base</strong>, y no puede
+deducirse del SQL porque ambas son tablas, no consultas: la diferencia se introduce en el
+proceso de carga, externo a Access.</p>
+
+<p class="note">Se marca como <strong>no resuelto</strong>. Es una pregunta abierta para el
+área agronómica, no un defecto con corrección obvia.</p>
+</div>
+
+<hr>
+
+<!-- H-08 -->
+<div class="finding" id="h08">
+<div class="finding-h"><span class="id">H-08</span><h3>H05_Clima con recargas exactas</h3><span class="sev sev-a">Alta</span></div>
+
+<p>La tabla contiene <strong>2.079 grupos de filas duplicadas exactas</strong>: el mismo
+timestamp registrado más de una vez con los mismos valores. Patrón idéntico al de H-03.</p>
+
+<div class="metrics">
+  <div class="metric"><span class="v">155.588</span><span class="k">filas totales</span></div>
+  <div class="metric"><span class="v">153.413</span><span class="k">timestamps distintos</span></div>
+  <div class="metric"><span class="v">2.079</span><span class="k">grupos duplicados</span></div>
+  <div class="metric"><span class="v">2.175</span><span class="k">filas de exceso</span></div>
+</div>
+
+<div class="callout soft">
+<span class="lbl">Por qué es un defecto y no una lectura legítima</span>
+<p><code>H05_Clima</code> viene de una estación meteorológica automática. <strong>Un timestamp
+identifica unívocamente una medición</strong>: no puede haber dos temperaturas —ni dos
+idénticas— para el mismo instante en la misma estación. La tabla no tiene columna que
+identifique la estación, así que tampoco cabe la interpretación de «dos sensores».</p>
+</div>
+
+<table>
+<thead><tr><th>Métrica</th><th class="num">Valor crudo</th></tr></thead>
+<tbody>
+<tr><td><code>AVG(Temp)</code></td><td class="num">21,8968635057212</td></tr>
+<tr><td><code>SUM(Lluvia)</code></td><td class="num">160,600001469254</td></tr>
+</tbody>
+</table>
+
+<p><strong><code>SUM(Lluvia)</code> es el caso más grave</strong> — la lluvia acumulada de los
+2.079 momentos duplicados se cuenta dos veces, sobrestimando la precipitación total.</p>
+
+<p>En un cultivo de arándano la precipitación acumulada alimenta decisiones de riego y de
+manejo de enfermedad fúngica. Un acumulado sobrestimado es un dato que puede inducir a regar
+de menos.</p>
+
+<p class="note"><code>H0501_VariablesClima</code> expone las 155.588 filas sin deduplicar —
+es un pase directo. Todo tablero de clima hereda el defecto.</p>
+</div>
+
+<hr>
+
+<!-- H-09 -->
+<div class="finding" id="h09">
+<div class="finding-h"><span class="id">H-09</span><h3>M_Evaluadores nunca enlaza</h3><span class="sev sev-m">Media</span></div>
+
+<p>Existe un maestro de evaluadores con 31 registros, pero <strong>ninguna consulta lo
+usa</strong>. Las tablas de evaluación guardan el <strong>DNI</strong>, mientras que el
+maestro se pensó para enlazar por un código corto (<code>Cod</code>).</p>
+
+<table>
+<thead><tr><th>Maestro · DNI</th><th>Maestro · Cod</th><th>Nombres</th></tr></thead>
+<tbody>
+<tr><td>74557665</td><td><code>JCAS</code></td><td>JESUS ALBERTO</td></tr>
+<tr><td>61070556</td><td><code>JCVL</code></td><td>JUAN CARLOS</td></tr>
+<tr><td>44770948</td><td><em>(vacío)</em></td><td>KELLY MARIBEL</td></tr>
+<tr><td>75023850</td><td><code>KPER</code></td><td>KETY MAYELY</td></tr>
+<tr><td>41891837</td><td><code>LMAN</code></td><td>LEYDI KETTY</td></tr>
+</tbody>
+</table>
+
+<table>
+<thead><tr><th>Lo que guarda <code>E01_Ramas.Evaluador</code></th><th class="num">Filas</th></tr></thead>
+<tbody>
+<tr><td>10616663</td><td class="num">7.021</td></tr>
+<tr><td>41078480</td><td class="num">2.931</td></tr>
+<tr><td>41772809</td><td class="num">5.345</td></tr>
+<tr><td>41891837</td><td class="num">4.721</td></tr>
+<tr><td>44652711</td><td class="num">7.708</td></tr>
+</tbody>
+</table>
+
+<p>Las tablas guardan <strong>DNI numérico</strong>, no el código de 4 letras. El enlace
+<em>es posible</em> por <code>DNI</code>, pero: <strong>ninguna de las 40 consultas lo
+intenta</strong> (verificado en el linaje: 0 consultas dependientes), la columna
+<code>Cod</code> no aparece en ninguna tabla de evaluación, y uniendo por DNI hay
+<strong>2 evaluadores sin registro en el maestro</strong>.</p>
+
+<p><strong>Consecuencia.</strong> No se puede analizar el desempeño por evaluador: ni cuántas
+plantas evalúa cada uno, ni la dispersión de sus mediciones. En evaluación fenológica la
+variabilidad entre evaluadores es una fuente de error conocida, y sin poder medirla no se
+puede corregir.</p>
+</div>
+
+<hr>
+
+<!-- H-10 -->
+<div class="finding" id="h10">
+<div class="finding-h"><span class="id">H-10</span><h3>H02_BDElifab sin tipar</h3><span class="sev sev-m">Media</span></div>
+
+<p>La tabla de packing tiene 35 columnas y <strong>34 están declaradas como texto</strong>
+(<code>WChar</code>, longitud 255), incluyendo columnas inequívocamente numéricas o de fecha.
+Es una importación directa de Excel sin ninguna definición de tipo.</p>
+
+<table>
+<thead><tr><th>Columna</th><th>Tipo declarado</th><th>Tipo que debería tener</th></tr></thead>
+<tbody>
+<tr><td><code>Semana</code></td><td>WChar(255)</td><td>entero</td></tr>
+<tr><td><code>Calibre</code></td><td>WChar(255)</td><td>categoría ordenada</td></tr>
+<tr><td><code>Calibres</code></td><td>WChar(255)</td><td>decimal</td></tr>
+<tr><td><code>Mes</code></td><td>WChar(255)</td><td>entero o fecha</td></tr>
+<tr><td><code>Contenedores esperados</code></td><td>WChar(255)</td><td>entero</td></tr>
+<tr><td><code>Contenedores volcados</code></td><td>WChar(255)</td><td>entero</td></tr>
+<tr><td><code>Acidez</code></td><td>WChar(255)</td><td>decimal</td></tr>
+</tbody>
+</table>
+
+<div class="callout soft">
+<span class="lbl">Por qué es un defecto y no una preferencia de diseño</span>
+<p>Con <code>Semana</code> como texto, el orden es <strong>alfabético, no numérico</strong>:
+<code>10</code> va antes que <code>2</code>. Un gráfico de evolución semanal muestra las
+semanas desordenadas. Lo mismo con <code>Calibre</code>, que es una escala ordenada
+(<code>12mm</code> &lt; <code>14mm</code> &lt; … &lt; <code>26mm+</code>).</p>
+</div>
+
+<h4>Cinco pares de columnas duplicadas</h4>
+<p><code>Modulo</code>/<code>Módulo</code> · <code>Productor1</code>/<code>Productor</code> ·
+<code>Calibre</code>/<code>Calibres</code> · <code>ACDT</code>/<code>ACDT 2</code> ·
+<code>Peso total (kg)</code>/<code>Peso total (kg)2</code>. Señal de importaciones sucesivas
+con encabezados ligeramente distintos.</p>
+
+<h4>Nulos relevantes</h4>
+<table>
+<thead><tr><th>Columna</th><th class="num">Nulos</th><th class="num">% de 117.536</th></tr></thead>
+<tbody>
+<tr><td><code>Hora de inicio</code></td><td class="num">56.173</td><td class="num">47,8%</td></tr>
+<tr><td><code>Hora de finalización</code></td><td class="num">56.172</td><td class="num">47,8%</td></tr>
+<tr><td><code>Contenedores volcados</code></td><td class="num">13.085</td><td class="num">11,1%</td></tr>
+<tr><td><code>Contenedores esperados</code></td><td class="num">10.439</td><td class="num">8,9%</td></tr>
+<tr><td><code>Turno</code></td><td class="num">7.708</td><td class="num">6,6%</td></tr>
+</tbody>
+</table>
+
+<p class="note">Casi la mitad de los registros no tiene hora de proceso. Cualquier análisis
+de duración de packing cubre solo la mitad de los datos.</p>
+</div>
+
+<hr>
+
+<!-- H-11 -->
+<div class="finding" id="h11">
+<div class="finding-h"><span class="id">H-11</span><h3>Lógica redundante entre consultas</h3><span class="sev sev-m">Media</span></div>
+
+<p>Seis consultas implementan un <strong>despivote manual mediante <code>UNION ALL</code> con
+literales</strong>: repiten el mismo bloque <code>SELECT</code> una vez por métrica, cambiando
+solo la columna y una etiqueta constante.</p>
+
+<pre><code>SELECT ..., "Kg Exp" AS Descripcion, R08_Forecast_Campaña.[KG Exp] AS Valor, ...
+FROM (...bloque de 25 líneas...)
+UNION ALL
+SELECT ..., "Kg Des" AS Descripcion, R08_Forecast_Campaña.[Kg Des] AS Valor, ...
+FROM (...el mismo bloque de 25 líneas, idéntico...)
+UNION ALL
+SELECT ..., "Kg Con" AS Descripcion, R08_Forecast_Campaña.[Kg Con] AS Valor, ...
+FROM (...el mismo bloque de 25 líneas, otra vez...)</code></pre>
+
+<table>
+<thead><tr><th>Consulta</th><th class="num">Ramas</th><th>Qué despivota</th></tr></thead>
+<tbody>
+<tr><td><code>0106_RaFloYem</code></td><td class="num">3</td><td>Ramas · Flores · YemaAb</td></tr>
+<tr><td><code>0303_ConteoEstados_Turno</code></td><td class="num">5</td><td>Est1 … Est5</td></tr>
+<tr><td><code>0304_ConteoEst_Flo_Turno</code></td><td class="num">2</td><td>Flores + Estados</td></tr>
+<tr><td><code>0305_Brotes_Ramas</code></td><td class="num">2</td><td>Brotes + Ramas</td></tr>
+<tr><td><code>0306_FrutosFlores</code></td><td class="num">2</td><td>Estadios + Flores</td></tr>
+<tr><td><code>R0801_Forecast_Campaña_SemMes</code></td><td class="num">3</td><td>Kg Exp · Des · Con</td></tr>
+</tbody>
+</table>
+
+<h4>Consecuencias medibles</h4>
+<ol>
+<li><strong>Coste de ejecución ×3.</strong> El motor evalúa la subconsulta y el join tres veces sobre las 101.715 filas de <code>R08</code>.</li>
+<li><strong>Riesgo de divergencia.</strong> Corregir el join exige editar tres bloques idénticos. Si se edita uno y se olvida otro, la consulta <strong>sigue ejecutándose y devuelve resultados inconsistentes entre métricas</strong> sin señal de error.</li>
+<li><strong>Es innecesario.</strong> PostgreSQL tiene <code>LATERAL</code> y Power Query «Anular dinamización» nativo. El patrón existe solo porque Access no lo tiene.</li>
+</ol>
+
+<p class="note">Es llamativo que <strong>3 de los 6 casos coinciden con consultas rotas</strong>.
+La correlación tiene explicación: son las consultas más largas y difíciles de editar, y por
+eso quedaron desactualizadas cuando cambiaron los objetos que referencian.</p>
+</div>
+
+<hr>
+
+<!-- H-12 -->
+<div class="finding" id="h12">
+<div class="finding-h"><span class="id">H-12</span><h3>Restos de importación de Excel</h3><span class="sev sev-b">Baja</span></div>
+
+<table>
+<thead><tr><th>Objeto</th><th>Tipo</th><th>Estado</th></tr></thead>
+<tbody>
+<tr><td><code>Errores de pegado</code></td><td>Tabla</td><td><strong>0 filas</strong> · generada por Access al fallar un pegado</td></tr>
+<tr><td><code>E05_DiametrosBayas</code></td><td>Tabla</td><td>4.193 filas · <strong>0 consultas la leen</strong></td></tr>
+<tr><td><code>M_Evaluadores</code></td><td>Tabla</td><td>31 filas · <strong>0 consultas la leen</strong></td></tr>
+<tr><td><code>M_nMuestra</code></td><td>Tabla</td><td>681 filas · <strong>0 consultas la leen</strong></td></tr>
+<tr><td><code>E</code></td><td>Consulta</td><td>rota · nombre de un carácter</td></tr>
+<tr><td><code>~TMPCLP151491</code></td><td>Consulta</td><td>temporal del portapapeles de Access</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<span class="lbl">Distinción importante</span>
+<p><code>Errores de pegado</code>, <code>E</code> y <code>~TMPCLP*</code> son basura: se
+descartan.</p>
+<p><strong><code>E05_DiametrosBayas</code>, <code>M_Evaluadores</code> y <code>M_nMuestra</code>
+NO son basura.</strong> Contienen <strong>4.905 filas de datos capturados en campo que nunca
+llegan a un tablero</strong>. No es deuda técnica: es información que se recoge y se pierde.</p>
+</div>
+
+<p><strong>El caso de <code>E05_DiametrosBayas</code> merece atención.</strong> Tiene 4.193
+mediciones de diámetro de baya (<code>AVG</code> = 19,885 mm) sin un solo nulo. El diámetro
+de baya es el <strong>indicador directo de calibre comercial</strong> — determina a qué
+mercado va la fruta y a qué precio. Es el eslabón que conecta la evaluación de campo con el
+resultado de packing (<code>H02_BDElifab</code>, que clasifica de 12mm a 26mm+).</p>
+
+<p>Que esta tabla no alimente ningún reporte significa que <strong>existe la medición de campo
+que permitiría anticipar el calibre de packing, y no se está usando</strong>.</p>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2 id="modelo">5 · Modelo de negocio implícito</h2>
+
+<p>La base no declara relaciones (H-02), pero el modelo existe en la lógica de las consultas.
+Reconstruido:</p>
+
+<h3>Jerarquía física</h3>
+<div class="chain">Fundo  (4 vocabularios distintos — H-01)
+  └── Módulo                         23 módulos
+        └── Turno                    agrupamiento de gestión, no unidad física
+              └── Lote               860 registros · 829,02 ha · 4.711.564 plantas
+                    └── Cortina
+                          └── Hilera
+                                └── Planta      grano de las evaluaciones</div>
+
+<p class="note"><strong>Sobre <code>Turno</code>:</strong> no es una unidad física sino un
+agrupamiento de gestión. Solo <code>M_Lotes</code>, <code>H01_ProdHistorica</code> y
+<code>E05_DiametrosBayas</code> lo traen de origen; el resto debe obtenerlo por join contra
+<code>M_Lotes</code> — y ese join es justamente el que falla en H-01.</p>
+
+<h3>Ciclo productivo · la cadena fenológica</h3>
+<div class="chain">M_Poda.FInicio        inicio del ciclo: la poda
+      ↓
+E04_Brotes            brotes nuevos          3.385 filas · 225.638 brotes
+      ↓
+E01_Ramas             estructura de madera  94.236 filas · 730.318 ramas
+      ↓
+E02_ConteoFlores      floración y cuajo     43.490 filas · 3.050.031 flores
+      ↓
+E03_ConteoEstados     fruto E1→E5           18.714 filas · 9.060.271 frutos
+      ↓
+E05_DiametrosBayas    calibre de baya        4.193 filas · AVG 19,885 mm
+      ↓
+H00 / H01             cosecha               30.812 / 30.626 · ~32,45 M kg
+      ↓
+H02_BDElifab          packing y mercado    117.536 filas · CHINA/USA/ÁCIDO/DESCARTE</div>
+
+<div class="callout">
+<span class="lbl">Cómo leer la cadena</span>
+<p>Cada eslabón predice el siguiente. Los brotes determinan cuántas ramas habrá; las ramas,
+cuántas flores; las flores que cuajan, cuántos frutos; los estados E1–E5, cuándo estarán
+listos; el diámetro, a qué calibre y mercado irán.</p>
+<p><strong>El valor analítico de esta base está en recorrer la cadena completa</strong> — y hoy
+no se puede: <code>E05_DiametrosBayas</code> está desconectada (H-12) y los eslabones
+<code>E01</code>/<code>E04</code> no enlazan con el maestro de lotes (H-01).</p>
+</div>
+
+<p><code>H05_Clima</code> es transversal: la temperatura y los grados-día aceleran o retrasan
+cada transición de la cadena.</p>
+
+<!-- ============ 6 ============ -->
+<h2 id="reportes">6 · Impacto en Power BI</h2>
+
+<p>Resumen de lo que el área de Reportes necesita saber. El detalle completo, con las 7
+verificaciones previas a la migración, está en <code>03_GUIA_REPORTES.md</code>.</p>
+
+<h3>Consultas que no devuelven datos hoy</h3>
+<table>
+<thead><tr><th>Consulta</th><th>Qué pasa</th><th>Qué se ve en el tablero</th></tr></thead>
+<tbody>
+<tr><td><code>0402_ConteoBrotes</code></td><td>rota · tabla inexistente</td><td>error o datos congelados</td></tr>
+<tr><td><code>R0101_KgCosecha</code></td><td>rota · tabla inexistente</td><td>ídem</td></tr>
+<tr><td><code>R0802_ResumenAño</code></td><td>rota · consulta inexistente</td><td>ídem</td></tr>
+<tr><td><code>R0801_Forecast_Campaña_SemMes</code></td><td>rota · columnas inexistentes</td><td>ídem</td></tr>
+<tr><td><code>R0902_Forecast_Sem_vs_Camp</code></td><td>rota · columna inexistente</td><td>ídem</td></tr>
+<tr><td><code>E</code></td><td>rota · borrador descartable</td><td>ídem</td></tr>
+<tr><td><strong><code>0108_diam</code></strong></td><td><strong>ejecuta pero devuelve 0 filas</strong></td><td><strong>visual vacío, sin error</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note"><code>0108_diam</code> es el caso más silencioso: Power BI la actualiza sin
+quejarse, pero devuelve cero filas. Es fácil atribuir el visual vacío a un filtro mal puesto.</p>
+
+<h3>Consultas con totales incorrectos</h3>
+<table>
+<thead><tr><th>Consulta</th><th>Problema</th><th>Efecto sobre las medidas</th></tr></thead>
+<tbody>
+<tr><td><strong><code>01_Flores_C2025</code></strong></td><td>inflado ×54</td><td><code>SUM</code> y <code>COUNT</code> ×54. <strong><code>AVG</code> sigue correcto</strong></td></tr>
+<tr><td><code>H0100_Resumen_kgCosecha</code></td><td>fila basura de 930.662,1 kg</td><td>total sobreestimado, no aparece en ningún corte</td></tr>
+<tr><td><code>H0101_ResumenHistoricos</code></td><td>2 filas basura · 995.333,2 kg</td><td>ídem</td></tr>
+<tr><td><code>H0501_VariablesClima</code></td><td>2.079 mediciones duplicadas</td><td><code>SUM(Lluvia)</code> sobreestimado</td></tr>
+<tr><td><code>0101_Diametros</code> y descendientes</td><td>duplicados de <code>E01_Ramas</code></td><td><code>SUM</code> +24%, <code>AVG</code> +0,83%</td></tr>
+</tbody>
+</table>
+
+<h3>Filtros fijos embebidos en el SQL</h3>
+<p>Estas consultas tienen el filtro escrito dentro del SQL, no como parámetro.
+<strong>No se puede cambiar desde Power BI.</strong></p>
+<table>
+<thead><tr><th>Consulta</th><th>Filtro fijo</th></tr></thead>
+<tbody>
+<tr><td><code>0201_Flores</code> · <code>0202_FloresTurno</code></td><td><code>Campaña = "C2026"</code></td></tr>
+<tr><td><code>0304_ConteoEst_Flo_Turno</code></td><td>heredado <strong>solo en la rama de flores</strong></td></tr>
+<tr><td><code>H0105_RendTurno_paña</code></td><td><code>Campaña = "C2025"</code></td></tr>
+<tr><td><code>R0901_Forecas_SemAc</code></td><td><code>Campaña IN ("C2025","C2026")</code></td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<span class="lbl">La advertencia de mayor impacto · versiones de forecast</span>
+<p><code>R08_Forecast_Campaña</code> acumula <strong>15 versiones</strong> de proyección y
+<code>R09_Forecast_Semanal</code> <strong>46</strong>. No solo la vigente: todo el histórico
+de re-proyecciones.</p>
+<p><strong>Toda medida sobre estas tablas debe filtrar una versión.</strong> Sin filtro:</p>
+<table>
+<thead><tr><th>Medida sin filtrar</th><th class="num">Valor</th><th>Qué es realmente</th></tr></thead>
+<tbody>
+<tr><td><code>SUM(R08.[KG Exp])</code></td><td class="num">648.044.713 kg</td><td>15 escenarios sumados</td></tr>
+<tr><td><code>SUM(R09.Kg)</code></td><td class="num">51.083.049 kg</td><td>46 escenarios sumados</td></tr>
+</tbody>
+</table>
+<p>Para contexto: la cosecha real de las 5 campañas suma ~32,45 M kg. Un forecast de 648 M no
+es un pronóstico optimista, es un artefacto de sumar versiones.</p>
+</div>
+
+<h3>Qué cambia tras migrar — y por qué es correcto</h3>
+<table>
+<thead><tr><th>Consulta / métrica</th><th class="num">Ahora</th><th class="num">Tras migrar</th><th>Hallazgo</th></tr></thead>
+<tbody>
+<tr><td><code>01_Flores_C2025</code> filas</td><td class="num">487.368</td><td class="num"><strong>9.040</strong></td><td>H-05</td></tr>
+<tr><td><code>0101_Diametros</code> filas</td><td class="num">94.236</td><td class="num"><strong>71.095</strong></td><td>H-03</td></tr>
+<tr><td><code>0101_Diametros</code> · Turno NULL</td><td class="num">94.236</td><td class="num"><strong>0</strong></td><td>H-01</td></tr>
+<tr><td><code>0108_diam</code> filas</td><td class="num">0</td><td class="num"><strong>&gt; 0</strong></td><td>H-01</td></tr>
+<tr><td><code>H00 SUM(KG)</code></td><td class="num">33.381.134,66</td><td class="num"><strong>32.450.472,60</strong></td><td>H-06</td></tr>
+<tr><td><code>H01 SUM(KG)</code></td><td class="num">33.441.319,22</td><td class="num"><strong>32.445.986,02</strong></td><td>H-06</td></tr>
+<tr><td><code>H0501_VariablesClima</code> filas</td><td class="num">155.588</td><td class="num"><strong>153.413</strong></td><td>H-08</td></tr>
+<tr><td><code>E01 AVG(Diametro)</code></td><td class="num">10,9776538610781</td><td class="num"><strong>10,8870645965645</strong></td><td>H-03</td></tr>
+</tbody>
+</table>
+
+<div class="callout soft">
+<span class="lbl">Cómo explicar la bajada de kilos</span>
+<p>«El total anterior incluía 1.925.995 kg en tres filas de subtotal de Excel que se
+importaron junto con los datos. No tenían fundo, módulo, lote ni fecha, así que nunca
+aparecían al segmentar — solo en el total general. Por eso el total no cuadraba con la suma
+de las partes. Ahora sí cuadra.»</p>
+</div>
+
+<h3>Qué NO cambia</h3>
+<ul>
+<li><strong>Los nombres de las 40 consultas.</strong> Existirán como vistas en PostgreSQL con su grafía actual, incluidas las que tienen <code>ñ</code> y acentos.</li>
+<li><strong>Los nombres de las columnas expuestas</strong>, incluidas las que tienen espacios (<code>Ramas &lt;5</code>, <code>KG Exp</code>).</li>
+<li><strong>El grano de cada consulta.</strong></li>
+</ul>
+
+<h3>Impacto inverso · qué revisar si TI toca una tabla</h3>
+<table>
+<thead><tr><th>Tabla</th><th class="num">Consultas afectadas</th></tr></thead>
+<tbody>
+<tr><td><strong><code>M_Lotes</code></strong></td><td class="num"><strong>33 de 40</strong></td></tr>
+<tr><td><strong><code>M_Time</code></strong></td><td class="num"><strong>26 de 40</strong></td></tr>
+<tr><td><code>E02_ConteoFlores</code></td><td class="num">11</td></tr>
+<tr><td><code>E03_ConteoEstados</code></td><td class="num">8</td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td class="num">7</td></tr>
+<tr><td><code>M_Poda</code></td><td class="num">7</td></tr>
+<tr><td><code>E01_Ramas</code></td><td class="num">5</td></tr>
+<tr><td><code>E05_DiametrosBayas</code> · <code>M_Evaluadores</code> · <code>M_nMuestra</code></td><td class="num"><strong>0</strong></td></tr>
+</tbody>
+</table>
+
+<!-- ============ 7 ============ -->
+<h2 id="migracion">7 · Ruta de migración</h2>
+
+<div class="callout">
+<span class="lbl">Principio rector</span>
+<p><strong>Se migra el modelo corregido, no el modelo actual.</strong> Los tres hallazgos
+críticos comparten una raíz: <strong>el motor nunca tuvo permiso para rechazar un dato
+inválido</strong>. Replicar la estructura tal cual sería conservar el único defecto que
+garantiza que todos los demás vuelvan a aparecer.</p>
+</div>
+
+<h3>La solución a H-01 · alias de fundo</h3>
+<p>Es el núcleo del plan: una tabla que registra las cuatro grafías como sinónimos de la
+misma entidad física.</p>
+
+<pre><code>CREATE TABLE dim.fundo_alias (
+    alias       text PRIMARY KEY,      -- cualquiera de las grafías existentes
+    fundo_id    smallint NOT NULL REFERENCES dim.fundo(fundo_id),
+    vocabulario char(1) NOT NULL CHECK (vocabulario IN ('A','B','C','D'))
+);</code></pre>
+
+<p>Todo hecho pasa por el mismo paso en el ETL:</p>
+
+<pre><code>JOIN dim.fundo_alias fa ON fa.alias = trim(s.fundo)   -- resuelve CUALQUIER vocabulario
+JOIN dim.modulo m ON m.fundo_id = fa.fundo_id AND m.codigo = trim(s.modulo)
+JOIN dim.lote   l ON l.modulo_id = m.modulo_id AND l.codigo = trim(s.lote)
+ON CONFLICT (lote_id, fecha, cortina, hilera, planta) DO NOTHING;   -- dedup H-03</code></pre>
+
+<p>El join que en Access <strong>nunca acertaba</strong> ahora siempre acierta. Y el
+<code>ON CONFLICT</code> hace la deduplicación de H-03 en la propia carga.</p>
+
+<p class="note">Existe un precedente interno que valida el enfoque:
+<code>M_EquivalenciaElifab</code> resuelve exactamente este tipo de problema de vocabulario
+entre la empacadora externa y la empresa. Es la única tabla de la base que ya lo hace.</p>
+
+<h3>Correcciones estructurales por hallazgo</h3>
+<table>
+<thead><tr><th>Hallazgo</th><th>Regla en PostgreSQL</th><th class="num">Verificación</th></tr></thead>
+<tbody>
+<tr><td>H-01</td><td>resolver fundo vía <code>dim.fundo_alias</code></td><td class="num">huérfanos = 0</td></tr>
+<tr><td>H-02</td><td>declarar FK y PK correctas</td><td class="num">FK &gt; 0</td></tr>
+<tr><td>H-03</td><td><code>UNIQUE (lote_id, fecha, cortina, hilera, planta)</code></td><td class="num">71.095 filas</td></tr>
+<tr><td>H-05</td><td>unir contra <code>dim.semana_evaluacion</code>, nunca contra días</td><td class="num">9.040 filas</td></tr>
+<tr><td>H-06</td><td><code>NOT NULL</code> en dimensiones; nulos a cuarentena</td><td class="num">3 filas en <code>qua</code></td></tr>
+<tr><td>H-08</td><td><code>PRIMARY KEY (fecha_hora)</code></td><td class="num">153.413 filas</td></tr>
+<tr><td>H-09</td><td>enlazar por DNI, no por <code>Cod</code></td><td class="num">2 a cuarentena</td></tr>
+<tr><td>H-10</td><td>tipar 34 columnas; consolidar 5 pares</td><td class="num">0 numéricas en texto</td></tr>
+<tr><td>H-11</td><td><code>LATERAL (VALUES ...)</code></td><td class="num">6 simplificadas</td></tr>
+<tr><td>H-12</td><td>descartar basura; <strong>migrar</strong> las 3 tablas sin consumo</td><td class="num">4.905 filas</td></tr>
+</tbody>
+</table>
+
+<div class="callout soft">
+<span class="lbl">Nada se descarta en silencio</span>
+<p>Toda fila que viole una restricción va a <code>qua.rechazos</code> con el motivo, el
+hallazgo asociado y la fila completa en <code>jsonb</code>. Si Agronomía determina que una
+fila rechazada era válida, se puede reprocesar.</p>
+</div>
+
+<h3>Seis decisiones pendientes del negocio</h3>
+<table>
+<thead><tr><th>ID</th><th>Decisión</th><th>Quién</th><th>Bloquea</th></tr></thead>
+<tbody>
+<tr><td><strong>D-4</strong></td><td>correspondencia del vocabulario A de fundo</td><td>Agronomía</td><td><strong>todo el plan</strong></td></tr>
+<tr><td>D-1</td><td>qué kilos de <code>R08</code> usa <code>R0902</code></td><td>Planeamiento</td><td>1 consulta</td></tr>
+<tr><td>D-2</td><td>fechas de corte de campaña (<code>CampProAra</code>)</td><td>Planeamiento</td><td>1 consulta + <code>dim.tiempo</code></td></tr>
+<tr><td>D-3</td><td><code>H00</code> o <code>H01</code>: fuente de verdad</td><td>Agronomía</td><td><code>fact.cosecha_oficial</code></td></tr>
+<tr><td>D-5</td><td>5 lotes duplicados en <code>M_Lotes</code></td><td>Agronomía</td><td><code>dim.lote</code></td></tr>
+<tr><td>D-6</td><td>¿se conservan los filtros fijos de campaña?</td><td>Reportes</td><td>5 vistas</td></tr>
+</tbody>
+</table>
+
+<p><strong>El camino crítico pasa por D-4.</strong> Los nombres comerciales
+(<code>Ampliacion</code>, <code>Vivadis</code>, <code>Sta.Teresa</code>) se han mapeado a los
+quechua <strong>por inferencia del conteo de lotes</strong>, no por evidencia directa. Es la
+única parte del plan que no está verificada contra los datos, y sin ella no se puede resolver
+H-01 — que bloquea todo lo demás.</p>
+
+<!-- ============ 8 ============ -->
+<h2 id="control">8 · Cifras de control</h2>
+
+<p>Contrato de aceptación de la migración. PostgreSQL debe reproducir estos números, salvo
+los marcados como corrección.</p>
+
+<h3>Filas por tabla</h3>
+<table>
+<thead><tr><th>Tabla</th><th class="num">Filas</th><th>Tabla</th><th class="num">Filas</th></tr></thead>
+<tbody>
+<tr><td><code>E01_Ramas</code></td><td class="num">94.236</td><td><code>M_EquivalenciaElifab</code></td><td class="num">15</td></tr>
+<tr><td><code>E02_ConteoFlores</code></td><td class="num">43.490</td><td><code>M_Evaluadores</code></td><td class="num">31</td></tr>
+<tr><td><code>E03_ConteoEstados</code></td><td class="num">18.714</td><td><code>M_Lotes</code></td><td class="num">860</td></tr>
+<tr><td><code>E04_Brotes</code></td><td class="num">3.385</td><td><code>M_nMuestra</code></td><td class="num">681</td></tr>
+<tr><td><code>E05_DiametrosBayas</code></td><td class="num">4.193</td><td><code>M_Poda</code></td><td class="num">2.159</td></tr>
+<tr><td><code>Errores de pegado</code></td><td class="num">0</td><td><code>M_Time</code></td><td class="num">2.189</td></tr>
+<tr><td><code>H00_VolumenCampo</code></td><td class="num">30.812</td><td><code>R08_Forecast_Campaña</code></td><td class="num">101.715</td></tr>
+<tr><td><code>H01_ProdHistorica</code></td><td class="num">30.626</td><td><code>R09_Forecast_Semanal</code></td><td class="num">48.368</td></tr>
+<tr><td><code>H02_BDElifab</code></td><td class="num">117.536</td><td></td><td class="num"></td></tr>
+<tr><td><code>H05_Clima</code></td><td class="num">155.588</td><td><strong>TOTAL</strong></td><td class="num"><strong>683.180</strong></td></tr>
+</tbody>
+</table>
+
+<h3>Métricas que deben reproducirse exactamente</h3>
+<table>
+<thead><tr><th>Métrica</th><th class="num">Valor</th></tr></thead>
+<tbody>
+<tr><td><code>E01 SUM([# Ramas])</code></td><td class="num">730.318</td></tr>
+<tr><td><code>E02 SUM(nFlores)</code></td><td class="num">3.050.031</td></tr>
+<tr><td><code>E03 SUM(Total)</code></td><td class="num">9.060.271</td></tr>
+<tr><td><code>E03 SUM(E1..E5)</code></td><td class="num">9.057.841</td></tr>
+<tr><td><code>E04 SUM(Brotes)</code></td><td class="num">225.638</td></tr>
+<tr><td><code>E05 AVG(Diametro)</code></td><td class="num">19,8850703636331</td></tr>
+<tr><td><code>M_Lotes SUM(Area)</code></td><td class="num">829,021356070414 ha</td></tr>
+<tr><td><code>M_Lotes SUM(NPlantas)</code></td><td class="num">4.711.564</td></tr>
+<tr><td><code>R08 SUM([KG Exp])</code></td><td class="num">648.044.713,139312</td></tr>
+<tr><td><code>R09 SUM(Kg)</code></td><td class="num">51.083.049,9174915</td></tr>
+<tr><td><code>H00 SUM(KG)</code> sin fila basura</td><td class="num">32.450.472,596651</td></tr>
+<tr><td><code>H01 SUM(KG)</code> sin filas basura</td><td class="num">32.445.986,0163518</td></tr>
+</tbody>
+</table>
+
+<p class="note"><code>E03 SUM(Total)</code> y <code>SUM(E1..E5)</code> difieren en
+<strong>2.430 frutos</strong>: la columna <code>Total</code> fue capturada de forma
+independiente y no se recalculó. En el modelo destino debe ser una columna calculada, no
+almacenada.</p>
+
+<h3>Defectos que deben quedar en cero</h3>
+<table>
+<thead><tr><th>Defecto</th><th class="num">Ahora</th><th class="num">Objetivo</th></tr></thead>
+<tbody>
+<tr><td>H-01 · <code>E01_Ramas</code> huérfanos</td><td class="num">94.236</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-01 · <code>E04_Brotes</code> huérfanos</td><td class="num">3.385</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-01 · <code>H00</code> huérfanos</td><td class="num">366</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-01 · <code>H01</code> huérfanos</td><td class="num">180</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-01 · <code>0101_Diametros</code> con Turno NULL</td><td class="num">94.236</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-03 · <code>E01_Ramas</code> filas de exceso</td><td class="num">23.141</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-05 · <code>01_Flores_C2025</code> filas</td><td class="num">487.368</td><td class="num"><strong>9.040</strong></td></tr>
+<tr><td>H-06 · filas basura</td><td class="num">3</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-06 · KG en filas basura</td><td class="num">1.925.995</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-08 · grupos duplicados en clima</td><td class="num">2.079</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-09 · evaluadores sin maestro</td><td class="num">2</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>H-04 · consultas rotas</td><td class="num"><strong>6</strong></td><td class="num"><strong>0</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>Integridad del origen:</strong> al terminar,
+<code>BD_AQUANQA_26.accdb</code> debe conservar su tamaño (140.115.968 bytes) y su fecha de
+modificación. Todo el acceso fue de solo lectura y así debe permanecer.</p>
+
+<!-- ============ 9 ============ -->
+<h2 id="conclusion">9 · Conclusión</h2>
+
+<p>La base cumple su función operativa: <strong>683.180 filas</strong> que cubren cinco
+campañas (C2022–C2026) de un cultivo de 829 hectáreas y 4,7 millones de plantas. La
+información está ahí y es rica.</p>
+
+<p>El problema no es la información sino <strong>la ausencia de contratos sobre ella</strong>.
+Sin claves foráneas, sin claves primarias correctas, sin un vocabulario único para nombrar el
+fundo, cada defecto entra en silencio y se propaga hasta los tableros de gerencia sin que nada
+lo señale.</p>
+
+<div class="callout">
+<span class="lbl">La raíz común</span>
+<p>Los tres hallazgos críticos comparten una misma causa: <strong>el motor nunca tuvo permiso
+para rechazar un dato inválido.</strong></p>
+<p>H-01 existe porque ninguna restricción exigió que el fundo fuese un valor conocido. H-03
+existe porque ningún índice único rechazó la segunda carga. Y H-02 <em>es</em> literalmente esa
+ausencia de restricciones.</p>
+<p><strong>Por eso la recomendación es migrar el modelo corregido, no el modelo actual.</strong>
+PostgreSQL puede declarar esas restricciones; Access, en la práctica, no las tenía.</p>
+</div>
+
+<h3>Lo que la base podría responder y hoy no responde</h3>
+
+<p>Tres preguntas de negocio para las que <strong>los datos ya existen</strong>, y que no se
+responden por defectos corregibles. Ninguna requiere capturar dato nuevo.</p>
+
+<table>
+<thead><tr><th>Pregunta</th><th>Datos disponibles</th><th>Qué lo impide</th></tr></thead>
+<tbody>
+<tr><td>¿El calibre medido en campo predice el calibre de packing?</td><td><code>E05_DiametrosBayas</code> · 4.193 mediciones<br><code>H02_BDElifab</code> · 117.536 registros</td><td>nadie las cruza (H-12)</td></tr>
+<tr><td>¿Qué evaluadores producen mediciones consistentes?</td><td><code>M_Evaluadores</code> · 31 registros<br>DNI en cada fila de evaluación</td><td>el maestro no enlaza (H-09)</td></tr>
+<tr><td>¿Se cumplió el muestreo requerido en cada lote?</td><td><code>M_nMuestra</code> · 681 filas</td><td>0 consultas la usan (H-12)</td></tr>
+</tbody>
+</table>
+
+<p>La primera tiene valor comercial directo: si el diámetro de campo predice el calibre de
+packing, se podría <strong>comprometer volumen por calibre con los clientes semanas antes de
+cosechar</strong>.</p>
+
+<div class="foot">
+<strong>Documentos relacionados</strong><br>
+<code>01_AUDITORIA.md</code> — los 12 hallazgos en detalle y el diccionario de las 18 tablas<br>
+<code>02_LOGICA_NEGOCIO.md</code> — las 40 consultas explicadas: qué hacen y por qué existen<br>
+<code>03_GUIA_REPORTES.md</code> — contrato de interfaz, advertencias y checklist para Power BI<br>
+<code>04_PLAN_MIGRACION.md</code> — DDL, ETL, validación y cronograma<br>
+<code>evidencia\</code> — volcados crudos reproducibles<br><br>
+Auditoría técnica · BD_AQUANQA_26.accdb · 2026-08-02 · acceso de solo lectura
+</div>
+
+</main>
+</div>
+</body>
+</html>

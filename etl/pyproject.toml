@@ -1,0 +1,37 @@
+[project]
+name = "aquanqa-etl"
+version = "0.1.0"
+description = "Extracción y carga de BD_AQUANQA_26.accdb y del maestro de lotes hacia PostgreSQL"
+requires-python = ">=3.11"
+dependencies = [
+    "pyodbc>=5.1",        # lectura del .accdb vía el driver ODBC de Access de 64 bits
+    "psycopg[binary]>=3.2",
+    "openpyxl>=3.1",      # maestro de lotes y tareo
+    "python-dotenv>=1.0",
+    "rich>=13.7",         # el informe de validación se lee en consola
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+aquanqa-etl = "aquanqa_etl.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Las pruebas que necesitan una base viva se marcan y se pueden excluir con -m "not db".
+markers = ["db: requiere una base PostgreSQL accesible"]

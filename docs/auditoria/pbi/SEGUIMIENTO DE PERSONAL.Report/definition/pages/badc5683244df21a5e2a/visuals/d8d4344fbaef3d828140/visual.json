@@ -1,0 +1,252 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "d8d4344fbaef3d828140",
+  "position": {
+    "x": 287.87364665354323,
+    "y": 278.29331587457818,
+    "z": 4000,
+    "height": 1110,
+    "width": 1840,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "deneb7E15AEF80B9E4D4F8E12924291ECE89A",
+    "query": {
+      "queryState": {
+        "dataset": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TAB RESUM_FL"
+                    }
+                  },
+                  "Property": "SEMANA"
+                }
+              },
+              "queryRef": "Sum(TAB RESUM_FL.SEMANA)",
+              "nativeQueryRef": "SEMANA"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TAB RESUM_FL"
+                    }
+                  },
+                  "Property": "Nombre corto"
+                }
+              },
+              "queryRef": "TAB RESUM_FL.Nombre corto",
+              "nativeQueryRef": "Nombre corto"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TAB RESUM_FL"
+                    }
+                  },
+                  "Property": "Promedio Flores Día"
+                }
+              },
+              "queryRef": "TAB RESUM_FL.Promedio Flores Día",
+              "nativeQueryRef": "Promedio Flores Día"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "TAB RESUM_FL"
+                  }
+                },
+                "Property": "SEMANA"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "editor": [
+        {
+          "properties": {
+            "theme": {
+              "expr": {
+                "Literal": {
+                  "Value": "'dark'"
+                }
+              }
+            },
+            "debugTableRowsPerPage": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "vega": [
+        {
+          "properties": {
+            "jsonSpec": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{\r\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\r\n\r\n  \"data\": {\r\n    \"name\": \"dataset\"\r\n  },\r\n\r\n  \"width\": \"container\",\r\n  \"height\": \"container\",\r\n\r\n  \"mark\": {\r\n    \"type\": \"rect\",\r\n    \"stroke\": \"white\",\r\n    \"strokeWidth\": 1\r\n  },\r\n\r\n  \"encoding\": {\r\n\r\n    \"x\": {\r\n      \"field\": \"SEMANA\",\r\n      \"type\": \"ordinal\",\r\n      \"title\": \"Semana\",\r\n      \"axis\": {\r\n        \"labelAngle\": 0,\r\n        \"labelFontSize\": 20,\r\n        \"titleFontSize\": 13,\r\n        \"grid\": false\r\n      }\r\n    },\r\n\r\n    \"y\": {\r\n      \"field\": \"Nombre corto\",\r\n      \"type\": \"nominal\",\r\n      \"title\": \"Evaluador\",\r\n      \"sort\": {\r\n        \"field\": \"Promedio Flores Día\",\r\n        \"op\": \"mean\",\r\n        \"order\": \"descending\"\r\n      },\r\n      \"axis\": {\r\n        \"labelFontSize\": 11,\r\n        \"titleFontSize\": 13\r\n      }\r\n    },\r\n\r\n    \"color\": {\r\n      \"field\": \"Promedio Flores Día\",\r\n      \"type\": \"quantitative\",\r\n\r\n      \"scale\": {\r\n        \"scheme\": \"redyellowgreen\",\r\n        \"zero\": false\r\n      },\r\n\r\n      \"legend\": {\r\n        \"title\": \"Promedio Flores / Día\",\r\n        \"format\": \",.2f\"\r\n      }\r\n    },\r\n\r\n    \"tooltip\": [\r\n\r\n      {\r\n        \"field\": \"Nombre corto\",\r\n        \"title\": \"Evaluador\"\r\n      },\r\n\r\n      {\r\n        \"field\": \"SEMANA\",\r\n        \"title\": \"Semana\"\r\n      },\r\n\r\n      {\r\n        \"field\": \"Suma de FLORES\",\r\n        \"type\": \"quantitative\",\r\n        \"title\": \"Total Flores\",\r\n        \"format\": \",.2f\"\r\n      },\r\n\r\n      {\r\n        \"field\": \"Recuento de Fecha\",\r\n        \"type\": \"quantitative\",\r\n        \"title\": \"Jornadas\",\r\n        \"format\": \",.0f\"\r\n      },\r\n\r\n      {\r\n        \"field\": \"Promedio Flores Día\",\r\n        \"type\": \"quantitative\",\r\n        \"title\": \"Promedio Flores / Día\",\r\n        \"format\": \",.2f\"\r\n      }\r\n\r\n    ]\r\n  },\r\n\r\n  \"config\": {\r\n\r\n    \"view\": {\r\n      \"stroke\": null\r\n    },\r\n\r\n    \"axis\": {\r\n      \"domain\": false,\r\n      \"tickSize\": 0\r\n    }\r\n  }\r\n}'"
+                }
+              }
+            },
+            "version": {
+              "expr": {
+                "Literal": {
+                  "Value": "'6.4.1'"
+                }
+              }
+            },
+            "jsonConfig": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{}'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stateManagement": [
+        {
+          "properties": {
+            "viewportHeight": {
+              "expr": {
+                "Literal": {
+                  "Value": "1055.7999992370605D"
+                }
+              }
+            },
+            "viewportWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "1810D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "developer": [
+        {
+          "properties": {
+            "version": {
+              "expr": {
+                "Literal": {
+                  "Value": "'1.9.1.0'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4F117A'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "30D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'DISTRIBUCIÓN DE FLORES EVALUADAS'"
+                }
+              }
+            },
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'center'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "divider": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

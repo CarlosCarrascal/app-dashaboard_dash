@@ -1,0 +1,291 @@
+LINAJE Y DEPENDENCIAS - BD_AQUANQA_26.accdb
+Generado: 2026-08-02 | Metodo: parseo del SQL real extraido via DAO.DBEngine.120
+====================================================================================================
+
+SECCION 1 - DEPENDENCIAS DIRECTAS POR CONSULTA (consulta => objetos que lee)
+----------------------------------------------------------------------------------------------------
+0101_Diametros
+   tablas   : E01_Ramas, M_Lotes
+   consultas: (ninguna)
+0102_CantRamas
+   tablas   : (ninguna directa)
+   consultas: 0101_Diametros
+0104_PromFlores
+   tablas   : E02_ConteoFlores, M_Lotes, M_Time
+   consultas: (ninguna)
+0105_AcumFlores
+   tablas   : (ninguna directa)
+   consultas: 0104_PromFlores
+0106_RaFloYem
+   tablas   : M_Lotes, M_Time
+   consultas: 0104_PromFlores, 0101_Diametros, 0102_CantRamas
+0107_YemasAb
+   tablas   : M_Lotes
+   consultas: 0104_PromFlores
+0108_diam
+   tablas   : M_Lotes, M_Time
+   consultas: 0101_Diametros
+01_Flores_C2025
+   tablas   : M_Lotes, M_Poda, M_Time
+   consultas: 0104_PromFlores
+0201_Flores
+   tablas   : E02_ConteoFlores, M_Lotes, M_Poda, M_Time
+   consultas: (ninguna)
+0202_FloresTurno
+   tablas   : (ninguna directa)
+   consultas: 0201_Flores
+0301_ConteoEstados
+   tablas   : E03_ConteoEstados, M_Lotes, M_Time
+   consultas: (ninguna)
+0302_ConteoAjustado
+   tablas   : (ninguna directa)
+   consultas: 0301_ConteoEstados
+0303_ConteoEstados_Turno
+   tablas   : (ninguna directa)
+   consultas: 0302_ConteoAjustado
+0304_ConteoEst_Flo_Turno
+   tablas   : (ninguna directa)
+   consultas: 0303_ConteoEstados_Turno, 0202_FloresTurno
+0305_Brotes_Ramas
+   tablas   : E04_Brotes, E01_Ramas
+   consultas: (ninguna)
+0306_FrutosFlores
+   tablas   : (ninguna directa)
+   consultas: 0301_ConteoEstados, 0104_PromFlores
+0307_EstadosFlores
+   tablas   : (ninguna directa)
+   consultas: 0301_ConteoEstados, 0104_PromFlores
+0401_Estados_planta
+   tablas   : E03_ConteoEstados, M_Lotes, M_Time
+   consultas: (ninguna)
+0402_ConteoBrotes
+   tablas   : M_Lotes, M_Time
+   consultas: (ninguna)
+   FALTANTE : E04_ConteoBrotes   <-- objeto inexistente
+E
+   tablas   : E03_ConteoEstados, E02_ConteoFlores
+   consultas: (ninguna)
+H0100_Resumen_kgCosecha
+   tablas   : H00_VolumenCampo, M_Lotes, M_Time
+   consultas: (ninguna)
+H0101_ResumenHistoricos
+   tablas   : H01_ProdHistorica, M_Lotes, M_Poda, M_Time
+   consultas: (ninguna)
+H0102_Producciondiaria
+   tablas   : H01_ProdHistorica, M_Lotes, M_Time
+   consultas: (ninguna)
+H0103_ResModulo
+   tablas   : H01_ProdHistorica, M_Lotes
+   consultas: (ninguna)
+H0104_FechaFinCosecha
+   tablas   : (ninguna directa)
+   consultas: H0101_ResumenHistoricos
+H0105_RendTurno_paña
+   tablas   : M_Lotes
+   consultas: H0101_ResumenHistoricos
+H0201_PesoBaya_Elifab
+   tablas   : M_EquivalenciaElifab, H01_ProdHistorica, H02_BDElifab
+   consultas: (ninguna)
+H0501_VariablesClima
+   tablas   : H05_Clima, M_Time
+   consultas: (ninguna)
+H0502_Temperatura_variacion
+   tablas   : (ninguna directa)
+   consultas: H0501_VariablesClima
+M_EdadCultivo
+   tablas   : M_Lotes
+   consultas: (ninguna)
+M_Lote_turno
+   tablas   : M_Lotes
+   consultas: (ninguna)
+M_Mod
+   tablas   : M_Lotes
+   consultas: (ninguna)
+R0101_KgCosecha
+   tablas   : M_Lotes, M_Time
+   consultas: (ninguna)
+   FALTANTE : R01_VolumenCampo   <-- objeto inexistente
+R0801_Forecast_Campaña_SemMes
+   tablas   : R08_Forecast_Campaña, M_Lotes, M_Time
+   consultas: (ninguna)
+R0801_ResCampaña
+   tablas   : R08_Forecast_Campaña
+   consultas: M_Mod
+R0802_ResumenAño
+   tablas   : (ninguna directa)
+   consultas: H0103_ResModulo, M_Mod
+   FALTANTE : R0901_ResCampaña   <-- objeto inexistente
+R0901_Forecas_SemAc
+   tablas   : R09_Forecast_Semanal
+   consultas: (ninguna)
+R0902_Forecast_Sem_vs_Camp
+   tablas   : R08_Forecast_Campaña, R09_Forecast_Semanal, M_Time
+   consultas: (ninguna)
+R0903_Forecast_FrtsTotal
+   tablas   : R09_Forecast_Semanal, M_Lotes
+   consultas: (ninguna)
+TPlantas
+   tablas   : M_Lotes
+   consultas: (ninguna)
+
+SECCION 2 - IMPACTO INVERSO POR TABLA (si se toca la tabla, cuantas consultas se afectan)
+----------------------------------------------------------------------------------------------------
+  M_Lotes                      ->  33 consultas
+       0101_Diametros, 0102_CantRamas, 0104_PromFlores, 0105_AcumFlores, 0106_RaFloYem, 0107_YemasAb, 0108_diam, 01_Flores_C2025, 0201_Flores, 0202_FloresTurno, 0301_ConteoEstados, 0302_ConteoAjustado, 0303_ConteoEstados_Turno, 0304_ConteoEst_Flo_Turno, 0306_FrutosFlores, 0307_EstadosFlores, 0401_Estados_planta, 0402_ConteoBrotes, H0100_Resumen_kgCosecha, H0101_ResumenHistoricos, H0102_Producciondiaria, H0103_ResModulo, H0104_FechaFinCosecha, H0105_RendTurno_paña, M_EdadCultivo, M_Lote_turno, M_Mod, R0101_KgCosecha, R0801_Forecast_Campaña_SemMes, R0801_ResCampaña, R0802_ResumenAño, R0903_Forecast_FrtsTotal, TPlantas
+  M_Time                       ->  26 consultas
+       0104_PromFlores, 0105_AcumFlores, 0106_RaFloYem, 0107_YemasAb, 0108_diam, 01_Flores_C2025, 0201_Flores, 0202_FloresTurno, 0301_ConteoEstados, 0302_ConteoAjustado, 0303_ConteoEstados_Turno, 0304_ConteoEst_Flo_Turno, 0306_FrutosFlores, 0307_EstadosFlores, 0401_Estados_planta, 0402_ConteoBrotes, H0100_Resumen_kgCosecha, H0101_ResumenHistoricos, H0102_Producciondiaria, H0104_FechaFinCosecha, H0105_RendTurno_paña, H0501_VariablesClima, H0502_Temperatura_variacion, R0101_KgCosecha, R0801_Forecast_Campaña_SemMes, R0902_Forecast_Sem_vs_Camp
+  E02_ConteoFlores             ->  11 consultas
+       0104_PromFlores, 0105_AcumFlores, 0106_RaFloYem, 0107_YemasAb, 01_Flores_C2025, 0201_Flores, 0202_FloresTurno, 0304_ConteoEst_Flo_Turno, 0306_FrutosFlores, 0307_EstadosFlores, E
+  E03_ConteoEstados            ->   8 consultas
+       0301_ConteoEstados, 0302_ConteoAjustado, 0303_ConteoEstados_Turno, 0304_ConteoEst_Flo_Turno, 0306_FrutosFlores, 0307_EstadosFlores, 0401_Estados_planta, E
+  H01_ProdHistorica            ->   7 consultas
+       H0101_ResumenHistoricos, H0102_Producciondiaria, H0103_ResModulo, H0104_FechaFinCosecha, H0105_RendTurno_paña, H0201_PesoBaya_Elifab, R0802_ResumenAño
+  M_Poda                       ->   7 consultas
+       01_Flores_C2025, 0201_Flores, 0202_FloresTurno, 0304_ConteoEst_Flo_Turno, H0101_ResumenHistoricos, H0104_FechaFinCosecha, H0105_RendTurno_paña
+  E01_Ramas                    ->   5 consultas
+       0101_Diametros, 0102_CantRamas, 0106_RaFloYem, 0108_diam, 0305_Brotes_Ramas
+  R08_Forecast_Campaña         ->   3 consultas
+       R0801_Forecast_Campaña_SemMes, R0801_ResCampaña, R0902_Forecast_Sem_vs_Camp
+  R09_Forecast_Semanal         ->   3 consultas
+       R0901_Forecas_SemAc, R0902_Forecast_Sem_vs_Camp, R0903_Forecast_FrtsTotal
+  H05_Clima                    ->   2 consultas
+       H0501_VariablesClima, H0502_Temperatura_variacion
+  E04_Brotes                   ->   1 consultas
+       0305_Brotes_Ramas
+  H00_VolumenCampo             ->   1 consultas
+       H0100_Resumen_kgCosecha
+  H02_BDElifab                 ->   1 consultas
+       H0201_PesoBaya_Elifab
+  M_EquivalenciaElifab         ->   1 consultas
+       H0201_PesoBaya_Elifab
+  E05_DiametrosBayas           ->   0 consultas
+  Errores de pegado            ->   0 consultas
+  M_Evaluadores                ->   0 consultas
+  M_nMuestra                   ->   0 consultas
+
+SECCION 3 - CIERRE TRANSITIVO POR CONSULTA (todo lo que necesita para ejecutarse)
+----------------------------------------------------------------------------------------------------
+  0101_Diametros                    profundidad=0 consultas + 2 tablas
+       E01_Ramas, M_Lotes
+  0102_CantRamas                    profundidad=1 consultas + 2 tablas
+       0101_Diametros, E01_Ramas, M_Lotes
+  0104_PromFlores                   profundidad=0 consultas + 3 tablas
+       E02_ConteoFlores, M_Lotes, M_Time
+  0105_AcumFlores                   profundidad=1 consultas + 3 tablas
+       0104_PromFlores, E02_ConteoFlores, M_Lotes, M_Time
+  0106_RaFloYem                     profundidad=3 consultas + 4 tablas
+       0101_Diametros, 0102_CantRamas, 0104_PromFlores, E01_Ramas, E02_ConteoFlores, M_Lotes, M_Time
+  0107_YemasAb                      profundidad=1 consultas + 3 tablas
+       0104_PromFlores, E02_ConteoFlores, M_Lotes, M_Time
+  0108_diam                         profundidad=1 consultas + 3 tablas
+       0101_Diametros, E01_Ramas, M_Lotes, M_Time
+  01_Flores_C2025                   profundidad=1 consultas + 4 tablas
+       0104_PromFlores, E02_ConteoFlores, M_Lotes, M_Poda, M_Time
+  0201_Flores                       profundidad=0 consultas + 4 tablas
+       E02_ConteoFlores, M_Lotes, M_Poda, M_Time
+  0202_FloresTurno                  profundidad=1 consultas + 4 tablas
+       0201_Flores, E02_ConteoFlores, M_Lotes, M_Poda, M_Time
+  0301_ConteoEstados                profundidad=0 consultas + 3 tablas
+       E03_ConteoEstados, M_Lotes, M_Time
+  0302_ConteoAjustado               profundidad=1 consultas + 3 tablas
+       0301_ConteoEstados, E03_ConteoEstados, M_Lotes, M_Time
+  0303_ConteoEstados_Turno          profundidad=2 consultas + 3 tablas
+       0301_ConteoEstados, 0302_ConteoAjustado, E03_ConteoEstados, M_Lotes, M_Time
+  0304_ConteoEst_Flo_Turno          profundidad=5 consultas + 5 tablas
+       0201_Flores, 0202_FloresTurno, 0301_ConteoEstados, 0302_ConteoAjustado, 0303_ConteoEstados_Turno, E02_ConteoFlores, E03_ConteoEstados, M_Lotes, M_Poda, M_Time
+  0305_Brotes_Ramas                 profundidad=0 consultas + 2 tablas
+       E01_Ramas, E04_Brotes
+  0306_FrutosFlores                 profundidad=2 consultas + 4 tablas
+       0104_PromFlores, 0301_ConteoEstados, E02_ConteoFlores, E03_ConteoEstados, M_Lotes, M_Time
+  0307_EstadosFlores                profundidad=2 consultas + 4 tablas
+       0104_PromFlores, 0301_ConteoEstados, E02_ConteoFlores, E03_ConteoEstados, M_Lotes, M_Time
+  0401_Estados_planta               profundidad=0 consultas + 3 tablas
+       E03_ConteoEstados, M_Lotes, M_Time
+  0402_ConteoBrotes                 profundidad=0 consultas + 2 tablas
+       M_Lotes, M_Time
+  E                                 profundidad=0 consultas + 2 tablas
+       E02_ConteoFlores, E03_ConteoEstados
+  H0100_Resumen_kgCosecha           profundidad=0 consultas + 3 tablas
+       H00_VolumenCampo, M_Lotes, M_Time
+  H0101_ResumenHistoricos           profundidad=0 consultas + 4 tablas
+       H01_ProdHistorica, M_Lotes, M_Poda, M_Time
+  H0102_Producciondiaria            profundidad=0 consultas + 3 tablas
+       H01_ProdHistorica, M_Lotes, M_Time
+  H0103_ResModulo                   profundidad=0 consultas + 2 tablas
+       H01_ProdHistorica, M_Lotes
+  H0104_FechaFinCosecha             profundidad=1 consultas + 4 tablas
+       H0101_ResumenHistoricos, H01_ProdHistorica, M_Lotes, M_Poda, M_Time
+  H0105_RendTurno_paña              profundidad=1 consultas + 4 tablas
+       H0101_ResumenHistoricos, H01_ProdHistorica, M_Lotes, M_Poda, M_Time
+  H0201_PesoBaya_Elifab             profundidad=0 consultas + 3 tablas
+       H01_ProdHistorica, H02_BDElifab, M_EquivalenciaElifab
+  H0501_VariablesClima              profundidad=0 consultas + 2 tablas
+       H05_Clima, M_Time
+  H0502_Temperatura_variacion       profundidad=1 consultas + 2 tablas
+       H0501_VariablesClima, H05_Clima, M_Time
+  M_EdadCultivo                     profundidad=0 consultas + 1 tablas
+       M_Lotes
+  M_Lote_turno                      profundidad=0 consultas + 1 tablas
+       M_Lotes
+  M_Mod                             profundidad=0 consultas + 1 tablas
+       M_Lotes
+  R0101_KgCosecha                   profundidad=0 consultas + 2 tablas
+       M_Lotes, M_Time
+  R0801_Forecast_Campaña_SemMes     profundidad=0 consultas + 3 tablas
+       M_Lotes, M_Time, R08_Forecast_Campaña
+  R0801_ResCampaña                  profundidad=1 consultas + 2 tablas
+       M_Lotes, M_Mod, R08_Forecast_Campaña
+  R0802_ResumenAño                  profundidad=2 consultas + 2 tablas
+       H0103_ResModulo, H01_ProdHistorica, M_Lotes, M_Mod
+  R0901_Forecas_SemAc               profundidad=0 consultas + 1 tablas
+       R09_Forecast_Semanal
+  R0902_Forecast_Sem_vs_Camp        profundidad=0 consultas + 3 tablas
+       M_Time, R08_Forecast_Campaña, R09_Forecast_Semanal
+  R0903_Forecast_FrtsTotal          profundidad=0 consultas + 2 tablas
+       M_Lotes, R09_Forecast_Semanal
+  TPlantas                          profundidad=0 consultas + 1 tablas
+       M_Lotes
+
+SECCION 4 - TABLAS SIN NINGUN CONSUMIDOR
+----------------------------------------------------------------------------------------------------
+  E05_DiametrosBayas   <-- ninguna consulta la lee: dato capturado que nunca llega a un tablero
+  Errores de pegado   <-- ninguna consulta la lee: dato capturado que nunca llega a un tablero
+  M_Evaluadores   <-- ninguna consulta la lee: dato capturado que nunca llega a un tablero
+  M_nMuestra   <-- ninguna consulta la lee: dato capturado que nunca llega a un tablero
+
+SECCION 5 - CONSULTAS HOJA (nadie depende de ellas: son puntos de consumo final / Power BI)
+----------------------------------------------------------------------------------------------------
+  0105_AcumFlores
+  0106_RaFloYem
+  0107_YemasAb
+  0108_diam
+  01_Flores_C2025
+  0304_ConteoEst_Flo_Turno
+  0305_Brotes_Ramas
+  0306_FrutosFlores
+  0307_EstadosFlores
+  0401_Estados_planta
+  0402_ConteoBrotes
+  E
+  H0100_Resumen_kgCosecha
+  H0102_Producciondiaria
+  H0104_FechaFinCosecha
+  H0105_RendTurno_paña
+  H0201_PesoBaya_Elifab
+  H0502_Temperatura_variacion
+  M_EdadCultivo
+  M_Lote_turno
+  R0101_KgCosecha
+  R0801_Forecast_Campaña_SemMes
+  R0801_ResCampaña
+  R0802_ResumenAño
+  R0901_Forecas_SemAc
+  R0902_Forecast_Sem_vs_Camp
+  R0903_Forecast_FrtsTotal
+  TPlantas
+
+SECCION 6 - OBJETOS REFERENCIADOS QUE NO EXISTEN
+----------------------------------------------------------------------------------------------------
+  0402_ConteoBrotes                   referencia a: E04_ConteoBrotes
+  R0101_KgCosecha                     referencia a: R01_VolumenCampo
+  R0802_ResumenAño                    referencia a: R0901_ResCampaña

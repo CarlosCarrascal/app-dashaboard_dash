@@ -1,0 +1,17 @@
+table EMPRESA
+	lineageTag: 1e97f792-354e-4751-9f47-46c8e814e61e
+
+	column Fundo
+		lineageTag: a01570ba-1f93-4741-bbda-efad7c97d3cf
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: E02_ConteoFlores[Fundo]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition EMPRESA = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(E02_ConteoFlores[Fundo])
+
+	annotation PBI_Id = ea42e15539cb4be8a84364df8f42f99f
+

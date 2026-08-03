@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "SEGUIMIENTO DE CAMPAÑA"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "632435e0-c297-4862-b77d-566f9a563254"
+  }
+}

@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # El DDL se aplica de verdad sobre un PostgreSQL limpio. Es la única forma de saber que
+  # un cambio de esquema no rompe nada: sin datos no se puede validar el contenido, pero sí
+  # que las capas se crean en orden y que las restricciones son declarables.
+  esquema:
+    name: Esquema
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: aquanqa
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci
+      PGDATABASE: aquanqa
+      PGCLIENTENCODING: UTF8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Aplicar capas en orden
+        run: |
+          for dir in 00_bootstrap 10_raw 20_stg 30_qua 40_dim 50_fact 60_reporting; do
+            node scripts/run.mjs sql "$dir"
+          done
+      - name: Verificar que las capas existen
+        run: |
+          node scripts/run.mjs psql -tAc \
+            "SELECT string_agg(nspname, ',' ORDER BY nspname) FROM pg_namespace
+             WHERE nspname IN ('raw','stg','qua','core','dim','fact','reporting')"
+
+  sql-lint:
+    name: SQL · sqlfluff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install sqlfluff
+      - run: sqlfluff lint packages/db/sql --dialect postgres
+
+  etl:
+    name: ETL · ruff + pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      # pyodbc necesita unixODBC para compilar; el driver de Access solo existe en Windows,
+      # así que en CI se ejecutan las pruebas que no tocan Access (-m "not db").
+      - run: sudo apt-get update && sudo apt-get install -y unixodbc-dev
+      - run: pip install -e "etl[dev]"
+      - run: ruff check etl
+      - run: pytest etl -m "not db"
+
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci || npm install
+      - run: npm run typecheck --if-present
+
+  # El modelo semántico se versiona en TMDL para que un cambio sea revisable. Este trabajo
+  # impide que vuelvan a entrar las dimensiones calculadas y los mapeos de negocio en DAX
+  # que documenta el hallazgo B-2/B-3 (ADR-0004).
+  bi-guardrail:
+    name: BI · frontera de transformación
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sin dimensiones fabricadas ni mapeos de negocio en el modelo
+        run: |
+          set +e
+          fallos=0
+          if grep -rn "SUMMARIZECOLUMNS" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::Hay una dimensión construida con SUMMARIZECOLUMNS. Las dimensiones vienen de reporting (ADR-0004)."
+            grep -rn "SUMMARIZECOLUMNS" bi/semantic-model --include='*.tmdl'
+            fallos=1
+          fi
+          if grep -rn "Table.ReplaceValue" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::Hay limpieza de texto en Power Query. Normalizar en stg (ADR-0004)."
+            grep -rn "Table.ReplaceValue" bi/semantic-model --include='*.tmdl'
+            fallos=1
+          fi
+          if grep -rn "Access.Database" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::El modelo sigue apuntando a Access. El origen es PostgreSQL."
+            fallos=1
+          fi
+          exit $fallos

@@ -1,0 +1,17 @@
+table DNI
+	lineageTag: 514c2618-6309-4986-b16b-84fbe73f38e0
+
+	column Documento
+		lineageTag: 330db5d1-beb2-4936-8c5e-7d87681c69ca
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: 2026[Documento]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DNI = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS('2026'[Documento])
+
+	annotation PBI_Id = 47aab5830db14d38ae7345529ae2e43b
+

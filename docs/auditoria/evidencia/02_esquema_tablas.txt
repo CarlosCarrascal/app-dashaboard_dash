@@ -1,0 +1,327 @@
+﻿ESQUEMA DE TABLAS - BD_AQUANQA_26.accdb
+Generado: 2026-08-02 | Proveedor: Microsoft.ACE.OLEDB.16.0
+Tipos OLEDB: 2=SmallInt 3=Integer 4=Single 5=Double 7=Date 11=Boolean 130=WChar
+====================================================================================================
+
+TABLA: E01_Ramas   (94236 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Id                                 130    25        0
+2    Actividad                          130    25        0
+3    Evaluador                          130    8         0
+4    Fecha                              7                0
+5    Fundo                              130    25        0
+6    Modulo                             130    5         0
+7    Lote                               130    5         0
+8    Cortina                            2                0
+9    Hilera                             2                0
+10   Planta                             2                0
+11   Ramas <5                           2                22
+12   Ramas >5                           2                29
+13   # Ramas                            2                0
+14   Diametro                           4                0
+
+TABLA: E02_ConteoFlores   (43490 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Item                               130    0         0
+2    Fecha                              7                0
+3    Evaluador                          130    8         0
+4    Fundo                              130    25        0
+5    Modulo                             130    4         0
+6    Lote                               130    5         0
+7    Cortina                            2                0
+8    Hilera                             2                0
+9    Planta                             2                0
+10   nFlores                            2                250
+11   Cuajo                              2                38154
+12   YA                                 2                31567
+13   YP                                 2                31958
+14   Hora                               7                14862
+
+TABLA: E03_ConteoEstados   (18714 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Item                               130    0         0
+2    Fecha                              7                0
+3    Evaluador                          130    8         0
+4    Fundo                              130    25        0
+5    Modulo                             130    4         0
+6    Lote                               130    5         0
+7    Cortina                            2                0
+8    Hilera                             2                0
+9    Planta                             2                0
+10   E1                                 2                0
+11   E2                                 2                0
+12   E3                                 2                0
+13   E4                                 2                0
+14   E5                                 2                0
+15   Total                              2                1
+16   F16                                130    255       5484
+
+TABLA: E04_Brotes   (3385 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Piso                               130    10        0
+2    Fecha                              7                0
+3    Evaluador                          130    10        0
+4    Fundo                              130    25        0
+5    Modulo                             130    5         0
+6    Lote                               130    5         0
+7    Cortina                            2                0
+8    Hilera                             2                0
+9    Planta                             2                0
+10   Brotes                             2                0
+11   Des1                               130    255       3145
+12   Des2                               130    255       3380
+13   Des3                               130    255       3380
+14   Des4                               130    255       3385
+15   Des5                               130    255       3385
+16   Hora                               7                2356
+
+TABLA: E05_DiametrosBayas   (4193 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Modulo                             130    4         0
+2    Turno                              130    5         0
+3    Lote                               130    5         0
+4    Cortina                            2                0
+5    Hilera                             2                0
+6    Diametro                           4                0
+7    Fecha                              7                0
+
+TABLA: Errores de pegado   (0 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    F1                                 130    255       0
+2    F2                                 7                0
+3    F3                                 130    255       0
+4    F4                                 130    255       0
+5    F5                                 130    255       0
+6    F6                                 130    255       0
+7    F7                                 5                0
+8    F8                                 5                0
+9    F9                                 5                0
+10   F10                                5                0
+11   F11                                5                0
+12   F12                                5                0
+13   F13                                5                0
+14   F14                                5                0
+15   F15                                130    255       0
+16   F16                                7                0
+
+TABLA: H00_VolumenCampo   (30812 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Campaña                            130    8         1
+2    Fecha                              7                1
+3    Fundo                              130    25        1
+4    Variedad                           130    25        1
+5    Modulo                             130    8         1
+6    Lote                               130    5         1
+7    KG                                 4                0
+
+TABLA: H01_ProdHistorica   (30626 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Fundo                              130    25        2
+2    Campaña                            130    8         2
+3    Modulo                             130    5         2
+4    Turno                              130    5         2
+5    Lote                               130    5         2
+6    nPlantas                           2                2
+7    Fecha                              7                2
+8    Semana                             2                2
+9    KG                                 4                0
+10   Paña                               4                2
+11   Peso                               4                10
+
+TABLA: H02_BDElifab   (117536 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Clases                             130    255       0
+2    Recuento                           4                30
+3    Peso total (kg)                    4                1
+4    %                                  4                3102
+5    Lote                               130    255       1254
+6    Programa de clasificación          130    255       391
+7    Contenedores esperados             130    255       10439
+8    Contenedores volcados              130    255       13085
+9    Peso total (kg)2                   4                0
+10   Hora de inicio                     7                56173
+11   Hora de finalización               7                56172
+12   Fecha Cosecha                      7                0
+13   Fecha Proceso                      7                0
+14   Productor1                         130    255       0
+15   Variedad                           130    255       0
+16   Modulo                             130    255       0
+17   Turno                              130    255       7708
+18   Calibrador                         130    255       0
+19   ACDT                               130    255       0
+20   Calibre                            130    255       0
+21   ACDT 2                             130    255       0
+22   ENSAYO                             130    255       0
+23   Mercado                            130    255       0
+24   Semana                             130    255       0
+25   S26                                130    255       0
+26   S271                               130    255       0
+27   Módulo                             130    255       0
+28   Productor                          130    255       0
+29   Acidez                             130    255       0
+30   Defecto                            130    255       0
+31   Packet                             130    255       0
+32   Clasificación                      130    255       0
+33   Año                                5                0
+34   Calibres                           130    255       0
+35   Mes                                130    255       0
+
+TABLA: H05_Clima   (155588 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Fecha                              7                0
+2    Barometro                          4                95
+3    Temp                               4                0
+4    TembAlta                           4                0
+5    TempBaja                           4                0
+6    Humedad                            4                0
+7    PuntoRocio                         4                0
+8    BulboHumedo                        4                0
+9    VelViento                          4                0
+10   DirecViento                        130    10        7830
+11   VientoCorriente                    4                0
+12   AltaVelViento                      3                0
+13   AltaDirecViento                    130    10        2351
+14   VientoFrio                         3                0
+15   IndiceCalor                        3                0
+16   THWIndex                           4                0
+17   TSHWIndex                          4                3
+18   Lluvia                             4                0
+19   TasaLluvia                         4                0
+20   RadSol                             4                0
+21   EnerSolar                          4                0
+22   RadSolAlta                         4                0
+23   ET-mm                              4                0
+24   DGCalentamiento                    4                0
+25   DGEnfriamiento                     4                0
+
+TABLA: M_EquivalenciaElifab   (15 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Productor                          130    25        0
+2    Empresa                            130    25        0
+
+TABLA: M_Evaluadores   (31 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    DNI                                130    8         0
+2    Nombres                            130    50        0
+3    Apellidos                          130    50        0
+4    Cod                                130    10        1
+5    InicioLabores                      130    255       12
+6    Nacimiento                         130    255       4
+7    Zona                               130    255       1
+8    Celular                            130    255       4
+9    Estado                             11     2         0
+
+TABLA: M_Lotes   (860 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Fundo                              130    50        0
+2    FundoPPto                          130    25        0
+3    Variedad                           130    25        0
+4    Modulo                             130    5         0
+5    Turno                              130    5         0
+6    Lote                               130    5         0
+7    Area                               4                0
+8    NPlantas                           2                0
+9    FSiembra                           7                1
+10   Maceta                             130    25        155
+11   TipoFibra                          130    25        240
+12   KeyMap                             130    11        53
+13   Fundo_pptom5                       130    255       0
+14   Moduloo                            130    255       0
+15   kk                                 130    255       0
+
+TABLA: M_nMuestra   (681 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Evaluacion                         130    25        0
+2    Fundo                              130    15        0
+3    Modulo                             130    3         0
+4    Turno                              130    3         0
+5    Lote                               130    4         0
+6    Cortina                            2                255
+7    Hilera                             2                255
+8    Planta                             2                255
+9    Muestras                           2                0
+
+TABLA: M_Poda   (2159 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Campaña                            130    6         0
+2    Fundo                              130    25        0
+3    Variedad                           130    25        0
+4    Modulo                             130    8         0
+5    Turno                              130    5         0
+6    Lote                               130    8         0
+7    Area                               4                0
+8    FSiembra                           7                58
+9    FInicio                            7                2
+
+TABLA: M_Time   (2189 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Fecha                              7                0
+2    Sem                                2                0
+3    Mes                                130    3         0
+4    Año                                2                0
+5    SEvConteo                          2                965
+6    AQII                               130    1         2189
+7    MesSem                             130    5         707
+
+TABLA: R08_Forecast_Campaña   (101715 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Version                            130    25        1
+2    Fundo                              130    30        1
+3    FundoPPto                          130    30        1
+4    Modulo                             130    5         1
+5    Turno                              130    5         1
+6    Año                                2                1
+7    Semana                             2                1
+8    KG Exp                             4                0
+9    Kg Des                             4                1
+10   Kg Con                             4                1
+11   FrtTotal_Exp                       4                17484
+12   Campaña                            130    12        1
+13   C12                                4                13121
+14   C14                                4                13121
+15   C16                                4                13121
+16   C18                                4                13121
+17   C19                                4                13121
+18   C20                                4                13121
+19   C22                                4                13121
+20   C24                                4                13121
+21   C26                                4                13121
+
+TABLA: R09_Forecast_Semanal   (48368 filas)
+----------------------------------------------------------------------------------------------------
+#    COLUMNA                            TIPO   LONGITUD  NULOS
+1    Campaña                            130    10        0
+2    Pasada                             3                22765
+3    Mod                                130    5         0
+4    Turno                              130    5         0
+5    Lote                               130    5         0
+6    Area                               4                0
+7    FCosAnt                            7                0
+8    FCos                               7                0
+9    Sem                                2                0
+10   FrtCos                             4                0
+11   Peso                               3                22765
+12   FrutosTotal                        3                22765
+13   Rend                               4                0
+14   Kg                                 4                0
+15   Dr                                 2                0
+16   Version                            130    10        0
+17   FundPPTo                           130    50        0
+18   Fundo                              130    50        0

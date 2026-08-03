@@ -1,0 +1,506 @@
+### RELATIONSHIPS ###
+REL MSysNavPaneGroupCategoriesMSysNavPaneGroups : MSysNavPaneGroupCategories => MSysNavPaneGroups [Id->GroupCategoryID] attr=4352
+REL MSysNavPaneGroupsMSysNavPaneGroupToObjects : MSysNavPaneGroups => MSysNavPaneGroupToObjects [Id->GroupID] attr=4352
+### INDEXES ###
+IDX E01_Ramas                Id                     uniq=False pk=False [Id]
+IDX E03_ConteoEstados        PrimaryKey             uniq=True pk=True [Modulo,Lote,Cortina,Hilera,Planta,E1,Fecha]
+IDX E04_Brotes               PrimaryKey             uniq=True pk=True [Piso,Fundo,Modulo,Lote,Cortina,Hilera,Planta]
+IDX M_Time                   PrimaryKey             uniq=True pk=True [Fecha]
+### QUERIES ###
+@@@QUERY: 01_Flores_C2025
+SELECT M_Poda.Campaña, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, [0104_PromFlores].Turno, [0104_PromFlores].Lote, M_Lotes.NPlantas, [0104_PromFlores].PromFlores, [0104_PromFlores].Año, [0104_PromFlores].Sem, M_Poda.FInicio, [0104_PromFlores].MínDeFecha
+FROM ((0104_PromFlores LEFT JOIN M_Poda ON ([0104_PromFlores].Fundo = M_Poda.Fundo) AND ([0104_PromFlores].Turno = M_Poda.Turno) AND ([0104_PromFlores].Modulo = M_Poda.Modulo) AND ([0104_PromFlores].Lote = M_Poda.Lote)) LEFT JOIN M_Lotes ON ([0104_PromFlores].Fundo = M_Lotes.FundoPPto) AND ([0104_PromFlores].Modulo = M_Lotes.Modulo) AND ([0104_PromFlores].Lote = M_Lotes.Lote)) INNER JOIN M_Time ON [0104_PromFlores].Sem = M_Time.SEvConteo;
+
+@@@QUERY: 0101_Diametros
+SELECT E01_Ramas.Id, E01_Ramas.Actividad, E01_Ramas.Evaluador, E01_Ramas.Fecha, M_Lotes.Turno, E01_Ramas.Fundo, E01_Ramas.Modulo, E01_Ramas.Lote, E01_Ramas.Cortina, E01_Ramas.Hilera, E01_Ramas.Planta, E01_Ramas.[Ramas <5], E01_Ramas.[Ramas >5], E01_Ramas.[# Ramas], E01_Ramas.Diametro, M_Lotes.KeyMap
+FROM M_Lotes RIGHT JOIN E01_Ramas ON (M_Lotes.Modulo = E01_Ramas.Modulo) AND (M_Lotes.Lote = E01_Ramas.Lote) AND (M_Lotes.FundoPPto = E01_Ramas.Fundo);
+
+@@@QUERY: 0102_CantRamas
+SELECT [0101_Diametros].Fecha, [0101_Diametros].Turno, [0101_Diametros].Fundo, [0101_Diametros].Modulo, [0101_Diametros].Lote, [0101_Diametros].Cortina, [0101_Diametros].Hilera, [0101_Diametros].Planta, [0101_Diametros].[Ramas <5], [0101_Diametros].[Ramas >5], [0101_Diametros].[Ramas <5]+[0101_Diametros].[Ramas >5] AS TotalRamas, [0101_Diametros].KeyMap
+FROM 0101_Diametros
+GROUP BY [0101_Diametros].Fecha, [0101_Diametros].Turno, [0101_Diametros].Fundo, [0101_Diametros].Modulo, [0101_Diametros].Lote, [0101_Diametros].Cortina, [0101_Diametros].Hilera, [0101_Diametros].Planta, [0101_Diametros].[Ramas <5], [0101_Diametros].[Ramas >5], [0101_Diametros].KeyMap;
+
+@@@QUERY: 0104_PromFlores
+SELECT E02_ConteoFlores.Fundo, E02_ConteoFlores.Modulo, M_Lotes.Turno, E02_ConteoFlores.Lote, M_Time.Año, Avg([E02_ConteoFlores.Cuajo]) AS PromCuajo, Avg(E02_ConteoFlores.nFlores) AS PromFlores, Avg(E02_ConteoFlores.YA) AS PromYA, Avg(E02_ConteoFlores.YP) AS PromYP, M_Time.Sem, Min(E02_ConteoFlores.Fecha) AS MínDeFecha, M_Lotes.KeyMap, M_Lotes.kk
+FROM (M_Lotes RIGHT JOIN E02_ConteoFlores ON (M_Lotes.FundoPPto = E02_ConteoFlores.Fundo) AND (M_Lotes.Modulo = E02_ConteoFlores.Modulo) AND (M_Lotes.Lote = E02_ConteoFlores.Lote)) LEFT JOIN M_Time ON E02_ConteoFlores.Fecha = M_Time.Fecha
+GROUP BY E02_ConteoFlores.Fundo, E02_ConteoFlores.Modulo, M_Lotes.Turno, E02_ConteoFlores.Lote, M_Time.Año, M_Time.Sem, M_Lotes.KeyMap, M_Lotes.kk;
+
+@@@QUERY: 0105_AcumFlores
+SELECT [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, [0104_PromFlores].Lote, Sum([0104_PromFlores].PromFlores) AS SumaDePromFlores, [0104_PromFlores].Año
+FROM 0104_PromFlores
+GROUP BY [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, [0104_PromFlores].Lote, [0104_PromFlores].Año;
+
+@@@QUERY: 0106_RaFloYem
+SELECT RES.Año, RES.Sem, RES.Fundo, RES.Modulo, RES.Turno, RES.Lote, RES.Valor, RES.KeyMap, RES.Evaluacion, left(RES.KeyMap,InStr(1,RES.KeyMap,"L")-1) AS kk
+FROM (SELECT M_Time.Año, M_Time.Sem, [0102_CantRamas].Fundo, [0102_CantRamas].Modulo, [0102_CantRamas].Turno, [0102_CantRamas].Lote, Avg([0102_CantRamas].[Ramas >5]) AS Valor, [0102_CantRamas].KeyMap, "Ramas" as Evaluacion
+FROM 0102_CantRamas INNER JOIN M_Time ON [0102_CantRamas].Fecha = M_Time.Fecha
+GROUP BY M_Time.Año, M_Time.Sem, [0102_CantRamas].Fundo, [0102_CantRamas].Modulo, [0102_CantRamas].Turno, [0102_CantRamas].Lote, [0102_CantRamas].KeyMap
+
+union ALL
+SELECT [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromFlores, [0104_PromFlores].KeyMap, "Flores" as Evaluacion
+FROM M_Lotes INNER JOIN 0104_PromFlores ON (M_Lotes.Lote = [0104_PromFlores].Lote) AND (M_Lotes.Modulo = [0104_PromFlores].Modulo) AND (M_Lotes.FundoPPto = [0104_PromFlores].Fundo)
+GROUP BY [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromFlores, [0104_PromFlores].KeyMap
+
+UNION ALL SELECT [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromYA, [0104_PromFlores].KeyMap, "YemaAb" AS Evaluacion
+FROM M_Lotes INNER JOIN 0104_PromFlores ON (M_Lotes.FundoPPto = [0104_PromFlores].Fundo) AND (M_Lotes.Modulo = [0104_PromFlores].Modulo) AND (M_Lotes.Lote = [0104_PromFlores].Lote)
+GROUP BY [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromYA, [0104_PromFlores].KeyMap
+UNION ALL SELECT M_Time.Año, M_Time.Sem, [0101_Diametros].Fundo, [0101_Diametros].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0101_Diametros].Diametro, [0101_Diametros].KeyMap, "Diametro" AS Evaluacion
+FROM (M_Lotes INNER JOIN 0101_Diametros ON (M_Lotes.Lote = [0101_Diametros].Lote) AND (M_Lotes.Modulo = [0101_Diametros].Modulo) AND (M_Lotes.FundoPPto = [0101_Diametros].Fundo)) INNER JOIN M_Time ON [0101_Diametros].Fecha = M_Time.Fecha)  AS RES;
+
+@@@QUERY: 0107_YemasAb
+SELECT [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromYA, [0104_PromFlores].KeyMap, "YemaAb" AS Evaluacion
+FROM M_Lotes INNER JOIN 0104_PromFlores ON (M_Lotes.Lote = [0104_PromFlores].Lote) AND (M_Lotes.Modulo = [0104_PromFlores].Modulo) AND (M_Lotes.FundoPPto = [0104_PromFlores].Fundo)
+GROUP BY [0104_PromFlores].Año, [0104_PromFlores].Sem, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0104_PromFlores].PromYA, [0104_PromFlores].KeyMap;
+
+@@@QUERY: 0108_diam
+SELECT M_Time.Año, M_Time.Sem, [0101_Diametros].Fundo, [0101_Diametros].Modulo, M_Lotes.Turno, M_Lotes.Lote, [0101_Diametros].Diametro, [0101_Diametros].KeyMap, "Diametro" AS Evaluacion
+FROM (M_Lotes INNER JOIN 0101_Diametros ON (M_Lotes.FundoPPto = [0101_Diametros].Fundo) AND (M_Lotes.Modulo = [0101_Diametros].Modulo) AND (M_Lotes.Lote = [0101_Diametros].Lote)) INNER JOIN M_Time ON [0101_Diametros].Fecha = M_Time.Fecha;
+
+@@@QUERY: 0201_Flores
+SELECT E02_ConteoFlores.Item, E02_ConteoFlores.Evaluador, E02_ConteoFlores.Fundo, M_Lotes.Fundo_pptom5, E02_ConteoFlores.Modulo, M_Lotes.Turno, E02_ConteoFlores.Lote, E02_ConteoFlores.Cortina, E02_ConteoFlores.Hilera, E02_ConteoFlores.Planta, E02_ConteoFlores.nFlores, E02_ConteoFlores.YA, E02_ConteoFlores.YP, E02_ConteoFlores.Fecha, M_Time.Sem, M_Time.Año, M_Lotes.KeyMap, M_Poda.FInicio
+FROM ((M_Lotes INNER JOIN E02_ConteoFlores ON (M_Lotes.FundoPPto = E02_ConteoFlores.Fundo) AND (M_Lotes.Modulo = E02_ConteoFlores.Modulo) AND (M_Lotes.Lote = E02_ConteoFlores.Lote)) INNER JOIN M_Time ON E02_ConteoFlores.Fecha = M_Time.Fecha) INNER JOIN M_Poda ON (E02_ConteoFlores.Lote = M_Poda.Lote) AND (E02_ConteoFlores.Modulo = M_Poda.Modulo) AND (E02_ConteoFlores.Fundo = M_Poda.Fundo)
+WHERE (((M_Poda.Campaña) = "C2026"));
+
+@@@QUERY: 0202_FloresTurno
+SELECT [0201_Flores].Año, [0201_Flores].Sem, CDate(Round(Avg([0201_Flores].Fecha),0)) AS Fecha, [0201_Flores].Fundo, [0201_Flores].Fundo_pptom5, [0201_Flores].Modulo, [0201_Flores].Turno, "Flor" AS Estado, Avg([0201_Flores].nFlores) AS Cantidad, Sum([0201_Flores].nFlores) AS SumaTotal, Count([0201_Flores].nFlores) AS n
+FROM 0201_Flores
+GROUP BY [0201_Flores].Año, [0201_Flores].Sem, [0201_Flores].Fundo, [0201_Flores].Fundo_pptom5, [0201_Flores].Modulo, [0201_Flores].Turno;
+
+@@@QUERY: 0301_ConteoEstados
+SELECT E03_ConteoEstados.Item, E03_ConteoEstados.Evaluador, E03_ConteoEstados.Fundo, E03_ConteoEstados.Modulo, M_Lotes.Turno, E03_ConteoEstados.Lote, M_Lotes.Area, M_Lotes.NPlantas, E03_ConteoEstados.Cortina, E03_ConteoEstados.Hilera, E03_ConteoEstados.Planta, E03_ConteoEstados.E1, E03_ConteoEstados.E2, E03_ConteoEstados.E3, E03_ConteoEstados.E4, E03_ConteoEstados.E5, E03_ConteoEstados.Total, E03_ConteoEstados.Fecha, "C" & E03_ConteoEstados.Cortina & "H" & E03_ConteoEstados.Hilera & "P" & E03_ConteoEstados.Planta AS codPlt, Right(E03_ConteoEstados.Fundo,2) & E03_ConteoEstados.Modulo & M_Lotes.Turno AS Key1, M_Lotes.KeyMap, M_Lotes.kk, M_Lotes.Fundo_pptom5, M_Time.Año, M_Time.Sem, M_Time.SEvConteo
+FROM (M_Lotes RIGHT JOIN E03_ConteoEstados ON (M_Lotes.Lote = E03_ConteoEstados.Lote) AND (E03_ConteoEstados.Modulo = M_Lotes.Modulo) AND (M_Lotes.FundoPPto = E03_ConteoEstados.Fundo)) INNER JOIN M_Time ON E03_ConteoEstados.Fecha = M_Time.Fecha;
+
+@@@QUERY: 0302_ConteoAjustado
+SELECT [0301_ConteoEstados].Año, [0301_ConteoEstados].Sem, cdate(round(Avg([0301_ConteoEstados].Fecha),0)) AS Fecha, [0301_ConteoEstados].Fundo, [0301_ConteoEstados].Modulo, [0301_ConteoEstados].Turno, Sum([0301_ConteoEstados].E1)/(Sum([0301_ConteoEstados].E1)+Sum([0301_ConteoEstados].E2)+Sum([0301_ConteoEstados].E3)+Sum([0301_ConteoEstados].E4)+Sum([0301_ConteoEstados].E5)) AS pE1, Sum([0301_ConteoEstados].E2)/(Sum([0301_ConteoEstados].E1)+Sum([0301_ConteoEstados].E2)+Sum([0301_ConteoEstados].E3)+Sum([0301_ConteoEstados].E4)+Sum([0301_ConteoEstados].E5)) AS pE2, Sum([0301_ConteoEstados].E3)/(Sum([0301_ConteoEstados].E1)+Sum([0301_ConteoEstados].E2)+Sum([0301_ConteoEstados].E3)+Sum([0301_ConteoEstados].E4)+Sum([0301_ConteoEstados].E5)) AS pE3, Sum([0301_ConteoEstados].E4)/(Sum([0301_ConteoEstados].E1)+Sum([0301_ConteoEstados].E2)+Sum([0301_ConteoEstados].E3)+Sum([0301_ConteoEstados].E4)+Sum([0301_ConteoEstados].E5)) AS pE4, Sum([0301_ConteoEstados].E5)/(Sum([0301_ConteoEstados].E1)+Sum([0301_ConteoEstados].E2)+Sum([0301_ConteoEstados].E3)+Sum([0301_ConteoEstados].E4)+Sum([0301_ConteoEstados].E5)) AS pE5, Sum([0301_ConteoEstados].Total) AS SumTotal, Count([0301_ConteoEstados].Planta) AS n, Sum([0301_ConteoEstados].Total)/Count([0301_ConteoEstados].Planta) AS FrutosxPl, [0301_ConteoEstados].Fundo_pptom5
+FROM 0301_ConteoEstados
+GROUP BY [0301_ConteoEstados].Año, [0301_ConteoEstados].Sem, [0301_ConteoEstados].Fundo, [0301_ConteoEstados].Modulo, [0301_ConteoEstados].Turno, [0301_ConteoEstados].Fundo_pptom5
+HAVING (((Sum([0301_ConteoEstados].Total))>0));
+
+@@@QUERY: 0303_ConteoEstados_Turno
+SELECT EstTurno.Año, EstTurno.Sem, EstTurno.Fecha, EstTurno.Fundo, EstTurno.Fundo_pptom5, EstTurno.Modulo, EstTurno.Turno, EstTurno.Estado, EstTurno.Cantidad, EstTurno.SumTotal, EstTurno.n
+FROM (SELECT [0302_ConteoAjustado].Año, [0302_ConteoAjustado].Sem, [0302_ConteoAjustado].Fecha, [0302_ConteoAjustado].Fundo, [0302_ConteoAjustado].Fundo_pptom5, [0302_ConteoAjustado].Modulo, [0302_ConteoAjustado].Turno, "Est1" as Estado, [0302_ConteoAjustado].pE1*[0302_ConteoAjustado].FrutosxPl as Cantidad, [0302_ConteoAjustado].FrutosxPl, [0302_ConteoAjustado].SumTotal, [0302_ConteoAjustado].n
+FROM 0302_ConteoAjustado
+
+union all
+
+SELECT [0302_ConteoAjustado].Año, [0302_ConteoAjustado].Sem, [0302_ConteoAjustado].Fecha, [0302_ConteoAjustado].Fundo, [0302_ConteoAjustado].Fundo_pptom5, [0302_ConteoAjustado].Modulo, [0302_ConteoAjustado].Turno, "Est2" as Estado, [0302_ConteoAjustado].pE2*[0302_ConteoAjustado].FrutosxPl as Cantidad, [0302_ConteoAjustado].FrutosxPl, [0302_ConteoAjustado].SumTotal, [0302_ConteoAjustado].n
+FROM 0302_ConteoAjustado
+
+union all
+
+SELECT [0302_ConteoAjustado].Año, [0302_ConteoAjustado].Sem, [0302_ConteoAjustado].Fecha, [0302_ConteoAjustado].Fundo, [0302_ConteoAjustado].Fundo_pptom5, [0302_ConteoAjustado].Modulo, [0302_ConteoAjustado].Turno, "Est3" as Estado, [0302_ConteoAjustado].pE3*[0302_ConteoAjustado].FrutosxPl as Cantidad, [0302_ConteoAjustado].FrutosxPl, [0302_ConteoAjustado].SumTotal, [0302_ConteoAjustado].n
+FROM 0302_ConteoAjustado
+
+union all
+
+SELECT [0302_ConteoAjustado].Año, [0302_ConteoAjustado].Sem, [0302_ConteoAjustado].Fecha, [0302_ConteoAjustado].Fundo, [0302_ConteoAjustado].Fundo_pptom5, [0302_ConteoAjustado].Modulo, [0302_ConteoAjustado].Turno, "Est4" as Estado, [0302_ConteoAjustado].pE4*[0302_ConteoAjustado].FrutosxPl as Cantidad, [0302_ConteoAjustado].FrutosxPl, [0302_ConteoAjustado].SumTotal, [0302_ConteoAjustado].n
+FROM 0302_ConteoAjustado
+
+union all
+
+SELECT [0302_ConteoAjustado].Año, [0302_ConteoAjustado].Sem, [0302_ConteoAjustado].Fecha, [0302_ConteoAjustado].Fundo, [0302_ConteoAjustado].Fundo_pptom5, [0302_ConteoAjustado].Modulo, [0302_ConteoAjustado].Turno, "Est5" as Estado, [0302_ConteoAjustado].pE5*[0302_ConteoAjustado].FrutosxPl as Cantidad, [0302_ConteoAjustado].FrutosxPl, [0302_ConteoAjustado].SumTotal, [0302_ConteoAjustado].n
+FROM 0302_ConteoAjustado
+
+
+
+
+)  AS EstTurno;
+
+@@@QUERY: 0304_ConteoEst_Flo_Turno
+SELECT evCont.Año, evCont.Sem, evCont.Fecha, evCont.Fundo, evCont.Fundo_pptom5, evCont.Modulo, evCont.Turno, evCont.Estado, evCont.Cantidad, evCont.SumaTotal, evCont.n
+FROM (SELECT [0202_FloresTurno].Año, [0202_FloresTurno].Sem, [0202_FloresTurno].Fecha, [0202_FloresTurno].Fundo, [0202_FloresTurno].Fundo_pptom5, [0202_FloresTurno].Modulo, [0202_FloresTurno].Turno, [0202_FloresTurno].Estado, [0202_FloresTurno].Cantidad, [0202_FloresTurno].SumaTotal, [0202_FloresTurno].n
+FROM 0202_FloresTurno
+
+UNION ALL
+
+SELECT [0303_ConteoEstados_Turno].Año, [0303_ConteoEstados_Turno].Sem, [0303_ConteoEstados_Turno].Fecha, [0303_ConteoEstados_Turno].Fundo, [0303_ConteoEstados_Turno].Fundo_pptom5, [0303_ConteoEstados_Turno].Modulo, [0303_ConteoEstados_Turno].Turno, [0303_ConteoEstados_Turno].Estado, [0303_ConteoEstados_Turno].Cantidad, [0303_ConteoEstados_Turno].SumTotal, [0303_ConteoEstados_Turno].n
+FROM 0303_ConteoEstados_Turno)  AS evCont;
+
+@@@QUERY: 0305_Brotes_Ramas
+SELECT vv.Piso, vv.Evaluador, vv.Fecha, vv.Fundo, vv.Modulo, vv.Lote, vv.Cortina, vv.Hilera, vv.Planta, vv.Brotes
+FROM (SELECT
+            E04_Brotes.Piso,
+            E04_Brotes.Evaluador,
+            E04_Brotes.Fecha,
+            E04_Brotes.Fundo,
+            E04_Brotes.Modulo,
+            E04_Brotes.Lote,
+            E04_Brotes.Cortina,
+            E04_Brotes.Hilera,
+            E04_Brotes.Planta,
+            E04_Brotes.Brotes
+        FROM
+            E04_Brotes
+        UNION ALL
+        SELECT
+            "Ramas" AS piso,
+            E01_Ramas.Evaluador,
+            E01_Ramas.Fecha,
+            E01_Ramas.Fundo,
+            E01_Ramas.Modulo,
+            E01_Ramas.Lote,
+            E01_Ramas.Cortina,
+            E01_Ramas.Hilera,
+            E01_Ramas.Planta,
+            E01_Ramas.[Ramas >5]
+        FROM
+            E01_Ramas
+        GROUP BY
+            E01_Ramas.Evaluador,
+            E01_Ramas.Fecha,
+            E01_Ramas.Fundo,
+            E01_Ramas.Modulo,
+            E01_Ramas.Lote,
+            E01_Ramas.Cortina,
+            E01_Ramas.Hilera,
+            E01_Ramas.Planta,
+            E01_Ramas.[Ramas >5]
+    )  AS vv;
+
+@@@QUERY: 0306_FrutosFlores
+SELECT edi.Fundo, edi.Modulo, edi.Turno, edi.Lote, edi.Eval, edi.Semana, edi.kk, edi.Conteo
+FROM (SELECT [0301_ConteoEstados].Fundo, [0301_ConteoEstados].Modulo, [0301_ConteoEstados].Turno, [0301_ConteoEstados].Lote, [0301_ConteoEstados].Total as Eval, [0301_ConteoEstados].SEvConteo as Semana, [0301_ConteoEstados].kk, "Estadios" as Conteo
+FROM 0301_ConteoEstados
+UNION ALL SELECT [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, [0104_PromFlores].Turno, [0104_PromFlores].Lote, [0104_PromFlores].PromFlores as Eval, [0104_PromFlores].Sem as Semana, [0104_PromFlores].kk, "Flores" as Conteo
+FROM 0104_PromFlores)  AS edi;
+
+@@@QUERY: 0307_EstadosFlores
+SELECT [0104_PromFlores].Año, [0104_PromFlores].Fundo, [0104_PromFlores].Modulo, [0104_PromFlores].Lote, [0104_PromFlores].PromFlores, [0301_ConteoEstados].Total, [0301_ConteoEstados].SEvConteo
+FROM 0104_PromFlores LEFT JOIN 0301_ConteoEstados ON ([0104_PromFlores].Fundo = [0301_ConteoEstados].Fundo) AND ([0104_PromFlores].Modulo = [0301_ConteoEstados].Modulo) AND ([0104_PromFlores].Lote = [0301_ConteoEstados].Lote) AND ([0104_PromFlores].Sem = [0301_ConteoEstados].SEvConteo) AND ([0104_PromFlores].Año = [0301_ConteoEstados].Año);
+
+@@@QUERY: 0401_Estados_planta
+SELECT M_Time.Año, M_Time.Sem, E03_ConteoEstados.Fecha, M_Lotes.Fundo, E03_ConteoEstados.Fundo AS Empresa, E03_ConteoEstados.Modulo, M_Lotes.Turno, E03_ConteoEstados.Lote, E03_ConteoEstados.Cortina, E03_ConteoEstados.Hilera, E03_ConteoEstados.Planta, E03_ConteoEstados.E1, E03_ConteoEstados.E2, E03_ConteoEstados.E3, E03_ConteoEstados.E4, E03_ConteoEstados.E5, E03_ConteoEstados.Total
+FROM (M_Lotes RIGHT JOIN E03_ConteoEstados ON (M_Lotes.Lote = E03_ConteoEstados.Lote) AND (M_Lotes.Modulo = E03_ConteoEstados.Modulo) AND (M_Lotes.FundoPPto = E03_ConteoEstados.Fundo)) LEFT JOIN M_Time ON E03_ConteoEstados.Fecha = M_Time.Fecha;
+
+@@@QUERY: 0402_ConteoBrotes
+SELECT E04_ConteoBrotes.Piso, M_Time.Año, M_Time.MesSem, M_Time.Sem, E04_ConteoBrotes.Fecha, E04_ConteoBrotes.Fundo, M_Lotes.Fundo_pptom5, E04_ConteoBrotes.Modulo, M_Lotes.Turno, E04_ConteoBrotes.Lote, E04_ConteoBrotes.Cortina, E04_ConteoBrotes.Hilera, E04_ConteoBrotes.Planta, E04_ConteoBrotes.Brotes, M_Lotes.KeyMap
+FROM M_Lotes RIGHT JOIN (E04_ConteoBrotes INNER JOIN M_Time ON E04_ConteoBrotes.Fecha = M_Time.Fecha) ON (M_Lotes.Fundo = E04_ConteoBrotes.Fundo) AND (M_Lotes.Modulo = E04_ConteoBrotes.Modulo) AND (M_Lotes.Lote = E04_ConteoBrotes.Lote);
+
+@@@QUERY: E
+SELECT E02_ConteoFlores.Actividad, E02_ConteoFlores.Fundo, E02_ConteoFlores.Evaluador, E02_ConteoFlores.Fecha, Count(E02_ConteoFlores.Planta) AS plantas, Sum(E02_ConteoFlores.nFlores) AS cant
+FROM E02_ConteoFlores
+GROUP BY E02_ConteoFlores.Actividad, E02_ConteoFlores.Fundo, E02_ConteoFlores.Evaluador, E02_ConteoFlores.Fecha
+
+UNION ALL SELECT E03_ConteoEstados.Actividad, E03_ConteoEstados.Fundo, E03_ConteoEstados.Evaluador, E03_ConteoEstados.Fecha, Count(E03_ConteoEstados.Lote) AS plantas, Sum(E03_ConteoEstados.Total) AS cant
+FROM E03_ConteoEstados
+GROUP BY E03_ConteoEstados.Actividad, E03_ConteoEstados.Fundo, E03_ConteoEstados.Evaluador, E03_ConteoEstados.Fecha;
+
+@@@QUERY: H0100_Resumen_kgCosecha
+SELECT H00_VolumenCampo.Campaña, H00_VolumenCampo.Fecha, H00_VolumenCampo.Fundo, H00_VolumenCampo.Variedad, H00_VolumenCampo.Modulo, M_Lotes.Turno, H00_VolumenCampo.Lote, H00_VolumenCampo.KG, M_Time.Sem, M_Time.Año, M_Lotes.NPlantas
+FROM M_Lotes RIGHT JOIN (H00_VolumenCampo LEFT JOIN M_Time ON H00_VolumenCampo.Fecha = M_Time.Fecha) ON (M_Lotes.Modulo = H00_VolumenCampo.Modulo) AND (M_Lotes.Lote = H00_VolumenCampo.Lote) AND (M_Lotes.FundoPPto = H00_VolumenCampo.Fundo);
+
+@@@QUERY: H0101_ResumenHistoricos
+SELECT cos.Fundo, cos.Campaña, cos.Modulo, cos.Turno, cos.Lote, M_Lotes.Area, M_Lotes.NPlantas, Sum(cos.KG) AS KG, cos.Paña, Sum(cos.FrutosT) AS FrutosT, Sum(cos.FecPon) AS FecPon, M_Poda.FInicio, cos.Fecha, cos.Semana, M_Time.Año AS anio, Cos.Modulo & Cos.Turno AS ModTur, M_Lotes.TipoFibra, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5
+FROM (((SELECT H01_ProdHistorica.Fundo, H01_ProdHistorica.Campaña, H01_ProdHistorica.Modulo, H01_ProdHistorica.Turno, H01_ProdHistorica.Lote, H01_ProdHistorica.nPlantas, H01_ProdHistorica.Fecha, H01_ProdHistorica.Semana, H01_ProdHistorica.KG, H01_ProdHistorica.Paña, H01_ProdHistorica.Peso, KG/Peso*1000 AS FrutosT, Fecha*KG AS FecPon FROM H01_ProdHistorica)  AS cos LEFT JOIN M_Lotes ON (cos.Lote = M_Lotes.Lote) AND (cos.Modulo = M_Lotes.Modulo) AND (cos.Fundo = M_Lotes.FundoPPto)) LEFT JOIN M_Poda ON (cos.Campaña = M_Poda.Campaña) AND (cos.Fundo = M_Poda.Fundo) AND (cos.Modulo = M_Poda.Modulo) AND (cos.Lote = M_Poda.Lote)) INNER JOIN M_Time ON cos.Fecha = M_Time.Fecha
+GROUP BY cos.Fundo, cos.Campaña, cos.Modulo, cos.Turno, cos.Lote, M_Lotes.Area, M_Lotes.NPlantas, cos.Paña, M_Poda.FInicio, cos.Fecha, cos.Semana, M_Time.Año, M_Lotes.TipoFibra, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5;
+
+@@@QUERY: H0102_Producciondiaria
+SELECT H01_ProdHistorica.Fundo, H01_ProdHistorica.Campaña, H01_ProdHistorica.Modulo, H01_ProdHistorica.Turno, H01_ProdHistorica.Lote, H01_ProdHistorica.nPlantas, H01_ProdHistorica.Fecha, M_Time.Sem, M_Time.Año, H01_ProdHistorica.KG, H01_ProdHistorica.Paña, H01_ProdHistorica.Peso, M_Lotes.Area
+FROM (H01_ProdHistorica INNER JOIN M_Lotes ON (H01_ProdHistorica.Fundo = M_Lotes.FundoPPto) AND (H01_ProdHistorica.Lote = M_Lotes.Lote) AND (H01_ProdHistorica.Modulo = M_Lotes.Modulo)) INNER JOIN M_Time ON H01_ProdHistorica.Fecha = M_Time.Fecha;
+
+@@@QUERY: H0103_ResModulo
+SELECT cos.Fundo, cos.Campaña, cos.Modulo, cos.año, Sum(cos.KG) AS KG, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5
+FROM (SELECT H01_ProdHistorica.Fundo, H01_ProdHistorica.Campaña, H01_ProdHistorica.Modulo, H01_ProdHistorica.Turno, H01_ProdHistorica.Lote, H01_ProdHistorica.nPlantas, H01_ProdHistorica.Fecha, H01_ProdHistorica.Semana, H01_ProdHistorica.KG, H01_ProdHistorica.Paña, H01_ProdHistorica.Peso, KG/Peso*1000 AS FrutosT, Fecha*KG AS FecPon, Year(H01_ProdHistorica.Fecha) AS año FROM H01_ProdHistorica)  AS cos LEFT JOIN M_Lotes ON (cos.Lote = M_Lotes.Lote) AND (cos.Modulo = M_Lotes.Modulo) AND (cos.Fundo = M_Lotes.FundoPPto)
+GROUP BY cos.Fundo, cos.Campaña, cos.Modulo, cos.año, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5;
+
+@@@QUERY: H0104_FechaFinCosecha
+SELECT H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Lote, H0101_ResumenHistoricos.Area, H0101_ResumenHistoricos.NPlantas, H0101_ResumenHistoricos.KG, H0101_ResumenHistoricos.Paña, H0101_ResumenHistoricos.FrutosT, H0101_ResumenHistoricos.FecPon, H0101_ResumenHistoricos.FInicio, H0101_ResumenHistoricos.Fecha, H0101_ResumenHistoricos.Semana, H0101_ResumenHistoricos.anio, H0101_ResumenHistoricos.ModTur, H0101_ResumenHistoricos.FundoPPto, H0101_ResumenHistoricos.Fundo_pptom5
+FROM H0101_ResumenHistoricos INNER JOIN (SELECT H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Lote, Max(H0101_ResumenHistoricos.Paña) AS ultPaña FROM H0101_ResumenHistoricos GROUP BY H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Lote HAVING (                 (                     (H0101_ResumenHistoricos.Campaña) = "C2026"                 )             ))  AS finPaña ON (H0101_ResumenHistoricos.Paña = finPaña.ultPaña) AND (H0101_ResumenHistoricos.Lote = finPaña.Lote) AND (H0101_ResumenHistoricos.Modulo = finPaña.Modulo) AND (H0101_ResumenHistoricos.Campaña = finPaña.Campaña) AND (H0101_ResumenHistoricos.Fundo = finPaña.Fundo)
+GROUP BY H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Lote, H0101_ResumenHistoricos.Area, H0101_ResumenHistoricos.NPlantas, H0101_ResumenHistoricos.KG, H0101_ResumenHistoricos.Paña, H0101_ResumenHistoricos.FrutosT, H0101_ResumenHistoricos.FecPon, H0101_ResumenHistoricos.FInicio, H0101_ResumenHistoricos.Fecha, H0101_ResumenHistoricos.Semana, H0101_ResumenHistoricos.anio, H0101_ResumenHistoricos.ModTur, H0101_ResumenHistoricos.FundoPPto, H0101_ResumenHistoricos.Fundo_pptom5;
+
+@@@QUERY: H0105_RendTurno_paña
+SELECT k.Campaña, k.Fundo, k.Modulo, k.Turno, k.Paña, k.KG, k.FrutosT, k.FecPon, k.Fundo_pptom5, a.Area, a.NPlantas
+FROM (SELECT H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Paña, Sum(H0101_ResumenHistoricos.KG) AS KG, Sum(H0101_ResumenHistoricos.FrutosT) AS FrutosT, Sum(H0101_ResumenHistoricos.FecPon) AS FecPon, H0101_ResumenHistoricos.Fundo_pptom5 FROM H0101_ResumenHistoricos GROUP BY H0101_ResumenHistoricos.Fundo, H0101_ResumenHistoricos.Campaña, H0101_ResumenHistoricos.Modulo, H0101_ResumenHistoricos.Turno, H0101_ResumenHistoricos.Paña, H0101_ResumenHistoricos.Fundo_pptom5 HAVING (((H0101_ResumenHistoricos.Campaña)="C2025")))  AS k INNER JOIN (SELECT M_Lotes.Fundo, M_Lotes.Fundo_pptom5, M_Lotes.Modulo, M_Lotes.Turno, Sum(M_Lotes.Area) AS Area, Sum(M_Lotes.NPlantas) AS NPlantas FROM M_Lotes GROUP BY M_Lotes.Fundo, M_Lotes.Fundo_pptom5, M_Lotes.Modulo, M_Lotes.Turno HAVING (((M_Lotes.Turno)<>"T00")))  AS a ON (k.Turno=a.Turno) AND (k.Modulo=a.Modulo) AND (k.Fundo_pptom5=a.Fundo_pptom5);
+
+@@@QUERY: H0201_PesoBaya_Elifab
+SELECT eli.Empresa, eli.modulo, eli.[Fecha Cosecha], eli.Mes, eli.año, eli.Pesototal, eli.Recuento, cam.Campaña, eli.Calibre
+FROM (SELECT
+            M_EquivalenciaElifab.Empresa,
+            IIf(
+                IsNumeric(Right(H02_BDElifab.Modulo, 1)),
+                "M" & Format(H02_BDElifab.Modulo, "00"),
+                "M" & UCase (H02_BDElifab.Modulo)
+            ) AS modulo,
+            H02_BDElifab.[Fecha Cosecha],
+            Sum(H02_BDElifab.[Peso total (kg)]) AS Pesototal,
+            Sum(H02_BDElifab.Recuento) AS Recuento,
+            Format(H02_BDElifab.[Fecha Cosecha], "mmm") AS Mes,
+            Year(H02_BDElifab.[Fecha Cosecha]) AS año,
+            H02_BDElifab.Calibre
+        FROM
+            H02_BDElifab
+            LEFT JOIN M_EquivalenciaElifab ON H02_BDElifab.Productor1 = M_EquivalenciaElifab.Productor
+        GROUP BY
+            M_EquivalenciaElifab.Empresa,
+            H02_BDElifab.[Fecha Cosecha],
+            H02_BDElifab.Calibre,
+            H02_BDElifab.Modulo
+        HAVING
+            (
+                (
+                    (H02_BDElifab.Calibre) <> "Descarte"
+                    AND (H02_BDElifab.Calibre) <> "Defectos"
+                    AND (H02_BDElifab.Calibre) <> "-"
+                )
+            )
+    )  AS eli LEFT JOIN (SELECT
+            H01_ProdHistorica.Campaña,
+            H01_ProdHistorica.Fundo,
+            H01_ProdHistorica.Modulo,
+            Min(H01_ProdHistorica.Fecha) AS MínF,
+            Max(H01_ProdHistorica.Fecha) AS MáxF
+        FROM
+            H01_ProdHistorica
+        GROUP BY
+            H01_ProdHistorica.Campaña,
+            H01_ProdHistorica.Fundo,
+            H01_ProdHistorica.Modulo
+    )  AS cam ON (eli.modulo = cam.Modulo) AND (eli.Empresa = cam.Fundo)
+WHERE (
+        (
+            (eli.[Fecha Cosecha]) >= [cam].[MínF]
+            AND (eli.[Fecha Cosecha]) <= [cam].[MáxF]
+        )
+    );
+
+@@@QUERY: H0501_VariablesClima
+SELECT M_Time.Año, M_Time.Mes, M_Time.Sem, clima.Fecha, clima.TembAlta, clima.TempBaja, clima.varTemp, clima.Humedad, clima.IndiceCalor, clima.Lluvia, clima.RadSol, clima.RadSolAlta, clima.DGCalentamiento, clima.DGEnfriamiento, clima.[ET-mm], clima.TipoHora, IIf(Abs(clima.varTemp)<0.5,"+-0.5",IIf(Abs(clima.varTemp)<1,"+-1.0",IIf(Abs(clima.varTemp)<2.5,"+-2.5",IIf(Abs(clima.varTemp)<5,"+-5.0",IIf(Abs(clima.varTemp)<9.9,"+-9.9",">9.9"))))) AS catVar, clima.VelViento
+FROM (SELECT Int([H05_Clima].Fecha) AS Fecha, [H05_Clima].TembAlta, [H05_Clima].TempBaja, [H05_Clima].Humedad, [H05_Clima].IndiceCalor, [H05_Clima].Lluvia, [H05_Clima].RadSol, [H05_Clima].RadSolAlta, [H05_Clima].DGCalentamiento, [H05_Clima].DGEnfriamiento, [H05_Clima].[ET-mm], iif(H05_Clima.Temp<15, "T10-15", iif(H05_Clima.Temp<20,"T15-20",iif(H05_Clima.Temp<25,"T20-25",iif(H05_Clima.Temp<30,"T25-30","T30>0")))) AS TipoHora, [H05_Clima].TembAlta-[H05_Clima].TempBaja AS varTemp, [H05_Clima].VelViento FROM H05_Clima)  AS clima INNER JOIN M_Time ON clima.Fecha = M_Time.Fecha;
+
+@@@QUERY: H0502_Temperatura_variacion
+SELECT H0501_VariablesClima.Año, H0501_VariablesClima.Mes, H0501_VariablesClima.Sem, H0501_VariablesClima.Fecha, Max(H0501_VariablesClima.TembAlta) AS Tmax, Min(H0501_VariablesClima.TempBaja) AS Tmin, Max(H0501_VariablesClima.TembAlta) -Min(H0501_VariablesClima.TempBaja) AS varDia
+FROM H0501_VariablesClima
+GROUP BY H0501_VariablesClima.Año, H0501_VariablesClima.Mes, H0501_VariablesClima.Sem, H0501_VariablesClima.Fecha;
+
+@@@QUERY: M_EdadCultivo
+SELECT M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5, M_Lotes.Modulo, M_Lotes.Turno, M_Lotes.Lote, M_Lotes.Area, CDate(Avg(M_Lotes.FSiembra)) AS FSiembra, (Now()-CDate(Avg(M_Lotes.FSiembra)))/365 AS Edad
+FROM M_Lotes
+GROUP BY M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5, M_Lotes.Modulo, M_Lotes.Turno, M_Lotes.Lote, M_Lotes.Area
+HAVING (((M_Lotes.Lote)<>"L000"));
+
+@@@QUERY: M_Lote_turno
+SELECT M_Lotes.Fundo, M_Lotes.Variedad, M_Lotes.Modulo, M_Lotes.Turno, M_Lotes.Lote, M_Lotes.Area, M_Lotes.NPlantas, M_Lotes.FSiembra, M_Lotes.Maceta, M_Lotes.TipoFibra, Modulo&Turno AS ModTur
+FROM M_Lotes;
+
+@@@QUERY: M_Mod
+SELECT M_Lotes.Fundo, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5, M_Lotes.Modulo, Sum(M_Lotes.Area) AS Area, Sum(M_Lotes.NPlantas) AS NPlantas
+FROM M_Lotes
+GROUP BY M_Lotes.Fundo, M_Lotes.FundoPPto, M_Lotes.Fundo_pptom5, M_Lotes.Modulo;
+
+@@@QUERY: R0101_KgCosecha
+SELECT R01_VolumenCampo.Campaña, R01_VolumenCampo.Fecha, R01_VolumenCampo.Fundo, R01_VolumenCampo.Variedad, R01_VolumenCampo.Modulo, M_Lotes.Turno, R01_VolumenCampo.Lote, R01_VolumenCampo.KG, M_Time.Sem, M_Time.Año, M_Lotes.NPlantas
+FROM M_Lotes RIGHT JOIN (R01_VolumenCampo LEFT JOIN M_Time ON R01_VolumenCampo.Fecha = M_Time.Fecha) ON (M_Lotes.Modulo = R01_VolumenCampo.Modulo) AND (M_Lotes.Lote = R01_VolumenCampo.Lote) AND (M_Lotes.FundoPPto = R01_VolumenCampo.Fundo);
+
+@@@QUERY: R0801_Forecast_Campaña_SemMes
+SELECT pryc.CampProAra, pryc.Campaña, pryc.Version, pryc.Fundo, pryc.FundoPPto, pryc.Modulo, pryc.NPlantas, pryc.Turno, pryc.Año, pryc.Semana, pryc.Descripcion, pryc.Valor, pryc.FrtTotal_Exp, pryc.MesSem, pryc.Trimestre
+FROM (SELECT
+            tim.CampProAra,
+            R08_Forecast_Campaña.Campaña,
+            R08_Forecast_Campaña.Version,
+            fun.Fundo,
+            R08_Forecast_Campaña.FundoPPto,
+            R08_Forecast_Campaña.Modulo,
+            fun.NPlantas,
+            R08_Forecast_Campaña.Turno,
+            R08_Forecast_Campaña.Año,
+            R08_Forecast_Campaña.Semana,
+            "Kg Exp" AS Descripcion,
+            R08_Forecast_Campaña.[KG Exp] AS Valor,
+            R08_Forecast_Campaña.FrtTotal_Exp,
+            tim.MesSem,
+            tim.Trimestre
+
+        FROM
+            (
+                SELECT
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    Sum(M_Lotes.NPlantas) AS NPlantas
+                FROM
+                    M_Lotes
+                GROUP BY
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    M_Lotes.Fundo
+            ) AS fun
+            INNER JOIN (
+                R08_Forecast_Campaña
+                INNER JOIN (
+                    SELECT
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                    FROM
+                        M_Time
+                    GROUP BY
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                ) AS tim ON (R08_Forecast_Campaña.Año = tim.Año)
+                AND (R08_Forecast_Campaña.Semana = tim.Sem)
+            ) ON (fun.Modulo = R08_Forecast_Campaña.Modulo)
+            AND (fun.FundoPPto = R08_Forecast_Campaña.Fundo)
+        UNION ALL
+        SELECT
+            tim.CampProAra,
+            R08_Forecast_Campaña.Campaña,
+            R08_Forecast_Campaña.Version,
+            fun.Fundo,
+            R08_Forecast_Campaña.FundoPPto,
+            R08_Forecast_Campaña.Modulo,
+            fun.NPlantas,
+            R08_Forecast_Campaña.Turno,
+            R08_Forecast_Campaña.Año,
+            R08_Forecast_Campaña.Semana,
+            "Kg Des" AS Descripcion,
+            R08_Forecast_Campaña.[Kg Des] AS Valor,
+            R08_Forecast_Campaña.FrtTotal_Exp,
+            tim.MesSem,
+            tim.Trimestre
+        FROM
+            (
+                SELECT
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    Sum(M_Lotes.NPlantas) AS NPlantas
+                FROM
+                    M_Lotes
+                GROUP BY
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    M_Lotes.Fundo
+            ) AS fun
+            INNER JOIN (
+                R08_Forecast_Campaña
+                INNER JOIN (
+                    SELECT
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                    FROM
+                        M_Time
+                    GROUP BY
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                ) AS tim ON (R08_Forecast_Campaña.Año = tim.Año)
+                AND (R08_Forecast_Campaña.Semana = tim.Sem)
+            ) ON (fun.Modulo = R08_Forecast_Campaña.Modulo)
+            AND (fun.FundoPPto = R08_Forecast_Campaña.Fundo)
+        UNION ALL
+        SELECT
+            tim.CampProAra,
+            R08_Forecast_Campaña.Campaña,
+            R08_Forecast_Campaña.Version,
+            fun.Fundo,
+            R08_Forecast_Campaña.FundoPPto,
+            R08_Forecast_Campaña.Modulo,
+            fun.NPlantas,
+            R08_Forecast_Campaña.Turno,
+            R08_Forecast_Campaña.Año,
+            R08_Forecast_Campaña.Semana,
+            "Kg Con" AS Descripcion,
+            R08_Forecast_Campaña.[Kg Con] AS Valor,
+            R08_Forecast_Campaña.FrtTotal_Exp,
+            tim.MesSem,
+            tim.Trimestre
+        FROM
+            (
+                SELECT
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    Sum(M_Lotes.NPlantas) AS NPlantas
+                FROM
+                    M_Lotes
+                GROUP BY
+                    M_Lotes.Fundo,
+                    M_Lotes.FundoPPto,
+                    M_Lotes.Modulo,
+                    M_Lotes.Fundo
+            ) AS fun
+            INNER JOIN (
+                R08_Forecast_Campaña
+                INNER JOIN (
+                    SELECT
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                    FROM
+                        M_Time
+                    GROUP BY
+                        M_Time.Sem,
+                        M_Time.Año,
+                        M_Time.MesSem,
+                        M_Time.CampProAra,
+                        M_Time.Trimestre
+                ) AS tim ON (R08_Forecast_Campaña.Año = tim.Año)
+                AND (R08_Forecast_Campaña.Semana = tim.Sem)
+            ) ON (fun.Modulo = R08_Forecast_Campaña.Modulo)
+            AND (fun.FundoPPto = R08_Forecast_Campaña.Fundo)
+    )  AS pryc;
+
+@@@QUERY: R0801_ResCampaña
+SELECT resMod.Version, resMod.FundoPPto, resMod.Modulo, resMod.Año, resMod.Campaña, resMod.KG, M_Mod.Area, M_Mod.NPlantas
+FROM (SELECT R08_Forecast_Campaña.Version, R08_Forecast_Campaña.FundoPPto, R08_Forecast_Campaña.Modulo, R08_Forecast_Campaña.Año, R08_Forecast_Campaña.Campaña, Sum(R08_Forecast_Campaña.[KG Exp]) AS KG FROM R08_Forecast_Campaña GROUP BY R08_Forecast_Campaña.Version, R08_Forecast_Campaña.FundoPPto, R08_Forecast_Campaña.Modulo, R08_Forecast_Campaña.Año, R08_Forecast_Campaña.Campaña)  AS resMod INNER JOIN M_Mod ON (resMod.FundoPPto = M_Mod.Fundo_pptom5) AND (resMod.Modulo = M_Mod.Modulo)
+GROUP BY resMod.Version, resMod.FundoPPto, resMod.Modulo, resMod.Año, resMod.Campaña, resMod.KG, M_Mod.Area, M_Mod.NPlantas;
+
+@@@QUERY: R0802_ResumenAño
+SELECT *
+FROM (SELECT "Real" AS Version, cosecha.Fundo_pptom5, cosecha.Modulo, cosecha.año, cosecha.Campaña, cosecha.KG, M_Mod.Area, M_Mod.NPlantas
+FROM (SELECT H0103_ResModulo.Fundo_pptom5, H0103_ResModulo.Modulo, H0103_ResModulo.año, H0103_ResModulo.Campaña, Sum(H0103_ResModulo.KG) AS KG
+FROM H0103_ResModulo
+GROUP BY H0103_ResModulo.Fundo_pptom5, H0103_ResModulo.Modulo, H0103_ResModulo.año, H0103_ResModulo.Campaña)  AS cosecha INNER JOIN M_Mod ON (cosecha.Fundo_pptom5 = M_Mod.Fundo_pptom5) AND (cosecha.Modulo = M_Mod.Modulo)
+GROUP BY cosecha.Fundo_pptom5, cosecha.Modulo, cosecha.año, cosecha.Campaña, cosecha.KG, M_Mod.Area, M_Mod.NPlantas
+
+union ALL
+
+SELECT R0901_ResCampaña.Version, R0901_ResCampaña.FundoPPto, R0901_ResCampaña.Modulo, R0901_ResCampaña.Año,R0901_ResCampaña.Campaña, R0901_ResCampaña.KG, R0901_ResCampaña.Area, R0901_ResCampaña.NPlantas
+FROM R0901_ResCampaña)  AS [%$##@_Alias];
+
+@@@QUERY: R0901_Forecas_SemAc
+SELECT R09_Forecast_Semanal.Campaña, R09_Forecast_Semanal.Fundo, R09_Forecast_Semanal.[Mod], R09_Forecast_Semanal.Turno, R09_Forecast_Semanal.Lote, R09_Forecast_Semanal.Area, R09_Forecast_Semanal.FCosAnt, R09_Forecast_Semanal.FCos, R09_Forecast_Semanal.Sem, R09_Forecast_Semanal.FrtCos, R09_Forecast_Semanal.Rend, R09_Forecast_Semanal.Kg, R09_Forecast_Semanal.Dr, R09_Forecast_Semanal.Version, R09_Forecast_Semanal.FundPPTo
+FROM R09_Forecast_Semanal
+WHERE (
+        ((R09_Forecast_Semanal.Campaña) IN("C2025", "C2026"))
+        AND (
+            (
+                Int(
+                    Right(Left([R09_Forecast_Semanal].[Version], 3), 2)
+                )
+            ) = [R09_Forecast_Semanal].[Sem]
+        )
+    );
+
+@@@QUERY: R0902_Forecast_Sem_vs_Camp
+SELECT *
+FROM (SELECT "Proy."&R09_Forecast_Semanal.Version as Version, R09_Forecast_Semanal.Fundo, R09_Forecast_Semanal.[Mod], M_Time.Año, M_Time.Sem, Sum(R09_Forecast_Semanal.Kg) AS Kg, R09_Forecast_Semanal.Campaña
+FROM R09_Forecast_Semanal INNER JOIN M_Time ON R09_Forecast_Semanal.FCos = M_Time.Fecha
+GROUP BY R09_Forecast_Semanal.Version, R09_Forecast_Semanal.Fundo, R09_Forecast_Semanal.[Mod], M_Time.Año, M_Time.Sem, R09_Forecast_Semanal.Campaña
+
+UNION ALL SELECT R08_Forecast_Campaña.Version, R08_Forecast_Campaña.FundoPPto, R08_Forecast_Campaña.Modulo, R08_Forecast_Campaña.Año, R08_Forecast_Campaña.Semana, R08_Forecast_Campaña.KG, R08_Forecast_Campaña.Campaña
+FROM R08_Forecast_Campaña)  AS res;
+
+@@@QUERY: R0903_Forecast_FrtsTotal
+SELECT R09_Forecast_Semanal.Campaña, R09_Forecast_Semanal.Fundo, R09_Forecast_Semanal.[Mod], R09_Forecast_Semanal.Turno, R09_Forecast_Semanal.Lote, R09_Forecast_Semanal.Area, R09_Forecast_Semanal.FCosAnt, R09_Forecast_Semanal.FCos, R09_Forecast_Semanal.Sem, R09_Forecast_Semanal.FrtCos, R09_Forecast_Semanal.Rend, R09_Forecast_Semanal.Kg, R09_Forecast_Semanal.Dr, R09_Forecast_Semanal.Version, R09_Forecast_Semanal.FundPPTo, M_Lotes.NPlantas * R09_Forecast_Semanal.FrtCos AS frutosT
+FROM R09_Forecast_Semanal INNER JOIN M_Lotes ON (R09_Forecast_Semanal.Lote = M_Lotes.Lote) AND (R09_Forecast_Semanal.[Mod] = M_Lotes.Modulo) AND (R09_Forecast_Semanal.Fundo = M_Lotes.Fundo_pptom5);
+
+@@@QUERY: TPlantas
+SELECT M_Lotes.FundoPPto, M_Lotes.Modulo, Sum(M_Lotes.NPlantas) AS TotalPlantas
+FROM M_Lotes
+GROUP BY M_Lotes.FundoPPto, M_Lotes.Modulo;
+

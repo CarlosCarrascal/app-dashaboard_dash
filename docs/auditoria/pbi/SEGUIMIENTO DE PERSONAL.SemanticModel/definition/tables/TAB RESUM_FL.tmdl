@@ -1,0 +1,94 @@
+table 'TAB RESUM_FL'
+	lineageTag: a477360d-00c5-4e68-912e-7329c18a84a7
+
+	measure 'Promedio Flores Día' =
+			
+			DIVIDE(
+			    SUM('TAB RESUM_FL'[FLORES]),
+			    COUNTROWS('TAB RESUM_FL')
+			)
+		lineageTag: f403234c-1235-4bd8-aa09-fa2d931ca617
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Fecha
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 42898f00-66ae-4004-befe-5478d29a7185
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		variation Variación
+			isDefault
+			relationship: fb51f0db-fdc0-422b-bdeb-f9882e6b90cd
+			defaultHierarchy: LocalDateTable_41f70fd9-7d69-4f7e-8986-93f610ea0ad6.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: 9831a954-f448-4481-9dc9-51240911883e
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column FLORES
+		dataType: double
+		lineageTag: 161e97af-b175-478c-aa3f-6e160629a6bf
+		summarizeBy: sum
+		sourceColumn: FLORES
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'RESUM_FRUTOS.PLANTAS'
+		dataType: int64
+		formatString: 0
+		lineageTag: a4223c97-ab27-4baf-9b2a-f6acbf604ab6
+		summarizeBy: sum
+		sourceColumn: RESUM_FRUTOS.PLANTAS
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'RESUM_FRUTOS.FRUTOS'
+		dataType: double
+		lineageTag: cb9eca2c-d73a-4fad-9182-dedf8ea76a74
+		summarizeBy: sum
+		sourceColumn: RESUM_FRUTOS.FRUTOS
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column SEMANA = WEEKNUM('TAB RESUM_FL'[Fecha],21)
+		formatString: 0
+		lineageTag: 8b28f40d-2d4e-4cd2-8351-240e404cf7e4
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nombre corto' = LOOKUPVALUE('2026'[Nombre Corto],'2026'[Documento],'TAB RESUM_FL'[Evaluador])
+		lineageTag: dacae782-52bf-42a0-8527-cc3c78f343f8
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'TAB RESUM_FL' = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E02_ConteoFlores"]}[Data],
+				    #"Filas agrupadas" = Table.Group(#"Navegación 1", {"Fecha", "Evaluador"}, {{"FLORES", each List.Sum([nFlores]), type nullable number}}),
+				    #"Consultas combinadas" = Table.NestedJoin(#"Filas agrupadas", {"Fecha", "Evaluador"}, RESUM_FRUTOS, {"Fecha", "Evaluador"}, "RESUM_FRUTOS", JoinKind.LeftOuter),
+				    #"Se expandió RESUM_FRUTOS" = Table.ExpandTableColumn(#"Consultas combinadas", "RESUM_FRUTOS", {"PLANTAS", "FRUTOS"}, {"RESUM_FRUTOS.PLANTAS", "RESUM_FRUTOS.FRUTOS"}),
+				    #"Filas filtradas" = Table.SelectRows(#"Se expandió RESUM_FRUTOS", each ([RESUM_FRUTOS.PLANTAS] = null) and ([FLORES] <> 0))
+				in
+				    #"Filas filtradas"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

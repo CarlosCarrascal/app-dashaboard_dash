@@ -1,0 +1,101 @@
+relationship 20e48d82-bd45-4862-8994-0a97a45e9afd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: E02_ConteoFlores.Hora
+	toColumn: LocalDateTable_276b03a1-f00f-4d76-9d04-14c3f90bda6b.Date
+
+relationship 60ab6242-6366-419f-b5fa-221d603c2311
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 2026.'Total Horas'
+	toColumn: LocalDateTable_8182b126-b4f8-45bc-81a7-38e22cd563e4.Date
+
+relationship c897cdbb-9f64-8bde-d22f-b6dcfe0bd309
+	fromColumn: E02_ConteoFlores.Fundo
+	toColumn: EMPRESA.Fundo
+
+relationship faef9b68-c2e8-b797-42cd-e1e99fa1df7e
+	fromColumn: E02_ConteoFlores.Modulo
+	toColumn: MODULO.Modulo
+
+relationship 4674c534-e1af-d1dd-ba0c-891e28803c28
+	fromColumn: E02_ConteoFlores.Lote
+	toColumn: LOTE.Lote
+
+relationship 32ab9569-8a25-e142-a3d8-87bb5d2b446e
+	fromColumn: E03_ConteoEstados.Fundo
+	toColumn: EMPRESA.Fundo
+
+relationship d680f97b-9f78-d489-cae6-57ea1b007b5d
+	fromColumn: E03_ConteoEstados.Modulo
+	toColumn: MODULO.Modulo
+
+relationship d590f49d-729b-0b40-710c-9298078f7746
+	fromColumn: E03_ConteoEstados.Lote
+	toColumn: LOTE.Lote
+
+relationship b9c2c913-2755-d626-61e6-11676a122a51
+	fromColumn: E05_DiametrosBayas.Modulo
+	toColumn: MODULO.Modulo
+
+relationship fdd999bb-4df2-0f06-2c83-959f438d2cd6
+	fromColumn: E05_DiametrosBayas.Lote
+	toColumn: LOTE.Lote
+
+relationship c7294f7e-862b-4699-ab73-5d48cbd4f5ba
+	joinOnDateBehavior: datePartOnly
+	fromColumn: BD_Calendario.Date
+	toColumn: LocalDateTable_69e120ac-e3c6-40db-a5f5-be1b6e146efb.Date
+
+relationship 6fe3c7c0-e682-f723-e914-6b2901afde29
+	fromColumn: E02_ConteoFlores.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 059d8a7b-817b-3244-895e-e94854102776
+	fromColumn: E03_ConteoEstados.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 7b68b254-65d9-a065-fc1b-4b00990d89c5
+	fromColumn: E05_DiametrosBayas.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship 8dad6112-f287-9dff-35ef-8cb9e31d7499
+	fromColumn: 2026.Fecha
+	toColumn: BD_Calendario.Date
+
+relationship fa4116bc-e379-945c-a37e-5711c6da71db
+	fromColumn: E05_DiametrosBayas.FUNDO
+	toColumn: EMPRESA.Fundo
+
+relationship 998a061e-b00b-2b42-a25c-7774630ee50f
+	fromColumn: E02_ConteoFlores.Evaluador
+	toColumn: DNI.Documento
+
+relationship 833fa292-56ff-80fb-4fa9-d2cde5768e62
+	fromColumn: E03_ConteoEstados.Evaluador
+	toColumn: DNI.Documento
+
+relationship 1361282c-f24d-595f-c76e-f67879ca782f
+	crossFilteringBehavior: bothDirections
+	securityFilteringBehavior: bothDirections
+	fromColumn: 2026.Documento
+	toColumn: DNI.Documento
+
+relationship e3c058df-3e98-461d-9e4c-c7bbb183aad4
+	joinOnDateBehavior: datePartOnly
+	fromColumn: RESUM_FLORES.Fecha
+	toColumn: LocalDateTable_390adc36-fe17-4c7e-a547-d61852e6e041.Date
+
+relationship 86b78882-bf06-4170-8383-9021a66596fd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: RESUM_FRUTOS.Fecha
+	toColumn: LocalDateTable_e03defe1-bef7-4950-8196-0c20f1b61632.Date
+
+relationship fb51f0db-fdc0-422b-bdeb-f9882e6b90cd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'TAB RESUM_FL'.Fecha
+	toColumn: LocalDateTable_41f70fd9-7d69-4f7e-8986-93f610ea0ad6.Date
+
+relationship ac409055-d4a2-4644-9c30-007f25fb0e3c
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'TAB RESUM_FR'.Fecha
+	toColumn: LocalDateTable_b24f4cc1-dc62-492c-9eb1-65dde72fb939.Date
+

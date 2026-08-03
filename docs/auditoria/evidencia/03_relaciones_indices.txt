@@ -1,0 +1,40 @@
+﻿RELACIONES E INDICES - BD_AQUANQA_26.accdb
+Generado: 2026-08-02 | API: DAO.DBEngine.120 (solo lectura)
+====================================================================================================
+
+SECCION 1 - RELACIONES DECLARADAS (claves foraneas)
+----------------------------------------------------------------------------------------------------
+[SISTEMA] MSysNavPaneGroupCategoriesMSysNavPaneGroups : MSysNavPaneGroupCategories => MSysNavPaneGroups  [Id -> GroupCategoryID]  attr=4352
+[SISTEMA] MSysNavPaneGroupsMSysNavPaneGroupToObjects : MSysNavPaneGroups => MSysNavPaneGroupToObjects  [Id -> GroupID]  attr=4352
+
+TOTAL RELACIONES DE USUARIO: 0
+=> HALLAZGO H-02: no existe ninguna clave foranea entre las 18 tablas de datos.
+
+SECCION 2 - INDICES Y CLAVES PRIMARIAS
+----------------------------------------------------------------------------------------------------
+E01_Ramas                Id             unico=False  pk=False  campos=[Id]
+E02_ConteoFlores         (sin indices)
+E03_ConteoEstados        PrimaryKey     unico=True   pk=True   campos=[Modulo, Lote, Cortina, Hilera, Planta, E1, Fecha]
+E04_Brotes               PrimaryKey     unico=True   pk=True   campos=[Piso, Fundo, Modulo, Lote, Cortina, Hilera, Planta]
+E05_DiametrosBayas       (sin indices)
+Errores de pegado        (sin indices)
+H00_VolumenCampo         (sin indices)
+H01_ProdHistorica        (sin indices)
+H02_BDElifab             (sin indices)
+H05_Clima                (sin indices)
+M_EquivalenciaElifab     (sin indices)
+M_Evaluadores            (sin indices)
+M_Lotes                  (sin indices)
+M_nMuestra               (sin indices)
+M_Poda                   (sin indices)
+M_Time                   PrimaryKey     unico=True   pk=True   campos=[Fecha]
+R08_Forecast_Campaña     (sin indices)
+R09_Forecast_Semanal     (sin indices)
+
+TOTAL INDICES: 4  en 18 tablas
+
+EVALUACION DE LAS CLAVES PRIMARIAS EXISTENTES:
+  M_Time.PrimaryKey [Fecha]                    -> CORRECTA
+  E03_ConteoEstados.PrimaryKey [... E1 ...]    -> ERRONEA: incluye la medida E1 en la clave
+  E04_Brotes.PrimaryKey [sin Fecha]            -> ERRONEA: impide 2 evaluaciones del mismo punto
+  E01_Ramas.Id (no unico)                      -> INSUFICIENTE: 15.043 Id para 94.236 filas

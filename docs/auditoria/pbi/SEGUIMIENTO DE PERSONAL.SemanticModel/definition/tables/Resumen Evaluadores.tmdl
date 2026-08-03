@@ -1,0 +1,129 @@
+table 'Resumen Evaluadores'
+	lineageTag: 659ebd18-66a4-4dcb-8aaa-e642ce0b74b7
+
+	column 'Nombre Corto'
+		lineageTag: 86432ace-8378-418c-bff0-b0fe57b693aa
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: E02_ConteoFlores[Nombre Corto]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		lineageTag: ffcab250-d546-4c97-a8d0-3beb9585bc75
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: E02_ConteoFlores[Fundo]
+
+		annotation SummarizationSetBy = Automatic
+
+	column DesvStd
+		lineageTag: debbfbc4-6cba-4fc3-8360-3b85627783fb
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [DesvStd]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CV
+		lineageTag: 1ae4d6d1-c771-40d3-8d8e-b620139df5ed
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [CV]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Registros
+		formatString: 0
+		lineageTag: 991e429d-9a9f-4dd6-bf33-23ba1f57c9c7
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Registros]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Semana
+		formatString: 0
+		lineageTag: 9ffe3caa-7e61-4f4b-96cc-5cf78f97f03b
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: BD_Calendario[Semana]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Tendencia =
+			
+			VAR PromedioActual = 'Resumen Evaluadores'[Promedio]
+			
+			VAR PromedioAnterior =
+			LOOKUPVALUE(
+			    'Resumen Evaluadores'[Promedio],
+			    'Resumen Evaluadores'[Nombre Corto],'Resumen Evaluadores'[Nombre Corto],
+			    'Resumen Evaluadores'[Fundo],'Resumen Evaluadores'[Fundo],
+			    'Resumen Evaluadores'[Semana],'Resumen Evaluadores'[Semana]-1
+			)
+			
+			RETURN
+			DIVIDE(
+			    PromedioActual-PromedioAnterior,
+			    PromedioAnterior
+			)
+		lineageTag: 0639b71f-a598-46e1-889b-49897b6cca52
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Icono =
+			
+			SWITCH(
+			    TRUE(),
+			    ISBLANK('Resumen Evaluadores'[Tendencia]), "",
+			    'Resumen Evaluadores'[Tendencia]>0.03,"▲",
+			    'Resumen Evaluadores'[Tendencia]<-0.03,"▼",
+			    "►"
+			)
+		lineageTag: ecacca0e-197e-4c9e-81db-eacb4a9deca3
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column Promedio
+		formatString: 0
+		lineageTag: 9fad585c-2fc6-4732-af3c-8bd95ed2a2ff
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Promedio]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Resumen Evaluadores' = calculated
+		mode: import
+		source =
+				
+				SUMMARIZE(
+				    E02_ConteoFlores,
+				    E02_ConteoFlores[Nombre Corto],
+				    E02_ConteoFlores[Fundo],
+				    BD_Calendario[Semana],
+				
+				    "Promedio", SUM(E02_ConteoFlores[nFlores]),
+				
+				    "DesvStd", STDEV.P(E02_ConteoFlores[nFlores]),
+				
+				    "CV",
+				        DIVIDE(
+				            STDEV.P(E02_ConteoFlores[nFlores]),
+				            AVERAGE(E02_ConteoFlores[nFlores])
+				        ) * 100,
+				
+				    "Registros", COUNTROWS(E02_ConteoFlores)
+				)
+
+	annotation PBI_Id = fa1311af176342c1ae8d1484be2dd2d3
+

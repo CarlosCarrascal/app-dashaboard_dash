@@ -1,0 +1,17 @@
+table MODULO
+	lineageTag: f0db2ba6-65e6-4e7c-ad4f-8af41b4dab77
+
+	column Modulo
+		lineageTag: 39df4723-a2eb-464d-837d-b80bcae85683
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: H0101_ResumenHistoricos[Modulo]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition MODULO = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(H0101_ResumenHistoricos[Modulo])
+
+	annotation PBI_Id = 608a0bd7146b406c9c76844f197f0900
+

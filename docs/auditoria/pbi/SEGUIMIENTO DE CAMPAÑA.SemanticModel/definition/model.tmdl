@@ -1,0 +1,32 @@
+model Model
+	culture: es-ES
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-PE
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["H0101_ResumenHistoricos","0201_Flores","0301_ConteoEstados","0305_Brotes_Ramas"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table DateTableTemplate_bf60bb82-9949-44ae-9582-7b7129874f21
+ref table H0101_ResumenHistoricos
+ref table LocalDateTable_e1704d8b-ff4a-448b-8c8b-ef7129249e96
+ref table 0201_Flores
+ref table 0301_ConteoEstados
+ref table 0305_Brotes_Ramas
+ref table BD_Calendario
+ref table LocalDateTable_d781e800-e42f-4c79-8ba3-eda805f40a9d
+ref table EMPRESA
+ref table LocalDateTable_60f028c4-ced2-4200-a423-63682cb8ff7b
+ref table FUNDO_CAMPO
+ref table MODULO
+ref table LOTE
+ref table TURNO
+
+ref cultureInfo es-ES
+

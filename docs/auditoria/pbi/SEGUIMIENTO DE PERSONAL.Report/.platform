@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "SEGUIMIENTO DE PERSONAL"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "711ff945-83fe-458a-abc1-1296906c8747"
+  }
+}

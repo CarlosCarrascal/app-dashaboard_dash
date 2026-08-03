@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+*.sql   text eol=lf working-tree-encoding=UTF-8
+*.md    text eol=lf working-tree-encoding=UTF-8
+*.py    text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.yml   text eol=lf
+*.tmdl  text eol=lf working-tree-encoding=UTF-8
+
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+
+*.xlsx  binary
+*.accdb binary
+*.pbix  binary
+*.png   binary
+*.abf   binary

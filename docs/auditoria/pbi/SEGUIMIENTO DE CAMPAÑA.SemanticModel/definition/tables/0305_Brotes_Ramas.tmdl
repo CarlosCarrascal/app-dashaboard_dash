@@ -1,0 +1,107 @@
+table 0305_Brotes_Ramas
+	lineageTag: 212384a7-a463-448a-82d3-a7816def7e11
+
+	column Piso
+		dataType: string
+		lineageTag: 44f1e247-d306-4241-a974-4dcabdaf3d53
+		summarizeBy: none
+		sourceColumn: Piso
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: f4eec4d6-c513-442c-8213-1f906e46f280
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 0f983431-2e5d-4dfe-b99d-8adbcee18649
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column Empresa
+		dataType: string
+		lineageTag: f50359c1-0e3b-47f2-b871-0de2f17805e0
+		summarizeBy: none
+		sourceColumn: Empresa
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		dataType: string
+		lineageTag: 7966f8fe-96b7-4c4e-9d92-bc972f28e21d
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: 1b4230d5-75c5-4104-8e1c-83362563fc34
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 0ff341fb-b998-457e-8ddb-64e78e50b89b
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: ac145b46-2570-4dc2-be9f-aca6ff5876c3
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: 3e42767a-f4c4-4da3-8401-c35f30e459c3
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Planta
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ad13751-40ac-49f2-ba08-399aa90a8b34
+		summarizeBy: sum
+		sourceColumn: Planta
+
+		annotation SummarizationSetBy = Automatic
+
+	column valor
+		dataType: int64
+		formatString: 0
+		lineageTag: 0ee456dd-2ff6-4827-ab30-bce2b6259aa2
+		summarizeBy: sum
+		sourceColumn: valor
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 0305_Brotes_Ramas = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "0305_Brotes_Ramas"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_ResultType = Table
+

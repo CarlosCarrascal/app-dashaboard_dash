@@ -1,0 +1,17 @@
+table FUNDO_CAMPO
+	lineageTag: eb51fde0-d914-4551-9db2-8cd1e4704f83
+
+	column FUNDO_CAMPO
+		lineageTag: e81b0229-052b-49d4-bb70-5efda3c3212e
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: 0201_Flores[FUNDO_CAMPO]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FUNDO_CAMPO = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS('0201_Flores'[FUNDO_CAMPO])
+
+	annotation PBI_Id = e1fd1639bd714f99b1b7d24d884ba7f0
+

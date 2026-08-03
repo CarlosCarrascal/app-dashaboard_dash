@@ -1,0 +1,161 @@
+﻿METRICAS DE VALIDACION - BD_AQUANQA_26.accdb
+Generado: 2026-08-02
+
+PROPOSITO: cifras de control congeladas del estado ACTUAL en Access.
+La migracion a PostgreSQL debe reproducir estos numeros (salvo las correcciones
+documentadas en la auditoria, senaladas con [SE CORRIGE]).
+====================================================================================================
+
+1. CONTEO DE FILAS POR TABLA
+----------------------------------------------------------------------------------------------------
+  E01_Ramas                                                      94236
+  E02_ConteoFlores                                               43490
+  E03_ConteoEstados                                              18714
+  E04_Brotes                                                     3385
+  E05_DiametrosBayas                                             4193
+  Errores de pegado                                              0
+  H00_VolumenCampo                                               30812
+  H01_ProdHistorica                                              30626
+  H02_BDElifab                                                   117536
+  H05_Clima                                                      155588
+  M_EquivalenciaElifab                                           15
+  M_Evaluadores                                                  31
+  M_Lotes                                                        860
+  M_nMuestra                                                     681
+  M_Poda                                                         2159
+  M_Time                                                         2189
+  R08_Forecast_Campaña                                           101715
+  R09_Forecast_Semanal                                           48368
+  TOTAL                                                          683.180 (suma)
+
+2. COSECHA - SUMA DE KG (control financiero/productivo)
+----------------------------------------------------------------------------------------------------
+  H00_VolumenCampo SUM(KG) crudo                                 33381134.659151
+  H00_VolumenCampo SUM(KG) sin fila basura   [SE CORRIGE]        32450472.596651
+  H01_ProdHistorica SUM(KG) crudo                                33441319.2194768
+  H01_ProdHistorica SUM(KG) sin filas basura [SE CORRIGE]        32445986.0163518
+
+  H00 por campana (campana | filas | SUM KG):
+   | 1 | 930662.0625
+  C2022 | 1691 | 1631073.48851395
+  C2023 | 2389 | 2322936.08424538
+  C2024 | 10590 | 10615334.8253902
+  C2025 | 13356 | 15654825.8634337
+  C2026 | 2785 | 2226302.33506775
+
+  H01 por campana (campana | filas | SUM KG):
+   | 2 | 995333.203125
+  C2022 | 1691 | 1631073.49000072
+  C2023 | 2261 | 2319623.81784058
+  C2024 | 10531 | 10614160.5100091
+  C2025 | 13356 | 15654825.8634337
+  C2026 | 2785 | 2226302.33506775
+
+  H01 por modulo (top 15):
+  M01 | 4289 | 5275717.04051757
+  M03 | 4171 | 5174988.86398554
+  M02 | 4185 | 5048465.67281061
+  M04 | 3504 | 4985691.29634118
+  M05 | 1663 | 1870559.51042747
+  M07 | 1332 | 1525501.96690178
+  M11 | 1288 | 1388302.18331909
+  M06 | 1194 | 1328401.35396004
+  M08 | 1518 | 1136929.28926182
+  M09 | 1829 | 1107428.57586575
+   | 2 | 995333.203125
+  M12 | 1135 | 944073.072052956
+  M10B | 854 | 733760.083749771
+  M10A | 863 | 535230.389667034
+  M13 | 1025 | 531203.523411751
+
+3. FORECAST - SUMA DE KG
+----------------------------------------------------------------------------------------------------
+  R08 SUM([KG Exp])                                              648044713.139312
+  R08 SUM([Kg Des])                                              32280549.2832595
+  R08 SUM([Kg Con])                                              9359445.43709949
+  R09 SUM(Kg)                                                    51083049.9174915
+
+4. EVALUACIONES - SUMAS DE CONTEO
+----------------------------------------------------------------------------------------------------
+  E01 SUM([# Ramas])                                             730318
+  E01 AVG(Diametro)                                              10.9776538610781
+  E01 AVG(Diametro) solo filas unicas       [SE CORRIGE]         10.8870645965645
+  E02 SUM(nFlores)                                               3050031
+  E03 SUM(Total)                                                 9060271
+  E03 SUM(E1..E5)                                                9057841
+  E04 SUM(Brotes)                                                225638
+  E05 AVG(Diametro)                                              19.8850703636331
+
+5. DIMENSIONES - TOTALES
+----------------------------------------------------------------------------------------------------
+  M_Lotes SUM(Area) ha                                           829.021356070414
+  M_Lotes SUM(NPlantas)                                          4711564
+  M_Lotes lotes distintos (Modulo,Lote)                          855
+  M_Lotes KeyMap nulos                                           53
+
+6. CLIMA
+----------------------------------------------------------------------------------------------------
+  H05 filas                                                      155588
+  H05 timestamps distintos                  [SE CORRIGE]         153413
+  H05 AVG(Temp) crudo                                            21.8968635057212
+  H05 SUM(Lluvia) crudo                                          160.600001469254
+
+7. DEFECTOS CUANTIFICADOS (deben quedar en CERO tras migrar)
+----------------------------------------------------------------------------------------------------
+  H-01 E01_Ramas huerfanos vs M_Lotes                            94236
+  H-01 E04_Brotes huerfanos vs M_Lotes                           3385
+  H-01 H00 huerfanos                                             366
+  H-01 H01 huerfanos                                             180
+  H-01 0101_Diametros filas con Turno NULL                       94236
+  H-03 E01 filas totales                                         94236
+  H-03 E01 filas unicas                                          71095
+  H-05 0104_PromFlores filas (origen)                            9040
+  H-05 01_Flores_C2025 filas (inflado x54)                       487368
+  H-06 H00 filas basura                                          1
+  H-06 H01 filas basura                                          2
+  H-06 KG en filas basura (H00+H01)                              1925995
+  H-08 H05 grupos duplicados                                     2079
+  H-09 E01 evaluadores sin maestro (join DNI)                    2
+
+8. CONTEO DE FILAS DE LAS 35 CONSULTAS EJECUTABLES
+----------------------------------------------------------------------------------------------------
+  01_Flores_C2025                                                487368
+  0101_Diametros                                                 94236
+  0102_CantRamas                                                 5530
+  0104_PromFlores                                                9040
+  0105_AcumFlores                                                867
+  0106_RaFloYem                                                  18778
+  0107_YemasAb                                                   9029
+  0108_diam                                                      0
+  0201_Flores                                                    43457
+  0202_FloresTurno                                               2648
+  0301_ConteoEstados                                             18714
+  0302_ConteoAjustado                                            2802
+  0303_ConteoEstados_Turno                                       14010
+  0304_ConteoEst_Flo_Turno                                       16658
+  0305_Brotes_Ramas                                              8910
+  0306_FrutosFlores                                              27754
+  0307_EstadosFlores                                             16239
+  0401_Estados_planta                                            18714
+  0402_ConteoBrotes                                              *** CONSULTA ROTA ***
+  E                                                              *** CONSULTA ROTA ***
+  H0100_Resumen_kgCosecha                                        30812
+  H0101_ResumenHistoricos                                        30624
+  H0102_Producciondiaria                                         30446
+  H0103_ResModulo                                                104
+  H0104_FechaFinCosecha                                          661
+  H0105_RendTurno_paña                                           3442
+  H0201_PesoBaya_Elifab                                          16971
+  H0501_VariablesClima                                           155588
+  H0502_Temperatura_variacion                                    1603
+  M_EdadCultivo                                                  860
+  M_Lote_turno                                                   860
+  M_Mod                                                          23
+  R0101_KgCosecha                                                *** CONSULTA ROTA ***
+  R0801_Forecast_Campaña_SemMes                                  *** CONSULTA ROTA ***
+  R0801_ResCampaña                                               29
+  R0802_ResumenAño                                               *** CONSULTA ROTA ***
+  R0901_Forecas_SemAc                                            6994
+  R0902_Forecast_Sem_vs_Camp                                     *** CONSULTA ROTA ***
+  R0903_Forecast_FrtsTotal                                       22272
+  TPlantas                                                       23

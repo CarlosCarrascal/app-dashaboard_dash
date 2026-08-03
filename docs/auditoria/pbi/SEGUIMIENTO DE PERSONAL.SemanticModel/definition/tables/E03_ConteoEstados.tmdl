@@ -1,0 +1,204 @@
+table E03_ConteoEstados
+	lineageTag: 72eda90b-d8aa-4a71-8ad4-e6d572299fd1
+
+	measure ESTADIOS = SUM(E03_ConteoEstados[Total])
+		formatString: 0
+		lineageTag: 5fe119b7-6802-4014-8798-a8fabe3eaa8e
+
+	measure 'Total Frutos' =
+			
+			SUM(E03_ConteoEstados[Total])
+		formatString: #,0
+		lineageTag: 99597c8e-ea14-4370-aba9-6eace9537eb8
+
+	measure 'Flores por Planta' =
+			
+			DIVIDE(
+			    [Total Flores],
+			    [Total Plantas]
+			)
+		lineageTag: ebd6c285-691c-4fef-9d41-e38bef73da97
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Frutos por Planta' =
+			
+			DIVIDE(
+			    [Total Frutos],
+			    [Total Plantas]
+			)
+		lineageTag: dae7a583-c7b6-43d8-98e4-163a3fa7d95f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Frutos por Hora' =
+			
+			DIVIDE(
+			    [Total Frutos],
+			    [Horas Hombre Flores]
+			)
+		lineageTag: 8dcc6d70-bac1-438f-8d98-ecd9a30b5982
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Plantas por Hora' =
+			
+			DIVIDE(
+			    [Total Plantas],
+			    [Horas Hombre Flores]
+			)
+		lineageTag: 1bee862d-6ec0-415c-a5bd-8e6f0276d50c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Item
+		dataType: string
+		lineageTag: b63f06e6-4fba-44df-b4f1-4545554a082d
+		summarizeBy: none
+		sourceColumn: Item
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 64b2b5d4-6884-4695-a74e-01cb9cf79c11
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: 80da6f6e-d2b6-4734-95e2-81a1010757aa
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		dataType: string
+		lineageTag: 0ef4491f-6a2e-4b24-a343-9f7a0075600c
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: 24d10910-afe3-44a1-bfc6-e8482405ab35
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 33d9d00b-b72d-4553-9848-44cd38d6c8c6
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: cf1d75d5-6afc-439c-b80b-322b5d6fc771
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: 88b7a403-8f96-4b18-b13a-e970046d448d
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Planta
+		dataType: int64
+		formatString: 0
+		lineageTag: 2f3c9040-d6b6-4800-8093-f8e2cb9d54c0
+		summarizeBy: sum
+		sourceColumn: Planta
+
+		annotation SummarizationSetBy = Automatic
+
+	column E1
+		dataType: int64
+		formatString: 0
+		lineageTag: 3dbe0a2f-1eac-4748-9fcd-c4d843bb5013
+		summarizeBy: sum
+		sourceColumn: E1
+
+		annotation SummarizationSetBy = Automatic
+
+	column E2
+		dataType: int64
+		formatString: 0
+		lineageTag: d19caccc-2bc8-4219-92da-c8a459e29c09
+		summarizeBy: sum
+		sourceColumn: E2
+
+		annotation SummarizationSetBy = Automatic
+
+	column E3
+		dataType: int64
+		formatString: 0
+		lineageTag: 3d5d506a-38f2-4f79-91e0-6eec1956dcfe
+		summarizeBy: sum
+		sourceColumn: E3
+
+		annotation SummarizationSetBy = Automatic
+
+	column E4
+		dataType: int64
+		formatString: 0
+		lineageTag: c2728b0d-376b-4d49-bca1-4d7dacfc559a
+		summarizeBy: sum
+		sourceColumn: E4
+
+		annotation SummarizationSetBy = Automatic
+
+	column E5
+		dataType: int64
+		formatString: 0
+		lineageTag: 93f011af-048d-4565-9d9e-20c8b082755e
+		summarizeBy: sum
+		sourceColumn: E5
+
+		annotation SummarizationSetBy = Automatic
+
+	column Total
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d5fabb6-9baf-4079-98f8-0d8bbf161193
+		summarizeBy: sum
+		sourceColumn: Total
+
+		annotation SummarizationSetBy = Automatic
+
+	column F16
+		dataType: string
+		lineageTag: ac93ccf8-8db1-497f-b633-b1f3d973afd7
+		summarizeBy: none
+		sourceColumn: F16
+
+		annotation SummarizationSetBy = Automatic
+
+	partition E03_ConteoEstados = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "E03_ConteoEstados"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_NavigationStepName = Navegación
+
+	annotation PBI_ResultType = Table
+

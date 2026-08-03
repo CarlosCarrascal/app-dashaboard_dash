@@ -1,0 +1,17 @@
+table MODULO
+	lineageTag: bd393b20-8f5e-4171-af2e-502a8b40d57e
+
+	column Modulo
+		lineageTag: 33483b65-8be5-4e9d-a5e0-483e3dfc8fe3
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: E02_ConteoFlores[Modulo]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition MODULO = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(E02_ConteoFlores[Modulo])
+
+	annotation PBI_Id = 6eea5b50d8eb4bb889a509053475e128
+

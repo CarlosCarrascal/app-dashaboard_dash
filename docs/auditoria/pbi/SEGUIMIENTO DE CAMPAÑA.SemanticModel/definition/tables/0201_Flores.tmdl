@@ -1,0 +1,206 @@
+table 0201_Flores
+	lineageTag: f34dc6bf-425d-4008-8250-24138ee85fc1
+
+	column Item
+		dataType: string
+		lineageTag: 7be69515-417d-4886-a704-f7431f718352
+		summarizeBy: none
+		sourceColumn: Item
+
+		annotation SummarizationSetBy = Automatic
+
+	column Evaluador
+		dataType: string
+		lineageTag: 6cae4017-1604-4bf4-9426-8b054e27cfda
+		summarizeBy: none
+		sourceColumn: Evaluador
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fundo
+		dataType: string
+		lineageTag: a7e235a5-d5d9-4b38-844d-0ae833c9c04f
+		summarizeBy: none
+		sourceColumn: Fundo
+
+		annotation SummarizationSetBy = Automatic
+
+	column FundoPPto
+		dataType: string
+		lineageTag: ebf8924b-a3b0-43f8-9c2b-0970bd6a4669
+		summarizeBy: none
+		sourceColumn: FundoPPto
+
+		annotation SummarizationSetBy = Automatic
+
+	column Modulo
+		dataType: string
+		lineageTag: 86805654-010a-4f8d-b406-60fa5c383a9f
+		summarizeBy: none
+		sourceColumn: Modulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Turno
+		dataType: string
+		lineageTag: 43fe87f9-561b-4804-aa5c-0bec32d72ac0
+		summarizeBy: none
+		sourceColumn: Turno
+
+		annotation SummarizationSetBy = Automatic
+
+	column Lote
+		dataType: string
+		lineageTag: 135464f1-5e7e-4b53-99be-0144f7d3b6a3
+		summarizeBy: none
+		sourceColumn: Lote
+
+		annotation SummarizationSetBy = Automatic
+
+	column Cortina
+		dataType: int64
+		formatString: 0
+		lineageTag: fa5a2e8a-c64e-433d-b91d-937811e46747
+		summarizeBy: sum
+		sourceColumn: Cortina
+
+		annotation SummarizationSetBy = Automatic
+
+	column Hilera
+		dataType: int64
+		formatString: 0
+		lineageTag: 2da98dd0-2663-44bd-9683-9ac52885da91
+		summarizeBy: sum
+		sourceColumn: Hilera
+
+		annotation SummarizationSetBy = Automatic
+
+	column Planta
+		dataType: int64
+		formatString: 0
+		lineageTag: a6e52072-a903-4690-8608-d26e75642178
+		summarizeBy: sum
+		sourceColumn: Planta
+
+		annotation SummarizationSetBy = Automatic
+
+	column nFlor
+		dataType: int64
+		formatString: 0
+		lineageTag: 5cb58122-0396-428d-b4ee-cd49acce4d52
+		summarizeBy: sum
+		sourceColumn: nFlor
+
+		annotation SummarizationSetBy = Automatic
+
+	column YA
+		dataType: int64
+		formatString: 0
+		lineageTag: e7347918-1a01-481d-93aa-c37708f0c7a7
+		summarizeBy: sum
+		sourceColumn: YA
+
+		annotation SummarizationSetBy = Automatic
+
+	column YP
+		dataType: int64
+		formatString: 0
+		lineageTag: 6639c17e-645f-41f5-927e-8714b323a5c2
+		summarizeBy: sum
+		sourceColumn: YP
+
+		annotation SummarizationSetBy = Automatic
+
+	column yemas
+		dataType: int64
+		formatString: 0
+		lineageTag: 382545e5-9ed1-4814-a313-3861cfb5ea00
+		summarizeBy: sum
+		sourceColumn: yemas
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 8941ef29-9192-4246-beec-d018127f63a1
+		summarizeBy: none
+		sourceColumn: Fecha
+
+		annotation SummarizationSetBy = Automatic
+
+	column Sem
+		dataType: int64
+		formatString: 0
+		lineageTag: 9023b2ab-ee22-4a5a-a349-23bb5f2b36ae
+		summarizeBy: sum
+		sourceColumn: Sem
+
+		annotation SummarizationSetBy = Automatic
+
+	column Año
+		dataType: int64
+		formatString: 0
+		lineageTag: 76638712-206c-4d7f-95fa-342dc4cd6ba9
+		summarizeBy: sum
+		sourceColumn: Año
+
+		annotation SummarizationSetBy = Automatic
+
+	column KeyMap
+		dataType: string
+		lineageTag: 2d781338-6de1-4ec2-9a4a-3bab130bd4a5
+		summarizeBy: none
+		sourceColumn: KeyMap
+
+		annotation SummarizationSetBy = Automatic
+
+	column FInicio
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: c72e1175-622f-441e-bfad-10d47a081db5
+		summarizeBy: none
+		sourceColumn: FInicio
+
+		variation Variación
+			isDefault
+			relationship: 4d474b62-1f21-43f5-8124-f0ea63b804db
+			defaultHierarchy: LocalDateTable_60f028c4-ced2-4200-a423-63682cb8ff7b.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column FUNDO_CAMPO =
+			
+			SWITCH(
+			    TRUE(),
+			
+			    '0201_Flores'[Modulo] IN {"M01","M02","M03","M04"},
+			        "Arena Azul",
+			
+			    '0201_Flores'[Modulo] = "M05",
+			        "Quri Allpa",
+			
+			    '0201_Flores'[Modulo] IN {"M06","M07","M08","M09","M10A","M10B","M11","M16"},
+			        "Kawsay Allpa",
+			
+			    '0201_Flores'[Modulo] IN {"M12","M13","M14","M15"},
+			        "Ayllu Allpa",
+			
+			    BLANK()
+			)
+		lineageTag: 01a9502b-c09c-49ae-8981-9e1795dfeb2b
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 0201_Flores = m
+		mode: import
+		source =
+				let
+				  Origen = Access.Database(File.Contents("C:\Users\gsanchez\Downloads\BD_AQUANQA_26.accdb"), [CreateNavigationProperties = true]),
+				  #"Navegación 1" = Origen{[Schema = "", Item = "0201_Flores"]}[Data]
+				in
+				  #"Navegación 1"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,17 @@
+table LOTE
+	lineageTag: bc747994-49a3-4237-bee3-83730ea46b4e
+
+	column Lote
+		lineageTag: 035a1229-4413-46fe-abf3-c21296b03ef9
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: E02_ConteoFlores[Lote]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition LOTE = calculated
+		mode: import
+		source = SUMMARIZECOLUMNS(E02_ConteoFlores[Lote])
+
+	annotation PBI_Id = 4d0e39a0880d40f1907814ca8c05b556
+
