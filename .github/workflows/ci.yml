@@ -39,7 +39,7 @@ jobs:
           node-version: '20'
       - name: Aplicar capas en orden
         run: |
-          for dir in 00_bootstrap 10_raw 20_stg 30_qua 40_dim 50_fact 60_reporting; do
+          for dir in 00_bootstrap 10_raw 20_core 30_stg 40_qua 50_carga_core 60_dim_fact 70_reporting; do
             node scripts/run.mjs sql "$dir"
           done
       - name: Verificar que las capas existen

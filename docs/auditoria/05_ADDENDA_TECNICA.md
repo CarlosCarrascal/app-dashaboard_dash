@@ -23,9 +23,9 @@ cuatro documentos, cuyos recuentos por tabla son correctos pero cuya suma no lo 
 
 | Bloque | Qué cambia |
 |---|---|
-| **A · Datos** (N-1…N-10) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, y el total de filas de la base está mal sumado |
+| **A · Datos** (N-1…N-14) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, el total de filas está mal sumado, las campañas se solapan, hay una cuarta fila de subtotal en el forecast, y H-07 no era lo que parecía |
 | **B · BI** (B-1…B-6) | El consumo real de Power BI no es el que midió el linaje: hay dimensiones inventadas con DAX, un mapeo de fundo incorrecto, una medida mal calculada y lógica de negocio que solo vive en Power Query |
-| **C · Decisiones** | D-4 (correspondencia de vocabularios) queda **resuelta por los datos**; D-1, D-2 y D-3 se implementan con supuesto parametrizado |
+| **C · Decisiones** | **D-3 y D-4 quedan cerradas por los datos**; D-2 estaba mal planteada; solo D-1 sigue necesitando a Planeamiento |
 
 **El hallazgo más importante es N-1.** El `UNIQUE` que `04_PLAN_MIGRACION.md` §3.4 declara para
 `fact.ramas` rechazaría **88.852 de las 94.236 filas de `E01_Ramas` — el 94%**.
@@ -314,6 +314,131 @@ filas y que la migración perdió datos. El contrato de aceptación de `raw` se 
 
 ---
 
+### N-11 · Las campañas se solapan: una fecha no determina la campaña · **Alto**
+
+`04_PLAN_MIGRACION.md` §3.2 añade `campana_productiva` como columna de la dimensión de
+tiempo, y la decisión D-2 la formula como "para cada campaña C2022–C2026, la fecha de inicio y
+fin". Eso presupone que las campañas se suceden sin solaparse. No es así.
+
+**Rango real observado, solo en cosecha (`H00_VolumenCampo`):**
+
+| Campaña | Desde | Hasta | Solape con la siguiente |
+|---|---|---|---|
+| C2022 | 2022-07-25 | 2023-01-05 | — |
+| C2023 | 2023-05-31 | 2024-02-16 | **61 días** con C2024 |
+| C2024 | 2023-12-18 | 2025-04-22 | **40 días** con C2025 |
+| C2025 | 2025-03-14 | 2026-03-05 | **11 días** con C2026 |
+| C2026 | 2026-02-23 | 2026-07-29 | — |
+
+Incorporando poda y forecast semanal, el solape llega a **354 días** entre C2024 y C2025. Al
+construir el calendario, **832 de los 2.189 días tienen más de una campaña activa**.
+
+**No es un defecto de los datos, es cómo funciona el cultivo.** La campaña de un lote depende
+de cuándo se podó ese lote, y los lotes no se podan a la vez: `M_Poda` reparte la poda de
+C2024 entre junio de 2023 y noviembre de 2024. Dos lotes pueden estar el mismo día en
+campañas distintas.
+
+**Consecuencias.**
+
+1. **`core.calendario` no lleva `campania_id`.** Asignar una campaña a cada día obligaría a
+   elegir arbitrariamente entre dos, y el `LEFT JOIN` contra un rango solapado además
+   duplicaría filas — de hecho, el primer intento de cargar el calendario falló con clave
+   duplicada en 2022-12-28, que es precisamente un día compartido por C2022 y C2023.
+2. **La campaña se resuelve por lote**, con `core.fn_campania_de_lote(lote_id, fecha)`: la
+   campaña de un lote en una fecha es la de su poda más reciente anterior. Dentro de un mismo
+   lote no hay solape, así que ahí sí es determinista.
+3. **D-2 está mal planteada.** Lo que hace falta de Planeamiento no son "fechas de corte" —no
+   existen como tales—, sino confirmar la regla de asignación por poda. Se registra como
+   `campania.origen_fechas = 'derivado'` hasta entonces.
+4. Explica de raíz el defecto de `H0103_ResModulo`, que agrupa por año y campaña a la vez y
+   parte los totales: año y campaña no son jerárquicos, son ortogonales.
+
+---
+
+### N-12 · Diámetros imposibles y conteos negativos · **Medio**
+
+Valores que ninguna restricción del origen impedía:
+
+| Caso | Filas | Rango observado | Efecto si se excluyeran |
+|---|---|---|---|
+| Diámetro de rama > 50 mm | 29 de 90.459 | hasta **8.789 mm** | la media baja de 10,89 a 10,62 |
+| Diámetro de baya > 40 mm | 3 de 4.193 | hasta **13.381 mm** | la media baja de 19,89 a 16,34 |
+| Conteos negativos | 2 filas | `-1` en E02 y E04 | — |
+
+Una rama de 8,8 metros y una baya de 13 metros son imposibles; el patrón sugiere decimales
+perdidos. **Se cargan igual**, porque las cifras de control que publica la auditoría los
+incluyen y excluirlos rompería el contrato de aceptación, pero quedan marcados con
+`sospechoso = true` y registrados en cuarentena para que Agronomía decida. Los conteos
+negativos sí se convierten a NULL: un conteo no puede ser negativo y el origen ya usa NULL
+para lo no medido.
+
+---
+
+### N-13 · `R08_Forecast_Campaña` tiene también una fila de subtotal · **Alto**
+
+H-06 documenta tres filas de subtotal de Excel en `H00` y `H01`, con 1.925.995 kg. Hay una
+cuarta, en la tabla de forecast, y es mucho mayor:
+
+```
+Version  Fundo  FundoPPto  Modulo  Turno  Año  Semana  Campaña  |  KG Exp
+(vacío)  (vac)   (vacío)   (vac)   (vac)  (v)   (vac)   (vac)   |  25.433.998
+```
+
+**Mismo patrón exacto que H-06**: todos los identificadores vacíos y un valor grande en la
+columna de kilos. La auditoría la menciona de pasada —en la tabla de versiones de `R08`
+aparece una fila `(vacío) | 1`— pero no la identifica como subtotal ni cuantifica su efecto.
+
+**Y su efecto no es menor:** son **25.433.998 kg, el 3,9%** de los 648.044.713,14 que
+`01_AUDITORIA.md` §7 publica como cifra de control de `SUM([KG Exp])`. Es decir, esa cifra de
+control incluye una fila de subtotal de Excel. Sin ella, el total es **622.610.715,14**.
+
+Como la fila no tiene versión y toda medida de forecast debe filtrar por versión, en la
+práctica ya quedaba fuera de cualquier tablero bien construido — pero entraba en cualquier
+total sin filtrar, que es justo lo que hacen los informes hoy (advertencia §5 de
+`03_GUIA_REPORTES.md`).
+
+**Corrección.** Va a cuarentena con motivo `SIN_IDENTIFICADORES`, igual que las de H-06, y el
+contrato de aceptación usa 622.610.715,14 como valor de `core.forecast_campania`.
+
+---
+
+### N-14 · H-07 resuelto: `H00` y `H01` contienen la misma cosecha · **Alto**
+
+H-07 documenta que `H01_ProdHistorica` tiene 187 filas menos que `H00_VolumenCampo` en C2023
+y C2024, con 4.486,59 kg de diferencia, y concluye que *"`H01` aplica algún criterio de
+consolidación —un umbral mínimo, o un agrupamiento de registros menores— que `H00` no
+aplica"*, marcándolo como pregunta abierta para Agronomía (decisión D-3).
+
+**No hay tal criterio de consolidación.** Tras normalizar los códigos y resolver la identidad
+de lote, ambas tablas contienen exactamente los mismos registros:
+
+| | `H00` | `H01` |
+|---|---|---|
+| Filas en el origen | 30.812 | 30.626 |
+| Menos las que no resuelven lote | −276 | −90 |
+| **Filas con lote identificado** | **30.536** | **30.536** |
+| Claves `(lote, fecha, campaña)` distintas | 30.536 | 30.536 |
+| Claves presentes solo en una de las dos | 0 | 0 |
+| **Diferencia total de kilos** | colspan | **0,01 kg** |
+
+La diferencia de 187 filas se explica entera por otra cosa: **cada tabla arrastra un conjunto
+distinto de filas cuyos lotes ya no están en el maestro vigente** — 276 en `H00` y 90 en
+`H01` — más las 3 filas de subtotal de H-06. Comparar los recuentos crudos, sin normalizar
+los códigos de lote ni apartar esas filas, produce el desfase aparente.
+
+**Consecuencias.**
+
+1. **D-3 deja de ser una pregunta para Agronomía.** No hay que elegir una "fuente de verdad":
+   las dos dicen lo mismo. `H00` se mantiene como referencia de kilos por convención, y `H01`
+   aporta paña, peso y plantas, que solo él trae.
+2. La reconciliación se sigue calculando y guardando en `qua.reconciliacion_cosecha`, ahora
+   como evidencia de que cuadran en lugar de como registro de una diferencia sin explicar.
+3. Lo que sí requiere revisión agronómica son los **276 y 90 registros de lotes retirados del
+   maestro** (M04/L078-L080 y similares): son cosecha real de lotes que ya no figuran, y están
+   en cuarentena con motivo `LOTE_INEXISTENTE`.
+
+---
+
 ## 3 · Bloque B · Hallazgos sobre el BI en producción
 
 Verificados en el TMDL de `pbi/` (`SEGUIMIENTO DE CAMPAÑA`, `SEGUIMIENTO DE PERSONAL`).
@@ -454,8 +579,8 @@ ya aporta el `Trimestre` que a `M_Time` le falta (H-04 caso 5) y las columnas `A
 | Decisión | Estado en `04_PLAN_MIGRACION.md` | Estado tras verificar |
 |---|---|---|
 | **D-1** · qué kilos compara `R0902` | Pendiente de Planeamiento | Se implementa con `[KG Exp]` (precedente de `R0801_ResCampaña`), parametrizado en `core.config_decision`. Cambiarlo es un `UPDATE` |
-| **D-2** · fechas de corte de campaña | Pendiente de Planeamiento | Se deriva del rango real observado por campaña en `H00`/`H01`/`M_Poda`, marcado como provisional |
-| **D-3** · reconciliación H00/H01 | H00 como referencia de KG | Se mantiene, con el ajuste de N-9: agregar por clave, no asumir unicidad |
+| **D-2** · fechas de corte de campaña | Pendiente de Planeamiento | **Mal planteada** (N-11): las campañas se solapan y una fecha no determina la campaña. Lo que hace falta confirmar es la regla de asignación por poda, no unas fechas de corte |
+| **D-3** · reconciliación H00/H01 | Pendiente de Agronomía | **Cerrada por los datos** (N-14): las dos tablas contienen la misma cosecha, con 0,01 kg de diferencia. No hay que elegir fuente de verdad |
 | **D-4** · correspondencia del vocabulario A | *"bloquea todo lo demás"* en la versión original | **Resuelta por los datos** (N-5): el maestro vigente sustituye el vocabulario A y R08/R09 confirman la equivalencia |
 | **D-5** · los 5 lotes duplicados | Obsoleto | Confirmado obsoleto: `(Fundo, Modulo, Lote)` es único en las 860 filas de Access |
 | **D-6** · filtros fijos de campaña | Regla de diseño | Sin cambios |

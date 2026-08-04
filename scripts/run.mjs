@@ -45,7 +45,12 @@ for (const k of Object.keys(dotenv)) if (!process.env[k] && dotenv[k]) env[k] = 
 function which(cmd) {
   const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { encoding: 'utf8' })
   if (r.status !== 0 || !r.stdout) return null
-  return r.stdout.split(/\r?\n/)[0].trim() || null
+  const rutas = r.stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+  if (process.platform !== 'win32') return rutas[0] ?? null
+  // En Windows `where` devuelve también shims sin extensión (fnm, nvm, scoop) que spawnSync
+  // no puede ejecutar: ENOENT. Hay que quedarse con el .cmd/.exe/.bat.
+  const ejecutable = rutas.find((p) => /\.(cmd|exe|bat|ps1)$/i.test(p))
+  return ejecutable ?? rutas[0] ?? null
 }
 
 function findPsql() {
@@ -100,7 +105,14 @@ function fail(msg) {
 
 function run(cmd, args, opts = {}) {
   log(`${C.dim}  $ ${cmd} ${args.join(' ')}${C.off}`)
-  const r = spawnSync(cmd, args, { stdio: 'inherit', env, cwd: opts.cwd ?? ROOT, shell: false })
+  // Node 20+ se niega a ejecutar .cmd/.bat sin shell (mitigación de CVE-2024-27980) y
+  // devuelve EINVAL. npm en Windows es siempre un .cmd, así que hay que pedirle shell.
+  const necesitaShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(cmd)
+  const r = spawnSync(
+    necesitaShell ? `"${cmd}"` : cmd,
+    necesitaShell ? args.map((a) => (/\s/.test(a) ? `"${a}"` : a)) : args,
+    { stdio: 'inherit', env, cwd: opts.cwd ?? ROOT, shell: necesitaShell }
+  )
   if (r.error) fail(`${cmd}: ${r.error.message}`)
   if (r.status !== 0 && !opts.allowFail) fail(`${cmd} terminó con código ${r.status}`)
   return r.status
@@ -200,8 +212,16 @@ function cmdSetup() {
   log(`${C.green}✓ Entorno listo. Siguiente: npm run extract${C.off}`)
 }
 
+/**
+ * Orden de las capas. El número del directorio ES la dependencia: no reordenar.
+ * Incluye 00_bootstrap para que `build` funcione también justo después de un `db:reset`.
+ */
+const CAPAS_MODELO = [
+  '00_bootstrap', '20_core', '30_stg', '40_qua', '50_carga_core', '60_dim_fact', '70_reporting',
+]
+
 function cmdBuild() {
-  for (const f of ['20_stg', '30_qua', '40_dim', '50_fact', '60_reporting']) sqlFolder(f)
+  for (const f of CAPAS_MODELO) sqlFolder(f)
   log(`${C.green}✓ Modelo construido. Siguiente: npm run validate${C.off}`)
 }
 

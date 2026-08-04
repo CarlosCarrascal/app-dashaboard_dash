@@ -20,6 +20,7 @@
     "migrate": "node scripts/run.mjs migrate",
     "psql": "node scripts/run.mjs psql",
     "sql": "node scripts/run.mjs sql",
+    "db:reset": "node scripts/run.mjs psql -f packages/db/tools/reset_modelo.sql",
     "db:pull": "npm run db:pull -w @aquanqa/db",
     "db:check": "npm run db:check -w @aquanqa/db",
     "dev": "npm run dev -w @aquanqa/web",
