@@ -73,7 +73,10 @@ BEGIN
     SELECT coalesce(a.lote_id, b.lote_id),
            coalesce(a.fecha, b.fecha),
            coalesce(a.campania_id, b.campania_id),
-           a.variedad_id,
+           -- ADR-0005: las 4 filas que solo existen en H01 (que nunca tuvo columna de
+           -- variedad) no tienen a.variedad_id — apuntan al centinela en vez de quedar NULL
+           -- (N-15). No es un fallo de resolución: el dato no existe en el origen.
+           coalesce(a.variedad_id, (SELECT variedad_id FROM core.variedad WHERE es_sentinel)),
            -- H00 es la referencia de kilos (decisión D-3): conserva los registros completos
            -- en C2023 y C2024, donde H01 tiene 187 filas menos.
            coalesce(a.kg, b.kg),
@@ -172,13 +175,27 @@ BEGIN
     -- Calibre como dimensión ORDENADA: en el origen era texto y se ordenaba alfabéticamente,
     -- con "10" antes que "2" (H-10). Los valores que no son un calibre conviven en la misma
     -- columna y se marcan en lugar de descartarse.
+    --
+    -- Deduplicación por fn_norm_texto: en el origen "Descarte" y "DESCARTE" son la MISMA
+    -- palabra con dos grafías (13.503 filas combinadas) y deben ser una sola fila. "Defectos"
+    -- y "-" NO se fusionan con "Descarte": son palabras distintas y no hay evidencia de que
+    -- sean sinónimos — fusionarlas sería asumir una regla de negocio que nadie confirmó
+    -- (ver ADR-0003 "nunca adivina"). La grafía canónica es la más frecuente de cada grupo,
+    -- para que el catálogo muestre la forma que de verdad predomina en el origen.
     INSERT INTO core.calibre (etiqueta, mm, orden, es_descarte)
     SELECT etiqueta, mm,
            (row_number() OVER (ORDER BY mm NULLS LAST, etiqueta))::smallint,
            mm IS NULL
     FROM (
-        SELECT DISTINCT calibre AS etiqueta, stg.fn_calibre_mm(calibre) AS mm
-        FROM stg.h02_packing WHERE calibre IS NOT NULL AND calibre <> ''
+        SELECT DISTINCT ON (stg.fn_norm_texto(calibre))
+               calibre AS etiqueta, stg.fn_calibre_mm(calibre) AS mm
+        FROM (
+            SELECT calibre, count(*) AS n
+            FROM stg.h02_packing
+            WHERE calibre IS NOT NULL AND calibre <> ''
+            GROUP BY calibre
+        ) f
+        ORDER BY stg.fn_norm_texto(calibre), n DESC
     ) c;
 
     INSERT INTO core.productor_equivalencia (productor_norm, productor, empresa_id, origen)
@@ -214,7 +231,9 @@ BEGIN
     LEFT JOIN core.productor_equivalencia pe
            ON pe.productor_norm = stg.fn_norm_texto(p.productor)
     LEFT JOIN core.variedad_alias va ON va.alias_norm = stg.fn_norm_texto(p.variedad)
-    LEFT JOIN core.calibre ca ON ca.etiqueta = p.calibre
+    -- Por texto normalizado, no exacto: si no, "Descarte" (minúscula) queda sin resolver
+    -- una vez que el catálogo unificó "Descarte"/"DESCARTE" bajo una sola grafía canónica.
+    LEFT JOIN core.calibre ca ON stg.fn_norm_texto(ca.etiqueta) = stg.fn_norm_texto(p.calibre)
     WHERE p.fecha_proceso IS NOT NULL;
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
@@ -278,10 +297,27 @@ BEGIN
     FROM stg.r08_forecast f
     WHERE f.version IS NULL OR f.version = '';
 
+    -- ADR-0005 / N-15: antes estas 624 filas quedaban con modulo_id NULL y NUNCA se
+    -- registraban en cuarentena — a diferencia de todos los demás hechos. Se registran
+    -- primero (con el mismo criterio LEFT JOIN que usa la carga) y luego se cargan con el
+    -- módulo apuntando al centinela.
+    INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
+    SELECT 'R08_Forecast_Campaña', 'core.forecast_campania', 'MODULO_INEXISTENTE', 'N-15',
+           'El módulo del origen no resuelve contra el maestro vigente.', to_jsonb(f)
+    FROM stg.r08_forecast f
+    WHERE (f.version IS NOT NULL AND f.version <> '')
+      AND NOT EXISTS (
+        SELECT 1 FROM core.modulo mo
+        LEFT JOIN core.fundo_alias af ON af.alias_norm = f.fundo_norm
+        WHERE mo.codigo = f.modulo AND (af.fundo_id IS NULL OR mo.fundo_id = af.fundo_id)
+      );
+
     INSERT INTO core.forecast_campania (version_id, modulo_id, empresa_id, turno_id,
         campania_id, anio, semana, kg_exp, kg_des, kg_con, frutos_exp,
         c12, c14, c16, c18, c19, c20, c22, c24, c26)
-    SELECT ve.version_id, m.modulo_id, al.empresa_id, t.turno_id, ca.campania_id,
+    SELECT ve.version_id,
+           coalesce(m.modulo_id, (SELECT modulo_id FROM core.modulo WHERE es_sentinel)),
+           al.empresa_id, t.turno_id, ca.campania_id,
            f.anio, f.semana, f.kg_exp, f.kg_des, f.kg_con, f.frutos_exp,
            f.c12, f.c14, f.c16, f.c18, f.c19, f.c20, f.c22, f.c24, f.c26
     FROM stg.r08_forecast f
@@ -300,10 +336,21 @@ BEGIN
 
     GET DIAGNOSTICS v_c = ROW_COUNT;
 
+    -- ADR-0005 / N-15: antes estas 23 filas se registraban en cuarentena Y quedaban en core
+    -- con lote_id NULL a la vez — doble registro sin excluirlas, distinto del resto de los
+    -- hechos. Ahora se registran igual, pero cargan con el lote apuntando al centinela.
+    INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
+    SELECT 'R09_Forecast_Semanal', 'core.forecast_semanal',
+           coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+           'Proyección sin lote identificable.', to_jsonb(v)
+    FROM stg.r09_forecast v WHERE lote_id IS NULL;
+
     INSERT INTO core.forecast_semanal (version_id, lote_id, campania_id, pasada, area_ha,
         fecha_cos_ant, fecha_cos, semana, frutos_por_planta, peso_baya, frutos_total,
         rendimiento, kg, dr)
-    SELECT ve.version_id, f.lote_id, ca.campania_id, f.pasada, f.area_ha,
+    SELECT ve.version_id,
+           coalesce(f.lote_id, (SELECT lote_id FROM core.lote WHERE es_sentinel)),
+           ca.campania_id, f.pasada, f.area_ha,
            f.fecha_cos_ant, f.fecha_cos, f.semana, f.frutos_por_planta, f.peso_baya,
            f.frutos_total, f.rendimiento, f.kg, f.dr
     FROM stg.r09_forecast f
@@ -312,13 +359,9 @@ BEGIN
 
     GET DIAGNOSTICS v_s = ROW_COUNT;
 
-    INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'R09_Forecast_Semanal', 'core.forecast_semanal',
-           coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
-           'Proyección sin lote identificable.', to_jsonb(v)
-    FROM stg.r09_forecast v WHERE lote_id IS NULL;
-
-    RAISE NOTICE 'Forecast: % de campaña y % semanales, en % versiones',
-        v_c, v_s, (SELECT count(*) FROM core.version_forecast);
+    RAISE NOTICE 'Forecast: % de campaña (% al módulo centinela) y % semanales (% al lote centinela), en % versiones',
+        v_c, (SELECT count(*) FROM core.forecast_campania fc JOIN core.modulo mo USING (modulo_id) WHERE mo.es_sentinel),
+        v_s, (SELECT count(*) FROM core.forecast_semanal fs JOIN core.lote l USING (lote_id) WHERE l.es_sentinel),
+        (SELECT count(*) FROM core.version_forecast);
 END;
 $$;

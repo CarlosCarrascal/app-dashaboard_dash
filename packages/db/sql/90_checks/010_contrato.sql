@@ -201,6 +201,25 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 ('cero.alias_sin_empresa', 'cero', 'Vocabularios de fundo que no resuelven empresa',
  'SELECT count(*) FROM core.fundo_alias WHERE empresa_id IS NULL', 0, 0, NULL, 'H-01', NULL, 38),
 
+('cero.fk_nula_en_hechos', 'cero', 'FK nula en las tablas de hechos (ADR-0005)',
+ 'SELECT
+    (SELECT count(*) FROM core.forecast_campania WHERE modulo_id IS NULL) +
+    (SELECT count(*) FROM core.forecast_semanal  WHERE lote_id   IS NULL) +
+    (SELECT count(*) FROM core.cosecha           WHERE variedad_id IS NULL)',
+ 0, 0, NULL, 'N-15',
+ 'El motor lo garantiza (NOT NULL); esto es una segunda verificación explícita.', 39),
+
+('cero.sentinel_duplicado', 'cero', 'Más de una fila centinela en la misma dimensión',
+ 'SELECT
+    (SELECT count(*) FROM core.empresa WHERE es_sentinel) +
+    (SELECT count(*) FROM core.fundo   WHERE es_sentinel) +
+    (SELECT count(*) FROM core.modulo  WHERE es_sentinel) +
+    (SELECT count(*) FROM core.turno   WHERE es_sentinel) +
+    (SELECT count(*) FROM core.variedad WHERE es_sentinel) +
+    (SELECT count(*) FROM core.lote    WHERE es_sentinel) - 6',
+ 0, 0, NULL, NULL,
+ 'Debe haber exactamente una por dimensión; el índice único parcial ya lo garantiza.', 39),
+
 -- ── 4 · Estado de core (difiere del origen, y se explica) ───────────────────
 ('core.lotes', 'core', 'Lotes del maestro vigente',
  'SELECT count(*) FROM core.lote', 879, 0, 860, 'N-4',
@@ -251,4 +270,19 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 
 ('core.cuarentena', 'core', 'Filas en cuarentena, todas con motivo',
  'SELECT count(*) FROM qua.rechazos WHERE motivo IS NULL', 0, 0, NULL, NULL,
- 'Ninguna fila apartada sin explicación.', 52);
+ 'Ninguna fila apartada sin explicación.', 52),
+
+('core.forecast_campania_sentinel', 'core', 'Filas de forecast_campania en el módulo centinela',
+ 'SELECT count(*) FROM core.forecast_campania fc JOIN core.modulo mo USING (modulo_id) WHERE mo.es_sentinel',
+ 624, 0, NULL, 'N-15',
+ 'Antes NULL y sin registrar en cuarentena; ahora apuntan al centinela y sí quedan registradas.', 53),
+
+('core.forecast_semanal_sentinel', 'core', 'Filas de forecast_semanal en el lote centinela',
+ 'SELECT count(*) FROM core.forecast_semanal fs JOIN core.lote l USING (lote_id) WHERE l.es_sentinel',
+ 23, 0, NULL, 'N-15',
+ 'Antes NULL y duplicadas en cuarentena a la vez; ahora apuntan al centinela sin duplicar.', 54),
+
+('core.cosecha_sentinel', 'core', 'Filas de cosecha en la variedad centinela',
+ 'SELECT count(*) FROM core.cosecha co JOIN core.variedad v USING (variedad_id) WHERE v.es_sentinel',
+ 4, 0, NULL, 'N-15',
+ 'Las 4 filas que solo existen en H01, que nunca tuvo columna de variedad.', 55);

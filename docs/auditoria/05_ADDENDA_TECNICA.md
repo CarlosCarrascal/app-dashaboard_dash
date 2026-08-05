@@ -23,7 +23,7 @@ cuatro documentos, cuyos recuentos por tabla son correctos pero cuya suma no lo 
 
 | Bloque | Qué cambia |
 |---|---|
-| **A · Datos** (N-1…N-14) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, el total de filas está mal sumado, las campañas se solapan, hay una cuarta fila de subtotal en el forecast, y H-07 no era lo que parecía |
+| **A · Datos** (N-1…N-15) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, el total de filas está mal sumado, las campañas se solapan, hay una cuarta fila de subtotal en el forecast, H-07 no era lo que parecía, y dos hechos de forecast no trataban sus FK sin resolver como el resto |
 | **B · BI** (B-1…B-6) | El consumo real de Power BI no es el que midió el linaje: hay dimensiones inventadas con DAX, un mapeo de fundo incorrecto, una medida mal calculada y lógica de negocio que solo vive en Power Query |
 | **C · Decisiones** | **D-3 y D-4 quedan cerradas por los datos**; D-2 estaba mal planteada; solo D-1 sigue necesitando a Planeamiento |
 
@@ -436,6 +436,35 @@ los códigos de lote ni apartar esas filas, produce el desfase aparente.
 3. Lo que sí requiere revisión agronómica son los **276 y 90 registros de lotes retirados del
    maestro** (M04/L078-L080 y similares): son cosecha real de lotes que ya no figuran, y están
    en cuarentena con motivo `LOTE_INEXISTENTE`.
+
+---
+
+### N-15 · Dos hechos con FK nula sin el mismo tratamiento que el resto · **Medio**
+
+Un inventario completo de las 41 claves foráneas declaradas en `core` — no solo las que ya
+se habían revisado — muestra que **solo 4 tienen algún nulo real** hoy. Verificarlas una por
+una encontró dos inconsistencias de implementación, no dos decisiones:
+
+| Columna | Nulos | El problema |
+|---|---|---|
+| `forecast_campania.modulo_id` | 624 de 101.714 | El módulo del origen no resolvía contra el maestro, y esas filas **nunca se registraban en `qua.rechazos`** — a diferencia de todos los demás hechos (ramas, flores, estados, brotes, bayas, cosecha), donde una identidad sin resolver siempre deja rastro |
+| `forecast_semanal.lote_id` | 23 de 48.368 | Sí se registraban en cuarentena, **pero además quedaban en `core` con `lote_id` NULL** — doble contabilidad: la fila estaba a la vez "excluida" (en cuarentena) y "incluida" (en `core`), sin que el patrón del resto de hechos se respetara |
+| `cosecha.variedad_id` | 4 de 30.540 | Legítimo, no es un fallo: son las 4 filas que solo existen en `H01_ProdHistorica`, que **nunca tuvo columna de variedad** en el origen |
+| `fundo_alias.fundo_id` | 7 de 23 | Por diseño: la tabla existe para registrar alias que no determinan un fundo físico; la columna `ambiguo` ya gobierna ese caso, no requiere cambio |
+
+**Corrección adoptada (ADR-0005):** las tablas de hechos ya no dejan ninguna FK en NULL.
+Cuando la identidad no resuelve, la fila apunta a una fila centinela `es_sentinel = true`
+("Sin identificar") en la dimensión correspondiente — `empresa`, `fundo`, `modulo`, `turno`,
+`variedad` y `lote` la llevan — y sigue registrándose en cuarentena con su motivo, como el
+resto. Los recuentos de `core.forecast_campania` (101.714), `core.forecast_semanal` (48.368)
+y `core.cosecha` (30.540) no cambian: el centinela repuebla el valor, no excluye la fila.
+
+Al registrar las 624 filas de `forecast_campania` se usó al principio el motivo
+`LOTE_INEXISTENTE`, ya existente. Fue un error: infló ese motivo de ~730 a 1.352 filas,
+por encima de su tope (900, calibrado solo para lotes) y mezclando dos problemas distintos
+en un mismo contador — el de `forecast_campania` es de **módulo**, no de lote. Se corrigió
+con un motivo propio, `MODULO_INEXISTENTE` (tope 700), verificado tras recargar: 728 en
+`LOTE_INEXISTENTE` y 624 en `MODULO_INEXISTENTE`, ambos dentro de su tope.
 
 ---
 

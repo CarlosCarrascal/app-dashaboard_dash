@@ -18,6 +18,24 @@ BEGIN
     TRUNCATE core.fundo_alias, core.lote, core.modulo, core.fundo, core.empresa,
              core.turno, core.variedad_alias, core.variedad RESTART IDENTITY CASCADE;
 
+    -------------------------------------------------------- fila centinela
+    -- Cadena "Sin identificar", de arriba a abajo (ADR-0005). Existe para que ninguna FK de
+    -- una tabla de hechos quede NULL cuando la identidad no resuelve: en vez de eso, apunta
+    -- aquí. Se crea antes que los datos reales para que ya esté disponible cuando la carga
+    -- de hechos (forecast, cosecha) la necesite.
+    INSERT INTO core.empresa (nombre, es_sentinel) VALUES ('Sin identificar', true);
+    INSERT INTO core.fundo (empresa_id, codigo, es_sentinel)
+    SELECT empresa_id, 'SIN_IDENTIFICAR', true FROM core.empresa WHERE es_sentinel;
+    INSERT INTO core.modulo (fundo_id, codigo, es_sentinel)
+    SELECT fundo_id, 'SIN_IDENTIFICAR', true FROM core.fundo WHERE es_sentinel;
+    INSERT INTO core.turno (codigo, es_sentinel) VALUES ('SIN_IDENTIFICAR', true);
+    INSERT INTO core.variedad (nombre, es_sentinel) VALUES ('Sin identificar', true);
+    INSERT INTO core.lote (modulo_id, turno_id, codigo, variedad_id, area_ha, n_plantas,
+                           es_sentinel, origen)
+    SELECT mo.modulo_id, t.turno_id, 'SIN_IDENTIFICAR', v.variedad_id, 0, 0, true, 'sentinel'
+    FROM core.modulo mo, core.turno t, core.variedad v
+    WHERE mo.es_sentinel AND t.es_sentinel AND v.es_sentinel;
+
     ------------------------------------------------------------------ empresa
     INSERT INTO core.empresa (nombre)
     SELECT DISTINCT empresa FROM stg.maestro_lote WHERE empresa IS NOT NULL
@@ -83,7 +101,10 @@ BEGIN
     SELECT mo.modulo_id,
            m.lote,
            t.turno_id,
-           va.variedad_id,
+           -- coalesce defensivo (ADR-0005): hoy las 879 filas del maestro resuelven variedad
+           -- (una sola, "Sekoya pop"), pero si el maestro trajera una grafía nueva sin alias
+           -- todavía, esto evita que la carga completa falle por una violación de NOT NULL.
+           coalesce(va.variedad_id, (SELECT variedad_id FROM core.variedad WHERE es_sentinel)),
            coalesce(m.area_ha, 0),
            coalesce(m.n_plantas, 0),
            m.fecha_siembra,
@@ -173,7 +194,7 @@ BEGIN
       ON e.nombre = CASE WHEN v.fundo LIKE 'Aqu Anqa II%' THEN 'Aqu Anqa II' ELSE 'Aqu Anqa' END
     ON CONFLICT (alias_norm) DO NOTHING;
 
-    RAISE NOTICE 'Ubicación: % empresas, % fundos, % módulos, % lotes, % alias',
+    RAISE NOTICE 'Ubicación: % empresas, % fundos, % módulos, % lotes del maestro + 1 centinela, % alias',
         (SELECT count(*) FROM core.empresa), (SELECT count(*) FROM core.fundo),
         (SELECT count(*) FROM core.modulo), v_lotes, (SELECT count(*) FROM core.fundo_alias);
 END;

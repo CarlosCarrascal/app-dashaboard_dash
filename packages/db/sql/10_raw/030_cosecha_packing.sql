@@ -115,8 +115,15 @@ COMMENT ON COLUMN raw.h02_bd_elifab.turno IS
     '[Turno] — turno de PROCESO de la empacadora: DÍA (90.702) / NOCHE (19.126). Dominio '
     'distinto del turno de riego T00-T12, aunque la columna se llame igual (N-2).';
 COMMENT ON COLUMN raw.h02_bd_elifab.calibre IS
-    '[Calibre] — escala ordenada en mm (12mm a 26mm+) más el valor DESCARTE, guardada como '
-    'texto: se ordena alfabéticamente y "10" va antes que "2" (H-10).';
+    '[Calibre] — escala ordenada en mm (12mm a 26mm+) más 4 valores que no son calibre: '
+    '"-" (6.376), "Defectos" (1.434), "Descarte" (1.381) y "DESCARTE" (12.122). Guardada como '
+    'texto: se ordena alfabéticamente y "10" va antes que "2" (H-10). "Descarte"/"DESCARTE" '
+    'son la misma palabra con dos grafías y se unifican al cargar core.calibre; "Defectos" y '
+    '"-" NO se fusionan con ella, por no haber evidencia de que sean sinónimos.';
+COMMENT ON COLUMN raw.h02_bd_elifab.calibres IS
+    '[Calibres] — el par duplicado de [Calibre] (H-10), pero mucho más grueso: solo 3 valores '
+    '("-", "< 19 mm+", "> 19 mm+") frente a los 9 calibres reales de [Calibre]. Se extrae por '
+    'trazabilidad y NO se usa para cargar core.calibre: [Calibre] es la fuente granular real.';
 COMMENT ON COLUMN raw.h02_bd_elifab.mercado IS
     '[Mercado] — destino comercial y por tanto el indicador de rentabilidad: USA (44.134), '
     'DESCARTE (12.305), CHINA (11.827), ÁCIDO (7.167). Pero también ''0'' (41.428) y ''-'' '

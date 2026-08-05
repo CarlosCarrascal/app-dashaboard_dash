@@ -11,8 +11,14 @@
 -- ============================================================================
 
 CREATE OR REPLACE VIEW dim.empresa AS
-SELECT empresa_id, nombre AS empresa, activo
+SELECT empresa_id, nombre AS empresa, activo, es_sentinel
 FROM core.empresa;
+
+COMMENT ON VIEW dim.empresa IS
+    'La fila con es_sentinel=true ("Sin identificar") existe para que ninguna FK de una '
+    'tabla de hechos quede NULL cuando la identidad no resuelve (ADR-0005). En Power BI: '
+    'filtrar es_sentinel=false para el análisis normal, o dejarla visible para auditar '
+    'cuánto volumen no se pudo identificar.';
 
 CREATE OR REPLACE VIEW dim.fundo AS
 SELECT f.fundo_id,
@@ -21,14 +27,15 @@ SELECT f.fundo_id,
        e.empresa_id,
        e.nombre            AS empresa,
        f.codigo || ' · ' || coalesce(f.alias_operativo, '') AS etiqueta,
-       f.activo
+       f.activo,
+       f.es_sentinel
 FROM core.fundo f
 JOIN core.empresa e USING (empresa_id);
 
 COMMENT ON VIEW dim.fundo IS
     'Los seis fundos físicos con su empresa. Sustituye a la columna calculada en DAX que '
     'asignaba fundo por módulo y que manda M01-M04 entero a Arena Azul y deja M17-M24 en '
-    'blanco (hallazgo B-3).';
+    'blanco (hallazgo B-3). La fila es_sentinel=true es "Sin identificar" (ADR-0005).';
 
 CREATE OR REPLACE VIEW dim.modulo AS
 SELECT m.modulo_id,
@@ -39,13 +46,18 @@ SELECT m.modulo_id,
        e.empresa_id,
        e.nombre      AS empresa,
        -- El código de módulo no es único: M01 a M04 están en dos fundos (N-4).
-       m.codigo || ' (' || f.codigo || ')' AS etiqueta
+       m.codigo || ' (' || f.codigo || ')' AS etiqueta,
+       m.es_sentinel
 FROM core.modulo m
 JOIN core.fundo f USING (fundo_id)
 JOIN core.empresa e ON e.empresa_id = f.empresa_id;
 
+COMMENT ON VIEW dim.modulo IS
+    'La fila es_sentinel=true ("Sin identificar") es donde apuntan las 624 filas de '
+    'forecast_campania cuyo módulo no resolvía contra el maestro vigente (ADR-0005, N-15).';
+
 CREATE OR REPLACE VIEW dim.turno AS
-SELECT turno_id, codigo AS turno FROM core.turno;
+SELECT turno_id, codigo AS turno, es_sentinel FROM core.turno;
 
 CREATE OR REPLACE VIEW dim.lote AS
 SELECT l.lote_id,
@@ -71,7 +83,8 @@ SELECT l.lote_id,
        -- el código de lote a secas no identifica un lote (B-2).
        e.nombre || '/' || m.codigo || '/' || l.codigo AS clave_negocio,
        m.codigo || '-' || l.codigo AS etiqueta,
-       m.codigo || t.codigo        AS mod_turno
+       m.codigo || t.codigo        AS mod_turno,
+       l.es_sentinel
 FROM core.lote l
 JOIN core.modulo m USING (modulo_id)
 JOIN core.fundo f  ON f.fundo_id = m.fundo_id
@@ -80,10 +93,11 @@ JOIN core.turno t  ON t.turno_id = l.turno_id
 LEFT JOIN core.variedad v ON v.variedad_id = l.variedad_id;
 
 COMMENT ON VIEW dim.lote IS
-    'Los 879 lotes con su jerarquía completa: empresa, fundo, módulo y turno. `clave_negocio` '
-    'es el identificador correcto — (empresa, módulo, lote), ADR-0003. El área viene de aquí '
-    'y NO debe sumarse desde un hecho: sumar core.cosecha.area repetiría la superficie una vez '
-    'por paña y es el error de la medida KG/HA (hallazgo B-4).';
+    'Los 879 lotes del maestro + 1 fila centinela "Sin identificar" (ADR-0005), con su '
+    'jerarquía completa: empresa, fundo, módulo y turno. `clave_negocio` es el identificador '
+    'correcto — (empresa, módulo, lote), ADR-0003. El área viene de aquí y NO debe sumarse '
+    'desde un hecho: sumar core.cosecha.area repetiría la superficie una vez por paña y es '
+    'el error de la medida KG/HA (hallazgo B-4).';
 
 CREATE OR REPLACE VIEW dim.tiempo AS
 SELECT c.fecha,
@@ -150,7 +164,12 @@ COMMENT ON VIEW dim.calibre IS
     'alfabéticamente, con 10 antes que 2 (H-10).';
 
 CREATE OR REPLACE VIEW dim.variedad AS
-SELECT variedad_id, nombre AS variedad FROM core.variedad;
+SELECT variedad_id, nombre AS variedad, es_sentinel FROM core.variedad;
+
+COMMENT ON VIEW dim.variedad IS
+    'La fila es_sentinel=true ("Sin identificar") es donde apuntan las 4 filas de cosecha '
+    'que solo existen en H01_ProdHistorica, que nunca tuvo columna de variedad (ADR-0005, '
+    'N-15) — no es un fallo de resolución, el dato no existe en el origen.';
 
 CREATE OR REPLACE VIEW dim.version_forecast AS
 SELECT version_id, sistema, codigo AS version, semana_emision, iteracion, es_presupuesto

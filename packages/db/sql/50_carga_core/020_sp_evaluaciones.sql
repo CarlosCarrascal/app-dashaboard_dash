@@ -63,7 +63,7 @@ BEGIN
     GET DIAGNOSTICS v_det = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E01_Ramas', 'core.rama_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-13',
+    SELECT 'E01_Ramas', 'core.rama_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
            'Diámetro de rama físicamente imposible: ' || diametro || ' mm. Se carga igual, '
            'porque las cifras de control de la auditoría lo incluyen.',
            jsonb_build_object('rama_medicion_id', rama_medicion_id, 'diametro', diametro)
@@ -134,7 +134,7 @@ BEGIN
 
     -- Un conteo negativo es imposible: se carga como NULL y queda constancia (N-13).
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E02_ConteoFlores', 'core.flores', 'CONTEO_NEGATIVO', 'N-13',
+    SELECT 'E02_ConteoFlores', 'core.flores', 'CONTEO_NEGATIVO', 'N-12',
            'Conteo con valor negativo en el origen; se carga como no medido.',
            jsonb_build_object('fecha', stg.fn_a_fecha(fecha), 'modulo', modulo, 'lote', lote,
                               'n_flores', n_flores, 'cuajo', cuajo, 'ya', ya, 'yp', yp)
@@ -213,7 +213,7 @@ BEGIN
     FROM stg.e04_brotes v WHERE lote_id IS NULL OR fecha IS NULL;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E04_Brotes', 'core.brotes', 'CONTEO_NEGATIVO', 'N-13',
+    SELECT 'E04_Brotes', 'core.brotes', 'CONTEO_NEGATIVO', 'N-12',
            'Conteo de brotes negativo en el origen; se carga como cero.',
            jsonb_build_object('fecha', stg.fn_a_fecha(fecha), 'modulo', modulo, 'lote', lote,
                               'brotes', brotes)
@@ -261,7 +261,7 @@ BEGIN
     GET DIAGNOSTICS v_n = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E05_DiametrosBayas', 'core.baya_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-13',
+    SELECT 'E05_DiametrosBayas', 'core.baya_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
            'Diámetro de baya físicamente imposible: ' || diametro || ' mm.',
            jsonb_build_object('baya_medicion_id', baya_medicion_id, 'diametro', diametro)
     FROM core.baya_medicion WHERE sospechoso;

@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS core.cosecha (
     lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
     fecha           date NOT NULL,
     campania_id     smallint NOT NULL REFERENCES core.campania(campania_id),
-    variedad_id     smallint REFERENCES core.variedad(variedad_id),
+    -- NOT NULL desde ADR-0005: las 4 filas que solo existen en H01 (que nunca tuvo columna
+    -- de variedad) apuntan al centinela "Sin identificar" en vez de quedar en NULL (N-15).
+    variedad_id     smallint NOT NULL REFERENCES core.variedad(variedad_id),
     kg              numeric(12,4) NOT NULL CHECK (kg >= 0),
     pana            smallint CHECK (pana > 0),
     peso_baya       numeric(8,4) CHECK (peso_baya > 0),
@@ -223,7 +225,9 @@ COMMENT ON COLUMN core.version_forecast.iteracion IS
 CREATE TABLE IF NOT EXISTS core.forecast_campania (
     forecast_campania_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     version_id      smallint NOT NULL REFERENCES core.version_forecast(version_id),
-    modulo_id       smallint REFERENCES core.modulo(modulo_id),
+    -- NOT NULL desde ADR-0005: 624 filas apuntan al módulo centinela "Sin identificar" en
+    -- vez de quedar en NULL sin registro (hallazgo N-15 — antes ni siquiera iban a cuarentena).
+    modulo_id       smallint NOT NULL REFERENCES core.modulo(modulo_id),
     empresa_id      smallint REFERENCES core.empresa(empresa_id),
     turno_id        smallint REFERENCES core.turno(turno_id),
     campania_id     smallint REFERENCES core.campania(campania_id),
@@ -252,7 +256,11 @@ COMMENT ON COLUMN core.forecast_campania.c12 IS
 CREATE TABLE IF NOT EXISTS core.forecast_semanal (
     forecast_semanal_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     version_id      smallint NOT NULL REFERENCES core.version_forecast(version_id),
-    lote_id         integer REFERENCES core.lote(lote_id),
+    -- NOT NULL desde ADR-0005: 23 filas apuntan al lote centinela "Sin identificar" en vez
+    -- de quedar en NULL. Antes esas 23 se registraban en cuarentena Y quedaban en core con
+    -- lote_id NULL a la vez — doble registro sin excluirlas, inconsistente con el resto de
+    -- los hechos (hallazgo N-15).
+    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
     campania_id     smallint REFERENCES core.campania(campania_id),
     pasada          smallint,
     area_ha         numeric(10,4),

@@ -28,8 +28,8 @@ COMMENT ON TABLE qua.rechazos IS
     'íntegro para poder reprocesarlo; `hallazgo` lo enlaza con el defecto de la auditoría que '
     'lo explica.';
 COMMENT ON COLUMN qua.rechazos.motivo IS
-    'Motivo tipificado. Los previstos: SIN_IDENTIFICADORES, LOTE_INEXISTENTE, LOTE_AMBIGUO, '
-    'DUPLICADO_EXACTO, CLAVE_NATURAL_REPETIDA, CONFLICTO_DIAMETRO_RAMA, '
+    'Motivo tipificado. Los previstos: SIN_IDENTIFICADORES, LOTE_INEXISTENTE, MODULO_INEXISTENTE, '
+    'LOTE_AMBIGUO, DUPLICADO_EXACTO, CLAVE_NATURAL_REPETIDA, CONFLICTO_DIAMETRO_RAMA, '
     'EVALUADOR_SIN_MAESTRO, MERCADO_INVALIDO, TIMESTAMP_DUPLICADO.';
 
 -- ── Umbrales esperados ──────────────────────────────────────────────────────
@@ -53,6 +53,10 @@ INSERT INTO qua.umbral (motivo, tope, hallazgo, explicacion) VALUES
     ('LOTE_INEXISTENTE', 900, 'N-3',
      'El par (módulo, lote) no está en el maestro vigente. Se esperan ~730 filas de ~280.000, '
      'concentradas en M04/L078-L080, M10/L191, M17/L042 y unos pocos más.'),
+    ('MODULO_INEXISTENTE', 700, 'N-15',
+     'El módulo de R08_Forecast_Campaña no resuelve contra el maestro vigente: 624 filas que '
+     'antes quedaban con modulo_id NULL y sin registrar (ADR-0005). Es un motivo propio, '
+     'distinto de LOTE_INEXISTENTE, porque lo que falla ahí es el módulo, no el lote.'),
     ('LOTE_AMBIGUO', 50, 'N-4',
      'El par existe en las dos empresas y el fundo de la fila no permite distinguir. Son los 9 '
      'pares de M01-M04 que el maestro repite.'),
@@ -71,12 +75,12 @@ INSERT INTO qua.umbral (motivo, tope, hallazgo, explicacion) VALUES
      'se descartan: son un tercio de la tabla.'),
     ('TIMESTAMP_DUPLICADO', 2500, 'H-08',
      'Mediciones de clima con el mismo instante: 2.175 filas de exceso.'),
-    ('DIAMETRO_FUERA_DE_RANGO', 60, 'N-13',
+    ('DIAMETRO_FUERA_DE_RANGO', 60, 'N-12',
      'Diámetros físicamente imposibles: 29 ramas por encima de 50 mm (hasta 8.789) y 3 bayas '
      'por encima de 40 mm (hasta 13.381), casi con seguridad decimales perdidos. Se cargan '
      'igual porque las cifras de control de la auditoría los incluyen; excluirlos bajaría la '
      'media de rama de 10,89 a 10,62 y la de baya de 19,89 a 16,34.'),
-    ('CONTEO_NEGATIVO', 10, 'N-13',
+    ('CONTEO_NEGATIVO', 10, 'N-12',
      'Conteos con valor negativo, imposibles: 1 fila en E02_ConteoFlores y 1 en E04_Brotes. '
      'Se convierten a NULL porque el origen ya usa NULL para lo no medido.')
 ON CONFLICT (motivo) DO UPDATE
