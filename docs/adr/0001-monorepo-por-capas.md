@@ -1,13 +1,21 @@
 # ADR-0001 · Monorepo por capas con el esquema como código
 
-- **Estado:** aceptado
+- **Estado:** aceptado · **parcialmente superado por [ADR-0006](0006-un-solo-lenguaje-de-backend.md)**
 - **Fecha:** 2026-08-03
+
+> **Qué sigue vigente y qué no.** La decisión de fondo —un solo repositorio, una regla por capa,
+> el esquema como código— es la que sostiene todo lo demás y no ha cambiado. Lo que ADR-0006
+> supera es solo la **tabla de capas** de abajo, en las tres filas que asignaban trabajo a
+> TypeScript: `packages/db/drizzle`, `packages/shared` (Zod) y `apps/web` (Next.js). Ninguna de
+> las tres llegó a tener código, y Flutter dejó sin propósito a la única que lo iba a tener.
+> Hoy esas responsabilidades viven en `domain/` y `backend/campo-api/`, en Python.
+> `packages/db/sql` se lee hoy como `db/sql`.
 
 ## Contexto
 
 Access dejó de ser suficiente por una razón concreta: **no tenía dónde declarar las reglas**. Sin
 FK, sin PK correctas y sin índices únicos, cada defecto entraba en silencio y llegaba a los
-tableros (`docs/auditoria/01_AUDITORIA.md`). Y las reglas que sí existían estaban repartidas: SQL
+tableros (`docs/historico-access/01_AUDITORIA.md`). Y las reglas que sí existían estaban repartidas: SQL
 dentro de Access, `Table.ReplaceValue` dentro de Power Query, `SWITCH` dentro de DAX, y un
 proceso de carga externo del que no queda rastro.
 

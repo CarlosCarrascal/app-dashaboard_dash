@@ -1,0 +1,48 @@
+# El modelo semántico se versiona en TMDL para que un cambio sea revisable. Este workflow
+# impide que vuelvan a entrar las dimensiones calculadas y los mapeos de negocio en DAX que
+# documentan los hallazgos B-2 y B-3 (ADR-0004).
+name: bi
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'bi/**'
+      - '.github/workflows/bi.yml'
+  pull_request:
+    paths:
+      - 'bi/**'
+      - '.github/workflows/bi.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guardrail:
+    name: Frontera de transformación
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Nota: solo mira bi/semantic-model. Los .tmdl congelados de docs/historico-access/pbi son
+      # la evidencia del estado ANTERIOR y por definición incumplen las tres reglas — no deben
+      # entrar aquí.
+      - name: Sin dimensiones fabricadas ni mapeos de negocio en el modelo
+        run: |
+          set +e
+          fallos=0
+          if grep -rn "SUMMARIZECOLUMNS" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::Hay una dimensión construida con SUMMARIZECOLUMNS. Las dimensiones vienen de reporting (ADR-0004)."
+            grep -rn "SUMMARIZECOLUMNS" bi/semantic-model --include='*.tmdl'
+            fallos=1
+          fi
+          if grep -rn "Table.ReplaceValue" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::Hay limpieza de texto en Power Query. Normalizar en stg (ADR-0004)."
+            grep -rn "Table.ReplaceValue" bi/semantic-model --include='*.tmdl'
+            fallos=1
+          fi
+          if grep -rn "Access.Database" bi/semantic-model --include='*.tmdl' -q; then
+            echo "::error::El modelo sigue apuntando a Access. El origen es PostgreSQL."
+            fallos=1
+          fi
+          exit $fallos

@@ -144,7 +144,7 @@ def cargar_raw(
             if sobran:
                 raise RuntimeError(
                     f"El CSV de {tabla} trae columnas que raw.{tabla} no tiene: {sobran}.\n"
-                    "  El catálogo (catalogo.py) y el DDL (packages/db/sql/10_raw) han "
+                    "  El catálogo (catalogo.py) y el DDL (db/sql/10_raw) han "
                     "divergido: corrige uno de los dos antes de cargar."
                 )
 

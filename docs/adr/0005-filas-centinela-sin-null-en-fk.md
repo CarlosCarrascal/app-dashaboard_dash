@@ -2,7 +2,7 @@
 
 - **Estado:** aceptado
 - **Fecha:** 2026-08-04
-- **Origen:** hallazgo N-15 de `../auditoria/05_ADDENDA_TECNICA.md`
+- **Origen:** hallazgo N-15 de `../historico-access/05_ADDENDA_TECNICA.md`
 
 ## Contexto
 

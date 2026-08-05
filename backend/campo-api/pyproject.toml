@@ -1,0 +1,36 @@
+[project]
+name = "aquanqa-campo-api"
+version = "0.1.0"
+description = "API de campo: recibe las evaluaciones de la app Flutter y los Excel de proyecciones calibradas"
+requires-python = ">=3.12"
+# Sin pyodbc a propósito: este paquete se empaqueta en un contenedor Linux para AWS, donde el
+# driver ODBC de Access no existe. La extracción del Access histórico vive en `etl/`, que solo
+# corre en Windows (ADR-0006).
+dependencies = [
+    "aquanqa-domain",       # las reglas de negocio y el acceso a core; se resuelve en editable
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "python-multipart>=0.0.9",  # subida del Excel de proyecciones
+    "openpyxl>=3.1",            # lectura de ese Excel
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27"]  # httpx: cliente de prueba de FastAPI
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: requiere una base PostgreSQL accesible"]

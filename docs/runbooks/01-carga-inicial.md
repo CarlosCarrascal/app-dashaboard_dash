@@ -33,7 +33,7 @@ npm run validate   # contrato de aceptación
 ## Qué debe salir
 
 Al terminar `load`, `raw` tiene **683.180 filas** repartidas exactamente como
-`docs/auditoria/evidencia/04_metricas_validacion.txt` §1. Cualquier desvío significa que la
+`docs/historico-access/evidencia/04_metricas_validacion.txt` §1. Cualquier desvío significa que la
 extracción se truncó: repetirla, no continuar.
 
 Al terminar `validate`, todas las filas del informe en `✓`. Las que deben **cambiar** respecto a

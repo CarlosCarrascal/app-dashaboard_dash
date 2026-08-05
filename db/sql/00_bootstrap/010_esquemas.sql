@@ -22,8 +22,9 @@ COMMENT ON SCHEMA qua IS
 
 CREATE SCHEMA IF NOT EXISTS core;
 COMMENT ON SCHEMA core IS
-    'Modelo operativo normalizado. La aplicación escribe aquí. Gobernado por Drizzle. '
-    'Prohibido agregar para reportes.';
+    'Modelo operativo normalizado. La API de campo escribe aquí. El DDL de db/sql/20_core es la '
+    'fuente de verdad del esquema, y las invariantes (NOT NULL, UNIQUE, FK, filas centinela de '
+    'ADR-0005) se declaran aquí y no en el código de aplicación. Prohibido agregar para reportes.';
 
 CREATE SCHEMA IF NOT EXISTS dim;
 COMMENT ON SCHEMA dim IS

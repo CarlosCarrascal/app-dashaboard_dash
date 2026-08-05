@@ -4,13 +4,14 @@
 -- Borra core, stg, qua, dim, fact y reporting, y los deja listos para que `npm run build`
 -- los vuelva a crear. **No toca `raw`**, así que no hay que repetir la extracción del .accdb.
 --
--- No forma parte del pipeline: vive fuera de packages/db/sql para que no se ejecute por
--- accidente. Se lanza a mano:
+-- No forma parte del pipeline: vive fuera de db/sql para que no se ejecute por accidente.
+-- Se lanza a mano:
 --
 --     npm run db:reset
 --
--- En cuanto Drizzle tome el control de `core` (E4), la evolución del esquema pasa a ser por
--- migraciones versionadas y esto queda solo para empezar de cero en local.
+-- Mientras `db/sql` siga siendo la fuente de verdad del esquema (ADR-0006), reconstruir desde
+-- cero es la forma normal de aplicar un cambio de DDL en local: ver
+-- `docs/runbooks/03-cambiar-el-esquema.md`.
 -- ============================================================================
 
 DROP SCHEMA IF EXISTS reporting CASCADE;

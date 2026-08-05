@@ -2,15 +2,12 @@
   "name": "aquanqa-data-platform",
   "version": "0.1.0",
   "private": true,
-  "description": "Plataforma de datos Aqu Anqa: migración de BD_AQUANQA_26.accdb a PostgreSQL, app de captura y modelo semántico de BI",
+  "description": "Plataforma de datos Aqu Anqa: PostgreSQL como código, ETL del histórico de Access, API de campo y modelo semántico de BI",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "comentario": "Node solo actúa de lanzador de tareas: scripts/run.mjs localiza psql y el Python de conda para que no haya que activar nada a mano. No hay dependencias npm ni código TypeScript; el backend, la validación y el ETL son Python (ADR-0006).",
   "scripts": {
     "setup": "node scripts/run.mjs setup",
     "extract": "node scripts/run.mjs py extract",
@@ -20,12 +17,6 @@
     "migrate": "node scripts/run.mjs migrate",
     "psql": "node scripts/run.mjs psql",
     "sql": "node scripts/run.mjs sql",
-    "db:reset": "node scripts/run.mjs psql -f packages/db/tools/reset_modelo.sql",
-    "db:pull": "npm run db:pull -w @aquanqa/db",
-    "db:check": "npm run db:check -w @aquanqa/db",
-    "dev": "npm run dev -w @aquanqa/web",
-    "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "db:reset": "node scripts/run.mjs psql -f db/tools/reset_modelo.sql"
   }
 }

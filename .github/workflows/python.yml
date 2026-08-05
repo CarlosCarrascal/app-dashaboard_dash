@@ -1,0 +1,93 @@
+# Los tres paquetes Python del monorepo, y la frontera entre ellos.
+#
+# Un solo workflow para los tres porque comparten `domain/`: un cambio ahí puede romper a
+# cualquiera de los otros dos, así que conviene que se verifiquen juntos.
+name: python
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'domain/**'
+      - 'etl/**'
+      - 'backend/**'
+      - '.github/workflows/python.yml'
+  pull_request:
+    paths:
+      - 'domain/**'
+      - 'etl/**'
+      - 'backend/**'
+      - '.github/workflows/python.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # `domain` se instala SOLO, sin fastapi ni pyodbc, a propósito: es lo que prueba que puede
+  # viajar dentro del contenedor Linux del backend en AWS, donde el driver de Access no existe.
+  # Si alguien le añade una de esas dependencias, este trabajo falla aquí y no en el despliegue.
+  domain:
+    name: domain · ruff + pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -e "domain[dev]"
+      - run: ruff check domain
+      - name: Fronteras de ADR-0006 y pruebas
+        run: pytest domain -m "not db"
+
+  etl:
+    name: etl · ruff + pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      # pyodbc necesita unixODBC para compilar; el driver de Access solo existe en Windows,
+      # así que aquí solo corren las pruebas que no tocan Access (-m "not db").
+      - run: sudo apt-get update && sudo apt-get install -y unixodbc-dev
+      - run: pip install -e domain && pip install -e "etl[dev]"
+      - run: ruff check etl
+      - run: pytest etl -m "not db"
+
+  backend:
+    name: backend · ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      # `domain` primero: es una dependencia declarada de campo-api y se resuelve contra la copia
+      # local del monorepo, no contra un índice de paquetes.
+      - run: pip install -e domain && pip install -e "backend/campo-api[dev]"
+      - run: ruff check backend
+      # Sin pytest todavía: el paquete es andamiaje y no tiene pruebas (E9). Cuando las tenga,
+      # añadir aquí `pytest backend/campo-api -m "not db"`.
+
+  # Las dos reglas de dependencia que no puede comprobar ningún paquete por su cuenta, porque
+  # son sobre la relación ENTRE dos de ellos (ADR-0006). La tercera regla —que `domain` no
+  # importe HTTP ni Access— sí es interna, y vive como prueba en domain/tests/test_fronteras.py.
+  fronteras:
+    name: Fronteras entre módulos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: etl y backend no se importan entre sí
+        run: |
+          set +e
+          fallos=0
+          if grep -rnE "^[[:space:]]*(import|from)[[:space:]]+aquanqa_etl" backend --include='*.py'; then
+            echo "::error::backend importa aquanqa_etl. Si necesita esa lógica, pertenece a domain/ (ADR-0006)."
+            fallos=1
+          fi
+          if grep -rnE "^[[:space:]]*(import|from)[[:space:]]+aquanqa_campo_api" etl --include='*.py'; then
+            echo "::error::etl importa aquanqa_campo_api. El ETL no depende de la API (ADR-0006)."
+            fallos=1
+          fi
+          exit $fallos

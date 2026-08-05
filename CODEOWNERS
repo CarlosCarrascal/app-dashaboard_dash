@@ -1,0 +1,36 @@
+# Quién revisa qué.
+#
+# Existe porque `core` y `reporting` ya son un contrato compartido entre varios consumidores
+# —Power BI hoy, la app Flutter mañana— y un cambio de esquema que entre sin que lo vea quien
+# entiende ese contrato se descubre en un tablero, no en CI.
+#
+# Sintaxis: <patrón> <@usuario o @org/equipo>. El último patrón que coincide gana, así que las
+# reglas más específicas van abajo.
+#
+# TODO: sustituir @eangulo por los equipos de GitHub reales cuando existan. Mientras haya un solo
+# responsable, este archivo documenta la intención de la frontera más que un reparto de trabajo.
+
+# Por defecto, todo
+*                       @eangulo
+
+# La plataforma de datos: el esquema, el contrato de aceptación y las reglas de negocio.
+# Es donde un cambio mal revisado rompe a todos los consumidores a la vez.
+/db/                    @eangulo
+/domain/                @eangulo
+
+# Ingesta del histórico. Se apaga cuando Access se apague.
+/etl/                   @eangulo
+
+# La API de campo. Cuando exista un equipo de backend, esta línea es la primera que cambia.
+/backend/               @eangulo
+
+# Modelo semántico y medidas: lo revisa quien mantiene los informes.
+/bi/                    @eangulo
+
+# Las decisiones de arquitectura y el criterio de cierre de la migración.
+/docs/adr/              @eangulo
+/docs/runbooks/         @eangulo
+
+# La auditoría original está congelada: es el racional histórico, no documentación viva.
+# Un cambio aquí casi siempre es un accidente.
+/docs/historico-access/ @eangulo

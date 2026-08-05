@@ -1,0 +1,35 @@
+[project]
+name = "aquanqa-domain"
+version = "0.1.0"
+description = "Reglas de negocio de Aqu Anqa y acceso tipado al esquema core. La importan el ETL y la API de campo"
+requires-python = ">=3.12"
+# Deliberadamente mínimo: aquí NO entra fastapi (eso es una fachada HTTP, no una regla de
+# negocio) ni pyodbc (eso es la extracción del Access histórico, que solo corre en Windows).
+# Si algún día este paquete no importa sin una de esas dos, algo se filtró donde no debía
+# — ver ADR-0006.
+dependencies = [
+    "pydantic>=2.9",        # las reglas de validación: qué es una medición o proyección válida
+    "psycopg[binary]>=3.2", # acceso a PostgreSQL
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: requiere una base PostgreSQL accesible"]

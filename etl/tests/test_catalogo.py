@@ -20,7 +20,7 @@ from aquanqa_etl.catalogo import (
 )
 from aquanqa_etl.config import raiz_repo
 
-DIR_SQL_RAW = raiz_repo() / "packages" / "db" / "sql" / "10_raw"
+DIR_SQL_RAW = raiz_repo() / "db" / "sql" / "10_raw"
 
 TOTAL_REAL = 654_598
 """Suma verificada de las 18 tablas del origen (hallazgo N-10).
@@ -142,7 +142,7 @@ def test_las_tablas_descartadas_no_estan_en_el_catalogo():
 def test_ruta_del_repo_se_resuelve():
     raiz = raiz_repo()
     assert (raiz / "package.json").exists()
-    assert (raiz / "packages" / "db").is_dir()
+    assert (raiz / "db" / "sql").is_dir()
 
 
 def test_ddl_sin_bom():

@@ -17,7 +17,11 @@ import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const SQL_DIR = join(ROOT, 'packages', 'db', 'sql')
+const SQL_DIR = join(ROOT, 'db', 'sql')
+
+// Los paquetes Python del monorepo, en orden de instalación: `domain` es la librería que
+// importan los otros dos (ADR-0006), así que va primero.
+const PAQUETES_PYTHON = ['domain', 'etl', join('backend', 'campo-api')]
 
 // ── .env ─────────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -171,11 +175,15 @@ function cmdSetup() {
     } else {
       run(conda, ['create', '-y', '-n', 'aquanqa', 'python=3.13'])
     }
-    run(findPython(), ['-m', 'pip', 'install', '-e', join(ROOT, 'etl')])
   }
 
-  step('Dependencias npm')
-  run(which('npm') ?? 'npm.cmd', ['install'], { allowFail: true })
+  // Fuera del bloque de conda a propósito: sin conda se usa el Python del PATH, pero los
+  // paquetes hay que instalarlos igual. `domain` va primero porque los otros dos lo importan
+  // (ADR-0006), y pip debe resolver esa dependencia contra la copia local del monorepo.
+  step('Paquetes Python del monorepo')
+  for (const pkg of PAQUETES_PYTHON) {
+    run(findPython(), ['-m', 'pip', 'install', '-e', join(ROOT, pkg)])
+  }
 
   step(`Base de datos ${env.PGDATABASE ?? 'aquanqa'}`)
   requirePassword()

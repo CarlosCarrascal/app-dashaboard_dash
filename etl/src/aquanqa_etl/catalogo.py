@@ -5,7 +5,7 @@ origen se escriben **exactamente** como están en Access, con sus espacios, acen
 (`[Ramas <5]`, `[# Ramas]`, `[Campaña]`, `[Paña]`, `[ET-mm]`): el extractor los entrecomilla
 con corchetes al construir el SELECT.
 
-`filas_esperadas` viene de `docs/auditoria/evidencia/04_metricas_validacion.txt` §1. No es
+`filas_esperadas` viene de `docs/historico-access/evidencia/04_metricas_validacion.txt` §1. No es
 decorativo: si la extracción trae otra cifra, la carga lo marca como desviación y hay que
 repetirla antes de seguir.
 """

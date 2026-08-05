@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS carga_log_tabla_idx
 COMMENT ON TABLE raw.carga_log IS
     'Bitácora de cargas a raw. estado=desviacion cuando filas_cargadas <> filas_esperadas.';
 COMMENT ON COLUMN raw.carga_log.filas_esperadas IS
-    'Cifra publicada en docs/auditoria/evidencia/04_metricas_validacion.txt §1. '
+    'Cifra publicada en docs/historico-access/evidencia/04_metricas_validacion.txt §1. '
     'NULL para orígenes que no estaban en la auditoría (maestro vigente, tareo).';
 
 -- Última carga de cada tabla, con su veredicto. Es lo primero que hay que mirar

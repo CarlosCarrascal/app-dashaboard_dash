@@ -1,0 +1,79 @@
+# La plataforma de datos: el DDL y su estilo.
+#
+# Un workflow por módulo, en lugar de uno solo con todos los trabajos, porque el filtro `paths`
+# de GitHub Actions es a nivel de workflow y no de job: es la única forma nativa de que un cambio
+# en `bi/` no dispare esto (ADR-0006).
+name: db
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'db/**'
+      - 'scripts/**'          # run.mjs es quien aplica las capas
+      - '.github/workflows/db.yml'
+  pull_request:
+    paths:
+      - 'db/**'
+      - 'scripts/**'
+      - '.github/workflows/db.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # El DDL se aplica de verdad sobre un PostgreSQL limpio. Es la única forma de saber que un
+  # cambio de esquema no rompe nada: sin datos no se puede validar el contenido, pero sí que las
+  # capas se crean en orden y que las restricciones son declarables.
+  #
+  # Lo que este trabajo NO puede comprobar es el contrato de aceptación (`90_checks`), que
+  # necesita los datos reales del .accdb. Eso se corre en local con `npm run validate`; el
+  # criterio está en docs/runbooks/02-cierre-de-migracion.md.
+  esquema:
+    name: Esquema
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: aquanqa
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci
+      PGDATABASE: aquanqa
+      PGCLIENTENCODING: UTF8
+    steps:
+      - uses: actions/checkout@v4
+      # Node solo actúa de lanzador: scripts/run.mjs no tiene dependencias npm (ADR-0006),
+      # así que no hay `npm ci` ni caché que restaurar.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Aplicar capas en orden
+        run: |
+          for dir in 00_bootstrap 10_raw 20_core 30_stg 40_qua 50_carga_core 60_dim_fact 70_reporting; do
+            node scripts/run.mjs sql "$dir"
+          done
+      - name: Verificar que las capas existen
+        run: |
+          node scripts/run.mjs psql -tAc \
+            "SELECT string_agg(nspname, ',' ORDER BY nspname) FROM pg_namespace
+             WHERE nspname IN ('raw','stg','qua','core','dim','fact','reporting')"
+
+  sql-lint:
+    name: SQL · sqlfluff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install sqlfluff
+      - run: sqlfluff lint db/sql --dialect postgres

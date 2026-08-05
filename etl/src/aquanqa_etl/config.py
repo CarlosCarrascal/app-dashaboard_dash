@@ -12,12 +12,18 @@ from dotenv import load_dotenv
 
 @cache
 def raiz_repo() -> Path:
-    """Raíz del monorepo, buscando hacia arriba el package.json del workspace."""
+    """Raíz del monorepo, buscando hacia arriba las dos señas que la identifican.
+
+    El centinela es `db/sql` y no `packages/`: esa carpeta desapareció con la reestructuración
+    de ADR-0006, y mientras el bucle la buscaba esta función acertaba solo de casualidad, por el
+    fallback de abajo. `db/sql` es además lo que el ETL necesita de verdad para comparar el
+    catálogo contra el DDL.
+    """
     actual = Path(__file__).resolve()
     for padre in actual.parents:
-        if (padre / "package.json").exists() and (padre / "packages").is_dir():
+        if (padre / "package.json").exists() and (padre / "db" / "sql").is_dir():
             return padre
-    # Ejecutado fuera del repo (por ejemplo instalado como paquete): dos niveles arriba de src.
+    # Ejecutado fuera del repo (instalado no editable): tres niveles arriba de este archivo.
     return actual.parents[3]
 
 
