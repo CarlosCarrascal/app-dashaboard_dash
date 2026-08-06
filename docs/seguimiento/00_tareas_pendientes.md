@@ -79,7 +79,7 @@ migración no se puede declarar hasta que alguien con autoridad las confirme.
 | D-2 | La regla de asignación de campaña por poda | Planeamiento | `campania.origen_fechas = 'derivado'` |
 | N-12 | 29 ramas y 3 bayas con diámetros físicamente imposibles — ¿decimales perdidos o se descartan? | Agronomía | Cargadas con `sospechoso = true`, en cuarentena |
 | N-14 | 276 + 90 filas de cosecha de lotes retirados del maestro vigente — ¿vuelven, se reasignan, o quedan fuera? | Agronomía | En cuarentena, motivo `LOTE_INEXISTENTE` |
-| N-18 | El turno se descarta en 5 tablas (H01, E05, M_Poda, M_nMuestra, R09) — ¿es derivable del lote? | Sin dueño asignado | No se carga; nadie lo ha comprobado |
+| N-18 | El turno se descarta en 5 tablas. Comprobado contra `core.lote`: H01 coincide 100% (30.536/30.536) pero E05 solo 97,4% (3.788/3.889) — 101 filas T09-vs-T11, siempre el mismo par, no ruido. ¿Cuál vale para esas 101, y se restaura en `stg` para M_Poda/M_nMuestra/R09? | Sin dueño asignado | No se carga; no es seguro derivarlo de lote sin decisión |
 | N-21 | 6 columnas de packing/Elifab sin significado documentado (`ENSAYO`, `S26`, `S271`, `Packet`, `Clasificación`, `ACDT 2`) | Operaciones de packing | Ni cargadas ni justificadas |
 | — | 105 filas de cosecha (0,34%) con kilos discrepantes entre H00 y H01 — ¿cuál vale? | Agronomía | Se conservan ambas cifras en paralelo (`kg` y `kg_h01`) |
 

@@ -191,8 +191,11 @@ COMMENT ON TABLE core.baya_medicion IS
     'hilera y fecha, unas 97 '
     'bayas cada una (hallazgo N-7). El origen no identifica la baya, así que nro_muestra se '
     'asigna en la carga por orden estable. Es la tabla más limpia del origen — sin un solo '
-    'nulo — y la única evaluación que trae el turno de origen, así que no depende del join '
-    'que falla en H-01.';
+    'nulo. E05 es una de las dos evaluaciones que SÍ trae turno de origen (la otra es H01) — '
+    'stg.v_e05_bayas lo normaliza (stg.fn_norm_turno), pero esta tabla no tiene columna para '
+    'él: 3.788 de 3.889 filas coinciden con el turno de core.lote resuelto por lote_id, y 101 '
+    'no coinciden (T09 en el origen contra T11 en el maestro vigente, siempre el mismo par) '
+    '— por eso no se deriva de lote sin decisión (N-18).';
 COMMENT ON COLUMN core.baya_medicion.diametro IS
     'Calibre comercial de la baya en mm, AVG 19,885. Es el indicador que conecta la evaluación '
     'de campo con el resultado de packing: permitiría anticipar a qué mercado irá la fruta '

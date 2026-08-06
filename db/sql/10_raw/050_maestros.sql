@@ -39,8 +39,12 @@ COMMENT ON COLUMN raw.m_lotes.fundo_ppto IS
 COMMENT ON COLUMN raw.m_lotes.fundo_pptom5 IS
     '[Fundo_pptom5] — vocabulario C, nombre quechua con prefijo de empresa.';
 COMMENT ON COLUMN raw.m_lotes.turno IS
-    '[Turno] — la fuente del turno para toda la base: solo M_Lotes, H01 y E05 lo traen de '
-    'origen; el resto debe obtenerlo por join, y ese join es el que falla en H-01.';
+    '[Turno] — no es el único: M_Poda, M_nMuestra, H01, E05, R08 y R09 también lo traen de '
+    'origen (raw.m_poda.turno, raw.m_n_muestra.turno, etc.). Solo H01 y E05 lo conservan hasta '
+    '`stg`; en M_Poda, M_nMuestra y R09 se descarta un paso antes, al construir la vista de '
+    '`stg`, y nunca llega a compararse contra el turno resuelto por lote (N-18). El turno de '
+    'M_Lotes en sí es histórico (860 filas de Access): el maestro vigente para resolver lote '
+    'es raw.m_lotes_maestro.';
 COMMENT ON COLUMN raw.m_lotes.moduloo IS '[Moduloo] — typo que duplica [Modulo]. Se descarta.';
 COMMENT ON COLUMN raw.m_lotes.kk IS
     '[kk] — prefijo de KeyMap hasta la letra L. Derivable, se descarta.';

@@ -172,10 +172,29 @@ negocio para fijarlos.
 
 - **Estado**: `H01`, `E05`, `M_Poda`, `M_nMuestra` y `R09` no traen turno a `core`, mientras que
   `R08` sí lo persiste. Nada se pierde en `qua` porque no es un descarte con motivo: es una
-  columna que nunca se leyó.
-- **Qué decidir**: si el turno de esas cinco es derivable del lote (la mayoría de lotes tiene un
-  turno único) o si hay casos donde no coincide y hace falta capturarlo aparte. Nadie lo ha
-  comprobado todavía.
+  columna que nunca se leyó. Y en dos de los cinco casos (`M_Poda`, `M_nMuestra`, `R09`) ni
+  siquiera llega a `stg` — se descarta un paso antes de lo que se pensaba, al construir la
+  vista, así que hoy no hay ningún valor con el que comparar.
+- **Por qué el fix no es automático**: para las dos tablas donde el turno sí sobrevive hasta
+  `stg` (`H01`, `E05`), comparar contra `core.lote.turno_id` (el turno resuelto por lote, del
+  maestro vigente) da resultados distintos:
+  - `H01`: 30.536/30.536 filas coinciden (100%). Ahí sí sería seguro derivar de lote.
+  - `E05`: 3.788/3.889 coinciden (97,4%); las 101 que no coinciden son **siempre el mismo par**,
+    turno `T09` en el origen contra `T11` en el maestro. No es ruido aleatorio — es un
+    desacuerdo sistemático entre una fuente y otra para un grupo de lotes concreto.
+
+  Escribir "turno = turno del lote" sin decidir cuál de las dos fuentes vale para esos 101
+  casos repetiría exactamente el patrón que esta migración corrige en otros hallazgos (H-01,
+  H-07): confiar en un join sin verificarlo primero. Puede ser que el maestro vigente
+  reasignara esos lotes de `T09` a `T11` después de que se capturaran esas evaluaciones —en
+  cuyo caso derivar de lote sería *incorrecto* para esas filas históricas, no solo redundante—,
+  o que sea un error de captura en E05. Sin esa decisión, "derivar de lote" arriesga
+  reemplazar un dato real por uno equivocado en el 2,6% de los casos, con la apariencia de
+  estar corregido.
+- **Qué decidir**: (1) para `E05`, cuál de las dos fuentes vale para los 101 casos T09/T11 —o si
+  ambos turnos son válidos porque el lote cambió de turno entre campañas—; (2) si vale la pena
+  restaurar el turno en la vista de `stg` de `M_Poda`, `M_nMuestra` y `R09` solo para poder
+  hacer la misma comprobación ahí, dado que hoy no hay nada que comparar.
 - **Fuente**: `docs/historico-access/05_ADDENDA_TECNICA.md` N-18.
 
 ### N-21 · Seis campos de packing (Elifab) sin significado documentado · **Operaciones de packing**
