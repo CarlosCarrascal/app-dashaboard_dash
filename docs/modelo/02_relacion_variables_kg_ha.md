@@ -41,9 +41,14 @@ semanas ISO de 2025), explicando `kg_ha` de la misma semana:
 Positivo en las dos, incluida la prueba más dura (módulo nunca visto). Es una relación
 descriptiva modesta pero real, no una casualidad de un solo corte.
 
-**Reporte completo, interactivo:** `docs/modelo/relacion_variables_kg_ha_2025.html`.
+**Reporte completo, interactivo:** `docs/modelo/relacion_variables_kg_ha_2025.html`. Además
+del ranking, incluye: las 4 fuentes de datos y su rol, estadística descriptiva (media,
+percentiles, cobertura) de las 17 variables agrupadas por categoría, una muestra de 10 filas
+reales tal como entraron al modelo, la metodología explicada paso a paso, y — la pieza nueva
+— un gráfico de dependencia real (valor de la variable × contribución SHAP, punto por punto,
+471 semanas) para cada una de las 6 variables de mayor peso, no solo su promedio.
 
-## Los tres hallazgos que importan del ranking
+## Los cuatro hallazgos que importan del ranking
 
 1. **`riego_mm` (lámina) se asocia con más kg/ha; `riego_m3` (volumen bruto) con menos.**
    No es una contradicción: `riego_m3` está confundido con el tamaño del módulo (un
@@ -56,6 +61,11 @@ descriptiva modesta pero real, no una casualidad de un solo corte.
    hay diferencias reales entre módulos —suelo, microclima, historia del lote— que
    ninguna de las variables medidas explica. No es una variable "accionable"; es la
    señal de que falta algo por capturar si se quiere explicar más que este 26%/16% de R².
+4. **El clima solo sirve acumulado desde la poda de cada módulo, no como promedio semanal.**
+   Las columnas de clima *semanal* (`temp_media`, `eto_semana_mm`...) son idénticas para
+   los 19 módulos la misma semana — no pueden explicar diferencias entre módulos. Acumuladas
+   desde la poda de cada uno (`gdd_acum_poda`, `eto_acum_poda_mm`), la misma estación única
+   sí discrimina, y aparecen entre las variables de mayor peso.
 
 ## Qué no se puede afirmar con esto
 
@@ -67,10 +77,16 @@ descriptiva modesta pero real, no una casualidad de un solo corte.
 
 ## Reproducir
 
+Tres pasos, cada uno consume lo que escribió el anterior — ninguno vuelve a calcular lo
+que ya calculó otro:
+
 ```
-python db/tools/analisis_shap_relacion_2025.py
+python db/tools/analisis_shap_relacion_2025.py     # entrena, valida (2 esquemas), SHAP
+python db/tools/preparar_reporte_shap_2025.py       # describe los datos de entrada
+python db/tools/generar_reporte_shap_2025.py        # ensambla el HTML final
 ```
 
 Requiere el entorno `aquanqa` (pandas, xgboost, shap, psycopg) y las credenciales de
-`.env`. Escribe `data/salida/shap_relacion_2025.json` (no versionado) con el ranking
-completo y las dos validaciones.
+`.env`. Los `.json`/`.csv`/`.npy` intermedios se escriben en `data/salida/` (no
+versionados); la plantilla del HTML sí está versionada:
+`db/tools/plantilla_reporte_shap_2025.html`.

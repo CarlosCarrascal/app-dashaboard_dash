@@ -1,0 +1,555 @@
+<title>Relación de variables con el rendimiento — Aqu Anqa 2025</title>
+
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --aumenta:        #2a78d6;
+    --aumenta-wash:   rgba(42,120,214,0.12);
+    --disminuye:      #e34948;
+    --disminuye-wash: rgba(227,73,72,0.12);
+    --neutro:         #898781;
+    --neutro-wash:    rgba(137,135,129,0.14);
+    --good:           #0ca30c;
+    --warn-bg:        #fdf3e3;
+    --warn-border:    #eda100;
+    --cat-riego:        #2a78d6;
+    --cat-clima_semanal:  #eb6834;
+    --cat-clima_acumulado:#1baf7a;
+    --cat-contexto_modulo:#eda100;
+    --cat-identidad:      #898781;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --aumenta:        #3987e5;
+      --aumenta-wash:   rgba(57,135,229,0.16);
+      --disminuye:      #e66767;
+      --disminuye-wash: rgba(230,103,103,0.16);
+      --neutro:         #898781;
+      --neutro-wash:    rgba(137,135,129,0.18);
+      --good:           #0ca30c;
+      --warn-bg:        #2a2410;
+      --warn-border:    #c98500;
+      --cat-riego:        #3987e5;
+      --cat-clima_semanal:  #d95926;
+      --cat-clima_acumulado:#199e70;
+      --cat-contexto_modulo:#c98500;
+      --cat-identidad:      #898781;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --aumenta:        #3987e5;
+    --aumenta-wash:   rgba(57,135,229,0.16);
+    --disminuye:      #e66767;
+    --disminuye-wash: rgba(230,103,103,0.16);
+    --neutro:         #898781;
+    --neutro-wash:    rgba(137,135,129,0.18);
+    --good:           #0ca30c;
+    --warn-bg:        #2a2410;
+    --warn-border:    #c98500;
+    --cat-riego:        #3987e5;
+    --cat-clima_semanal:  #d95926;
+    --cat-clima_acumulado:#199e70;
+    --cat-contexto_modulo:#c98500;
+    --cat-identidad:      #898781;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 72px; }
+
+  .hero-h1 { font-size: 23px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 28px; }
+
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 22px; }
+  .card h2 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+  .card .lede { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 18px; }
+  .section-num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--grid); color:var(--text-secondary); font-size:12px; font-weight:600; margin-right:8px; }
+
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stat-tile { flex: 1; min-width: 160px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
+  .stat-value { font-size: 27px; font-weight: 600; color: var(--text-primary); }
+  .stat-value.good { color: var(--good); }
+  .stat-note { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+
+  .caveat { background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+  .caveat b { font-weight: 600; }
+  .caveat + .caveat { margin-top: 10px; }
+
+  .legend { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .swatch.dot { border-radius: 50%; }
+
+  .cat-header { display:flex; align-items:baseline; gap:8px; margin: 22px 0 8px; }
+  .cat-header:first-child { margin-top: 4px; }
+  .cat-dot { width:9px; height:9px; border-radius:50%; flex:none; }
+  .cat-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.03em; }
+  .cat-sub { font-size: 11.5px; color: var(--text-muted); }
+
+  .chart-row { display: grid; grid-template-columns: 200px 1fr 108px; align-items: center; gap: 10px; padding: 5px 0; }
+  .chart-row + .chart-row { border-top: 1px solid var(--grid); }
+  .row-label { font-size: 12.5px; color: var(--text-primary); text-align: right; line-height: 1.3; }
+  .row-label code { font-size: 11px; color: var(--text-muted); }
+  .bar-track { position: relative; height: 20px; }
+  .bar { position: absolute; left: 0; top: 2px; height: 16px; border-radius: 0 4px 4px 0; transition: filter 0.1s ease; }
+  .bar:hover { filter: brightness(1.12); }
+  .row-value { font-size: 11.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; line-height: 1.3; }
+  .row-value .signo { font-weight: 600; }
+
+  .tooltip { position: fixed; pointer-events: none; background: var(--text-primary); color: var(--surface-1); font-size: 12px; line-height: 1.5; padding: 9px 12px; border-radius: 6px; max-width: 280px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.1s ease; z-index: 20; }
+  .tooltip.show { opacity: 1; }
+  .tooltip b { font-weight: 600; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.data-table th, table.data-table td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  table.data-table th { color: var(--text-muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.02em; }
+  table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data-table tbody tr:hover { background: var(--grid); }
+  .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+  .cat-pill { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text-secondary); }
+
+  .source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 12px; }
+  .source-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .source-card .name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .source-card .role { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px; }
+  .source-card .meta { font-size: 11px; color: var(--text-muted); }
+
+  .dep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; }
+  .dep-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .dep-title { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; display:flex; align-items:center; gap:6px; }
+  .dep-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; line-height:1.4; }
+  .dep-svg-wrap { position: relative; }
+  .dep-axis-label { font-size: 10px; fill: var(--text-muted); }
+
+  .finding { display: flex; gap: 12px; padding: 14px 0; }
+  .finding + .finding { border-top: 1px solid var(--grid); }
+  .finding-badge { flex: none; width: 26px; height: 26px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 13px; font-weight: 700; color: white; }
+  .finding-title { font-size: 13.5px; font-weight: 600; margin: 0 0 4px; }
+  .finding-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+  .finding-body code { font-size: 11.5px; }
+
+  .toc { display: flex; gap: 4px 14px; flex-wrap: wrap; font-size: 12.5px; margin-bottom: 24px; }
+  .toc a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px dotted var(--baseline); }
+  .toc a:hover { color: var(--text-primary); }
+
+  .foot { font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+  .foot code { background: var(--grid); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  details summary { cursor: pointer; font-size: 12.5px; color: var(--text-secondary); margin-top: 10px; }
+  details summary:hover { color: var(--text-primary); }
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+
+  <h1 class="hero-h1">¿Qué se relaciona con el rendimiento (kg/ha) por módulo?</h1>
+  <p class="subtitle">Aqu Anqa · Sekoya Pop · 2025 (único año con riego real medido) · grano módulo × semana ISO · generado 2026-08-06</p>
+
+  <div class="toc">
+    <a href="#objetivo">1. Objetivo y método</a>
+    <a href="#datos">2. Datos de entrada</a>
+    <a href="#metodologia">3. Cómo se entrenó y validó</a>
+    <a href="#ranking">4. Ranking de importancia</a>
+    <a href="#dependencia">5. Cómo se comporta cada variable</a>
+    <a href="#hallazgos">6. Hallazgos</a>
+    <a href="#limitaciones">7. Qué NO se puede afirmar</a>
+  </div>
+
+  <div class="card" id="objetivo">
+    <h2><span class="section-num">1</span>Objetivo y método</h2>
+    <p class="lede">
+      La pregunta de negocio: de todo lo que se mide hoy en campo (clima, riego, edad del
+      fruto), <b>¿qué se relaciona más con cuántos kilos por hectárea produce un módulo en
+      una semana?</b> No es una pregunta que se responda mirando una tabla — hay 17
+      variables cruzándose al mismo tiempo. Para eso se usa <b>SHAP</b> (SHapley Additive
+      exPlanations): en vez de mirar una correlación variable-por-variable, se entrena un
+      modelo (<b>XGBoost</b>, árboles de decisión) que aprende de las 471 combinaciones
+      reales de módulo-semana, y SHAP reparte la predicción de cada fila entre las
+      variables que la explican — cuánto sumó o restó cada una, en las mismas unidades del
+      resultado (kg/ha).
+    </p>
+    <p class="lede" style="margin-bottom:0">
+      La diferencia con el plan original (<code>Estimación de Arándanos con IA.md</code>,
+      Paso 3) es que aquí <b>cada número que sigue se validó contra datos que el modelo no
+      vio</b> antes de decidir si mostrarlo. La primera versión — pronosticar la semana
+      siguiente — no pasó esa prueba y se descartó (detalle en §7). La que sí se muestra
+      explica <b>la semana actual</b>, no pronostica el futuro.
+    </p>
+  </div>
+
+  <div class="card" id="datos">
+    <h2><span class="section-num">2</span>Datos de entrada</h2>
+    <p class="lede">Cuatro fuentes, ya cargadas en PostgreSQL, cruzadas en un panel de 471 filas (una por módulo y semana ISO de 2025):</p>
+    <div class="source-grid" id="fuentes"></div>
+
+    <div style="margin-top:22px">
+      <h2 style="font-size:13.5px; margin-bottom:2px">Las 17 variables, con su estadística real</h2>
+      <p class="lede" style="margin-bottom:12px">Agrupadas por qué tipo de información aportan. "Faltante" son las semanas sin ese dato — 0 en todas: dentro de 2025 la cobertura es completa.</p>
+      <div class="table-scroll">
+        <table class="data-table" id="tabla-descriptivos"></table>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <details>
+        <summary>Ver una muestra de 10 filas reales, tal como entraron al modelo</summary>
+        <div class="table-scroll" style="margin-top:10px">
+          <table class="data-table" id="tabla-muestra"></table>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="card" id="metodologia">
+    <h2><span class="section-num">3</span>Cómo se entrenó y se validó</h2>
+    <p class="lede">
+      Modelo: <b>XGBoost</b> (300 árboles, profundidad máxima 4, tasa de aprendizaje 0,05) —
+      elegido porque maneja de forma nativa variables con datos faltantes y relaciones no
+      lineales (un efecto de riego que ayuda hasta cierto punto y luego deja de sumar, por
+      ejemplo), sin necesidad de asumir que la relación es una línea recta.
+    </p>
+    <p class="lede">
+      La validación es la parte que de verdad importa — un modelo <i>siempre</i> puede
+      ajustar bien los datos con los que se entrenó; la pregunta es si sirve para algo con
+      datos que no vio. Se probó de dos formas, cada vez más exigente:
+    </p>
+    <div class="stat-row" style="margin-bottom:4px">
+      <div class="stat-tile">
+        <p class="stat-label">(a) 5 particiones aleatorias</p>
+        <div class="stat-value good" id="v-r2a">—</div>
+        <p class="stat-note">Se separan las 471 filas en 5 grupos al azar; cada grupo se predice con un modelo entrenado SOLO con los otros 4. R² = qué fracción de la variación real se explica (0 = nada, 1 = perfecto).</p>
+      </div>
+      <div class="stat-tile">
+        <p class="stat-label">(b) Deja-un-módulo-fuera</p>
+        <div class="stat-value good" id="v-r2b">—</div>
+        <p class="stat-note">Más dura: cada módulo se predice con un modelo que <b>nunca vio ese módulo</b>. Si esto es positivo, el patrón no depende de "memorizar" el módulo — generaliza a uno nuevo.</p>
+      </div>
+      <div class="stat-tile">
+        <p class="stat-label">Filas / módulos</p>
+        <div class="stat-value" id="v-n">—</div>
+        <p class="stat-note" id="v-media">—</p>
+      </div>
+    </div>
+    <div class="caveat">
+      Que ambas validaciones den positivo (y no solo la (a), la más fácil) es lo que separa
+      esto de una casualidad de ajuste. Sigue siendo un R² modesto: el modelo explica una
+      parte real del patrón, no todo — el resto es ruido o factores que no se están
+      midiendo (ver hallazgo de <code>modulo_id</code> en §6).
+    </div>
+  </div>
+
+  <div class="card" id="ranking">
+    <h2><span class="section-num">4</span>Ranking de importancia</h2>
+    <p class="lede">
+      Cada barra es el promedio de <b>|valor SHAP|</b> de esa variable: cuántos kg/ha movió
+      la predicción, en promedio, subiendo o bajando. El color de la barra dice la
+      <b>dirección</b> del efecto promedio; el punto de color junto al nombre de cada grupo
+      es solo para identificar la categoría, no la dirección.
+    </p>
+    <div class="legend">
+      <div class="legend-item"><span class="swatch" style="background:var(--aumenta)"></span>Se asocia con MÁS kg/ha</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--disminuye)"></span>Se asocia con MENOS kg/ha</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--neutro)"></span>Sin dirección clara / identidad</div>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="card" id="dependencia">
+    <h2><span class="section-num">5</span>Cómo se comporta cada variable</h2>
+    <p class="lede">
+      El ranking anterior dice <i>cuánto</i> pesa cada variable, en promedio — no dice
+      <i>cómo</i>. Estos gráficos muestran, para las 6 variables con más peso, cada una de
+      las 471 semanas reales: en el eje horizontal, el valor que tuvo esa variable esa
+      semana; en el eje vertical, cuántos kg/ha sumó o restó (SHAP) esa semana en particular.
+      La línea gruesa es el promedio por tramo — la forma real de la relación, no una recta
+      asumida.
+    </p>
+    <div class="dep-grid" id="dependencia-grid"></div>
+  </div>
+
+  <div class="card" id="hallazgos">
+    <h2><span class="section-num">6</span>Hallazgos</h2>
+    <div id="hallazgos-lista"></div>
+  </div>
+
+  <div class="card" id="limitaciones">
+    <h2><span class="section-num">7</span>Qué NO se puede afirmar con esto</h2>
+    <div class="caveat">
+      <b>No es un pronóstico.</b> Explica el kg/ha de la <b>misma</b> semana, con las
+      variables de esa misma semana — no predice la semana siguiente. Se probó esa versión
+      primero (mismo modelo, mismo método, prediciendo t+1) y <b>no validó</b>: R² = −0,33
+      (corte temporal) y R² = −0,09 (5-fold por campaña) — peor que predecir el promedio
+      histórico. Se descartó sin mostrarla como si "probara" algo.
+    </div>
+    <div class="caveat">
+      <b>No es causal.</b> Es una relación estadística validada por generalización (el
+      modelo funciona con módulos y semanas que no vio), no un experimento controlado. No
+      se puede decir "si aumento el riego X mm, la cosecha sube Y kg" con la certeza de un
+      ensayo agronómico diseñado para eso.
+    </div>
+    <div class="caveat">
+      <b>Alcance limitado.</b> Solo 2025 (único año con riego real cargado). Sin
+      fenología (flores, estados, diámetro de baya): esas tablas solo existen para la
+      campaña 2026 y no son comparables entre años. Sin riego para M16-M18 ni Aqu Anqa 6
+      (sin fuente de datos).
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="foot">
+      <b>Reproducir:</b> <code>python db/tools/analisis_shap_relacion_2025.py</code> (entrena
+      y valida) y <code>python db/tools/preparar_reporte_shap_2025.py</code> (genera los
+      datos de este reporte). Requiere el entorno conda <code>aquanqa</code>
+      (pandas, xgboost, shap, psycopg). Fuente completa, con las dos validaciones y el
+      intento descartado de pronóstico, en
+      <code>docs/modelo/02_relacion_variables_kg_ha.md</code> del monorepo.
+    </p>
+  </div>
+
+</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = __DATOS_JSON__;
+
+const CAT_COLOR = {
+  riego: "var(--cat-riego)",
+  clima_semanal: "var(--cat-clima_semanal)",
+  clima_acumulado: "var(--cat-clima_acumulado)",
+  contexto_modulo: "var(--cat-contexto_modulo)",
+  identidad: "var(--cat-identidad)",
+};
+const CAT_ORDEN = ["riego", "clima_acumulado", "contexto_modulo", "clima_semanal", "identidad"];
+const CAT_ETIQUETA = DATA.categorias;
+const CAT_DESC = {
+  riego: "Único con lámina real medida por módulo",
+  clima_acumulado: "La misma estación, integrada desde la poda de cada módulo — SÍ varía por módulo",
+  contexto_modulo: "Edad del fruto, dispersión de la poda, área y plantas del módulo",
+  clima_semanal: "La misma estación del fundo — idéntico para todos los módulos esa semana",
+  identidad: "Efectos del módulo que ninguna otra variable explica",
+};
+
+const FUENTES = [
+  {nombre: "core.cosecha", rol: "Objetivo: kg cosechados, agregados a kg/ha por módulo y semana", meta: "30.540 filas origen · excluye lotes ficticios L000"},
+  {nombre: "core.clima", rol: "Temperatura, ETO, lluvia, humedad — una sola estación de todo el fundo", meta: "153.413 lecturas · 2022-2026"},
+  {nombre: "core.riego_semanal", rol: "Lámina (mm) y volumen (m³) de riego, ya resuelto por módulo real", meta: "1.060 filas · solo 2025 · 4 Excel de Riego/Operaciones"},
+  {nombre: "core.poda / core.lote", rol: "Fecha de poda (edad del fruto) y área/plantas del módulo", meta: "2.147 filas de poda · maestro vigente de 879 lotes"},
+];
+
+function fmt(n, dec=1) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return n.toLocaleString("es-PE", {minimumFractionDigits: dec, maximumFractionDigits: dec});
+}
+function signoTxt(n) { return n >= 0 ? "+" + fmt(n,1) : fmt(n,1); }
+
+// ── Stat tiles metodología ──
+document.getElementById("v-r2a").textContent = DATA.resumen.validacion_a.r2.toFixed(2);
+document.getElementById("v-r2b").textContent = DATA.resumen.validacion_b.r2.toFixed(2);
+document.getElementById("v-n").textContent = `${DATA.resumen.n_filas} / ${DATA.resumen.n_modulos}`;
+document.getElementById("v-media").textContent = `kg/ha promedio en la muestra: ${fmt(DATA.resumen.media_kg_ha,0)}`;
+
+// ── Fuentes ──
+const fuentesEl = document.getElementById("fuentes");
+FUENTES.forEach(f => {
+  const c = document.createElement("div");
+  c.className = "source-card";
+  c.innerHTML = `<div class="name">${f.nombre}</div><div class="role">${f.rol}</div><div class="meta">${f.meta}</div>`;
+  fuentesEl.appendChild(c);
+});
+
+// ── Tabla descriptivos, agrupada por categoría ──
+const tabla = document.getElementById("tabla-descriptivos");
+let filas = `<tr><th>Variable</th><th>Categoría</th><th>Unidad</th><th class="num">Media</th><th class="num">Desv.</th><th class="num">Mín</th><th class="num">P25</th><th class="num">Mediana</th><th class="num">P75</th><th class="num">Máx</th><th class="num">Faltante</th></tr>`;
+CAT_ORDEN.forEach(cat => {
+  DATA.descriptivos.filter(d => d.categoria === cat).forEach(d => {
+    if (d.variable === "modulo_id") {
+      filas += `<tr><td><code>${d.variable}</code></td><td><span class="cat-pill"><span class="swatch dot" style="background:${CAT_COLOR[cat]}"></span>${CAT_ETIQUETA[cat]}</span></td><td>—</td><td class="num" colspan="7">${d.n_niveles} módulos distintos</td><td class="num">0</td></tr>`;
+      return;
+    }
+    filas += `<tr><td><code>${d.variable}</code></td><td><span class="cat-pill"><span class="swatch dot" style="background:${CAT_COLOR[cat]}"></span>${CAT_ETIQUETA[cat]}</span></td><td>${d.unidad}</td>` +
+      `<td class="num">${fmt(d.media)}</td><td class="num">${fmt(d.desv)}</td><td class="num">${fmt(d.min)}</td><td class="num">${fmt(d.p25)}</td><td class="num">${fmt(d.mediana)}</td><td class="num">${fmt(d.p75)}</td><td class="num">${fmt(d.max)}</td>` +
+      `<td class="num">${d.n_faltante}</td></tr>`;
+  });
+});
+tabla.innerHTML = filas;
+
+// ── Muestra de filas ──
+const tablaMuestra = document.getElementById("tabla-muestra");
+if (DATA.muestra.length) {
+  const cols = Object.keys(DATA.muestra[0]);
+  tablaMuestra.innerHTML = `<tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>` +
+    DATA.muestra.map(r => `<tr>${cols.map(c => `<td class="${typeof r[c]==='number' && !['fundo','modulo'].includes(c) ? 'num':''}">${typeof r[c]==='number' ? fmt(r[c], Number.isInteger(r[c])?0:2) : r[c]}</td>`).join("")}</tr>`).join("");
+}
+
+// ── Ranking agrupado por categoría ──
+const tooltip = document.getElementById("tooltip");
+function tipoDireccion(signo, abs) {
+  if (abs < 3) return "neutro";
+  return signo >= 0 ? "sube" : "baja";
+}
+const COLOR_DIR = {sube: "var(--aumenta)", baja: "var(--disminuye)", neutro: "var(--neutro)"};
+const maxAbs = Math.max(...DATA.ranking.map(d => d.shap_medio_abs));
+
+const chart = document.getElementById("chart");
+// orden de categorías por peso total, para que el grupo mas importante aparezca primero
+const pesoCategoria = {};
+DATA.ranking.forEach(d => { pesoCategoria[d.categoria] = (pesoCategoria[d.categoria]||0) + d.shap_medio_abs; });
+const catOrdenPorPeso = [...CAT_ORDEN].sort((a,b) => (pesoCategoria[b]||0) - (pesoCategoria[a]||0));
+
+catOrdenPorPeso.forEach(cat => {
+  const vars = DATA.ranking.filter(d => d.categoria === cat).sort((a,b) => b.shap_medio_abs - a.shap_medio_abs);
+  if (!vars.length) return;
+  const header = document.createElement("div");
+  header.className = "cat-header";
+  header.innerHTML = `<span class="cat-dot" style="background:${CAT_COLOR[cat]}"></span><span class="cat-title">${CAT_ETIQUETA[cat]}</span><span class="cat-sub">— ${CAT_DESC[cat]}</span>`;
+  chart.appendChild(header);
+
+  vars.forEach(d => {
+    const tipo = tipoDireccion(d.shap_medio_con_signo, d.shap_medio_abs);
+    const row = document.createElement("div");
+    row.className = "chart-row";
+    row.innerHTML = `<div class="row-label"><code>${d.variable}</code></div><div class="bar-track"></div><div class="row-value">±${fmt(d.shap_medio_abs)} <span class="signo">(${signoTxt(d.shap_medio_con_signo)})</span></div>`;
+    const track = row.querySelector(".bar-track");
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.width = `${(d.shap_medio_abs / maxAbs) * 100}%`;
+    bar.style.background = COLOR_DIR[tipo];
+    track.appendChild(bar);
+    row.addEventListener("mousemove", (e) => {
+      tooltip.innerHTML = `<b>${d.variable}</b><br>${d.etiqueta}<br><br>Impacto medio: <b>±${fmt(d.shap_medio_abs)} kg/ha</b><br>Efecto promedio: <b>${signoTxt(d.shap_medio_con_signo)} kg/ha</b>`;
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top = (e.clientY + 14) + "px";
+      tooltip.classList.add("show");
+    });
+    row.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+    chart.appendChild(row);
+  });
+});
+
+// ── Dependencia: scatter + promedio por tramo, para las top 6 ──
+const depGrid = document.getElementById("dependencia-grid");
+const ordenDependencia = DATA.ranking.filter(d => d.variable !== "modulo_id").slice(0,6).map(d => d.variable);
+
+function construirBins(puntos, nBins=9) {
+  const validos = puntos.filter(p => p.x !== null).sort((a,b) => a.x - b.x);
+  if (!validos.length) return [];
+  const n = validos.length;
+  const bins = [];
+  for (let i=0;i<nBins;i++) {
+    const desde = Math.floor(i * n / nBins), hasta = Math.floor((i+1) * n / nBins);
+    const grupo = validos.slice(desde, hasta);
+    if (!grupo.length) continue;
+    bins.push({
+      x: grupo.reduce((s,p)=>s+p.x,0) / grupo.length,
+      shap: grupo.reduce((s,p)=>s+p.shap,0) / grupo.length,
+    });
+  }
+  return bins;
+}
+
+ordenDependencia.forEach(varName => {
+  const puntos = DATA.dependencia[varName];
+  if (!puntos) return;
+  const meta = DATA.ranking.find(d => d.variable === varName);
+  const cat = meta.categoria;
+
+  const card = document.createElement("div");
+  card.className = "dep-card";
+  card.innerHTML = `<div class="dep-title"><span class="cat-dot" style="background:${CAT_COLOR[cat]}"></span><code>${varName}</code></div><div class="dep-note">${meta.etiqueta}</div>`;
+
+  const W = 320, H = 190, M = {l:44, r:12, t:10, b:26};
+  const validos = puntos.filter(p => p.x !== null);
+  const xs = validos.map(p=>p.x), shaps = validos.map(p=>p.shap);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  const yAbsMax = Math.max(Math.abs(Math.min(...shaps)), Math.abs(Math.max(...shaps))) * 1.1;
+  const sx = x => M.l + (x-xMin)/(xMax-xMin || 1) * (W-M.l-M.r);
+  const sy = y => M.t + (H-M.t-M.b)/2 - (y/(yAbsMax||1)) * (H-M.t-M.b)/2;
+
+  const bins = construirBins(validos);
+  const linea = bins.map(b => `${sx(b.x).toFixed(1)},${sy(b.shap).toFixed(1)}`).join(" ");
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", "100%");
+  svg.style.overflow = "visible";
+  svg.innerHTML = `
+    <line x1="${M.l}" y1="${sy(0)}" x2="${W-M.r}" y2="${sy(0)}" stroke="var(--baseline)" stroke-width="1"/>
+    <text x="${M.l-6}" y="${sy(0)+3}" text-anchor="end" class="dep-axis-label">0</text>
+    <text x="${M.l-6}" y="${M.t+9}" text-anchor="end" class="dep-axis-label">${fmt(yAbsMax,0)}</text>
+    <text x="${M.l-6}" y="${H-M.b}" text-anchor="end" class="dep-axis-label">−${fmt(yAbsMax,0)}</text>
+    <text x="${M.l}" y="${H-4}" text-anchor="start" class="dep-axis-label">${fmt(xMin,0)}</text>
+    <text x="${W-M.r}" y="${H-4}" text-anchor="end" class="dep-axis-label">${fmt(xMax,0)}</text>
+    ${validos.map(p => `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.shap).toFixed(1)}" r="2.6" fill-opacity="0.4" data-modulo="${p.modulo}" data-fundo="${p.fundo}" data-x="${p.x}" data-shap="${p.shap}" style="cursor:pointer"/>`).join("")}
+    <polyline points="${linea}" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  `;
+  // SVG fill no resuelve custom properties en algunos motores: se resuelve a hex real aquí.
+  const colorReal = getComputedStyle(document.querySelector(".viz-root")).getPropertyValue(`--cat-${cat}`).trim();
+  svg.querySelectorAll("circle").forEach(c => c.setAttribute("fill", colorReal));
+
+  svg.querySelectorAll("circle").forEach(c => {
+    c.addEventListener("mousemove", (e) => {
+      tooltip.innerHTML = `<b>${c.dataset.fundo} · ${c.dataset.modulo}</b><br>${varName}: <b>${fmt(+c.dataset.x)}</b><br>Contribución SHAP: <b>${signoTxt(+c.dataset.shap)} kg/ha</b>`;
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top = (e.clientY + 14) + "px";
+      tooltip.classList.add("show");
+    });
+    c.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+  });
+
+  const wrap = document.createElement("div");
+  wrap.className = "dep-svg-wrap";
+  wrap.appendChild(svg);
+  card.appendChild(wrap);
+  depGrid.appendChild(card);
+});
+
+// ── Hallazgos narrativos ──
+const HALLAZGOS = [
+  {n:1, color:"var(--aumenta)", titulo:"La lámina de riego (mm) se asocia con más kg/ha — el volumen bruto (m³), con menos",
+   cuerpo:`<code>riego_mm</code> (normalizada por área) tiene efecto promedio ${signoTxt(DATA.ranking.find(d=>d.variable==='riego_mm').shap_medio_con_signo)} kg/ha; <code>riego_m3</code> (volumen total) tiene ${signoTxt(DATA.ranking.find(d=>d.variable==='riego_m3').shap_medio_con_signo)} kg/ha. No es contradicción: <code>riego_m3</code> está confundido con el tamaño del módulo — un módulo grande usa más metros cúbicos en total sin regar más intensamente por hectárea. <b>Para leer el efecto del riego, usar riego_mm, no riego_m3.</b>`},
+  {n:2, color:"var(--cat-contexto_modulo)", titulo:"La edad del fruto es la variable agronómica de mayor peso",
+   cuerpo:`<code>edad_dias</code> (días desde la poda) pesa ${fmt(DATA.ranking.find(d=>d.variable==='edad_dias').shap_medio_abs)} kg/ha en promedio — coherente con que el modelo de macro que usa hoy Agronomía también se basa en el tiempo desde la poda para proyectar maduración. Es la variable con más peso después de riego y clima acumulado.`},
+  {n:3, color:"var(--neutro)", titulo:"La identidad del módulo pesa casi más que todo lo demás junto",
+   cuerpo:`<code>modulo_id</code> es la variable de mayor peso individual (±${fmt(DATA.ranking.find(d=>d.variable==='modulo_id').shap_medio_abs)} kg/ha). Significa que hay diferencias reales entre módulos — suelo, microclima, historia del lote — que ninguna de las 16 variables medidas explica. No es una variable "accionable": es la señal de que el R² de 0,16-0,26 tiene un techo mientras no se capture qué hace distinto a cada módulo.`},
+  {n:4, color:"var(--cat-clima_acumulado)", titulo:"El clima solo sirve si se acumula desde la poda de cada módulo",
+   cuerpo:`Las variables de clima <i>semanal</i> (temperatura, ETO de la semana) son idénticas para los 19 módulos esa semana — no pueden explicar por qué un módulo rinde distinto de otro. Acumuladas desde la poda de cada módulo (<code>gdd_acum_poda</code>, <code>eto_acum_poda_mm</code>), la misma estación única se vuelve una variable que sí distingue módulos, y aparecen entre las de mayor peso del ranking.`},
+];
+const hallazgosEl = document.getElementById("hallazgos-lista");
+hallazgosEl.innerHTML = HALLAZGOS.map(h => `
+  <div class="finding">
+    <div class="finding-badge" style="background:${h.color}">${h.n}</div>
+    <div>
+      <p class="finding-title">${h.titulo}</p>
+      <p class="finding-body">${h.cuerpo}</p>
+    </div>
+  </div>
+`).join("");
+</script>
