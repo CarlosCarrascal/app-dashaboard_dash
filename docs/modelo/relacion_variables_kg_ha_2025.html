@@ -1,0 +1,306 @@
+<title>Relación de variables con el rendimiento — Aqu Anqa 2025</title>
+
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --aumenta:        #2a78d6;
+    --aumenta-wash:   rgba(42,120,214,0.10);
+    --disminuye:      #e34948;
+    --disminuye-wash: rgba(227,73,72,0.10);
+    --neutro:         #898781;
+    --neutro-wash:    rgba(137,135,129,0.14);
+    --good:           #0ca30c;
+    --warn-bg:        #fdf3e3;
+    --warn-border:    #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --aumenta:        #3987e5;
+      --aumenta-wash:   rgba(57,135,229,0.14);
+      --disminuye:      #e66767;
+      --disminuye-wash: rgba(230,103,103,0.14);
+      --neutro:         #898781;
+      --neutro-wash:    rgba(137,135,129,0.16);
+      --good:           #0ca30c;
+      --warn-bg:        #2a2410;
+      --warn-border:    #c98500;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --aumenta:        #3987e5;
+    --aumenta-wash:   rgba(57,135,229,0.14);
+    --disminuye:      #e66767;
+    --disminuye-wash: rgba(230,103,103,0.14);
+    --neutro:         #898781;
+    --neutro-wash:    rgba(137,135,129,0.16);
+    --good:           #0ca30c;
+    --warn-bg:        #2a2410;
+    --warn-border:    #c98500;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 21px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 24px; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+  .stat-tile { flex: 1; min-width: 150px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
+  .stat-value { font-size: 26px; font-weight: 600; color: var(--text-primary); }
+  .stat-value.good { color: var(--good); }
+  .stat-note { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .caveat {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+  .caveat b { font-weight: 600; }
+
+  .legend { display: flex; gap: 20px; align-items: center; margin-bottom: 18px; font-size: 13px; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 230px 1fr 74px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    position: relative;
+  }
+  .chart-row + .chart-row { border-top: 1px solid var(--grid); }
+  .row-label {
+    font-size: 13px;
+    color: var(--text-primary);
+    text-align: right;
+    line-height: 1.3;
+  }
+  .row-label .sub { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+  .bar-track { position: relative; height: 22px; }
+  .bar {
+    position: absolute;
+    left: 0; top: 3px;
+    height: 16px;
+    border-radius: 0 4px 4px 0;
+    transition: filter 0.1s ease;
+  }
+  .bar:hover { filter: brightness(1.12); }
+  .row-value { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
+
+  .tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--surface-1);
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 11px;
+    border-radius: 6px;
+    max-width: 260px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 10;
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip b { font-weight: 600; }
+
+  .foot { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 4px; }
+  .foot code { background: var(--grid); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  table.data-table th, table.data-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+  table.data-table th { color: var(--text-muted); font-weight: 500; }
+  table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+
+  <h1>¿Qué se relaciona con el rendimiento (kg/ha) por módulo?</h1>
+  <p class="subtitle">Aqu Anqa · Sekoya Pop · 2025 (único año con riego real cargado) · grano módulo × semana ISO</p>
+
+  <div class="card">
+    <div class="stat-row">
+      <div class="stat-tile">
+        <p class="stat-label">Filas analizadas</p>
+        <div class="stat-value">471</div>
+        <p class="stat-note">19 módulos, 53 semanas ISO de 2025</p>
+      </div>
+      <div class="stat-tile">
+        <p class="stat-label">R² — validación aleatoria (5-fold)</p>
+        <div class="stat-value good">0,26</div>
+        <p class="stat-note">explica ~26% de la varianza en semanas no usadas para ajustar</p>
+      </div>
+      <div class="stat-tile">
+        <p class="stat-label">R² — dejando un módulo fuera</p>
+        <div class="stat-value good">0,16</div>
+        <p class="stat-note">prueba más dura: módulo nunca visto por el modelo</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="caveat">
+    <b>Qué es esto y qué NO es.</b> Es una relación descriptiva, validada dos veces con
+    datos que el modelo no vio (R² positivo en ambas) — no un pronóstico ni una prueba
+    causal. Explica el kg/ha de <b>la misma semana</b>, no de la semana siguiente: una
+    versión que intentaba pronosticar la semana siguiente se probó primero y
+    <b>no validó</b> (R² negativo, peor que el promedio) — se descartó en vez de mostrarla.
+    Alcance: solo 2025, porque es el único año con riego real medido; sin datos de
+    fenología (flores/estados/diámetro), que solo existen para la campaña 2026 y no son
+    comparables entre años.
+  </div>
+
+  <div class="card">
+    <div class="legend">
+      <div class="legend-item"><span class="swatch" style="background:var(--aumenta)"></span>Se asocia con MÁS kg/ha</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--disminuye)"></span>Se asocia con MENOS kg/ha</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--neutro)"></span>Identidad del módulo (sin dirección)</div>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="card">
+    <p class="foot">
+      <b>Lectura de las dos filas de riego:</b> <code>riego_mm</code> (lámina, normalizada
+      por área) se asocia con <b>más</b> kg/ha; <code>riego_m3</code> (volumen bruto) se
+      asocia con <b>menos</b> — el signo opuesto no es una contradicción: el volumen bruto
+      está confundido con el tamaño del módulo (un módulo grande usa más m³ sin regar más
+      intensamente), mientras que la lámina ya normaliza por área. Para leer el efecto del
+      riego, usar <code>riego_mm</code>, no <code>riego_m3</code>.
+    </p>
+    <p class="foot" style="margin-top:10px">
+      <b>Metodología:</b> XGBoost (300 árboles, profundidad 4) + SHAP (TreeExplainer) sobre
+      <code>reporting.v_analitica_modulo_semana</code> filtrado a 2025. Barra = promedio de
+      |valor SHAP| por variable (cuánto mueve la predicción, en kg/ha, en promedio).
+      Color = signo promedio del efecto. Generado por
+      <code>db/tools/analisis_shap_relacion_2025.py</code>, 2026-08-06.
+    </p>
+    <details>
+      <summary>Ver la tabla completa</summary>
+      <table class="data-table" id="tabla"></table>
+    </details>
+  </div>
+
+</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = [
+  {v:"modulo_id", et:"Módulo (identidad — factores no medidos: suelo, microclima, historia del lote)", abs:176.52, signo:5.28, tipo:"neutro"},
+  {v:"lluvia_acum_poda_mm", et:"Lluvia acumulada desde la poda de este módulo", abs:134.39, signo:-0.12, tipo:"mixto"},
+  {v:"temp_media", et:"Temperatura media de la semana (misma en todo el fundo)", abs:124.95, signo:-7.13, tipo:"baja"},
+  {v:"edad_dias", et:"Edad del fruto — días desde la poda de este módulo", abs:102.40, signo:-17.18, tipo:"baja"},
+  {v:"eto_acum_poda_mm", et:"Evapotranspiración acumulada desde la poda de este módulo", abs:82.63, signo:12.20, tipo:"sube"},
+  {v:"gdd_acum_poda", et:"Grados-día acumulados desde la poda de este módulo", abs:60.58, signo:11.40, tipo:"sube"},
+  {v:"riego_mm", et:"Lámina de riego de la semana (mm, normalizada por área)", abs:59.00, signo:4.73, tipo:"sube"},
+  {v:"riego_m3", et:"Agua total aplicada en la semana (m³, volumen bruto — confundido con el tamaño del módulo)", abs:52.46, signo:-2.76, tipo:"baja"},
+  {v:"temp_max", et:"Temperatura máxima de la semana (misma en todo el fundo)", abs:42.76, signo:-1.12, tipo:"baja"},
+  {v:"eto_semana_mm", et:"ETO de la semana (misma en todo el fundo)", abs:42.02, signo:1.99, tipo:"sube"},
+  {v:"gdd_semana", et:"Grados-día de la semana (mismos en todo el fundo)", abs:40.08, signo:-8.04, tipo:"baja"},
+  {v:"temp_min", et:"Temperatura mínima de la semana (misma en todo el fundo)", abs:39.27, signo:4.04, tipo:"sube"},
+  {v:"humedad_media", et:"Humedad relativa media de la semana", abs:24.31, signo:2.58, tipo:"sube"},
+  {v:"poda_dispersion_dias", et:"Dispersión de la poda dentro del módulo", abs:11.63, signo:-1.35, tipo:"baja"},
+  {v:"lluvia_semana_mm", et:"Lluvia de la semana (misma en todo el fundo)", abs:5.74, signo:0.48, tipo:"sube"},
+  {v:"area_ha", et:"Área productiva del módulo", abs:4.73, signo:0.12, tipo:"sube"},
+  {v:"n_plantas", et:"Plantas del módulo", abs:2.16, signo:-0.03, tipo:"baja"},
+  {v:"riego_dias_con_registro", et:"Días con registro de riego esa semana (calidad del dato)", abs:0.33, signo:-0.06, tipo:"baja"},
+];
+
+const COLOR = {sube: "var(--aumenta)", baja: "var(--disminuye)", neutro: "var(--neutro)", mixto: "var(--neutro)"};
+const ETIQUETA_SIGNO = {sube: "↑ más kg/ha", baja: "↓ menos kg/ha", neutro: "sin dirección (identidad)", mixto: "efecto mixto, sin dirección clara"};
+
+const maxAbs = Math.max(...DATA.map(d => d.abs));
+const chart = document.getElementById("chart");
+const tooltip = document.getElementById("tooltip");
+
+DATA.forEach(d => {
+  const row = document.createElement("div");
+  row.className = "chart-row";
+
+  const label = document.createElement("div");
+  label.className = "row-label";
+  label.innerHTML = `${d.v}<span class="sub">${ETIQUETA_SIGNO[d.tipo]}</span>`;
+
+  const track = document.createElement("div");
+  track.className = "bar-track";
+  const bar = document.createElement("div");
+  bar.className = "bar";
+  bar.style.width = `${(d.abs / maxAbs) * 100}%`;
+  bar.style.background = COLOR[d.tipo];
+  track.appendChild(bar);
+
+  const value = document.createElement("div");
+  value.className = "row-value";
+  value.textContent = d.abs.toFixed(1);
+
+  row.appendChild(label);
+  row.appendChild(track);
+  row.appendChild(value);
+
+  row.addEventListener("mousemove", (e) => {
+    tooltip.innerHTML = `<b>${d.v}</b><br>${d.et}<br><br>` +
+      `Impacto medio: <b>±${d.abs.toFixed(1)} kg/ha</b><br>` +
+      `Efecto promedio: <b>${d.signo >= 0 ? "+" : ""}${d.signo.toFixed(1)} kg/ha</b> (${ETIQUETA_SIGNO[d.tipo]})`;
+    tooltip.style.left = (e.clientX + 14) + "px";
+    tooltip.style.top = (e.clientY + 14) + "px";
+    tooltip.classList.add("show");
+  });
+  row.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+
+  chart.appendChild(row);
+});
+
+const tabla = document.getElementById("tabla");
+tabla.innerHTML = "<tr><th>Variable</th><th>Descripción</th><th>|SHAP| medio (kg/ha)</th><th>Efecto medio (kg/ha)</th></tr>" +
+  DATA.map(d => `<tr><td>${d.v}</td><td>${d.et}</td><td class="num">${d.abs.toFixed(2)}</td><td class="num">${d.signo >= 0 ? "+" : ""}${d.signo.toFixed(2)}</td></tr>`).join("");
+</script>
