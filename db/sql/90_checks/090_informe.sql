@@ -39,6 +39,15 @@ SELECT codigo, descripcion, access AS origen, obtenido AS en_core, estado, halla
 FROM qua.fn_validar() WHERE grupo = 'core';
 
 \echo ''
+\echo '════════ 5 · Vistas de compatibilidad de reporting (bloques 1-4) ════════'
+SELECT codigo, descripcion, obtenido, estado, hallazgo, nota
+FROM qua.fn_validar() WHERE grupo = 'reporting' AND estado <> 'ok';
+
+SELECT count(*) FILTER (WHERE estado = 'ok')  AS vistas_ok,
+       count(*) FILTER (WHERE estado <> 'ok') AS vistas_falla
+FROM qua.fn_validar() WHERE grupo = 'reporting';
+
+\echo ''
 \echo '════════ Cuarentena ════════'
 SELECT motivo, hallazgo, filas, tope,
        CASE WHEN excede_umbral THEN 'REVISAR' ELSE 'ok' END AS estado

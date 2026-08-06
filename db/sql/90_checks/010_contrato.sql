@@ -1,7 +1,7 @@
 -- ============================================================================
 -- 90_checks · 010 · Contrato de aceptación
 --
--- La migración se da por buena cuando esto pasa entero. Cuatro grupos, y la distinción entre
+-- La migración se da por buena cuando esto pasa entero. Cinco grupos, y la distinción entre
 -- los dos primeros es lo que hace el contrato honesto:
 --
 --   reproducir · se mide sobre `raw`/`stg`, que son copia fiel del origen. Si estas cifras
@@ -12,6 +12,10 @@
 --   core       · lo que queda en el modelo operativo tras apartar lo que no se pudo
 --                identificar. NO coincide con el origen, y eso es correcto: la diferencia
 --                está en `qua.rechazos`, fila por fila, con su motivo.
+--   reporting  · cifra de control de cada vista de compatibilidad (36 vistas, bloques 1-4,
+--                tarea #33). Congela el conteo verificado el día en que se construyó cada
+--                vista; una FALLA aquí no dice "esto está mal", dice "esto cambió desde
+--                entonces" — recontar contra `core`/`fact` antes de decidir qué hacer.
 --
 -- Confundir "reproducir" con "core" es el error que haría parecer que la migración pierde
 -- datos cuando lo que hace es apartarlos con constancia.
@@ -23,7 +27,7 @@ DROP TABLE IF EXISTS qua.control;
 
 CREATE TABLE qua.control (
     codigo        text PRIMARY KEY,
-    grupo         text NOT NULL CHECK (grupo IN ('reproducir', 'cambiar', 'cero', 'core')),
+    grupo         text NOT NULL CHECK (grupo IN ('reproducir', 'cambiar', 'cero', 'core', 'reporting')),
     descripcion   text NOT NULL,
     consulta      text NOT NULL,
     esperado      numeric NOT NULL,
@@ -330,4 +334,99 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 ('core.packing_kg', 'core', 'Kilos empacados (la columna sumable, N-16)',
  'SELECT round(sum(peso_kg)) FROM core.packing',
  18582402, 100, NULL, 'N-16',
- 'Antes sumaba 789,60 M kg porque usaba el total del grupo repetido en cada fila.', 58);
+ 'Antes sumaba 789,60 M kg porque usaba el total del grupo repetido en cada fila.', 58),
+
+-- ── 5 · Vistas de compatibilidad de reporting (bloques 1-4, tarea #33) ──────
+-- Hoy estas 36 vistas solo se habían verificado ad-hoc, fuera de `npm run validate`. La
+-- cifra de `esperado` es el conteo real contra la base cargada el día en que se agregó este
+-- check: no es una cifra publicada por Access ni por el plan de migración, es el punto de
+-- referencia para detectar si una vista se rompe en un cambio futuro de `core`/`fact`.
+
+-- Bloque 1 · flores y ramas (01xx + 02xx)
+('reporting.0104_promflores', 'reporting', '0104_PromFlores',
+ 'SELECT count(*) FROM reporting."0104_PromFlores"', 9033, 0, NULL, NULL, NULL, 60),
+('reporting.0105_acumflores', 'reporting', '0105_AcumFlores',
+ 'SELECT count(*) FROM reporting."0105_AcumFlores"', 858, 0, NULL, NULL, NULL, 61),
+('reporting.0107_yemasab', 'reporting', '0107_YemasAb',
+ 'SELECT count(*) FROM reporting."0107_YemasAb"', 9033, 0, NULL, NULL, NULL, 62),
+('reporting.0102_cantramas', 'reporting', '0102_CantRamas',
+ 'SELECT count(*) FROM reporting."0102_CantRamas"', 5384, 0, NULL, NULL, NULL, 63),
+('reporting.0101_diametros', 'reporting', '0101_Diametros',
+ 'SELECT count(*) FROM reporting."0101_Diametros"', 71095, 0, NULL, NULL, NULL, 64),
+('reporting.0108_diam', 'reporting', '0108_diam',
+ 'SELECT count(*) FROM reporting."0108_diam"', 71095, 0, NULL, NULL, NULL, 65),
+('reporting.0106_rafloyem', 'reporting', '0106_RaFloYem',
+ 'SELECT count(*) FROM reporting."0106_RaFloYem"', 89881, 0, NULL, NULL, NULL, 66),
+('reporting.01_flores_c2025', 'reporting', '01_Flores_C2025',
+ 'SELECT count(*) FROM reporting."01_Flores_C2025"', 9033, 0, 487368, 'H-05',
+ 'Access unía Sem contra M_Time.SEvConteo, semana contra día: explotaba ×54.', 67),
+('reporting.0202_florestruno', 'reporting', '0202_FloresTurno',
+ 'SELECT count(*) FROM reporting."0202_FloresTurno"', 2648, 0, NULL, NULL, NULL, 68),
+
+-- Bloque 2 · estados y brotes (03xx + 04xx)
+('reporting.0302_conteoajustado', 'reporting', '0302_ConteoAjustado',
+ 'SELECT count(*) FROM reporting."0302_ConteoAjustado"', 2798, 0, NULL, NULL, NULL, 70),
+('reporting.0303_conteoestados_turno', 'reporting', '0303_ConteoEstados_Turno',
+ 'SELECT count(*) FROM reporting."0303_ConteoEstados_Turno"', 13990, 0, NULL, NULL, NULL, 71),
+('reporting.0304_conteoest_flo_turno', 'reporting', '0304_ConteoEst_Flo_Turno',
+ 'SELECT count(*) FROM reporting."0304_ConteoEst_Flo_Turno"', 16638, 0, NULL, NULL, NULL, 72),
+('reporting.0306_frutosflores', 'reporting', '0306_FrutosFlores',
+ 'SELECT count(*) FROM reporting."0306_FrutosFlores"', 27741, 0, NULL, NULL, NULL, 73),
+('reporting.0307_estadosflores', 'reporting', '0307_EstadosFlores',
+ 'SELECT count(*) FROM reporting."0307_EstadosFlores"', 16232, 0, NULL, NULL, NULL, 74),
+('reporting.0401_estados_planta', 'reporting', '0401_Estados_planta',
+ 'SELECT count(*) FROM reporting."0401_Estados_planta"', 18708, 0, NULL, NULL, NULL, 75),
+('reporting.0402_conteobrotes', 'reporting', '0402_ConteoBrotes',
+ 'SELECT count(*) FROM reporting."0402_ConteoBrotes"', 3385, 0, NULL, 'H-04',
+ 'Access referenciaba E04_ConteoBrotes, que no existe; el objeto real es E04_Brotes (caso 1).', 76),
+('reporting.e', 'reporting', 'E',
+ 'SELECT count(*) FROM reporting."E"', 1938, 0, NULL, 'H-04',
+ 'Access pedía Actividad de E03_ConteoEstados, columna que solo existe en E01_Ramas (caso 4).', 77),
+
+-- Bloque 3 · cosecha, clima y maestros (H0xxx + M_)
+('reporting.h0100_resumen_kgcosecha', 'reporting', 'H0100_Resumen_kgCosecha',
+ 'SELECT count(*) FROM reporting."H0100_Resumen_kgCosecha"', 30536, 0, NULL, NULL, NULL, 80),
+('reporting.h0102_produccionidiaria', 'reporting', 'H0102_Producciondiaria',
+ 'SELECT count(*) FROM reporting."H0102_Producciondiaria"', 30536, 0, NULL, NULL, NULL, 81),
+('reporting.h0103_resmodulo', 'reporting', 'H0103_ResModulo',
+ 'SELECT count(*) FROM reporting."H0103_ResModulo"', 91, 0, NULL, NULL, NULL, 82),
+('reporting.h0104_fechafincosecha', 'reporting', 'H0104_FechaFinCosecha',
+ 'SELECT count(*) FROM reporting."H0104_FechaFinCosecha"', 2328, 0, NULL, 'D-6',
+ 'Sin el filtro fijo Campaña=C2026 de la subconsulta de última paña.', 83),
+('reporting.h0105_rendturno_pana', 'reporting', 'H0105_RendTurno_paña',
+ 'SELECT count(*) FROM reporting."H0105_RendTurno_paña"', 8025, 0, NULL, 'D-6',
+ 'Sin el filtro fijo Campaña=C2025; el join usa Fundo en vez de Fundo_pptom5 (N-21).', 84),
+('reporting.h0201_pesobaya_elifab', 'reporting', 'H0201_PesoBaya_Elifab',
+ 'SELECT count(*) FROM reporting."H0201_PesoBaya_Elifab"', 17322, 0, NULL, NULL, NULL, 85),
+('reporting.h0501_variablesclima', 'reporting', 'H0501_VariablesClima',
+ 'SELECT count(*) FROM reporting."H0501_VariablesClima"', 153413, 0, NULL, NULL, NULL, 86),
+('reporting.h0502_temperatura_variacion', 'reporting', 'H0502_Temperatura_variacion',
+ 'SELECT count(*) FROM reporting."H0502_Temperatura_variacion"', 1603, 0, NULL, NULL, NULL, 87),
+('reporting.m_edadcultivo', 'reporting', 'M_EdadCultivo',
+ 'SELECT count(*) FROM reporting."M_EdadCultivo"', 866, 0, NULL, NULL, NULL, 88),
+('reporting.m_lote_turno', 'reporting', 'M_Lote_turno',
+ 'SELECT count(*) FROM reporting."M_Lote_turno"', 879, 0, NULL, NULL, NULL, 89),
+('reporting.m_mod', 'reporting', 'M_Mod',
+ 'SELECT count(*) FROM reporting."M_Mod"', 29, 0, NULL, NULL, NULL, 90),
+('reporting.tplantas', 'reporting', 'TPlantas',
+ 'SELECT count(*) FROM reporting."TPlantas"', 29, 0, NULL, NULL, NULL, 91),
+('reporting.r0101_kgcosecha', 'reporting', 'R0101_KgCosecha',
+ 'SELECT count(*) FROM reporting."R0101_KgCosecha"', 30536, 0, NULL, 'H-04',
+ 'Access referenciaba R01_VolumenCampo, que no existe (caso 2).', 92),
+
+-- Bloque 4 · forecast (R0xxx)
+('reporting.r0801_forecast_campania_semmes', 'reporting', 'R0801_Forecast_Campaña_SemMes',
+ 'SELECT count(*) FROM reporting."R0801_Forecast_Campaña_SemMes"', 305142, 0, NULL, 'H-04',
+ 'Access pedía M_Time.CampProAra y .Trimestre, columnas que no existen (caso 5).', 93),
+('reporting.r0801_rescampania', 'reporting', 'R0801_ResCampaña',
+ 'SELECT count(*) FROM reporting."R0801_ResCampaña"', 1182, 0, NULL, NULL, NULL, 94),
+('reporting.r0802_resumenanio', 'reporting', 'R0802_ResumenAño',
+ 'SELECT count(*) FROM reporting."R0802_ResumenAño"', 1273, 0, NULL, 'H-04',
+ 'Access referenciaba R0901_ResCampaña, que no existe (caso 3).', 95),
+('reporting.r0901_forecas_semac', 'reporting', 'R0901_Forecas_SemAc',
+ 'SELECT count(*) FROM reporting."R0901_Forecas_SemAc"', 9007, 0, NULL, NULL, NULL, 96),
+('reporting.r0902_forecast_sem_vs_camp', 'reporting', 'R0902_Forecast_Sem_vs_Camp',
+ 'SELECT count(*) FROM reporting."R0902_Forecast_Sem_vs_Camp"', 103476, 0, NULL, 'H-04',
+ 'Access pedía R08_Forecast_Campaña.KG, columna que no existe (caso 6); usa KG Exp (D-1).', 97),
+('reporting.r0903_forecast_frtstotal', 'reporting', 'R0903_Forecast_FrtsTotal',
+ 'SELECT count(*) FROM reporting."R0903_Forecast_FrtsTotal"', 48368, 0, NULL, NULL, NULL, 98);
