@@ -99,14 +99,24 @@ razón registrada". Hay dos comportamientos distintos según el motivo, y convie
 
 ## 2 · Qué se considera "migrado con éxito"
 
-La migración está cerrada desde ingeniería cuando las cuatro condiciones se cumplen a la vez, y
-así está hoy:
+La migración está cerrada desde ingeniería cuando las **cinco** condiciones se cumplen a la vez:
 
 1. ✅ El contrato de aceptación corre sin errores y sus únicas fallas son las del grupo `core`,
    con su nota explicativa.
 2. ✅ `cero.fk_nula_en_hechos = 0` — ninguna clave foránea de un hecho quedó nula.
 3. ✅ Ningún motivo de cuarentena excede su umbral (`qua.v_alertas` vacío).
 4. ✅ Ninguna fila apartada sin motivo (`core.cuarentena = 0` en el contrato).
+5. ❌ **Cada columna de Access está localizada en `core` o su ausencia está justificada.**
+
+> **El punto 5 no se cumple todavía.** La auditoría de mapeo columna por columna
+> ([`../modelo/01_mapeo_access_core.md`](../modelo/01_mapeo_access_core.md), 2026-08-05) cubrió
+> las 235 columnas del origen y encontró siete hallazgos nuevos (N-16 … N-22). Uno es
+> **crítico**: `core.packing.peso_kg` guarda el total del grupo en cada fila y sumarlo multiplica
+> los kilos por ~24 (N-16).
+>
+> Hasta que N-16, N-17, N-19 y N-22 estén corregidos —los cuatro dependen solo de ingeniería—
+> **la migración no puede declararse cerrada**, y `core.packing.peso_kg` no debe usarse en
+> ninguna medida de Power BI.
 
 Access queda como **archivo histórico de solo lectura**. No se apaga hasta que los flujos de
 captura que hoy lo alimentan tengan reemplazo (ver `docs/adr/0006-*`).
@@ -150,6 +160,20 @@ tiene la autoridad agronómica o de planeamiento para fijarlos.
 - **Qué decidir**: si esos lotes deben volver al maestro como históricos, o si su cosecha se
   reasigna, o si se acepta que queden fuera de `core`.
 - **Fuente**: `docs/historico-access/05_ADDENDA_TECNICA.md` N-14, consecuencia 3.
+
+### N-21 · Seis campos de packing (Elifab) sin significado documentado · **Operaciones de packing**
+
+- **Estado**: `ENSAYO`, `S26`, `S271`, `Packet`, `Clasificación` y `ACDT 2` se descartaron por
+  parecer duplicados. La auditoría de mapeo comprobó que **no lo son** (N-21): tienen valores
+  propios que no se derivan de ninguna otra columna.
+- **Qué decidir**: qué representa cada uno. Si son operativamente útiles, se cargan; si no, se
+  documenta el descarte con su motivo. Hoy no están ni cargados ni justificados.
+
+### Las 105 filas de cosecha con kilos discrepantes entre H00 y H01 · **Agronomía**
+
+- **Estado**: conservadas en `core.cosecha`, con `kg` (de H00, por convención) y `kg_h01` en
+  paralelo. Son 105 de 30.532 filas presentes en ambas fuentes (0,34 %).
+- **Qué decidir**: cuál de las dos cifras vale cuando difieren. Ninguna se ha perdido.
 
 **Cerradas por los datos, ya sin pregunta pendiente**: D-3 (H00 y H01 contienen la misma
 cosecha, 0,01 kg de diferencia — N-14), D-4 (el maestro vigente sustituye el vocabulario A —

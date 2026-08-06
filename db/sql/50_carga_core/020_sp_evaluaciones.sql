@@ -184,17 +184,18 @@ BEGIN
     FROM stg.e03_estados v WHERE lote_id IS NULL OR fecha IS NULL;
 
     INSERT INTO core.estados (lote_id, fecha, cortina, hilera, planta, evaluador_id,
-                              e1, e2, e3, e4, e5, total_origen, item)
+                              e1, e2, e3, e4, e5, total_origen, hora, item)
     SELECT lote_id, fecha, coalesce(cortina, 0), coalesce(hilera, 0), coalesce(planta, 0),
            stg.fn_resolver_evaluador(dni),
-           e1, e2, e3, e4, e5, total_origen, item
+           e1, e2, e3, e4, e5, total_origen, hora, item
     FROM stg.e03_estados
     WHERE lote_id IS NOT NULL AND fecha IS NOT NULL
     ON CONFLICT (item, lote_id, fecha, cortina, hilera, planta) DO NOTHING;
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
-    RAISE NOTICE 'Estados: % filas (diferencia Total vs E1..E5 en el origen: % frutos)',
-        v_n, (SELECT coalesce(sum(total_origen) - sum(total), 0) FROM core.estados);
+    RAISE NOTICE 'Estados: % filas (Total vs E1..E5 en el origen: % frutos de diferencia, % con hora de captura)',
+        v_n, (SELECT coalesce(sum(total_origen) - sum(total), 0) FROM core.estados),
+        (SELECT count(*) FROM core.estados WHERE hora IS NOT NULL);
 END;
 $$;
 
@@ -304,6 +305,20 @@ DECLARE v_n integer;
 BEGIN
     TRUNCATE core.muestra_requerida RESTART IDENTITY CASCADE;
 
+    -- N-23: este era el único procedimiento que descartaba filas sin dejar rastro. El filtro
+    -- de abajo aparta las que no resuelven lote, igual que en el resto de los hechos, pero
+    -- aquí no se registraba nada — y una fila que desaparece en silencio es exactamente lo
+    -- que la migración existe para evitar. Se registra primero, se carga después.
+    INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
+    SELECT 'M_nMuestra', 'core.muestra_requerida',
+           coalesce(motivo, 'SIN_IDENTIFICADORES'),
+           CASE WHEN coalesce(motivo, 'SIN_IDENTIFICADORES') = 'SIN_IDENTIFICADORES'
+                THEN 'H-06' ELSE 'N-3' END,
+           'Muestreo requerido cuyo lote no resuelve contra el maestro vigente.',
+           to_jsonb(m)
+    FROM stg.m_n_muestra m
+    WHERE lote_id IS NULL OR muestras IS NULL;
+
     INSERT INTO core.muestra_requerida (lote_id, evaluacion, cortina, hilera, planta, muestras)
     SELECT lote_id, evaluacion, cortina, hilera, planta, muestras
     FROM stg.m_n_muestra
@@ -311,6 +326,7 @@ BEGIN
     ON CONFLICT (lote_id, evaluacion, cortina, hilera, planta) DO NOTHING;
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
-    RAISE NOTICE 'Muestreo requerido: % filas', v_n;
+    RAISE NOTICE 'Muestreo requerido: % filas, % apartadas', v_n,
+        (SELECT count(*) FROM qua.rechazos WHERE tabla_origen = 'M_nMuestra');
 END;
 $$;

@@ -91,8 +91,10 @@ BEGIN
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
 
-    -- H00 repite su clave natural en 34 grupos (151 filas de exceso). Se suman los kilos,
-    -- que es lo que preserva el total de control, y el caso queda anotado (N-9).
+    -- La auditoría contaba 34 grupos de H00 con la clave natural repetida y 151 filas de
+    -- exceso (N-9). Ya no ocurre: normalizar los códigos de lote (N-3) lo resolvió, y hoy
+    -- esta consulta devuelve 0 filas (N-22). Se conserva porque es barata y porque, si el
+    -- origen vuelve a repetir una clave, los kilos se suman y aquí queda el rastro.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
     SELECT 'H00_VolumenCampo', 'core.cosecha', 'CLAVE_NATURAL_REPETIDA', 'N-9',
            'El mismo lote, fecha y campaña aparece ' || n || ' veces; los kilos se suman.',
@@ -210,14 +212,16 @@ BEGIN
     INSERT INTO core.packing (
         modulo_id, empresa_id, variedad_id, calibre_id, fecha_cosecha, fecha_proceso,
         semana, anio, turno_packing, clase, mercado, mercado_valido, recuento, peso_kg,
-        porcentaje, nota_packing, calibrador, acdt, acidez, defecto, programa,
+        peso_kg_lote, porcentaje, nota_packing, calibrador, acdt, acidez, defecto, programa,
         contenedores_esperados, contenedores_volcados, hora_inicio, hora_fin)
     SELECT m.modulo_id,
            pe.empresa_id,
            va.variedad_id,
            ca.calibre_id,
            p.fecha_cosecha, p.fecha_proceso, p.semana, p.anio, p.turno_packing,
-           p.clase, p.mercado, p.mercado_valido, p.recuento, p.peso_kg, p.porcentaje,
+           p.clase, p.mercado, p.mercado_valido, p.recuento,
+           -- Los dos pesos, por separado: `peso_kg` es sumable, `peso_kg_lote` no (N-16).
+           p.peso_kg, p.peso_kg_lote, p.porcentaje,
            p.nota_packing, p.calibrador, p.acdt, p.acidez, p.defecto, p.programa,
            p.contenedores_esperados, p.contenedores_volcados, p.hora_inicio, p.hora_fin
     FROM stg.h02_packing p
@@ -247,9 +251,24 @@ BEGIN
         WHERE NOT mercado_valido GROUP BY 1
     ) d;
 
+    -- N-19: las filas donde el nombre del programa venía dentro de [Contenedores volcados].
+    -- El valor se rescata en la vista de stg; aquí queda el rastro de que hubo que moverlo,
+    -- porque un dato en la columna equivocada es un defecto del origen, no una curiosidad.
+    INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
+    SELECT 'H02_BDElifab', 'core.packing', 'VALOR_EN_COLUMNA_EQUIVOCADA', 'N-19',
+           'El nombre del programa venía en [Contenedores volcados] y '
+           '[Programa de clasificación] estaba vacío: ' || n || ' filas. El valor se movió '
+           'a core.packing.programa; el contenedor volcado queda NULL porque no era un número.',
+           jsonb_build_object('programa', programa, 'filas', n)
+    FROM (
+        SELECT programa, count(*) AS n FROM stg.h02_packing
+        WHERE programa_rescatado GROUP BY 1
+    ) d;
+
     SELECT count(*) INTO v_merc FROM core.packing WHERE NOT mercado_valido;
-    RAISE NOTICE 'Packing: % filas, % calibres, % sin mercado asignable',
-        v_n, (SELECT count(*) FROM core.calibre), v_merc;
+    RAISE NOTICE 'Packing: % filas, % calibres, % sin mercado asignable, % con el programa rescatado',
+        v_n, (SELECT count(*) FROM core.calibre), v_merc,
+        (SELECT count(*) FROM stg.h02_packing WHERE programa_rescatado);
 END;
 $$;
 

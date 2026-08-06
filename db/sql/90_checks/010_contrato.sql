@@ -220,18 +220,46 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
  0, 0, NULL, NULL,
  'Debe haber exactamente una por dimensión; el índice único parcial ya lo garantiza.', 39),
 
+-- N-23: cada tabla del origen que pierde filas tiene que explicar por qué. Esta comprobación
+-- cuenta las tablas donde entraron menos filas de las que tenía Access Y no hay ni una sola
+-- entrada en cuarentena que lo justifique. Es la garantía de que nada desaparece en silencio.
+('cero.tabla_pierde_sin_rastro', 'cero', 'Tablas con filas perdidas y sin rastro en cuarentena',
+ $q$SELECT count(*) FROM (VALUES
+      ('E02_ConteoFlores', (SELECT count(*) FROM core.flores),            43490),
+      ('E03_ConteoEstados',(SELECT count(*) FROM core.estados),           18714),
+      ('E05_DiametrosBayas',(SELECT count(*) FROM core.baya_medicion),     4193),
+      ('M_nMuestra',       (SELECT count(*) FROM core.muestra_requerida),   681),
+      ('M_Poda',           (SELECT count(*) FROM core.poda),               2159)
+    ) AS t(tabla, en_core, en_access)
+    WHERE en_core < en_access
+      AND NOT EXISTS (SELECT 1 FROM qua.rechazos r WHERE r.tabla_origen = t.tabla)$q$,
+ 0, 0, NULL, 'N-23',
+ 'M_nMuestra era la única que descartaba una fila sin registrarla; ya no.', 39),
+
+-- N-16: el defecto era sumar el total del grupo una vez por fila. Si peso_kg vuelve a
+-- apuntar a la columna equivocada, esta comprobación lo detecta al instante: 18,58 M kg es
+-- coherente con los 32,39 M de cosecha; 789,60 M no lo es por un factor de 24.
+('cero.peso_packing_inflado', 'cero', 'peso_kg de packing por encima de la cosecha real (N-16)',
+ 'SELECT CASE WHEN (SELECT sum(peso_kg) FROM core.packing)
+                 > (SELECT sum(kg) FROM core.cosecha) THEN 1 ELSE 0 END',
+ 0, 0, NULL, 'N-16',
+ 'Lo empacado no puede superar lo cosechado. peso_kg_lote es un total repetido y NO se suma.', 39),
+
 -- ── 4 · Estado de core (difiere del origen, y se explica) ───────────────────
+-- `esperado` es el 879/6/29 del maestro vigente MÁS la fila centinela de ADR-0005 (+1 en
+-- cada uno): sin sumarla, estos tres quedaban en FALLA por un desajuste del propio contrato,
+-- no por la diferencia real con Access, que sigue intacta en `valor_access` y en la nota.
 ('core.lotes', 'core', 'Lotes del maestro vigente',
- 'SELECT count(*) FROM core.lote', 879, 0, 860, 'N-4',
- 'El maestro vigente tiene 19 lotes más y módulos nuevos M14-M24.', 40),
+ 'SELECT count(*) FROM core.lote', 880, 0, 860, 'N-4',
+ 'El maestro vigente tiene 19 lotes más y módulos nuevos M14-M24, más 1 fila centinela.', 40),
 
 ('core.fundos', 'core', 'Fundos físicos',
- 'SELECT count(*) FROM core.fundo', 6, 0, 4, 'N-5',
- 'Aqu Anqa 1 a 6, frente a los 4 nombres comerciales del origen.', 41),
+ 'SELECT count(*) FROM core.fundo', 7, 0, 4, 'N-5',
+ 'Aqu Anqa 1 a 6 frente a los 4 nombres comerciales del origen, más 1 fila centinela.', 41),
 
 ('core.modulos', 'core', 'Combinaciones fundo x módulo',
- 'SELECT count(*) FROM core.modulo', 29, 0, 23, 'N-4',
- 'M01 a M04 pertenecen a dos fundos a la vez.', 42),
+ 'SELECT count(*) FROM core.modulo', 30, 0, 23, 'N-4',
+ 'M01 a M04 pertenecen a dos fundos a la vez, más 1 fila centinela.', 42),
 
 ('core.ramas_declaradas', 'core', 'Ramas declaradas por los evaluadores',
  'SELECT sum(coalesce(ramas_menor5,0) + coalesce(ramas_mayor5,0)) FROM core.evaluacion_ramas',
@@ -285,4 +313,21 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 ('core.cosecha_sentinel', 'core', 'Filas de cosecha en la variedad centinela',
  'SELECT count(*) FROM core.cosecha co JOIN core.variedad v USING (variedad_id) WHERE v.es_sentinel',
  4, 0, NULL, 'N-15',
- 'Las 4 filas que solo existen en H01, que nunca tuvo columna de variedad.', 55);
+ 'Las 4 filas que solo existen en H01, que nunca tuvo columna de variedad.', 55),
+
+-- Las dos recuperaciones de la auditoría de mapeo: datos que antes se perdían en silencio.
+('core.estados_con_hora', 'core', 'Estados con la hora de captura recuperada',
+ 'SELECT count(*) FROM core.estados WHERE hora IS NOT NULL',
+ 13224, 0, 13230, 'N-17',
+ 'La columna [F16] del origen perdió su encabezado y se descartaba como residuo; es la hora. '
+ 'En el origen son 13.230: las 6 que faltan están en las filas que van a cuarentena.', 56),
+
+('core.packing_programa_rescatado', 'core', 'Packing con el programa rescatado de otra columna',
+ 'SELECT count(*) FROM stg.h02_packing WHERE programa_rescatado',
+ 390, 0, 0, 'N-19',
+ 'Traían el nombre del programa dentro de [Contenedores volcados]; antes se perdía al castear.', 57),
+
+('core.packing_kg', 'core', 'Kilos empacados (la columna sumable, N-16)',
+ 'SELECT round(sum(peso_kg)) FROM core.packing',
+ 18582402, 100, NULL, 'N-16',
+ 'Antes sumaba 789,60 M kg porque usaba el total del grupo repetido en cada fila.', 58);

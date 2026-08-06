@@ -17,8 +17,10 @@ CREATE TABLE IF NOT EXISTS raw.h00_volumen_campo (
 COMMENT ON TABLE raw.h00_volumen_campo IS
     'H00_VolumenCampo — 30.812 filas. Kilos cosechados en campo: el dato primario de '
     'producción. Contiene 1 fila de subtotal de Excel con 930.662,06 kg y todos los '
-    'identificadores vacíos (H-06), y 151 filas de exceso por su clave natural en 34 '
-    'grupos (N-9). Es la referencia de KG frente a H01 (decisión D-3).';
+    'identificadores vacíos (H-06). Es la referencia de KG frente a H01 (decisión D-3). '
+    'La auditoría le atribuía además 151 filas de exceso por clave natural repetida en 34 '
+    'grupos (N-9); eso dejó de ser cierto al normalizar los códigos de lote (N-3): hoy hay '
+    '0 grupos repetidos (N-22).';
 COMMENT ON COLUMN raw.h00_volumen_campo.campania IS '[Campaña] — C2022 a C2026.';
 COMMENT ON COLUMN raw.h00_volumen_campo.fundo IS '[Fundo] — vocabulario B: empresa.';
 COMMENT ON COLUMN raw.h00_volumen_campo.variedad IS
@@ -136,6 +138,15 @@ COMMENT ON COLUMN raw.h02_bd_elifab.productor IS
 COMMENT ON COLUMN raw.h02_bd_elifab.hora_inicio IS
     '[Hora de inicio] — 47,8% nula: cualquier análisis de duración de packing cubre la '
     'mitad de los datos.';
+COMMENT ON COLUMN raw.h02_bd_elifab.peso_total_kg IS
+    '[Peso total (kg)] — el peso de ESTA fila: los kilos de esa clase/calibre concreto. Es el '
+    'numerador del porcentaje y la única de las dos columnas de peso que se puede sumar '
+    '(N-16). Suma 18.582.402 kg en las 117.536 filas.';
 COMMENT ON COLUMN raw.h02_bd_elifab.peso_total_kg2 IS
-    '[Peso total (kg)2] — par duplicado de [Peso total (kg)]; se conserva esta porque tiene '
-    '0 nulos frente a 1 (H-10).';
+    '[Peso total (kg)2] — NO es un duplicado de [Peso total (kg)], aunque se creyó que lo era '
+    'y se eligió esta por tener 0 nulos frente a 1 (N-16 corrige a H-10). Es un total que se '
+    'repite idéntico en cada fila del grupo (fecha proceso, módulo, turno, lote) en 2.535 de '
+    '2.591 grupos, y actúa de denominador del porcentaje: % = 100 x peso1 / peso2, con un '
+    'error medio de 0,25 pp. Sumarla por fila multiplica los kilos unas 24 veces. '
+    'No es la suma de sus partes salvo en el 46% de los grupos: es un dato declarado aparte, '
+    'compatible con un peso de recepción, pendiente de confirmar con Operaciones (N-21).';

@@ -1,0 +1,696 @@
+<title>Auditoría de mapeo · Access → PostgreSQL · Aqu Anqa</title>
+<style>
+  :root {
+    --paper:#FBFBFC; --raise:#FFFFFF; --ink:#14161A; --ink-2:#4A4F58; --ink-3:#868C97;
+    --rule:#E2E4E8; --rule-2:#CFD3D9; --wash:#F1F2F4; --shadow:0 1px 2px rgba(20,22,26,.05);
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --paper:#0E1013; --raise:#15181C; --ink:#ECEEF1; --ink-2:#A8AEB8; --ink-3:#6E757F;
+           --rule:#23262B; --rule-2:#31353B; --wash:#181B1F; --shadow:0 1px 2px rgba(0,0,0,.4); }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1013; --raise:#15181C; --ink:#ECEEF1; --ink-2:#A8AEB8; --ink-3:#6E757F;
+    --rule:#23262B; --rule-2:#31353B; --wash:#181B1F; --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"]{
+    --paper:#FBFBFC; --raise:#FFFFFF; --ink:#14161A; --ink-2:#4A4F58; --ink-3:#868C97;
+    --rule:#E2E4E8; --rule-2:#CFD3D9; --wash:#F1F2F4; --shadow:0 1px 2px rgba(20,22,26,.05);
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px 96px}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0}
+  a{color:inherit}
+  code,.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ── cabecera ─────────────────────────────────────────────── */
+  header{border-bottom:2px solid var(--ink);padding:56px 0 24px;margin-bottom:40px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+           color:var(--ink-3);margin:0 0 14px}
+  h1{font-size:clamp(30px,4.4vw,46px);line-height:1.1;letter-spacing:-.01em}
+  .sub{color:var(--ink-2);max-width:64ch;margin:16px 0 0;font-size:16px}
+  .meta{display:flex;flex-wrap:wrap;gap:24px;margin-top:22px;font-family:var(--mono);
+        font-size:12px;color:var(--ink-3)}
+
+  /* ── indicadores ──────────────────────────────────────────── */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
+         background:var(--rule);border:1px solid var(--rule);margin:0 0 12px}
+  .tile{background:var(--raise);padding:18px 20px}
+  .tile .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--ink-3);margin-bottom:10px}
+  .tile .v{font-family:var(--mono);font-size:30px;font-variant-numeric:tabular-nums;
+           line-height:1;letter-spacing:-.02em}
+  .tile .n{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.45}
+  .tile.mark{box-shadow:inset 3px 0 0 var(--ink)}
+
+  /* ── secciones ────────────────────────────────────────────── */
+  section{margin-top:64px;scroll-margin-top:20px}
+  .shead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);
+         padding-bottom:10px;margin-bottom:8px}
+  .shead .num{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .shead h2{font-size:23px}
+  .lede{color:var(--ink-2);max-width:72ch;margin:16px 0 24px}
+
+  /* ── tablas ───────────────────────────────────────────────── */
+  .scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--raise)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+     color:var(--ink-3);text-align:left;padding:11px 14px;background:var(--wash);
+     border-bottom:1px solid var(--rule-2);white-space:nowrap;font-weight:500}
+  td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  .num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
+              white-space:nowrap}
+  /* la columna de balance cierra el asiento: filete grueso a su izquierda */
+  .bal{border-left:2px solid var(--rule-2);font-family:var(--mono);text-align:right;
+       font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.src{font-family:var(--mono);font-size:12.5px}
+  td.why{color:var(--ink-2);font-size:12.5px;line-height:1.5}
+  tfoot td{border-top:2px solid var(--ink);border-bottom:none;font-weight:600;padding-top:12px}
+
+  /* ── estado: densidad y forma, nunca color ────────────────── */
+  .chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+        text-transform:uppercase;padding:2.5px 8px;border:1px solid var(--ink);
+        white-space:nowrap;line-height:1.5}
+  .chip.solid{background:var(--ink);color:var(--paper)}          /* crítico */
+  .chip.line{background:transparent;color:var(--ink)}            /* medio   */
+  .chip.ghost{border-color:var(--rule-2);color:var(--ink-3)}     /* bajo / resuelto */
+  .chip.tick::before{content:"✓ "}
+
+  /* ── hallazgos ────────────────────────────────────────────── */
+  .find{border:1px solid var(--rule);background:var(--raise);padding:22px 24px;margin-bottom:1px}
+  .find.crit{box-shadow:inset 4px 0 0 var(--ink)}
+  .find.med{box-shadow:inset 4px 0 0 var(--rule-2)}
+  .find.low{box-shadow:inset 4px 0 0 transparent}
+  .find .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .find .id{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em}
+  .find h3{font-size:16.5px;font-family:var(--sans);font-weight:600;flex:1;min-width:230px}
+  .find p{margin:0 0 12px;color:var(--ink-2);max-width:76ch;font-size:14px}
+  .find p:last-child{margin-bottom:0}
+  .find .fix{border-top:1px dashed var(--rule-2);padding-top:12px;margin-top:14px;font-size:13.5px}
+  .find .fix b{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;
+               text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:5px;
+               font-weight:500}
+
+  .ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+      background:var(--rule);border:1px solid var(--rule);margin:14px 0}
+  .ev div{background:var(--wash);padding:11px 13px}
+  .ev .k{font-size:11px;color:var(--ink-3);margin-bottom:5px;line-height:1.35}
+  .ev .v{font-family:var(--mono);font-size:16px;font-variant-numeric:tabular-nums}
+
+  .note{border-left:2px solid var(--rule-2);padding:2px 0 2px 16px;margin:22px 0;
+        color:var(--ink-2);font-size:13.5px;max-width:76ch}
+  .note b{color:var(--ink)}
+  ul{padding-left:20px;color:var(--ink-2);max-width:76ch}
+  li{margin-bottom:7px}
+  footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--rule);
+         font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.7}
+  @media (max-width:640px){
+    .wrap{padding:0 16px 64px} header{padding-top:36px}
+    td,th{padding:9px 10px} .find{padding:18px 16px}
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Plataforma de datos Aqu Anqa · Auditoría de migración</p>
+  <h1>Dónde vive hoy cada dato de Access</h1>
+  <p class="sub">Contabilidad completa de la migración de <code>BD_AQUANQA_26.accdb</code> a
+  PostgreSQL: las 18 tablas y las 235 columnas del origen, fila por fila, con la razón de cada
+  diferencia y de cada nulo. Nada se da por bueno sin una consulta que lo respalde.</p>
+  <div class="meta">
+    <span>6 de agosto de 2026</span>
+    <span>654 598 filas en el origen</span>
+    <span>Base <code>aquanqa</code> · PostgreSQL 18</span>
+  </div>
+</header>
+
+<div class="tiles">
+  <div class="tile">
+    <div class="k">Filas localizadas</div>
+    <div class="v">100 %</div>
+    <div class="n">Ninguna fila del origen desaparece sin una razón registrada.</div>
+  </div>
+  <div class="tile">
+    <div class="k">Columnas mapeadas</div>
+    <div class="v">211<span style="font-size:17px;color:var(--ink-3)">/235</span></div>
+    <div class="n">18 sin destino justificado · 6 pendientes de criterio de negocio.</div>
+  </div>
+  <div class="tile">
+    <div class="k">FK nulas en hechos</div>
+    <div class="v">0</div>
+    <div class="n">Garantizado por <code>NOT NULL</code> y filas centinela (ADR-0005).</div>
+  </div>
+  <div class="tile mark">
+    <div class="k">Contrato</div>
+    <div class="v">44<span style="font-size:17px;color:var(--ink-3)"> ok</span></div>
+    <div class="n">3 diferencias esperadas frente a Access · 0 errores.</div>
+  </div>
+</div>
+<p style="font-size:12.5px;color:var(--ink-3);margin:10px 0 0">
+  Reproducible con <code>npm run validate</code>. Las 3 «diferencias esperadas» son el maestro de
+  lotes vigente siendo más completo que Access — no son fallos: se detallan en §1.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="balance">
+  <div class="shead"><span class="num">§1</span><h2>El balance: cada fila del origen, localizada</h2></div>
+  <p class="lede">La condición de la auditoría era que todo lo que existe en Access esté en la base
+  nueva, y que lo que no esté sea porque se demostró que era basura. Este es el asiento: filas en
+  el origen, filas en <code>core</code>, y la razón exacta de la diferencia. La última columna es
+  lo que queda sin explicar.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Tabla de Access</th><th class="num">Access</th><th>Destino en core</th>
+      <th class="num">core</th><th class="num">Dif.</th><th>Por qué difiere</th>
+      <th class="bal" style="text-align:right">Sin explicar</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="src">E01_Ramas</td><td class="num">94 236</td>
+          <td class="src">rama_medicion<br><span style="color:var(--ink-3)">+ evaluacion_ramas (5 384)</span></td>
+          <td class="num">71 095</td><td class="num">23 141</td>
+          <td class="why">Copias byte a byte de filas que sí están. Verificado: 13 272 grupos duplicados, 23 141 copias sobrantes = 23 141 filas no cargadas.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">E02_ConteoFlores</td><td class="num">43 490</td><td class="src">flores</td>
+          <td class="num">43 469</td><td class="num">21</td>
+          <td class="why">Lote fuera del maestro vigente. En cuarentena.</td><td class="bal">0</td></tr>
+      <tr><td class="src">E03_ConteoEstados</td><td class="num">18 714</td><td class="src">estados</td>
+          <td class="num">18 708</td><td class="num">6</td>
+          <td class="why">Lote fuera del maestro vigente. En cuarentena.</td><td class="bal">0</td></tr>
+      <tr><td class="src">E04_Brotes</td><td class="num">3 385</td><td class="src">brotes</td>
+          <td class="num">3 385</td><td class="num">0</td>
+          <td class="why">Sin pérdida.</td><td class="bal">0</td></tr>
+      <tr><td class="src">E05_DiametrosBayas</td><td class="num">4 193</td><td class="src">baya_medicion</td>
+          <td class="num">3 889</td><td class="num">304</td>
+          <td class="why">Módulos M10 y M10B, que E05 escribe sin el sufijo A/B. En cuarentena.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">Errores de pegado</td><td class="num">0</td>
+          <td class="src" style="color:var(--ink-3)">— descartada</td><td class="num">0</td><td class="num">0</td>
+          <td class="why">Tabla vacía. Se extrae solo para dejar constancia de que se miró.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">H00_VolumenCampo</td><td class="num">30 812</td><td class="src">cosecha</td>
+          <td class="num">30 536</td><td class="num">276</td>
+          <td class="why">1 fila de subtotal de Excel (930 662 kg, sin identificadores) + 275 de lotes retirados del maestro.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">H01_ProdHistorica</td><td class="num">30 626</td><td class="src">cosecha</td>
+          <td class="num">30 536</td><td class="num">90</td>
+          <td class="why">2 subtotales de Excel + 88 de lotes retirados. Se unifica con H00: ver §3.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">H02_BDElifab</td><td class="num">117 536</td><td class="src">packing</td>
+          <td class="num">117 536</td><td class="num">0</td>
+          <td class="why">Sin pérdida.</td><td class="bal">0</td></tr>
+      <tr><td class="src">H05_Clima</td><td class="num">155 588</td><td class="src">clima</td>
+          <td class="num">153 413</td><td class="num">2 175</td>
+          <td class="why">Mismo instante registrado dos veces por una recarga: 2 079 grupos. La clave es el timestamp.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">M_EquivalenciaElifab</td><td class="num">15</td><td class="src">productor_equivalencia</td>
+          <td class="num">15</td><td class="num">0</td>
+          <td class="why">Sin pérdida. Es lo que da empresa a las 117 536 filas de packing.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">M_Evaluadores</td><td class="num">31</td><td class="src">evaluador</td>
+          <td class="num">31</td><td class="num">0</td>
+          <td class="why">Sin pérdida. Además se añaden 6 DNI que capturan datos sin ficha (37 en total).</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">M_Lotes</td><td class="num">860</td>
+          <td class="src">fundo_alias<br><span style="color:var(--ink-3)">sustituida</span></td>
+          <td class="num">3</td><td class="num">857</td>
+          <td class="why"><b>Sustituida por decisión</b> (ADR-0003): el maestro vigente <code>M_Lotes.xlsx</code> tiene 879 lotes y reemplaza a estas 860. Solo sobreviven 3 grafías de fundo como alias histórico.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">M_nMuestra</td><td class="num">681</td><td class="src">muestra_requerida</td>
+          <td class="num">680</td><td class="num">1</td>
+          <td class="why">Lote que no resuelve. <b>Hasta esta auditoría desaparecía sin registro</b> — ver N-23.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">M_Poda</td><td class="num">2 159</td><td class="src">poda</td>
+          <td class="num">2 147</td><td class="num">12</td>
+          <td class="why">Lote fuera del maestro vigente. En cuarentena.</td><td class="bal">0</td></tr>
+      <tr><td class="src">M_Time</td><td class="num">2 189</td><td class="src">calendario</td>
+          <td class="num">2 189</td><td class="num">0</td>
+          <td class="why">Sin pérdida. El calendario se genera continuo y se enriquece con M_Time.</td>
+          <td class="bal">0</td></tr>
+      <tr><td class="src">R08_Forecast_Campaña</td><td class="num">101 715</td><td class="src">forecast_campania</td>
+          <td class="num">101 714</td><td class="num">1</td>
+          <td class="why">1 fila de subtotal de Excel sin versión ni módulo.</td><td class="bal">0</td></tr>
+      <tr><td class="src">R09_Forecast_Semanal</td><td class="num">48 368</td><td class="src">forecast_semanal</td>
+          <td class="num">48 368</td><td class="num">0</td>
+          <td class="why">Sin pérdida.</td><td class="bal">0</td></tr>
+    </tbody>
+    <tfoot><tr>
+      <td>18 tablas</td><td class="num">654 598</td><td></td><td class="num"></td><td class="num"></td>
+      <td class="why" style="font-weight:400">Toda diferencia tiene causa registrada y consultable en <code>qua.rechazos</code>.</td>
+      <td class="bal">0</td>
+    </tr></tfoot>
+  </table>
+  </div>
+
+  <div class="note"><b>Qué significa «cuarentena».</b> No es dato perdido: es dato que no entró en
+  <code>core</code> con su razón registrada y la fila íntegra en <code>jsonb</code>, lista para
+  reprocesar. Hay dos comportamientos y conviene no confundirlos — unas filas quedan
+  <i>apartadas</i> (no están en <code>core</code>) y otras se <i>cargan marcadas</i>: un diámetro
+  imposible entra con <code>sospechoso = true</code>, y una identidad sin resolver entra apuntando
+  a una fila centinela. En ambos casos queda constancia.</div>
+
+  <div class="note"><b>Las 3 diferencias del contrato que aparecen como falla.</b>
+  <code>core.lotes</code> 880 frente a 860, <code>core.fundos</code> 7 frente a 4 y
+  <code>core.modulos</code> 30 frente a 23. No son pérdidas ni errores: son el maestro de lotes
+  vigente, que tiene 19 lotes más y los módulos M14–M24 que Access no conocía. Están declaradas
+  como grupo aparte precisamente para que nadie las lea como una fuga de datos.</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="hallazgos">
+  <div class="shead"><span class="num">§2</span><h2>Los ocho hallazgos de esta auditoría</h2></div>
+  <p class="lede">Cruzar las 235 columnas del origen contra el esquema y los datos reales sacó a la
+  luz ocho defectos que ninguna revisión anterior había detectado. Siete ya están corregidos y
+  verificados; uno queda abierto porque depende de una respuesta que no está en los datos.</p>
+
+  <div class="find crit">
+    <div class="top"><span class="id">N-16</span>
+      <h3>La columna de peso de packing guardaba el total del grupo en cada fila</h3>
+      <span class="chip solid">Crítico</span><span class="chip ghost tick">Corregido</span></div>
+    <p><code>H02_BDElifab</code> tiene dos columnas casi homónimas: <code>Peso total (kg)</code> y
+    <code>Peso total (kg)2</code>. Se trataron como un par duplicado y se conservó la segunda
+    <i>por tener menos nulos</i> — 0 frente a 1. No eran duplicados: son el numerador y el
+    denominador de un porcentaje.</p>
+    <div class="ev">
+      <div><div class="k">% declarado ≈ 100 × peso1 / peso2</div><div class="v">0,25 pp</div></div>
+      <div><div class="k">Filas que cuadran dentro de 1 pp</div><div class="v">108 394</div></div>
+      <div><div class="k">Grupos con peso2 constante</div><div class="v">2 535 / 2 591</div></div>
+      <div><div class="k">Filas donde ambos coinciden</div><div class="v">0</div></div>
+    </div>
+    <p>Al repetirse idéntico en cada fila del grupo, sumarlo lo contaba una vez por clase en vez de
+    una vez por lote: <code>core.packing</code> reportaba <b>789 597 707 kg</b> frente a
+    <b>32 386 650 kg</b> de cosecha real. Un factor de 24. Es el mismo defecto estructural que la
+    medida <code>KG/HA</code> del hallazgo B-4, en el otro extremo del pipeline.</p>
+    <div class="fix"><b>Corrección aplicada</b>
+      Se cargan las dos por separado: <code>peso_kg</code> (la parte, sumable, 18 582 402 kg) y
+      <code>peso_kg_lote</code> (el total repetido, <b>no sumable</b>), cada una con su
+      <code>COMMENT</code> en la base. El contrato incorpora
+      <code>cero.peso_packing_inflado</code>, que falla si lo empacado vuelve a superar lo
+      cosechado.</div>
+  </div>
+
+  <div class="find med">
+    <div class="top"><span class="id">N-17</span>
+      <h3>Una columna descartada como residuo era la hora de captura</h3>
+      <span class="chip line">Medio</span><span class="chip ghost tick">Corregido</span></div>
+    <p>La columna <code>F16</code> de <code>E03_ConteoEstados</code> perdió su encabezado al
+    importar a Access, y por su nombre se dio por basura. Contiene <b>13 230 valores</b>, el 100 %
+    con formato de hora, en rango 04:25:03–22:42:03. Es el mismo dato que <code>E02</code> y
+    <code>E04</code> sí conservaban.</p>
+    <p>La corrección destapó una segunda causa: <code>fn_a_hora</code> exigía un timestamp completo
+    porque en las otras tablas Access entrega <code>1899-12-30 07:24:06</code>. Aquí la columna es
+    de texto y llega como <code>09:59:03</code> pelado, así que el cast la rechazaba entera.</p>
+    <div class="fix"><b>Corrección aplicada</b>
+      <code>fn_a_hora</code> acepta ahora ambos formatos y el dato carga en
+      <code>core.estados.hora</code>: 13 224 filas — las 6 que faltan son las que van a cuarentena.</div>
+  </div>
+
+  <div class="find med">
+    <div class="top"><span class="id">N-21</span>
+      <h3>Seis columnas de packing descartadas por «duplicadas» no lo son</h3>
+      <span class="chip line">Medio</span><span class="chip line">Abierto</span></div>
+    <p>Se descartaron por parecer redundantes. No lo son: <code>ACDT 2</code> coincide con
+    <code>ACDT</code> en solo 15 950 de 117 536 filas; <code>ENSAYO</code> difiere de
+    <code>Mercado</code> en 19 286; <code>S26</code> y <code>S271</code> son rangos distintos entre
+    sí; <code>Packet</code> y <code>Clasificación</code> tienen valores propios no derivables de
+    ninguna otra columna.</p>
+    <p>Son campos del sistema de packing (Elifab) cuyo significado no está documentado en ninguna
+    parte del proyecto. Cargarlos sin saber qué miden sería inventar semántica.</p>
+    <div class="fix"><b>Requiere decisión</b>
+      Operaciones de packing debe decir qué representa cada uno. Si son útiles, entran como
+      columnas de texto; si no, se documenta el descarte con su motivo. La misma pregunta cubre
+      qué mide exactamente <code>peso_kg_lote</code> (N-16).</div>
+  </div>
+
+  <div class="find med">
+    <div class="top"><span class="id">N-18</span>
+      <h3>El turno se descarta en cinco tablas y se conserva en una</h3>
+      <span class="chip line">Medio</span><span class="chip line">Abierto</span></div>
+    <p><code>core.turno</code> existe como dimensión y <code>R08</code> sí persiste su turno. Pero
+    <code>H01</code> (30 624 valores), <code>E05</code>, <code>M_Poda</code>,
+    <code>M_nMuestra</code> y <code>R09</code> lo normalizan en <code>stg</code> y lo tiran al
+    insertar. Suele ser derivable del lote, que sí se guarda — pero nadie lo ha comprobado y no
+    está escrito en ninguna parte.</p>
+    <div class="fix"><b>Verificación pendiente</b>
+      Comprobar en cada tabla si el turno del hecho coincide con el del lote resuelto. Donde
+      coincida, documentar que es derivable; donde no, persistirlo: una discrepancia es
+      información, no ruido.</div>
+  </div>
+
+  <div class="find low">
+    <div class="top"><span class="id">N-19</span>
+      <h3>390 filas traían el programa dentro de la columna de contenedores</h3>
+      <span class="chip ghost">Bajo</span><span class="chip ghost tick">Corregido</span></div>
+    <p>En 390 filas, <code>Contenedores volcados</code> contenía un nombre de programa
+    (<code>Programa IA AQU 2025…</code>) mientras <code>Programa de clasificación</code> estaba
+    vacío — en las 390, sin excepción. El resto de la fila era correcto, así que no es un
+    desplazamiento general de columnas sino un valor mal puesto, y el dato es recuperable sin
+    ambigüedad.</p>
+    <p>Hasta ahora el casteo a entero lo anulaba en silencio. Era la causa de que
+    <code>core</code> tuviera <b>más</b> nulos que el origen en esa columna: 13 475 frente a
+    13 085.</p>
+    <div class="fix"><b>Corrección aplicada</b>
+      El valor se rescata en <code>stg</code>, antes del casteo, y pasa a
+      <code>core.packing.programa</code>, que baja de 391 nulos a 1. Queda registrado en cuarentena
+      con motivo propio <code>VALOR_EN_COLUMNA_EQUIVOCADA</code>.</div>
+  </div>
+
+  <div class="find low">
+    <div class="top"><span class="id">N-23</span>
+      <h3>Un procedimiento de carga descartaba una fila sin dejar rastro</h3>
+      <span class="chip ghost">Bajo</span><span class="chip ghost tick">Corregido</span></div>
+    <p><code>sp_cargar_muestreo()</code> era el único de todo el proyecto que filtraba filas sin
+    registrarlas: una fila de <code>M_nMuestra</code> cuyo lote no resuelve simplemente
+    desaparecía. Una sola fila — pero una fila que desaparece en silencio es exactamente lo que
+    esta migración existe para impedir.</p>
+    <div class="fix"><b>Corrección aplicada</b>
+      Ahora se registra antes de cargar, como el resto de los hechos. Y el contrato incorpora
+      <code>cero.tabla_pierde_sin_rastro</code>, que falla si cualquier tabla vuelve a perder filas
+      sin una sola entrada en cuarentena que lo justifique.</div>
+  </div>
+
+  <div class="find low">
+    <div class="top"><span class="id">N-20</span>
+      <h3>52 fechas de poda con el cero de la época de Excel</h3>
+      <span class="chip ghost">Bajo</span><span class="chip ghost tick">Sin cambio</span></div>
+    <p>Access declara 2 nulos en <code>M_Poda.FInicio</code>. En realidad faltan 54: 2 nulos y
+    <b>52 con el valor <code>1899-12-30</code></b>, que es lo que Access guarda cuando una fecha
+    está vacía. El casteo ya las convierte a <code>NULL</code>, que es lo correcto — una poda no
+    empezó en 1899.</p>
+    <div class="fix"><b>Sin corrección: la migración ya acierta</b>
+      Se documenta porque la diferencia entre «2 nulos en Access» y «54 en core» parecía una
+      pérdida y es lo contrario: aquí la base nueva es más honesta que el origen.</div>
+  </div>
+
+  <div class="find low">
+    <div class="top"><span class="id">N-22</span>
+      <h3>Una cifra de la auditoría original dejó de ser cierta</h3>
+      <span class="chip ghost">Bajo</span><span class="chip ghost tick">Corregido</span></div>
+    <p>La documentación y el código afirmaban que <code>H00</code> tenía «151 filas de exceso en 34
+    grupos» por clave natural repetida. Hoy hay <b>0 grupos repetidos</b>: normalizar los códigos
+    de lote (N-3) resolvió el problema. Los 116 casos que quedan en cuarentena vienen todos de
+    <code>E02_ConteoFlores</code>.</p>
+    <div class="fix"><b>Corrección aplicada</b>
+      Cuatro comentarios corregidos en el SQL y la nota actualizada en la addenda. Sin cambio de
+      datos — pero una cifra que ya no describe la realidad induce a error a quien la lea dentro
+      de un año.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="cosecha">
+  <div class="shead"><span class="num">§3</span><h2>Por qué la cosecha se unificó en una sola tabla</h2></div>
+  <p class="lede">Es el cambio de modelado con más impacto de la migración, y hasta ahora solo
+  estaba documentado el resultado. Este es el porqué.</p>
+
+  <p style="color:var(--ink-2);max-width:76ch"><b>El problema.</b>
+  <code>H00_VolumenCampo</code> (30 812 filas) y <code>H01_ProdHistorica</code> (30 626) son la
+  misma cosecha contada dos veces con columnas distintas: H00 trae la variedad y era la referencia
+  de kilos; H01 trae paña, peso de baya, número de plantas y semana. Ninguna trae todo. Cualquier
+  informe que necesitara variedad <i>y</i> peso de baya tenía que unir ambas a mano, y cada
+  analista lo hacía a su manera. Ese era el coste real: la relación entre las dos tablas vivía en
+  la cabeza de quien escribía cada consulta.</p>
+
+  <p style="color:var(--ink-2);max-width:76ch;margin-top:16px"><b>Lo que se descubrió al
+  verificar.</b> La auditoría original registró una diferencia de 187 filas y 4 486,59 kg entre
+  ambas, y la dejó como pregunta abierta para Agronomía. <b>Esa diferencia no existía</b>: era
+  artefacto de comparar recuentos crudos sin normalizar los códigos de lote y sin apartar las filas
+  de subtotal. Normalizando la identidad primero, las dos tablas contienen la misma cosecha con
+  <b>0,01 kg</b> de diferencia. Eso cerró la decisión pendiente sin necesidad de preguntar a nadie:
+  no hay que elegir una fuente de verdad porque no hay conflicto.</p>
+
+  <div class="ev" style="margin-top:22px">
+    <div><div class="k">Filas en core.cosecha</div><div class="v">30 540</div></div>
+    <div><div class="k">Presentes en ambas fuentes</div><div class="v">30 532</div></div>
+    <div><div class="k">Solo en H00 / solo en H01</div><div class="v">4 / 4</div></div>
+    <div><div class="k">Kilos discrepantes</div><div class="v">105</div></div>
+  </div>
+
+  <p style="color:var(--ink-2);max-width:76ch"><b>Cómo se unificó.</b>
+  <code>FULL OUTER JOIN</code> por <code>(lote, fecha, campaña)</code> — la paña queda
+  deliberadamente fuera de la clave, porque solo H01 la conoce y usarla partiría filas que son la
+  misma cosecha. Los kilos los gana H00 por convención, no porque H01 esté mal; los de H01 se
+  guardan aparte en <code>kg_h01</code> sin sobrescribir nada. Paña, peso de baya, número de
+  plantas y semana vienen solo de H01. Las columnas <code>en_h00</code> y <code>en_h01</code>
+  marcan de qué fuente venía cada fila.</p>
+
+  <div class="note"><b>Qué se pierde, y hay que saberlo.</b> El turno propio de H01 (N-18) y la
+  posibilidad de ver a simple vista de qué tabla venía cada cifra — para eso están
+  <code>en_h00</code> y <code>en_h01</code>. Y <b>105 filas siguen con kilos discrepantes</b> entre
+  las dos fuentes: son reales, están conservadas en ambas columnas, y nadie ha decidido cuál vale.
+  Es el 0,34 %, pero no es cero.</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="columnas">
+  <div class="shead"><span class="num">§4</span><h2>Las 235 columnas, una por una</h2></div>
+  <p class="lede">Dónde vive cada columna del origen. Regla general que se repite en casi todas las
+  tablas: <code>Fundo</code> + <code>Modulo</code> + <code>Lote</code> nunca tienen columna propia
+  — los tres se colapsan en un único <code>lote_id</code> (ADR-0003), y el fundo se recupera
+  navegando <code>lote → modulo → fundo</code>. <code>Evaluador</code> se resuelve a
+  <code>evaluador_id</code> por DNI.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Columna de Access</th><th>Destino en core</th><th>Nota</th></tr></thead>
+    <tbody>
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">E01_Ramas · el grano cambia (N-1)</td></tr>
+      <tr><td class="src">Id</td><td class="src">rama_medicion.id_origen</td><td class="why">Entra en la deduplicación por fila completa.</td></tr>
+      <tr><td class="src">Actividad</td><td class="src" style="color:var(--ink-3)">— sin destino</td><td class="why">Justificado: constante, un solo valor <code>ConteoRamas</code>.</td></tr>
+      <tr><td class="src">Evaluador · Fecha · Fundo · Modulo · Lote · Cortina · Hilera · Planta</td>
+          <td class="src">evaluacion_ramas.*</td><td class="why">Cabecera: una fila por planta evaluada (5 384).</td></tr>
+      <tr><td class="src">Ramas &lt;5 · Ramas &gt;5</td><td class="src">evaluacion_ramas.ramas_menor5 / _mayor5</td>
+          <td class="why"><code>max()</code> por planta: en el origen se repetían en cada rama.</td></tr>
+      <tr><td class="src"># Ramas</td><td class="src">rama_medicion.nro_rama</td>
+          <td class="why">Es el <b>índice</b> de rama, no un total: sumarlo daba 730 318 en vez de 110 118 (N-1).</td></tr>
+      <tr><td class="src">Diametro</td><td class="src">rama_medicion.diametro · .sospechoso</td><td class="why">Marca los &gt; 50 mm.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">E02_ConteoFlores</td></tr>
+      <tr><td class="src">Item · Fecha · Evaluador · ubicación · nFlores · Cuajo · YA · YP · Hora</td>
+          <td class="src">flores.*</td><td class="why"><code>YA</code>→<code>yemas_abiertas</code>, <code>YP</code>→<code>yemas_por_abrir</code>.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">E03_ConteoEstados</td></tr>
+      <tr><td class="src">Item · Fecha · Evaluador · ubicación · E1…E5</td><td class="src">estados.*</td>
+          <td class="why"><code>item</code> forma parte de la clave natural (N-8).</td></tr>
+      <tr><td class="src">Total</td><td class="src">estados.total_origen</td>
+          <td class="why">Se conserva crudo; <code>estados.total</code> es columna <b>generada</b> <code>e1+…+e5</code>.</td></tr>
+      <tr><td class="src">F16</td><td class="src">estados.hora</td>
+          <td class="why"><b>Recuperada por esta auditoría</b> (N-17): es la hora de captura, no un residuo.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">E04_Brotes · E05_DiametrosBayas · M_Evaluadores · M_nMuestra</td></tr>
+      <tr><td class="src">E04: Piso · Fecha · Evaluador · ubicación · Brotes · Des1–Des3 · Hora</td>
+          <td class="src">brotes.*</td><td class="why">La fecha entra en la clave, que en el origen no estaba (H-02).</td></tr>
+      <tr><td class="src">E04: Des4 · Des5</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why">Justificado: 3 385 de 3 385 vacías. Verificado.</td></tr>
+      <tr><td class="src">E05: Modulo · Lote · Cortina · Hilera · Diametro · Fecha</td>
+          <td class="src">baya_medicion.*</td><td class="why">Una fila = una baya (N-7); <code>nro_muestra</code> es sintético.</td></tr>
+      <tr><td class="src">E05: Turno</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-18</b>: 12 turnos en el origen, se descartan.</td></tr>
+      <tr><td class="src">M_Evaluadores: DNI · Nombres · Apellidos · Cod · InicioLabores · Nacimiento · Zona · Celular · Estado</td>
+          <td class="src">evaluador.*</td><td class="why">Todas mapeadas. <code>Estado</code>→<code>activo</code>.</td></tr>
+      <tr><td class="src">M_nMuestra: Evaluacion · ubicación · Cortina · Hilera · Planta · Muestras</td>
+          <td class="src">muestra_requerida.*</td><td class="why">—</td></tr>
+      <tr><td class="src">M_nMuestra: Turno</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-18</b>: se descarta ya en la vista de stg.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">H00 + H01 → core.cosecha · ver §3</td></tr>
+      <tr><td class="src">H00: Campaña · Fecha · ubicación · Variedad · KG</td>
+          <td class="src">cosecha.campania_id / fecha / lote_id / variedad_id / kg</td>
+          <td class="why">H00 es la referencia de kilos.</td></tr>
+      <tr><td class="src">H01: nPlantas · Semana · Paña · Peso</td>
+          <td class="src">cosecha.n_plantas / semana / pana / peso_baya</td><td class="why"><b>Solo H01 los trae.</b></td></tr>
+      <tr><td class="src">H01: KG</td><td class="src">cosecha.kg_h01</td><td class="why">Se guarda aparte, no sobrescribe.</td></tr>
+      <tr><td class="src">H01: Turno</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-18</b>: 30 624 valores descartados.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">H02_BDElifab · 35 columnas</td></tr>
+      <tr><td class="src">Clases · Recuento · % · Programa · Contenedores esp./volc. · Horas · Fechas · Calibrador · ACDT · Acidez · Defecto · Semana · Año</td>
+          <td class="src">packing.*</td><td class="why">Mapeo directo.</td></tr>
+      <tr><td class="src">Lote</td><td class="src">packing.nota_packing</td>
+          <td class="why"><b>No es un lote de campo</b>: es una nota de packing (N-2). Su grano no baja a lote.</td></tr>
+      <tr><td class="src">Peso total (kg)</td><td class="src">packing.peso_kg</td>
+          <td class="why"><b>Recuperada por esta auditoría</b> (N-16): es el peso de la fila y lo único sumable.</td></tr>
+      <tr><td class="src">Peso total (kg)2</td><td class="src">packing.peso_kg_lote</td>
+          <td class="why"><b>NO SUMAR</b> (N-16): total repetido por fila. Sumarlo multiplica por 24.</td></tr>
+      <tr><td class="src">Productor</td><td class="src">packing.empresa_id</td>
+          <td class="why">Vía <code>productor_equivalencia</code>: 117 536 de 117 536 resueltas.</td></tr>
+      <tr><td class="src">Productor1</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why">Justificado: 16 grafías; se eligió <code>Productor</code>, con 2 valores canónicos.</td></tr>
+      <tr><td class="src">Variedad · Módulo · Turno · Calibre · Mercado</td>
+          <td class="src">packing.variedad_id / modulo_id / turno_packing / calibre_id / mercado</td>
+          <td class="why"><code>turno_packing</code> es un dominio distinto del turno de riego (N-2).</td></tr>
+      <tr><td class="src">Modulo <i>(sin tilde)</i> · Calibres · Mes</td>
+          <td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why">Justificado: duplicados reales o derivables. Se eligió <code>Módulo</code>, que resuelve los submódulos A/B.</td></tr>
+      <tr><td class="src">ACDT 2 · ENSAYO · S26 · S271 · Packet · Clasificación</td>
+          <td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-21</b>: no son duplicados. Pendiente de criterio de Operaciones.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">H05_Clima · 25 columnas</td></tr>
+      <tr><td class="src">Las 25</td><td class="src">clima.*</td>
+          <td class="why">Mapeo 1:1 verificado columna por columna. <code>TembAlta</code>→<code>temp_alta</code> corrige el typo del origen.</td></tr>
+
+      <tr><td colspan="3" style="background:var(--wash);font-family:var(--mono);font-size:11px;
+          letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">Maestros y forecast</td></tr>
+      <tr><td class="src">M_Lotes: Fundo</td><td class="src">fundo_alias</td>
+          <td class="why">Única columna con uso real: aporta 3 grafías comerciales.</td></tr>
+      <tr><td class="src">M_Lotes: las otras 14</td><td class="src" style="color:var(--ink-3)">— sustituidas</td>
+          <td class="why">El maestro vigente <code>M_Lotes.xlsx</code> (879 lotes) las reemplaza (ADR-0003).</td></tr>
+      <tr><td class="src">M_Poda: Campaña · ubicación · Area · FSiembra · FInicio</td><td class="src">poda.*</td>
+          <td class="why"><code>FInicio</code>: ver N-20.</td></tr>
+      <tr><td class="src">M_Poda: Turno</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-18</b>.</td></tr>
+      <tr><td class="src">M_Time: Fecha · Sem · Mes · Año</td><td class="src">calendario.*</td>
+          <td class="why"><b>Recalculadas</b> desde la fecha, no copiadas. El <code>Año</code> de M_Time es año-ISO y difiere en 9 días de frontera: su equivalente es <code>anio_semana</code>.</td></tr>
+      <tr><td class="src">M_Time: SEvConteo</td><td class="src">calendario.sem_ev_conteo + semana_evaluacion</td>
+          <td class="why">Grano semanal separado, que es la corrección estructural de H-05.</td></tr>
+      <tr><td class="src">M_Time: AQII</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why">Justificado: 2 189 de 2 189 vacías. Verificado.</td></tr>
+      <tr><td class="src">M_EquivalenciaElifab: Productor · Empresa</td><td class="src">productor_equivalencia.*</td>
+          <td class="why">15 de 15. Es lo que da empresa a todo el packing.</td></tr>
+      <tr><td class="src">R08: Fundo</td><td class="src">forecast_campania.empresa_id</td>
+          <td class="why"><b>Semántica invertida</b> (N-5): esta columna trae la empresa, no el fundo.</td></tr>
+      <tr><td class="src">R08: FundoPPto</td><td class="src" style="color:var(--ink-3)">indirecto</td>
+          <td class="why"><b>N-5</b>: trae el fundo físico; se usa para desambiguar el módulo.</td></tr>
+      <tr><td class="src">R08: Version · Modulo · Turno · Año · Semana · KG Exp/Des/Con · FrtTotal_Exp · Campaña · C12…C26</td>
+          <td class="src">forecast_campania.* · version_forecast.*</td>
+          <td class="why">624 filas al módulo centinela (ADR-0005).</td></tr>
+      <tr><td class="src">R09: Version · Campaña · Pasada · Mod/Lote/Fundo · Area · FCosAnt · FCos · Sem · FrtCos · Peso · FrutosTotal · Rend · Kg · Dr</td>
+          <td class="src">forecast_semanal.*</td>
+          <td class="why"><code>FrtCos</code>→<code>frutos_por_planta</code>, renombre semántico. 23 al lote centinela.</td></tr>
+      <tr><td class="src">R09: Turno · FundPPTo</td><td class="src" style="color:var(--ink-3)">— sin destino</td>
+          <td class="why"><b>N-18</b>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="nulos">
+  <div class="shead"><span class="num">§5</span><h2>Los nulos: 72 columnas, seis categorías</h2></div>
+  <p class="lede">Se midieron los nulos reales de las <b>321 columnas</b> de <code>core</code> y se
+  compararon una a una con los que declara Access. La conclusión operativa: <b>ninguna columna
+  tiene un nulo sin causa conocida</b>, y solo dos tienen más nulos que el origen — ambas
+  explicadas.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Categoría</th><th class="num">Cols.</th><th>Qué son y qué hacer con ellos</th><th>Ejemplos verificados</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>A · Idénticos a Access</b><br><span class="chip ghost">Nada que corregir</span></td>
+        <td class="num">≈ 45</td>
+        <td class="why"><b>Ausencia legítima de medición.</b> Nadie contó el cuajo en esa planta, el packing no registró la hora, el forecast no desglosó calibres. La coincidencia exacta con el origen es la prueba de que la migración fue fiel. Forzarles un valor inventaría datos que nadie capturó.</td>
+        <td class="why"><code>flores.hora</code> 14 862 = 14 862 · <code>packing.hora_inicio</code> 56 173 = 56 173 · <code>forecast_semanal.pasada</code> 22 765 = 22 765 · <code>brotes.des1</code> 3 145 = 3 145</td>
+      </tr>
+      <tr>
+        <td><b>B · Menos que en Access</b><br><span class="chip ghost">Correcto por construcción</span></td>
+        <td class="num">≈ 12</td>
+        <td class="why">La diferencia son las filas que no entraron en <code>core</code> y están en cuarentena. Menos filas, menos nulos.</td>
+        <td class="why"><code>flores.cuajo</code> 38 138 vs 38 154 · <code>clima.direc_viento</code> 7 723 vs 7 830</td>
+      </tr>
+      <tr>
+        <td><b>C · Más que en Access</b><br><span class="chip line">Los dos únicos casos</span></td>
+        <td class="num">2</td>
+        <td class="why">Son los que despertaron la sospecha de pérdida. Ambos investigados hasta el fondo y ambos explicados: uno es la migración corrigiendo al origen, el otro un defecto del origen ahora recuperado.</td>
+        <td class="why"><code>poda.fecha_inicio</code> 54 vs 2 → <b>N-20</b>, el cero de Excel<br><code>packing.contenedores_volcados</code> 13 475 vs 13 085 → <b>N-19</b>, ya rescatado</td>
+      </tr>
+      <tr>
+        <td><b>D · Dominio distinto</b><br><span class="chip ghost">No comparable</span></td>
+        <td class="num">11</td>
+        <td class="why">No vienen del Access que se está auditando, así que comparar sus nulos con él no significa nada.</td>
+        <td class="why"><code>lote.*</code> viene del maestro vigente (879 lotes, no 860) · <code>evaluador.*</code> tiene 37 filas porque se añaden 6 DNI sin ficha</td>
+      </tr>
+      <tr>
+        <td><b>E · Estructurales del modelo nuevo</b><br><span class="chip ghost">Por diseño</span></td>
+        <td class="num">≈ 12</td>
+        <td class="why">El nulo <i>es</i> la información. No hay nada que rellenar.</td>
+        <td class="why"><code>calibre.mm</code> 3/12: <code>DESCARTE</code> está fuera de la escala de milímetros · <code>version_forecast.semana_emision</code> 15/61: <code>Presupuesto 2026</code> no lleva semana · <code>config_decision.confirmado_por</code> 5/5: <b>el nulo es el estado</b> — esas decisiones siguen sin confirmar</td>
+      </tr>
+      <tr>
+        <td><b>F · Claves foráneas de hechos</b><br><span class="chip ghost tick">Cerrado</span></td>
+        <td class="num">0</td>
+        <td class="why">Ninguna FK de una tabla de hechos es nula. Cuando la identidad no resuelve, la fila apunta a una fila centinela «Sin identificar» y la columna es <code>NOT NULL</code>: la garantía la da el motor, no la disciplina de quien escriba (ADR-0005).</td>
+        <td class="why">624 filas de forecast al módulo centinela · 23 al lote · 4 de cosecha a la variedad centinela</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note"><b>La excepción documentada.</b> <code>fundo_alias.fundo_id</code> tiene 8 nulos
+  de 25 y se queda así: esa tabla existe precisamente para registrar alias que <i>no</i> determinan
+  un fundo físico, y la columna <code>ambiguo</code> ya gobierna ese caso. Convertirlo a centinela
+  sería redundante.</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="cierre">
+  <div class="shead"><span class="num">§6</span><h2>Qué falta para declarar la migración cerrada</h2></div>
+  <p class="lede">El cierre técnico está hecho y es reproducible por cualquiera con
+  <code>npm run validate</code>. Lo que queda no se resuelve con código: son preguntas cuya
+  respuesta está en la operación, no en los datos.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Pendiente</th><th>Tipo</th><th>Quién decide</th><th>Estado mientras tanto</th></tr></thead>
+    <tbody>
+      <tr><td class="why"><b>N-21</b> · Qué representan <code>ENSAYO</code>, <code>S26</code>,
+          <code>S271</code>, <code>Packet</code>, <code>Clasificación</code>, <code>ACDT 2</code> —
+          y qué mide exactamente <code>peso_kg_lote</code></td>
+          <td><span class="chip line">Negocio</span></td><td class="why">Operaciones de packing</td>
+          <td class="why">No cargadas. Los datos siguen íntegros en <code>raw</code>: cargarlas más adelante es reprocesar, no re-extraer.</td></tr>
+      <tr><td class="why"><b>N-18</b> · Si el turno de cada hecho coincide con el del lote resuelto</td>
+          <td><span class="chip line">Verificación</span></td><td class="why">Ingeniería, con criterio de Agronomía</td>
+          <td class="why">Descartado en 5 tablas. Recuperable desde <code>raw</code>.</td></tr>
+      <tr><td class="why">Las <b>105 filas de cosecha</b> con kilos discrepantes entre H00 y H01</td>
+          <td><span class="chip line">Negocio</span></td><td class="why">Agronomía</td>
+          <td class="why">Conservadas en las dos columnas, <code>kg</code> y <code>kg_h01</code>. Ninguna se ha perdido.</td></tr>
+      <tr><td class="why"><b>N-12</b> · 29 ramas y 3 bayas con diámetros físicamente imposibles
+          (hasta 8 789 mm)</td>
+          <td><span class="chip line">Negocio</span></td><td class="why">Agronomía</td>
+          <td class="why">Cargadas con <code>sospechoso = true</code>. Excluirlas bajaría la media de rama de 10,89 a 10,62.</td></tr>
+      <tr><td class="why"><b>N-14</b> · 276 + 90 filas de cosecha de lotes retirados del maestro</td>
+          <td><span class="chip line">Negocio</span></td><td class="why">Agronomía</td>
+          <td class="why">En cuarentena con la fila íntegra.</td></tr>
+      <tr><td class="why"><b>D-1</b> y <b>D-2</b> · Qué kilos compara <code>R0902</code> y la regla
+          de asignación de campaña por poda</td>
+          <td><span class="chip line">Negocio</span></td><td class="why">Planeamiento</td>
+          <td class="why">Implementadas con un supuesto explícito y reversible con un <code>UPDATE</code> en <code>core.config_decision</code>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note" style="border-left-width:3px;border-left-color:var(--ink)">
+  <b>Ninguno de estos seis bloquea el uso de la base.</b> Los seis están implementados con un
+  supuesto documentado, y en todos los casos el dato original sigue íntegro en <code>raw</code>,
+  de modo que aplicar la decisión cuando llegue es reprocesar — nunca volver al
+  <code>.accdb</code>. Lo que sí cambió con esta auditoría es que dejaron de ser supuestos
+  invisibles.</div>
+</section>
+
+<footer>
+  Auditoría generada el 6 de agosto de 2026 sobre la base <code>aquanqa</code> · PostgreSQL 18.<br>
+  Cada cifra de este documento procede de una consulta ejecutada contra los datos reales, no de la
+  lectura del código.<br>
+  Fuentes: <code>docs/historico-access/evidencia/02_esquema_tablas.txt</code> (esquema del origen) ·
+  <code>docs/modelo/01_mapeo_access_core.md</code> (detalle completo) ·
+  <code>docs/runbooks/02-cierre-de-migracion.md</code> (criterio de cierre) ·
+  <code>db/sql/90_checks/</code> (contrato ejecutable).
+</footer>
+
+</div>

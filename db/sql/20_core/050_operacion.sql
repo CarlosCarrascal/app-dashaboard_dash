@@ -58,9 +58,10 @@ COMMENT ON COLUMN core.cosecha.kg_h01 IS
     'Los kilos según H01, cuando difieren de los de H00. Permite cuantificar el desfase por '
     'campaña sin mantener dos tablas de hechos.';
 COMMENT ON COLUMN core.cosecha.registros_h00 IS
-    'Cuántas filas de H00 se agregaron en esta. Normalmente 1; hay 34 grupos donde el origen '
-    'repite la clave y suma 151 filas de exceso (N-9). Se suman los kilos, que es lo que '
-    'preserva el total de control, y el caso queda registrado en cuarentena.';
+    'Cuántas filas de H00 se agregaron en esta. Hoy vale 1 en todas: la agregación sigue '
+    'existiendo por si el origen repite la clave, pero ya no se dispara. La auditoría contaba '
+    '34 grupos repetidos con 151 filas de exceso (N-9), algo que dejó de ocurrir al normalizar '
+    'los códigos de lote (N-3) — verificado en 0 grupos (N-22).';
 
 CREATE INDEX IF NOT EXISTS cosecha_lote_fecha_idx ON core.cosecha (lote_id, fecha);
 CREATE INDEX IF NOT EXISTS cosecha_campania_idx ON core.cosecha (campania_id);
@@ -156,7 +157,10 @@ CREATE TABLE IF NOT EXISTS core.packing (
     mercado         text,
     mercado_valido  boolean NOT NULL DEFAULT true,
     recuento        integer CHECK (recuento >= 0),
+    -- Dos pesos, y la diferencia importa (N-16): `peso_kg` es de esta fila y se puede sumar;
+    -- `peso_kg_lote` es un total repetido en cada fila del grupo y sumarlo multiplica por ~24.
     peso_kg         numeric(12,4) CHECK (peso_kg >= 0),
+    peso_kg_lote    numeric(12,4) CHECK (peso_kg_lote >= 0),
     porcentaje      numeric(8,4),
     nota_packing    text,
     calibrador      text,
@@ -188,6 +192,19 @@ COMMENT ON COLUMN core.packing.mercado_valido IS
     'recogía (N-2).';
 COMMENT ON COLUMN core.packing.nota_packing IS
     'La columna [Lote] del origen, conservada con su nombre real.';
+COMMENT ON COLUMN core.packing.peso_kg IS
+    'Kilos de ESTA fila: el peso de esa clase/calibre concreto. Es la única columna de peso '
+    'que se puede sumar. Viene de [Peso total (kg)] y suma 18,58 M kg, coherente con los '
+    '32,39 M kg de cosecha de campo.';
+COMMENT ON COLUMN core.packing.peso_kg_lote IS
+    'NO SUMAR. Es un total que se repite idéntico en cada fila del grupo (fecha proceso, '
+    'módulo, turno, lote) y actúa de denominador del porcentaje. Sumarlo por fila lo cuenta '
+    'una vez por cada clase en vez de una vez por lote, y multiplica los kilos unas 24 veces: '
+    'era el defecto N-16, la misma clase de error que la medida KG/HA de B-4. Para totalizarlo '
+    'hay que tomar un solo valor por grupo (max o DISTINCT), no sum(). '
+    'Qué mide exactamente sigue sin confirmar: no es un acumulado (verificado) ni la suma de '
+    'sus partes salvo en el 46% de los grupos; es compatible con un peso de recepción, '
+    'pendiente de Operaciones de packing (N-21).';
 COMMENT ON COLUMN core.packing.hora_inicio IS
     '47,8% nula en el origen: cualquier análisis de duración de packing cubre la mitad de los '
     'datos y el tablero debe indicarlo.';

@@ -87,10 +87,11 @@ CREATE TABLE IF NOT EXISTS core.flores (
 );
 
 COMMENT ON TABLE core.flores IS
-    'Conteo de flores, cuajo y yemas por planta: 43.490 filas. Mide el potencial productivo '
-    'antes de que se forme el fruto. Sin clave natural única en el origen — ninguna '
-    'combinación distingue las 43.490 filas, la mejor llega a 43.329 (hallazgo N-9) — así que '
-    'se usa clave sustituta y los conflictos se registran en cuarentena.';
+    'Conteo de flores, cuajo y yemas por planta: 43.469 filas, de las 43.490 del origen (21 '
+    'con lote fuera del maestro vigente van a cuarentena). Mide el potencial productivo antes '
+    'de que se forme el fruto. Sin clave natural única en el origen — ninguna combinación '
+    'distingue las 43.490 filas, la mejor llega a 43.329 (hallazgo N-9) — así que se usa clave '
+    'sustituta y los 116 conflictos se registran en cuarentena.';
 COMMENT ON COLUMN core.flores.cuajo IS
     'Flores fecundadas que se convertirán en fruto. La tasa de cuajo es el principal predictor '
     'de producción. 87,7% nula en el origen, y no es un defecto: el cuajo solo se evalúa en '
@@ -116,6 +117,7 @@ CREATE TABLE IF NOT EXISTS core.estados (
     e5 smallint NOT NULL DEFAULT 0 CHECK (e5 >= 0),
     total       integer GENERATED ALWAYS AS (e1 + e2 + e3 + e4 + e5) STORED,
     total_origen smallint,
+    hora        time,
     item        text NOT NULL,
     -- Clave verificada: con `item` da exactamente 18.714 = total de filas (hallazgo N-8).
     -- La clave del plan original, sin `item`, habría rechazado 212 filas.
@@ -123,7 +125,8 @@ CREATE TABLE IF NOT EXISTS core.estados (
 );
 
 COMMENT ON TABLE core.estados IS
-    'Distribución de frutos por estado de madurez E1 a E5, por planta y fecha: 18.714 filas. '
+    'Distribución de frutos por estado de madurez E1 a E5, por planta y fecha: 18.708 filas, '
+    'de las 18.714 del origen (6 con lote fuera del maestro vigente van a cuarentena). '
     'Es la base del pronóstico de cosecha: conociendo cuántos frutos hay en cada estado se '
     'estima cuándo estarán listos. La PK del origen incluía E1, que es una medida, así que '
     'corregir un conteo duplicaba el registro en lugar de sustituirlo (H-02).';
@@ -133,6 +136,10 @@ COMMENT ON COLUMN core.estados.total IS
     'desaparece por construcción.';
 COMMENT ON COLUMN core.estados.total_origen IS
     'El Total tal como venía del origen, para poder auditar esa diferencia de 2.430 frutos.';
+COMMENT ON COLUMN core.estados.hora IS
+    'Hora de captura. En el origen es la columna [F16], que perdió su encabezado al importar y '
+    'por eso se descartaba como residuo, aunque E02 y E04 sí conservaban la suya (N-17). '
+    '13.230 de 18.708 filas la traen.';
 
 CREATE INDEX IF NOT EXISTS estados_lote_fecha_idx ON core.estados (lote_id, fecha);
 CREATE INDEX IF NOT EXISTS estados_evaluador_idx ON core.estados (evaluador_id, fecha);
@@ -179,7 +186,9 @@ CREATE TABLE IF NOT EXISTS core.baya_medicion (
 );
 
 COMMENT ON TABLE core.baya_medicion IS
-    'Una fila por BAYA medida: 4.193 filas en 43 combinaciones de hilera y fecha, unas 97 '
+    'Una fila por BAYA medida: 3.889 filas, de las 4.193 del origen (304 de los módulos M10 y '
+    'M10B, que E05 escribe sin el sufijo A/B, van a cuarentena). Son 43 combinaciones de '
+    'hilera y fecha, unas 97 '
     'bayas cada una (hallazgo N-7). El origen no identifica la baya, así que nro_muestra se '
     'asigna en la carga por orden estable. Es la tabla más limpia del origen — sin un solo '
     'nulo — y la única evaluación que trae el turno de origen, así que no depende del join '

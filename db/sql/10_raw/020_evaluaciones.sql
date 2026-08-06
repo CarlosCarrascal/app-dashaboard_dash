@@ -111,7 +111,10 @@ COMMENT ON COLUMN raw.e03_conteo_estados.total IS
     '[Total] — capturado aparte y NO recalculado: SUM(Total)=9.060.271 frente a '
     'SUM(E1..E5)=9.057.841, 2.430 frutos de diferencia. En core es columna generada.';
 COMMENT ON COLUMN raw.e03_conteo_estados.f16 IS
-    '[F16] — columna sin nombre real, residuo de importación. 5.484 nulos.';
+    '[F16] — el encabezado se perdió al importar, pero NO es un residuo: es la HORA de captura '
+    '(N-17). 13.230 valores no vacíos, el 100% con formato de hora, en rango 04:25:03-22:42:03. '
+    'Se descartaba por culpa de su nombre, mientras E02 y E04 sí conservaban la suya; ahora '
+    'carga en core.estados.hora.';
 
 -- ── E04_Brotes ──────────────────────────────────────────────────────────────
 -- 3.385 filas, y son tan pocas porque la PK del origen no incluye la fecha (H-02).

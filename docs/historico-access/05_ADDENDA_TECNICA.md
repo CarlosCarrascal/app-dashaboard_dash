@@ -23,7 +23,7 @@ cuatro documentos, cuyos recuentos por tabla son correctos pero cuya suma no lo 
 
 | Bloque | Qué cambia |
 |---|---|
-| **A · Datos** (N-1…N-15) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, el total de filas está mal sumado, las campañas se solapan, hay una cuarta fila de subtotal en el forecast, H-07 no era lo que parecía, y dos hechos de forecast no trataban sus FK sin resolver como el resto |
+| **A · Datos** (N-1…N-22) | El grano de dos tablas está mal entendido, una clave natural es inviable, otra faltaba, los códigos de lote no están normalizados entre fuentes, el total de filas está mal sumado, las campañas se solapan, hay una cuarta fila de subtotal en el forecast, H-07 no era lo que parecía, dos hechos de forecast no trataban sus FK sin resolver como el resto, y **la columna de peso de packing guarda el total del grupo en cada fila, lo que multiplica los kilos por 24** (N-16) |
 | **B · BI** (B-1…B-6) | El consumo real de Power BI no es el que midió el linaje: hay dimensiones inventadas con DAX, un mapeo de fundo incorrecto, una medida mal calculada y lógica de negocio que solo vive en Power Query |
 | **C · Decisiones** | **D-3 y D-4 quedan cerradas por los datos**; D-2 estaba mal planteada; solo D-1 sigue necesitando a Planeamiento |
 
@@ -465,6 +465,29 @@ por encima de su tope (900, calibrado solo para lotes) y mezclando dos problemas
 en un mismo contador — el de `forecast_campania` es de **módulo**, no de lote. Se corrigió
 con un motivo propio, `MODULO_INEXISTENTE` (tope 700), verificado tras recargar: 728 en
 `LOTE_INEXISTENTE` y 624 en `MODULO_INEXISTENTE`, ambos dentro de su tope.
+
+---
+
+### N-16 a N-22 · Hallazgos de la auditoría de mapeo columna por columna
+
+Al cruzar las **235 columnas** de `evidencia/02_esquema_tablas.txt` contra el esquema y los
+datos reales de `core`, aparecieron siete hallazgos más. El detalle completo —el destino de
+cada columna y la clasificación de todos los nulos— está en
+[`../modelo/01_mapeo_access_core.md`](../modelo/01_mapeo_access_core.md).
+
+| # | Hallazgo | Gravedad |
+|---|---|---|
+| **N-16** | **`packing.peso_kg` guarda el total del grupo, no el peso de la fila.** `Peso total (kg)` y `Peso total (kg)2` se trataron como duplicados y se eligió la segunda por tener menos nulos. Son numerador y denominador de un porcentaje: `% ≈ 100 × peso1 / peso2` con error medio de 0,25 pp, y `peso2` es constante dentro de (fecha proceso, módulo, turno, lote) en 2.535 de 2.591 grupos. `core.packing` reporta hoy **789.597.707 kg** frente a **32.386.650 kg** de cosecha real: sumar esa columna infla los kilos **~24 veces**. Es el mismo defecto estructural que B-4, en el otro extremo del pipeline | **Crítico** |
+| **N-17** | **`E03_ConteoEstados.F16` es la hora de captura, no un residuo.** 13.230 valores no vacíos, el 100 % con formato de hora (`04:25:03`–`22:42:03`). Se descartó como basura, mientras que `E02` y `E04` sí conservan la suya | Medio |
+| **N-18** | **El turno se descarta en cinco tablas** (`H01`, `E05`, `M_Poda`, `M_nMuestra`, `R09`) mientras `R08` sí lo persiste. Suele ser derivable del lote, pero nadie lo ha comprobado y no está documentado | Medio |
+| **N-19** | **390 filas de packing traen un nombre de programa en `Contenedores volcados`**, con `Programa de clasificación` vacío en las 390. Hoy el casteo las anula sin dejar registro: es la causa de que `core` tenga 13.475 nulos donde Access tiene 13.085 | Bajo |
+| **N-20** | **52 fechas de `M_Poda.FInicio` valen `1899-12-30`**, el cero de la época de Excel. Access declara 2 nulos cuando en realidad faltan 54. El casteo ya las convierte a NULL, que es lo correcto — la migración es más honesta que el origen, pero la diferencia parecía una pérdida | Bajo · *resuelto* |
+| **N-21** | **Seis columnas de H02 descartadas por "duplicadas" no lo son**: `ACDT 2` coincide con `ACDT` en solo 15.950 de 117.536 filas; `ENSAYO` difiere de `Mercado` en 19.286; `S26`/`S271` son rangos distintos entre sí; `Packet` y `Clasificación` tienen valores propios no derivables. Son campos de Elifab sin documentar | Medio |
+| **N-22** | **La cifra de N-9 quedó obsoleta para `H00`.** Hoy hay **0 grupos** con la clave natural repetida en `stg.h00_cosecha` y 0 rechazos con ese origen: los 116 de `CLAVE_NATURAL_REPETIDA` vienen todos de `E02_ConteoFlores`. La normalización de identidad (N-3) resolvió el problema, pero el código y el párrafo de N-9 más arriba siguen citando "34 grupos / 151 filas" | Bajo |
+
+**Cobertura del mapeo:** 211 de 235 columnas tienen destino en `core`; 18 no lo tienen de forma
+justificada (columnas 100 % vacías, duplicados reales o valores derivables) y 6 son las pérdidas
+no justificadas de N-17, N-18 y N-21.
 
 ---
 

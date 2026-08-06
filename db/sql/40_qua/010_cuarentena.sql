@@ -30,7 +30,8 @@ COMMENT ON TABLE qua.rechazos IS
 COMMENT ON COLUMN qua.rechazos.motivo IS
     'Motivo tipificado. Los previstos: SIN_IDENTIFICADORES, LOTE_INEXISTENTE, MODULO_INEXISTENTE, '
     'LOTE_AMBIGUO, DUPLICADO_EXACTO, CLAVE_NATURAL_REPETIDA, CONFLICTO_DIAMETRO_RAMA, '
-    'EVALUADOR_SIN_MAESTRO, MERCADO_INVALIDO, TIMESTAMP_DUPLICADO.';
+    'EVALUADOR_SIN_MAESTRO, MERCADO_INVALIDO, TIMESTAMP_DUPLICADO, DIAMETRO_FUERA_DE_RANGO, '
+    'CONTEO_NEGATIVO, VALOR_EN_COLUMNA_EQUIVOCADA.';
 
 -- ── Umbrales esperados ──────────────────────────────────────────────────────
 
@@ -66,8 +67,10 @@ INSERT INTO qua.umbral (motivo, tope, hallazgo, explicacion) VALUES
      'La misma rama de la misma planta y fecha con dos diámetros distintos: 4.557 casos. No es '
      'una recarga, es un conflicto de captura que necesita criterio agronómico.'),
     ('CLAVE_NATURAL_REPETIDA', 1000, 'N-9',
-     'La clave natural se repite con medidas distintas. E02_ConteoFlores no tiene ninguna clave '
-     'única (161 conflictos con la mejor disponible) y H00 tiene 151 filas de exceso.'),
+     'La clave natural se repite con medidas distintas. Hoy son 116 filas, TODAS de '
+     'E02_ConteoFlores, que no tiene ninguna clave única posible. La auditoría atribuía '
+     'además 151 filas de exceso a H00, pero eso se resolvió al normalizar los códigos de '
+     'lote (N-3): H00 ya no aporta ninguna (N-22).'),
     ('EVALUADOR_SIN_MAESTRO', 10, 'H-09',
      'DNI que captura datos y no está en M_Evaluadores: 2 en E01_Ramas.'),
     ('MERCADO_INVALIDO', 45000, 'N-2',
@@ -82,7 +85,12 @@ INSERT INTO qua.umbral (motivo, tope, hallazgo, explicacion) VALUES
      'media de rama de 10,89 a 10,62 y la de baya de 19,89 a 16,34.'),
     ('CONTEO_NEGATIVO', 10, 'N-12',
      'Conteos con valor negativo, imposibles: 1 fila en E02_ConteoFlores y 1 en E04_Brotes. '
-     'Se convierten a NULL porque el origen ya usa NULL para lo no medido.')
+     'Se convierten a NULL porque el origen ya usa NULL para lo no medido.'),
+    ('VALOR_EN_COLUMNA_EQUIVOCADA', 5, 'N-19',
+     'Un valor que pertenece a otra columna. Los 2 casos conocidos son las 390 filas de '
+     'H02_BDElifab donde el nombre del programa venía dentro de [Contenedores volcados] con '
+     '[Programa de clasificación] vacío; el valor se recupera en lugar de perderse al castear. '
+     'El tope cuenta GRUPOS de texto distinto, no filas: si aparece un tercero, hay que verlo.')
 ON CONFLICT (motivo) DO UPDATE
     SET tope = excluded.tope,
         hallazgo = excluded.hallazgo,

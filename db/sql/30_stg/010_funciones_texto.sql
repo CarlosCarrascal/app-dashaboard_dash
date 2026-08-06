@@ -242,13 +242,22 @@ CREATE OR REPLACE FUNCTION stg.fn_a_hora(p_texto text)
 RETURNS time
 LANGUAGE sql IMMUTABLE PARALLEL SAFE
 AS $$
-    SELECT CASE WHEN stg.fn_es_timestamp(p_texto) THEN btrim(p_texto)::timestamp::time END;
+    SELECT CASE
+             -- Con fecha delante: así llegan E02, E04 y H02.
+             WHEN stg.fn_es_timestamp(p_texto) THEN btrim(p_texto)::timestamp::time
+             -- Hora pelada: así llega E03.F16, porque en Access esa columna es de TEXTO y no
+             -- de fecha. Exigir un timestamp descartaba sus 13.230 horas enteras (N-17).
+             WHEN btrim(coalesce(p_texto, '')) ~ '^\d{1,2}:\d{2}(:\d{2})?$'
+                  THEN btrim(p_texto)::time
+           END;
 $$;
 
 COMMENT ON FUNCTION stg.fn_a_hora(text) IS
-    'Extrae la hora. Access guarda una hora sin fecha como 1899-12-30 07:52:39, su fecha cero; '
-    'quedarse con la parte de tiempo es lo correcto tanto ahí como en H02, donde el mismo '
-    'campo sí trae fecha real.';
+    'Extrae la hora, venga con fecha delante o sola. Access guarda una hora sin fecha como '
+    '1899-12-30 07:52:39, su fecha cero, y quedarse con la parte de tiempo es lo correcto '
+    'tanto ahí como en H02, donde el mismo campo sí trae fecha real. E03.F16 es la excepción: '
+    'en el origen es una columna de texto, así que llega como 09:59:03 — exigirle un timestamp '
+    'era lo que descartaba sus 13.230 horas (N-17).';
 
 CREATE OR REPLACE FUNCTION stg.fn_a_fecha_dmy(p_texto text)
 RETURNS date

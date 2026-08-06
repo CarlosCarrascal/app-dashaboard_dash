@@ -86,6 +86,9 @@ SELECT r.lote_id,
        coalesce(stg.fn_conteo(e.e4), 0) AS e4,
        coalesce(stg.fn_conteo(e.e5), 0) AS e5,
        stg.fn_a_entero(e.total)   AS total_origen,
+       -- [F16] perdió su encabezado al importar, pero es la hora de captura (N-17): mismo
+       -- dato que E02 y E04 sí conservaban.
+       stg.fn_a_hora(e.f16)       AS hora,
        coalesce(nullif(btrim(e.item), ''), '(sin item)') AS item
 FROM raw.e03_conteo_estados e
 LEFT JOIN stg.v_resolucion r
@@ -182,15 +185,32 @@ SELECT stg.fn_norm_modulo(coalesce(nullif(btrim(p.modulo_acento), ''), p.modulo)
        btrim(p.productor)                        AS productor,
        btrim(p.productor1)                       AS productor_origen,
        stg.fn_a_entero(p.recuento)               AS recuento,
-       -- De los dos "peso total" se conserva el que no tiene nulos (H-10).
-       stg.fn_a_real(coalesce(p.peso_total_kg2, p.peso_total_kg)) AS peso_kg,
+       -- Los dos "peso total" NO son un par duplicado, aunque lo parecieran (N-16 corrige
+       -- a H-10). [Peso total (kg)] es el peso de esta fila y es lo único sumable;
+       -- [Peso total (kg)2] es un total repetido en cada fila del grupo que actúa de
+       -- denominador del porcentaje. Se cargan los dos, por separado y con ese nombre.
+       stg.fn_a_real(p.peso_total_kg)            AS peso_kg,
+       stg.fn_a_real(p.peso_total_kg2)           AS peso_kg_lote,
        stg.fn_a_numero(p.porcentaje)             AS porcentaje,
        nullif(btrim(p.lote), '')                 AS nota_packing,
        btrim(p.calibrador)                       AS calibrador,
        btrim(p.acdt)                             AS acdt,
        btrim(p.acidez)                           AS acidez,
        btrim(p.defecto)                          AS defecto,
-       btrim(p.programa_clasificacion)           AS programa,
+       -- N-19: 390 filas traen el nombre del programa dentro de [Contenedores volcados], con
+       -- [Programa de clasificación] vacío en las 390. El casteo a entero lo destruiría en
+       -- silencio, así que se rescata aquí, mientras el texto original sigue disponible.
+       CASE
+           WHEN nullif(btrim(p.programa_clasificacion), '') IS NULL
+                AND btrim(coalesce(p.contenedores_volcados, '')) <> ''
+                AND stg.fn_a_entero(p.contenedores_volcados) IS NULL
+           THEN btrim(p.contenedores_volcados)
+           ELSE btrim(p.programa_clasificacion)
+       END                                       AS programa,
+       -- Marca las filas donde el programa se rescató, para poder registrarlas en cuarentena.
+       (nullif(btrim(p.programa_clasificacion), '') IS NULL
+        AND btrim(coalesce(p.contenedores_volcados, '')) <> ''
+        AND stg.fn_a_entero(p.contenedores_volcados) IS NULL) AS programa_rescatado,
        stg.fn_a_entero(p.contenedores_esperados) AS contenedores_esperados,
        stg.fn_a_entero(p.contenedores_volcados)  AS contenedores_volcados,
        stg.fn_a_hora(p.hora_inicio)              AS hora_inicio,
