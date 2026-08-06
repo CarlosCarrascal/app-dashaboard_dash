@@ -106,17 +106,22 @@ La migración está cerrada desde ingeniería cuando las **cinco** condiciones s
 2. ✅ `cero.fk_nula_en_hechos = 0` — ninguna clave foránea de un hecho quedó nula.
 3. ✅ Ningún motivo de cuarentena excede su umbral (`qua.v_alertas` vacío).
 4. ✅ Ninguna fila apartada sin motivo (`core.cuarentena = 0` en el contrato).
-5. ❌ **Cada columna de Access está localizada en `core` o su ausencia está justificada.**
+5. ⚠️ **Cada columna de Access está localizada en `core` o su ausencia está justificada.**
 
-> **El punto 5 no se cumple todavía.** La auditoría de mapeo columna por columna
+> La auditoría de mapeo columna por columna
 > ([`../modelo/01_mapeo_access_core.md`](../modelo/01_mapeo_access_core.md), 2026-08-05) cubrió
-> las 235 columnas del origen y encontró siete hallazgos nuevos (N-16 … N-22). Uno es
-> **crítico**: `core.packing.peso_kg` guarda el total del grupo en cada fila y sumarlo multiplica
-> los kilos por ~24 (N-16).
+> las 235 columnas del origen y encontró siete hallazgos nuevos (N-16 … N-22). Los cuatro que
+> dependían solo de ingeniería **ya están corregidos**: N-16 (`core.packing.peso_kg` sumaba el
+> total del grupo repetido por fila e inflaba los kilos ~24 veces; ahora es sumable y
+> `peso_kg_lote` documenta el total aparte), N-17 (la hora de captura de estados, antes
+> descartada por perder su encabezado, carga en `core.estados.hora`), N-19 (390 programas de
+> packing rescatados de la columna equivocada) y N-22 (el comentario obsoleto de N-9).
+> `core.packing.peso_kg` ya puede usarse en medidas de Power BI.
 >
-> Hasta que N-16, N-17, N-19 y N-22 estén corregidos —los cuatro dependen solo de ingeniería—
-> **la migración no puede declararse cerrada**, y `core.packing.peso_kg` no debe usarse en
-> ninguna medida de Power BI.
+> El punto 5 sigue en ⚠️ solo por dos hallazgos de documentación/decisión, ya trasladados a la
+> tabla de §3: **N-18** (el turno se descarta en cinco tablas sin que nadie haya comprobado si
+> es derivable del lote) y **N-21** (seis columnas de packing sin significado documentado).
+> Ninguno bloquea el cierre técnico ni el uso de `core`.
 
 Access queda como **archivo histórico de solo lectura**. No se apaga hasta que los flujos de
 captura que hoy lo alimentan tengan reemplazo (ver `docs/adr/0006-*`).
@@ -125,9 +130,11 @@ captura que hoy lo alimentan tengan reemplazo (ver `docs/adr/0006-*`).
 
 ## 3 · Lo que ingeniería no puede cerrar
 
-Cuatro asuntos siguen abiertos. Ninguno bloquea el uso de la base: los cuatro están
-implementados con un supuesto explícito y reversible. Lo que falta es la confirmación de quien
-tiene la autoridad agronómica o de planeamiento para fijarlos.
+Siete asuntos siguen abiertos. Ninguno bloquea el uso de la base: D-1, D-2, N-12, N-14 y la
+discrepancia H00/H01 están implementados con un supuesto explícito y reversible; N-18 y N-21 son
+columnas que hoy no se cargan en absoluto, pendientes de que su dueño confirme si hace falta
+hacerlo. Lo que falta en todos los casos es la confirmación de quien tiene la autoridad de
+negocio para fijarlos.
 
 ### D-1 · Qué kilos compara `R0902_Forecast_Sem_vs_Camp` · **Planeamiento**
 
@@ -160,6 +167,16 @@ tiene la autoridad agronómica o de planeamiento para fijarlos.
 - **Qué decidir**: si esos lotes deben volver al maestro como históricos, o si su cosecha se
   reasigna, o si se acepta que queden fuera de `core`.
 - **Fuente**: `docs/historico-access/05_ADDENDA_TECNICA.md` N-14, consecuencia 3.
+
+### N-18 · El turno se descarta en cinco tablas del origen · **sin dueño asignado**
+
+- **Estado**: `H01`, `E05`, `M_Poda`, `M_nMuestra` y `R09` no traen turno a `core`, mientras que
+  `R08` sí lo persiste. Nada se pierde en `qua` porque no es un descarte con motivo: es una
+  columna que nunca se leyó.
+- **Qué decidir**: si el turno de esas cinco es derivable del lote (la mayoría de lotes tiene un
+  turno único) o si hay casos donde no coincide y hace falta capturarlo aparte. Nadie lo ha
+  comprobado todavía.
+- **Fuente**: `docs/historico-access/05_ADDENDA_TECNICA.md` N-18.
 
 ### N-21 · Seis campos de packing (Elifab) sin significado documentado · **Operaciones de packing**
 

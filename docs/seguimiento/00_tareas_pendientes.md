@@ -17,7 +17,7 @@ vivo — la fuente de verdad para el estado técnico sigue siendo `npm run valid
 | 4 | E3 · `core` y dimensiones maestras | ✅ completada |
 | 5 | **E4 · `core` como código en `domain/` (sin Drizzle)** | ⬜ pendiente |
 | 6 | E5 · Cargar hechos con las correcciones aplicadas | ✅ completada |
-| 7 | E6 · Capa `reporting` y 40 vistas de compatibilidad | ⬜ pendiente (solo falta #33) |
+| 7 | E6 · Capa `reporting` y 40 vistas de compatibilidad | ✅ completada |
 | 8 | E7 · Contrato de aceptación ejecutable | ✅ completada |
 | 9 | **E8 · Modelo estrella de BI y reapuntado de informes** | ⬜ pendiente |
 | 10 | **E9 · `backend/campo-api` (FastAPI) para Flutter** | ⬜ pendiente |
@@ -43,14 +43,17 @@ vivo — la fuente de verdad para el estado técnico sigue siendo `npm run valid
 | 30 | E6 · Bloque 2: estados/brotes (03xx + 04xx) | ✅ completada |
 | 31 | E6 · Bloque 3: cosecha/clima/maestros (H0xxx + M_) | ✅ completada |
 | 32 | E6 · Bloque 4: forecast (R0xxx) | ✅ completada |
-| **33** | **E6 · Checks del contrato para las 36 vistas nuevas** | ⬜ **pendiente — siguiente paso** |
+| 33 | E6 · Checks del contrato para las 36 vistas nuevas | ✅ completada |
 
 ### Lo inmediato
 
-**#33** — incorporar al contrato de aceptación (`db/sql/90_checks/010_contrato.sql`) las cifras
-de control de las 36 vistas nuevas de `reporting` construidas en los bloques 1-4. Hoy esas
-vistas están verificadas ad-hoc (scripts en el scratchpad de cada sesión) pero no forman parte
-de `npm run validate`.
+**#33** quedó completada (2026-08-06): las 36 vistas de `reporting` de los bloques 1-4 tienen
+su cifra de control en `db/sql/90_checks/010_contrato.sql` (grupo `reporting`) y su propia
+sección en el informe (`090_informe.sql`). `npm run validate` corre entero: 83 comprobaciones,
+0 falla, 0 error — CONTRATO CUMPLIDO. Ya no se verifican ad-hoc.
+
+El siguiente paso natural es una de las tres fases grandes sin iniciar (#5, #9 o #10) — ninguna
+tiene prioridad técnica sobre las otras; la elección depende de qué necesite el negocio primero.
 
 ### Fases grandes sin iniciar
 
@@ -76,13 +79,14 @@ migración no se puede declarar hasta que alguien con autoridad las confirme.
 | D-2 | La regla de asignación de campaña por poda | Planeamiento | `campania.origen_fechas = 'derivado'` |
 | N-12 | 29 ramas y 3 bayas con diámetros físicamente imposibles — ¿decimales perdidos o se descartan? | Agronomía | Cargadas con `sospechoso = true`, en cuarentena |
 | N-14 | 276 + 90 filas de cosecha de lotes retirados del maestro vigente — ¿vuelven, se reasignan, o quedan fuera? | Agronomía | En cuarentena, motivo `LOTE_INEXISTENTE` |
+| N-18 | El turno se descarta en 5 tablas (H01, E05, M_Poda, M_nMuestra, R09) — ¿es derivable del lote? | Sin dueño asignado | No se carga; nadie lo ha comprobado |
 | N-21 | 6 columnas de packing/Elifab sin significado documentado (`ENSAYO`, `S26`, `S271`, `Packet`, `Clasificación`, `ACDT 2`) | Operaciones de packing | Ni cargadas ni justificadas |
 | — | 105 filas de cosecha (0,34%) con kilos discrepantes entre H00 y H01 — ¿cuál vale? | Agronomía | Se conservan ambas cifras en paralelo (`kg` y `kg_h01`) |
 
-**Nota de vigencia:** el runbook de cierre también condicionaba el cierre a corregir
-N-16/N-17/N-19/N-22 (§2, punto 5) — las cuatro ya están corregidas (tareas #23-26). Ese punto
-del runbook quedó desactualizado y conviene refrescarlo la próxima vez que se edite ese
-documento.
+**Nota de vigencia:** el runbook de cierre ya se refrescó (2026-08-06) — el punto 5 de §2 ya no
+dice que N-16/N-17/N-19/N-22 estén pendientes; documenta que las cuatro están corregidas
+(tareas #23-26) y que solo N-18 y N-21 quedan como hallazgos de documentación/decisión, ambos
+en esta tabla.
 
 ---
 
