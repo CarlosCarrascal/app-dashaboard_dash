@@ -66,7 +66,19 @@ INSERT INTO core.config_decision (clave, valor, descripcion, hallazgo, estado, d
      'no como total de ramas: en un mismo punto y fecha hay una fila por rama con su propio '
      'diámetro. De ello depende que la métrica de ramas sea 110.095 (declaradas) o 71.095 '
      '(medidas) en lugar de 730.318 (suma de índices).',
-     'N-1 / ADR-0002', 'provisional', 'Agronomía')
+     'N-1 / ADR-0002', 'provisional', 'Agronomía'),
+
+    ('clima.gdd_temp_base',
+     '10.0',
+     'Temperatura base en °C para los grados-día de crecimiento (GDD) de '
+     'reporting.v_clima_diario: GDD = max((Tmax+Tmin)/2 - base, 0). Se usa 10 °C, el valor '
+     'más habitual en arándano, pero NO está confirmado para Sekoya Pop en esta zona y el '
+     'valor cambia la escala de toda la variable de tiempo térmico. '
+     'OJO: la estación trae dg_calentamiento y dg_enfriamiento, que NO son GDD agronómico '
+     'sino grados-día de climatización — dg_calentamiento correlaciona -0,79 con la '
+     'temperatura (a más frío, más alto), así que usarlo como "temperatura acumulada" '
+     'invierte el signo de la variable.',
+     'N-24', 'provisional', 'Agronomía')
 
 ON CONFLICT (clave) DO NOTHING;
 

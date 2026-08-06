@@ -39,7 +39,7 @@ SELECT codigo, descripcion, access AS origen, obtenido AS en_core, estado, halla
 FROM qua.fn_validar() WHERE grupo = 'core';
 
 \echo ''
-\echo '════════ 5 · Vistas de compatibilidad de reporting (bloques 1-4) ════════'
+\echo '════════ 5 · Vistas de reporting (compatibilidad Access + panel analítico) ════════'
 SELECT codigo, descripcion, obtenido, estado, hallazgo, nota
 FROM qua.fn_validar() WHERE grupo = 'reporting' AND estado <> 'ok';
 

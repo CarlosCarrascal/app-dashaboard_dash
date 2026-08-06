@@ -429,4 +429,36 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
  'SELECT count(*) FROM reporting."R0902_Forecast_Sem_vs_Camp"', 103476, 0, NULL, 'H-04',
  'Access pedía R08_Forecast_Campaña.KG, columna que no existe (caso 6); usa KG Exp (D-1).', 97),
 ('reporting.r0903_forecast_frtstotal', 'reporting', 'R0903_Forecast_FrtsTotal',
- 'SELECT count(*) FROM reporting."R0903_Forecast_FrtsTotal"', 48368, 0, NULL, NULL, NULL, 98);
+ 'SELECT count(*) FROM reporting."R0903_Forecast_FrtsTotal"', 48368, 0, NULL, NULL, NULL, 98),
+
+-- Analítica (070): el panel módulo x semana. No reproduce nada de Access — es nuevo — así
+-- que su cifra de control es el conteo verificado el día en que se construyó.
+('reporting.panel_modulo_semana', 'reporting', 'Panel analítico módulo x semana',
+ 'SELECT count(*) FROM reporting.v_analitica_modulo_semana', 1183, 0, NULL, NULL,
+ 'Semana por año ISO y sin lotes ficticios L000.', 99),
+
+('reporting.clima_diario', 'reporting', 'Clima colapsado a día, con GDD agronómico',
+ 'SELECT count(*) FROM reporting.v_clima_diario', 1603, 0, NULL, NULL,
+ 'Una fila por día con registro de la única estación del fundo.', 100),
+
+('reporting.poda_modulo', 'reporting', 'Poda de referencia por módulo y campaña',
+ 'SELECT count(*) FROM reporting.v_poda_modulo', 62, 0, NULL, 'N-20',
+ 'Media ponderada por área; excluye las 54 filas sin fecha de poda.', 101),
+
+-- El panel no puede inventar ni perder kilos: tiene que cuadrar con core.cosecha una vez
+-- excluidos los lotes ficticios. La tolerancia es por el redondeo a 3 decimales por celda.
+('cero.panel_kg_descuadra', 'cero', 'Diferencia de kg entre el panel y core.cosecha',
+ 'SELECT abs((SELECT sum(kg) FROM reporting.v_analitica_modulo_semana)
+           - (SELECT sum(co.kg) FROM core.cosecha co JOIN core.lote l USING (lote_id)
+              WHERE NOT l.es_ficticio AND NOT l.es_sentinel))',
+ 0, 0.5, NULL, NULL,
+ 'Si se descuadra, el panel dejó de excluir los L000 o duplicó una celda.', 40),
+
+-- Guardián del defecto de semana: agrupar por (anio, semana) del calendario mezcla el año
+-- calendario con la semana ISO y produce celdas que abarcan enero Y diciembre — verificado
+-- en 428 filas y 309.190 kg dentro de (2025, semana 1). El panel usa anio_semana, que va
+-- por año ISO; esta comprobación falla si alguien vuelve al par suelto.
+('cero.panel_semana_contaminada', 'cero', 'Celdas del panel que abarcan más de 7 días',
+ 'SELECT count(*) FROM reporting.v_analitica_modulo_semana
+  WHERE semana_hasta - semana_desde > 6 OR dias_en_semana <> 7',
+ 0, 0, NULL, 'H-05', NULL, 41);
