@@ -175,11 +175,18 @@ COMMENT ON VIEW fact.forecast_campania IS
     'escenarios del mismo periodo. `kg_exp` es lo que R0801_ResCampaña entiende por "los kilos '
     'del forecast" y el supuesto en uso para la decisión D-1.';
 
-CREATE OR REPLACE VIEW fact.forecast_semanal AS
+DROP VIEW IF EXISTS fact.forecast_semanal CASCADE;
+
+CREATE VIEW fact.forecast_semanal AS
 SELECT f.forecast_semanal_id, f.version_id, f.lote_id, f.campania_id,
-       f.pasada, f.fecha_cos, f.fecha_cos_ant, f.semana,
+       f.pasada, f.fecha_cos, f.fecha_cos_ant, f.semana, f.dr,
        f.frutos_por_planta, f.peso_baya, f.frutos_total, f.rendimiento, f.kg
 FROM core.forecast_semanal f;
+
+COMMENT ON VIEW fact.forecast_semanal IS
+    'dr (días de reingreso) se añadió al construir R0901_Forecas_SemAc/R0903_Forecast_FrtsTotal '
+    '(bloque 4 de reporting): existía en core.forecast_semanal pero se había quedado fuera de '
+    'esta vista.';
 
 -- ── Personal ────────────────────────────────────────────────────────────────
 
