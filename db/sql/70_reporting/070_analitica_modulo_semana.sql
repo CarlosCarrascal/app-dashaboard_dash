@@ -9,7 +9,7 @@
 -- exponía. Esta es nueva y existe para el análisis de variables, así que no imita
 -- ningún nombre ni columna del origen.
 --
--- ── Tres decisiones que hay que conocer antes de usarla ─────────────────────
+-- ── Cinco decisiones que hay que conocer antes de usarla ────────────────────
 --
 -- 1 · SEMANA = `core.calendario.anio_semana`, que usa el AÑO ISO. No se agrupa por
 --     (anio, semana): ese par mezcla el año calendario con la semana ISO y produce
@@ -31,7 +31,21 @@
 --     global se convierte en tiempo térmico propio de cada uno.
 --
 -- Sin campaña fija (regla D-6): se expone `campania` como columna y el consumidor
--- filtra. Riego: ver `riego_mm` al final.
+-- filtra.
+--
+-- 4 · Riego (`riego_mm`, `riego_m3`) viene de core.riego_semanal — 4 Excel de Riego/
+--     Operaciones, 2025, ajenos a Access. Solo cubre Aqu Anqa 1-4 y M11 (de Aqu Anqa
+--     5): no hay riego para M16-M18 ni Aqu Anqa 6, y `riego_mm` queda NULL ahí, no en
+--     0 — 0 significaría "se midió y no se regó", que no es lo que pasó. `riego_estimado`
+--     avisa cuándo la semana incluye el reparto de M10A/M10B (D-7).
+--
+-- 5 · `modulo` (M01, M02...) NO ES ÚNICO GLOBALMENTE. Verificado: hay un M01 en Aqu
+--     Anqa 1 y OTRO M01 distinto en Aqu Anqa 2 (modulo_id 8 y 2 — 9 pares de módulo se
+--     repiten entre fundos, ver el comentario de core.lote). Agrupar, filtrar o
+--     entrenar un modelo por la columna `modulo` a solas MEZCLA módulos físicos
+--     distintos con historias de poda, área y cosecha distintas. La clave real es
+--     `modulo_id`, expuesta como primera columna — úsala para agrupar; `modulo` y
+--     `fundo` son solo para leer.
 -- ============================================================================
 
 -- ── Clima diario, con GDD agronómico calculado ───────────────────────────────
@@ -103,7 +117,12 @@ COMMENT ON VIEW reporting.v_poda_modulo IS
     'sus lotes se podaron muy separados.';
 
 -- ── El panel ─────────────────────────────────────────────────────────────────
-CREATE OR REPLACE VIEW reporting.v_analitica_modulo_semana AS
+-- DROP y no solo CREATE OR REPLACE: cambiar el orden o el tipo de las columnas (como
+-- pasó al agregar riego_m3/riego_dias_con_registro/riego_estimado) no lo permite
+-- PostgreSQL sobre una vista existente. Mismo patrón que fact.forecast_semanal.
+DROP VIEW IF EXISTS reporting.v_analitica_modulo_semana;
+
+CREATE VIEW reporting.v_analitica_modulo_semana AS
 WITH semana AS (
     -- Rango real de cada semana ISO, tomado del propio calendario del modelo.
     SELECT anio_semana,
@@ -154,6 +173,12 @@ modulo_area AS (
 )
 SELECT
     -- ── Identificación ──
+    -- `modulo` (M01, M02...) NO es único globalmente: cada fundo reinicia su propia
+    -- numeración, y hay un M01 en Aqu Anqa 1 y OTRO M01 distinto en Aqu Anqa 2 (9 pares
+    -- de módulo se repiten entre fundos — ver el comentario de core.lote). Agrupar o
+    -- filtrar por `modulo` a solas mezcla módulos físicos distintos. La clave real,
+    -- única, es `modulo_id` — úsala en cualquier análisis, y `modulo` solo para mostrar.
+    cs.modulo_id,
     cam.codigo                              AS campania,
     mo.codigo                               AS modulo,
     fu.codigo                               AS fundo,
@@ -200,13 +225,13 @@ SELECT
     cl.dias_incompletos,
     sem.dias                                AS dias_en_semana,
 
-    -- ── Riego: NO EXISTE EN LA BASE ──
-    -- Buscado en raw, stg y core por rieg|agua|lamina|caudal|m3|litro|fertirr|nutri:
-    -- cero columnas. Lo único parecido es core.turno ("turno de riego T00-T12"), que es
-    -- la etiqueta del turno al que pertenece el lote, no el agua aplicada. La columna se
-    -- declara aquí, en NULL, para que el contrato del panel no cambie el día que
-    -- Operaciones entregue la fuente.
-    NULL::numeric                           AS riego_mm
+    -- ── Riego: fuente externa a Access, cargada 2026-08-06 (4 Excel de Riego/
+    -- Operaciones). Cubre solo Aqu Anqa 1-4 y M11 — NULL en los demás módulos, no 0:
+    -- 0 significaría "se midió y no se regó", que no es lo que pasó ahí.
+    ri.agua_m3                               AS riego_m3,
+    ri.lamina_mm                             AS riego_mm,
+    ri.dias_con_registro                     AS riego_dias_con_registro,
+    coalesce(ri.estimado, false)             AS riego_estimado
 
 FROM cosecha_semana cs
 JOIN core.modulo mo     ON mo.modulo_id = cs.modulo_id
@@ -216,6 +241,8 @@ JOIN core.campania cam  ON cam.campania_id = cs.campania_id
 JOIN semana sem         ON sem.anio_semana = cs.anio_semana
 LEFT JOIN modulo_area ma ON ma.modulo_id = cs.modulo_id
 LEFT JOIN clima_semana cl ON cl.anio_semana = cs.anio_semana
+LEFT JOIN core.riego_semanal ri
+       ON ri.modulo_id = cs.modulo_id AND ri.anio_semana = cs.anio_semana
 LEFT JOIN reporting.v_poda_modulo pm
        ON pm.modulo_id = cs.modulo_id AND pm.campania_id = cs.campania_id
 LEFT JOIN LATERAL (
@@ -234,4 +261,9 @@ COMMENT ON VIEW reporting.v_analitica_modulo_semana IS
     'campaña fija. Las columnas *_semana del clima son iguales para todos los módulos de '
     'la misma semana y solo explican variación temporal; las *_acum_poda acumulan desde '
     'la poda de cada módulo y son las únicas del clima que discriminan entre módulos. '
-    'riego_mm existe como contrato y está en NULL: esa fuente no está en la base.';
+    'riego_mm y riego_m3 vienen de core.riego_semanal (fuente externa a Access): NULL en '
+    'los módulos y semanas sin ese registro, no 0. riego_estimado avisa cuándo la '
+    'semana incluye el reparto M10A/M10B (D-7). ADVERTENCIA: `modulo` (M01, M02...) no '
+    'es único globalmente — hay un M01 en Aqu Anqa 1 y otro M01 distinto en Aqu Anqa 2. '
+    'Agrupar o entrenar un modelo por `modulo` a solas mezcla módulos físicos distintos; '
+    'la clave real es `modulo_id`.';

@@ -27,8 +27,13 @@ SALIDA = RAIZ / "data" / "salida"
 # Advertencias que viajan CON el dato. El panel se va a abrir en Excel y en Python por gente
 # que no leyó el DDL, y tres de estas columnas se malinterpretan solas.
 DICCIONARIO = [
+    ("modulo_id", "LA CLAVE REAL del módulo. Úsala para agrupar o para entrenar un modelo.",
+     "`modulo` (M01, M02...) NO es única globalmente: hay un M01 en Aqu Anqa 1 y OTRO M01 "
+     "distinto en Aqu Anqa 2, con historias de poda y cosecha diferentes. Agrupar por "
+     "`modulo` a solas los mezcla sin ningún error visible."),
     ("campania", "Campaña productiva.", ""),
-    ("modulo", "Módulo. Es el grano del análisis.", ""),
+    ("modulo", "Código del módulo tal como lo usa Agronomía (M01, M02...). Para LEER, no para agrupar.",
+     "Se repite entre fundos — ver la advertencia de modulo_id."),
     ("fundo", "Fundo físico (Aqu Anqa 1..6).", ""),
     ("empresa", "Razón social.", ""),
     ("anio_semana", "Semana ISO en formato AAAA-SS. Clave temporal del panel.",
@@ -79,11 +84,17 @@ DICCIONARIO = [
     ("dias_incompletos", "Días con menos de 90 de las 96 lecturas esperadas.",
      "En esos días la máxima y la mínima son poco fiables, y con ellas el GDD."),
     ("dias_en_semana", "Días de calendario en la semana. Debe ser 7.", ""),
-    ("riego_mm", "Riego aplicado en la semana (mm). SIEMPRE VACÍA.",
-     "NO EXISTE EN LA BASE. Buscado en raw, stg y core por rieg|agua|lamina|caudal|m3|"
-     "litro|fertirr|nutri: cero columnas. Lo único parecido es core.turno (turno de riego "
-     "T00-T12), que es la etiqueta del turno del lote, no el agua aplicada. La columna se "
-     "reserva para cuando Operaciones entregue la fuente."),
+    ("riego_m3", "Agua total aplicada en la semana (m3). Suma de todos los turnos del módulo.",
+     "Fuente: 4 Excel de Riego/Operaciones 2025, ajenos a Access, cargados 2026-08-06. "
+     "Solo cubre Aqu Anqa 1-4 y M11 (de Aqu Anqa 5): en M16-M18 y Aqu Anqa 6 esta columna "
+     "queda NULL, no 0 — 0 significaría 'se midió y no se regó'."),
+    ("riego_mm", "LÁMINA de riego aplicada en la semana (mm). VARÍA entre módulos.",
+     "Es la variable de riego que Access nunca tuvo. Junto con gdd_acum_poda, es de las "
+     "pocas variables ambientales que sí discriminan entre módulos en la misma semana."),
+    ("riego_dias_con_registro", "Días de la semana con registro de riego (de 7).", ""),
+    ("riego_estimado", "true si la semana incluye el reparto M10A/M10B (decisión D-7).",
+     "El origen no separa esos dos módulos; se reparte agua_m3 proporcional al área real "
+     "de cada uno. lamina_mm NO se reparte (es una medida intensiva, no un volumen)."),
 ]
 
 

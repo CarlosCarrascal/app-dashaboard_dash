@@ -78,9 +78,39 @@ INSERT INTO core.config_decision (clave, valor, descripcion, hallazgo, estado, d
      'sino grados-día de climatización — dg_calentamiento correlaciona -0,79 con la '
      'temperatura (a más frío, más alto), así que usarlo como "temperatura acumulada" '
      'invierte el signo de la variable.',
-     'N-24', 'provisional', 'Agronomía')
+     'N-24', 'provisional', 'Agronomía'),
+
+    ('riego.reparto_m10',
+     'proporcional_area',
+     'Los 4 Excel de riego 2025 (Riego/Operaciones, cargados 2026-08-06) traen M10A y '
+     'M10B como un solo "módulo 10" de Aqu Anqa 3, sin distinguirlos: 46,93 ha, la suma '
+     'exacta de M10A (23,03) y M10B (23,90). Se reparte agua_m3 proporcional al área '
+     'real de cada uno (~49,1% / ~50,9%); lamina_mm NO se reparte, porque es una medida '
+     'intensiva (mm aplicados), no un volumen. Las filas resultantes quedan marcadas '
+     'core.riego_semanal.estimado = true.',
+     'D-7', 'provisional', 'Riego / Agronomía'),
+
+    ('riego.modulo11_fundo_origen',
+     'aqu_anqa_3',
+     'El archivo de riego de Aqu Anqa 3 incluye un "módulo 11" (42,42 ha) que coincide '
+     'por área con M11 (42,47 ha) — pero el maestro de lotes vigente asigna M11 a '
+     'Aqu Anqa 5, no a Aqu Anqa 3. Confirmado por el usuario 2026-08-06: el sistema de '
+     'riego agrupa M11 en la infraestructura de Aqu Anqa 3 por cercanía física, aunque '
+     'el maestro de lotes lo asigne administrativamente a Aqu Anqa 5. Se carga como '
+     'riego de M11 sin marca especial — es una diferencia de cómo cada sistema delimita '
+     'el fundo, no un error de dato.',
+     'D-8', 'confirmado', 'Riego / Agronomía')
 
 ON CONFLICT (clave) DO NOTHING;
+
+-- D-8 se confirmó en la sesión de análisis del 2026-08-06, no por un memo formal de
+-- Riego — se deja constancia de quién y cuándo, igual que exige el resto de la tabla
+-- para cualquier fila en estado 'confirmado'.
+UPDATE core.config_decision
+   SET confirmado_por = 'eangulo (sesión de análisis, respuesta directa a la pregunta '
+                         'de resolución de módulo)',
+       confirmado_en = '2026-08-06T00:00:00-05'::timestamptz
+ WHERE clave = 'riego.modulo11_fundo_origen' AND confirmado_por IS NULL;
 
 -- Lectura tipada, para no repetir el cast en cada vista.
 CREATE OR REPLACE FUNCTION core.fn_config(p_clave text)

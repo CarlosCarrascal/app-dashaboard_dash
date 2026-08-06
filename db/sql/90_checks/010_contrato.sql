@@ -461,4 +461,34 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 ('cero.panel_semana_contaminada', 'cero', 'Celdas del panel que abarcan más de 7 días',
  'SELECT count(*) FROM reporting.v_analitica_modulo_semana
   WHERE semana_hasta - semana_desde > 6 OR dias_en_semana <> 7',
- 0, 0, NULL, 'H-05', NULL, 41);
+ 0, 0, NULL, 'H-05', NULL, 41),
+
+-- N-25: `modulo.codigo` se repite entre fundos (M01 existe en Aqu Anqa 1 Y en Aqu Anqa
+-- 2, con historias de poda y cosecha distintas). Si alguna vez el panel deja de exponer
+-- modulo_id como clave, agrupar por `modulo` a solas mezclaría módulos físicos
+-- distintos sin ningún error visible — este check lo detecta antes de que llegue a un
+-- análisis o a un modelo.
+('cero.panel_clave_no_unica', 'cero', 'Panel con más de una fila por módulo_id x campaña x semana',
+ 'SELECT count(*) - count(DISTINCT (modulo_id, campania, anio_semana))
+  FROM reporting.v_analitica_modulo_semana',
+ 0, 0, NULL, 'N-25', NULL, 42),
+
+-- Riego (fuente externa, cargada 2026-08-06): reconciliar core contra stg asegura que
+-- ningún módulo se sumó dos veces ni se perdió al agregar por semana.
+('reporting.riego_semanal', 'reporting', 'Riego semanal por módulo (fuente externa a Access)',
+ 'SELECT count(*) FROM core.riego_semanal', 1060, 0, NULL, NULL,
+ '20 módulos x 53 semanas ISO de 2025 (incluida la semana de solape con 2026).', 102),
+
+('cero.riego_agua_descuadra', 'cero', 'Diferencia de agua_m3 entre core.riego_semanal y stg',
+ 'SELECT abs((SELECT sum(agua_m3) FROM core.riego_semanal)
+           - (SELECT sum(agua_m3) FROM stg.v_riego_diario))',
+ 0, 1, NULL, NULL,
+ 'Si se descuadra, la agregación semanal perdió o duplicó un día/turno.', 43),
+
+('cero.riego_peso_incompleto', 'cero', 'Módulo local del riego cuyos pesos no suman 1',
+ $q$SELECT count(*) FROM (
+      SELECT archivo, modulo_local, sum(peso) AS total
+      FROM stg.mapa_modulo_riego GROUP BY 1,2 HAVING abs(sum(peso) - 1) > 0.001
+    ) d$q$,
+ 0, 0, NULL, 'D-7',
+ 'El reparto de M10A/M10B (u otro que se agregue) debe repartir el 100% del módulo, ni más ni menos.', 44);
