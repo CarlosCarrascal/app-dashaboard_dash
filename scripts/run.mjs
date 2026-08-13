@@ -170,6 +170,51 @@ function cmdDashboard(args) {
   return run(findPython(), ['-m', 'streamlit', 'run', app, ...args])
 }
 
+const DASHBOARD_DASH_DIR = join(ROOT, 'db', 'tools', 'dashboard_dash')
+
+/** Tablero Dash (sucesor del Streamlit, conviven durante la migración). */
+function cmdDashboardDash(args) {
+  const app = join(DASHBOARD_DASH_DIR, 'app.py')
+  if (!existsSync(app)) fail(`No existe ${app}`)
+  return run(findPython(), [app, ...args])
+}
+
+/**
+ * CLI standalone de Tailwind: un binario suelto, sin `npm install` ni `node_modules`.
+ * ADR-0006 prohíbe dependencias npm; el binario standalone no es un paquete de Node, así
+ * que compilar el CSS del tablero Dash con él no rompe esa regla.
+ *
+ * Descarga manual (una vez): https://github.com/tailwindlabs/tailwindcss/releases
+ * → guardar el binario como `db/tools/dashboard_dash/bin/tailwindcss.exe` (Windows) o
+ * definir TAILWIND_EXE en `.env` con la ruta completa.
+ */
+function findTailwind() {
+  if (env.TAILWIND_EXE && existsSync(env.TAILWIND_EXE)) return env.TAILWIND_EXE
+  const local = join(DASHBOARD_DASH_DIR, 'bin', process.platform === 'win32' ? 'tailwindcss.exe' : 'tailwindcss')
+  if (existsSync(local)) return local
+  const onPath = which('tailwindcss')
+  if (onPath) return onPath
+  fail(
+    'No encuentro el CLI standalone de Tailwind.\n' +
+      '  Descargalo de https://github.com/tailwindlabs/tailwindcss/releases (el binario\n' +
+      '  standalone, no el paquete npm) y guardalo en\n' +
+      `  ${join('db', 'tools', 'dashboard_dash', 'bin', 'tailwindcss.exe')}\n` +
+      '  o definí TAILWIND_EXE en .env con la ruta completa.'
+  )
+}
+
+function cmdTailwind(args) {
+  const watch = args.includes('--watch')
+  const tailwind = findTailwind()
+  const flags = [
+    '-i', join(DASHBOARD_DASH_DIR, 'src', 'input.css'),
+    '-o', join(DASHBOARD_DASH_DIR, 'assets', 'tailwind.css'),
+  ]
+  if (watch) flags.push('--watch')
+  else flags.push('--minify')
+  return run(tailwind, flags)
+}
+
 // ── Comandos ─────────────────────────────────────────────────────────────────
 function cmdSetup() {
   step('Entorno Python (conda env `aquanqa`)')
@@ -251,7 +296,13 @@ switch (target) {
   case 'migrate':  sqlFolder('10_raw'); cmdBuild(); break
   case 'validate': sqlFolder('90_checks'); break
   case 'dashboard': cmdDashboard(rest); break
+  case 'dashboard-dash': cmdDashboardDash(rest); break
+  case 'tailwind': cmdTailwind(rest); break
   default:
-    log(`Uso: node scripts/run.mjs <setup|migrate|build|validate|dashboard|sql <carpeta>|psql <args>|py <args>>`)
+    log(
+      'Uso: node scripts/run.mjs ' +
+        '<setup|migrate|build|validate|dashboard|dashboard-dash|tailwind [--watch]|' +
+        'sql <carpeta>|psql <args>|py <args>>'
+    )
     process.exit(target ? 1 : 0)
 }

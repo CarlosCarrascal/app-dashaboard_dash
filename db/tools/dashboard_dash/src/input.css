@@ -1,0 +1,14 @@
+/* Fuente para `assets/tailwind.css`, compilado con el CLI standalone de Tailwind v4
+ * (sin npm — ver `scripts/run.mjs::findTailwind`, ADR-0006 prohíbe dependencias npm).
+ *
+ * Compilar:  npm run dashboard:dash:css        (una vez, o tras cambiar clases)
+ * Vigilar:   npm run dashboard:dash:css:watch  (mientras se edita)
+ */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* v4 detecta clases automáticamente en el proyecto, pero se declara explícito para no
+ * depender de que la heurística reconozca archivos .py como candidatos de texto. */
+@source "../pages";
+@source "../components";
+@source "../app.py";

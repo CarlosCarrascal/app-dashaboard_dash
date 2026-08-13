@@ -23,8 +23,12 @@ dependencies = [
     "xgboost>=2.1",
     "shap>=0.46",
     "matplotlib>=3.9",      # figuras de los reportes HTML
-    "streamlit>=1.40",      # tablero interactivo (db/tools/dashboard/app.py)
+    "streamlit>=1.40",      # tablero interactivo Streamlit (db/tools/dashboard/app.py)
     "plotly>=5.24",         # graficos del tablero
+    "dash>=4.4.1",          # tablero interactivo Dash (db/tools/dashboard_dash/app.py)
+    "dash-extensions>=2.0", # Serverside: cachear el panel y el modelo sin mandarlos al navegador
+    "dash-ag-grid>=31",     # tabla virtualizada para el panel completo (Datos y calidad)
+    "flask-caching>=2.3",   # backend de cache que usa dash-extensions
 ]
 
 [project.optional-dependencies]
