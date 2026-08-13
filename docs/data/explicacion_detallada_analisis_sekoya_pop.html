@@ -1,0 +1,423 @@
+
+<h2 class="sr-only">Explicación detallada del análisis de producción de arándano Sekoya Pop para audiencia no técnica</h2>
+
+<style>
+.nav-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.5rem;position:sticky;top:0;z-index:10;padding:8px 0;background:var(--surface-0,#fff)}
+.nav-bar button{font-size:12px;padding:6px 12px;border-radius:var(--radius);background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.nav-bar button:hover{background:var(--surface-1);border-color:var(--border-strong)}
+.nav-bar button.on{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent);font-weight:500}
+.sec{display:none}.sec.show{display:block}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem}
+.mc{background:var(--surface-1);border-radius:var(--radius);padding:1rem}
+.mc-l{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.mc-v{font-size:22px;font-weight:500;color:var(--text-primary)}
+.mc-s{font-size:11px;color:var(--text-secondary);margin-top:3px}
+.st{font-size:17px;font-weight:500;color:var(--text-primary);margin:2rem 0 .5rem}
+.ss{font-size:13px;color:var(--text-secondary);margin-bottom:1rem;line-height:1.7}
+.cw{position:relative;width:100%;margin-bottom:.5rem}
+.dt{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:.5rem}
+.dt th{text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--border-strong);color:var(--text-secondary);font-weight:500;font-size:12px}
+.dt td{padding:7px 10px;border-bottom:0.5px solid var(--border);color:var(--text-primary)}
+.dt tr:hover td{background:var(--surface-1)}
+.bd{display:inline-block;padding:2px 8px;border-radius:var(--radius);font-size:11px;font-weight:500}
+.bd-g{background:var(--bg-success);color:var(--text-success)}
+.bd-y{background:var(--bg-warning);color:var(--text-warning)}
+.bd-r{background:var(--bg-danger);color:var(--text-danger)}
+.bd-b{background:var(--bg-accent);color:var(--text-accent)}
+.ex{background:var(--surface-1);border-radius:12px;padding:1.25rem;margin:1rem 0 1.5rem;border-left:3px solid var(--border-accent);line-height:1.75}
+.ex h4{font-size:14px;font-weight:500;margin:0 0 6px;color:var(--text-primary)}
+.ex p{font-size:13px;color:var(--text-secondary);margin:0 0 8px}
+.ex p:last-child{margin-bottom:0}
+.ex-ok{border-left-color:var(--border-success)}
+.ex-w{border-left-color:var(--border-warning)}
+.ex-r{border-left-color:var(--border-danger)}
+.ex-p{border-left-color:#7F77DD}
+.an{background:var(--surface-1);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1rem;font-size:13px;color:var(--text-secondary);line-height:1.75}
+.an strong{color:var(--text-primary);font-weight:500}
+.pos{color:var(--text-success)}.neg{color:var(--text-danger)}
+.term{border-bottom:1px dashed var(--border-strong);cursor:help}
+.gl{font-size:13px;color:var(--text-secondary);line-height:1.75;margin-bottom:1.5rem}
+.gl dt{font-weight:500;color:var(--text-primary);margin-top:8px}
+.gl dd{margin:0 0 4px 0}
+</style>
+
+<div style="padding:1rem 0">
+
+<div class="nav-bar" id="nv">
+  <button class="on" data-t="intro"><i class="ti ti-book" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Contexto</button>
+  <button data-t="rend"><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Rendimiento</button>
+  <button data-t="lag"><i class="ti ti-clock" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Efectos retardados</button>
+  <button data-t="int"><i class="ti ti-arrows-cross" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Descubrimientos clave</button>
+  <button data-t="gdd"><i class="ti ti-flame" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Reloj térmico</button>
+  <button data-t="tim"><i class="ti ti-calendar" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Adelanto y atraso</button>
+  <button data-t="rec"><i class="ti ti-bulb" aria-hidden="true" style="font-size:14px;margin-right:2px"></i> Recomendaciones</button>
+</div>
+
+<!-- ============ CONTEXTO ============ -->
+<div class="sec show" id="s-intro">
+
+<div class="st" style="margin-top:0">¿Qué analizamos y por qué?</div>
+<div class="an">
+  <strong>El objetivo</strong> fue entender qué factores ambientales y de manejo determinan cuánta fruta produce cada módulo de arándano Sekoya Pop, qué tan pesada es esa fruta, y cuándo exactamente llega la cosecha.
+</div>
+<div class="an">
+  <strong>¿Por qué importa?</strong> Si sabemos que el riego de hace 13 semanas afecta el peso del fruto de hoy, podemos planificar el riego con anticipación para obtener fruta más grande. Si sabemos que la temperatura promedio determina si la cosecha se adelanta o atrasa, podemos predecir las fechas de cosecha y planificar la logística de empaque y exportación.
+</div>
+
+<div class="st">¿Qué datos usamos?</div>
+<div class="an">
+  Analizamos el archivo <strong>"Datos mes.xlsx"</strong> con 4 fuentes de información cruzadas:
+</div>
+<div class="mg">
+  <div class="mc"><div class="mc-l">Cosecha real</div><div class="mc-v">948</div><div class="mc-s">Registros semanales de Kg, frutos y peso por módulo</div></div>
+  <div class="mc"><div class="mc-l">Flores</div><div class="mc-v">5,447</div><div class="mc-s">Conteos de flores por turno, semana y módulo</div></div>
+  <div class="mc"><div class="mc-l">Clima</div><div class="mc-v">938</div><div class="mc-s">Datos diarios: temperatura, radiación, lluvia, evaporación</div></div>
+  <div class="mc"><div class="mc-l">Riego y nutrientes</div><div class="mc-v">7,240</div><div class="mc-s">Agua, nitrógeno, fósforo y potasio aplicados por día</div></div>
+</div>
+
+<div class="st">¿Cómo lo analizamos?</div>
+<div class="an">
+  Usamos un <strong>sistema de 4 agentes especializados</strong> que trabajan en equipo, cada uno con un rol distinto:
+</div>
+<div class="mg" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+  <div class="mc"><div class="mc-l"><i class="ti ti-database" aria-hidden="true" style="font-size:14px;margin-right:4px"></i> DataCleaner</div><div class="mc-s" style="margin-top:8px;font-size:13px;line-height:1.6">Limpia los datos: rellena semanas sin información, suaviza curvas erráticas, detecta valores imposibles. Es como un contador que revisa que todos los números cuadren antes del análisis.</div></div>
+  <div class="mc"><div class="mc-l"><i class="ti ti-chart-dots" aria-hidden="true" style="font-size:14px;margin-right:4px"></i> BioStat</div><div class="mc-s" style="margin-top:8px;font-size:13px;line-height:1.6">El científico de datos: calcula correlaciones, detecta patrones, mide cuántas semanas de retardo tiene cada variable. Encuentra las relaciones numéricas sin juzgar si tienen sentido biológico.</div></div>
+  <div class="mc"><div class="mc-l"><i class="ti ti-plant" aria-hidden="true" style="font-size:14px;margin-right:4px"></i> AgroSekoya</div><div class="mc-s" style="margin-top:8px;font-size:13px;line-height:1.6">El experto agrónomo: revisa cada hallazgo de BioStat y valida si tiene sentido con la biología de la planta. Descarta correlaciones falsas y confirma las reales. Funciona como un "filtro de realidad".</div></div>
+  <div class="mc"><div class="mc-l"><i class="ti ti-report" aria-hidden="true" style="font-size:14px;margin-right:4px"></i> Orchestrator</div><div class="mc-s" style="margin-top:8px;font-size:13px;line-height:1.6">Consolida todo en un reporte final. Genera el Excel con 10 hojas de resultados organizados.</div></div>
+</div>
+
+<div class="st">Glosario de términos clave</div>
+<dl class="gl">
+  <dt>Lag (retardo)</dt><dd>Es el tiempo que pasa entre que ocurre algo (ej: regar) y se ve el efecto (ej: el fruto pesa más). Un lag de 13 semanas significa que lo que hiciste hace 13 semanas está afectando lo que pasa hoy.</dd>
+  <dt>Correlación (R)</dt><dd>Mide qué tan fuerte es la relación entre dos cosas. Va de -1 a +1. Si R = +0.90, hay una relación muy fuerte positiva (cuando una sube, la otra sube). Si R = -0.90, es muy fuerte negativa (cuando una sube, la otra baja). Valores cercanos a 0 significan que no hay relación.</dd>
+  <dt>GDD (grados-día de crecimiento)</dt><dd>Es un "reloj térmico" de la planta. Cada día, la planta acumula calor según la temperatura. En vez de contar días calendario, contamos cuánto calor ha recibido desde la poda. Es más preciso porque la planta no entiende de calendarios, sino de temperatura.</dd>
+  <dt>ETO (evapotranspiración)</dt><dd>Es cuánta agua pierde el ambiente por evaporación y transpiración de las plantas. Un ETO alto = ambiente muy seco y demandante. Es como medir la "sed" del ambiente.</dd>
+  <dt>Cuajado</dt><dd>Es cuando una flor se convierte en fruto. No todas las flores cuajan: algunas se caen. El porcentaje de flores que llegan a ser fruto se llama "tasa de cuajado".</dd>
+  <dt>Flujo de cosecha</dt><dd>Una "oleada" de fruta que madura al mismo tiempo. En cada módulo hay 2-3 flujos principales: la fruta no madura toda junta sino en oleadas separadas por semanas.</dd>
+  <dt>Módulo</dt><dd>Una parcela de campo con plantas del mismo tipo y manejo. La finca tiene varios módulos (M01, M02, etc.) en distintos fundos (AQ I, AQ II, etc.).</dd>
+  <dt>DeltaT (amplitud térmica)</dt><dd>La diferencia entre la temperatura máxima y mínima del día. Un DeltaT alto (ej: 15°C) significa días muy calientes y noches frías, lo cual estresa a la planta.</dd>
+</dl>
+</div>
+
+<!-- ============ RENDIMIENTO ============ -->
+<div class="sec" id="s-rend">
+
+<div class="st" style="margin-top:0">¿Cuánta fruta produce cada módulo?</div>
+<div class="ss">Comparamos dos campañas (temporadas de cosecha): C2024 y C2025. Cada barra muestra cuántos kilogramos de arándano produce una sola planta durante toda la campaña.</div>
+
+<div class="mg">
+  <div class="mc"><div class="mc-l">Promedio C2024</div><div class="mc-v">3.72 Kg/pl</div><div class="mc-s">14 módulos activos</div></div>
+  <div class="mc"><div class="mc-l">Promedio C2025</div><div class="mc-v">4.07 Kg/pl</div><div class="mc-s">21 módulos (+9%)</div></div>
+  <div class="mc"><div class="mc-l">Mejor módulo</div><div class="mc-v">M11 — 6.84</div><div class="mc-s">Aqu Anqa V</div></div>
+  <div class="mc"><div class="mc-l">Módulo con menor rend.</div><div class="mc-v">M09 — 2.39</div><div class="mc-s">Aqu Anqa III</div></div>
+</div>
+
+<div class="cw" style="height:340px"><canvas id="c1" role="img" aria-label="Rendimiento en Kg por planta para cada módulo en C2025">Gráfico de barras</canvas></div>
+
+<div class="ex ex-ok">
+  <h4><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> ¿Qué nos dice este gráfico?</h4>
+  <p>Cada barra representa un módulo (parcela) del campo. Las barras <strong style="color:var(--text-success)">verdes</strong> son módulos con rendimiento normal (3-6 Kg por planta), las <strong style="color:var(--text-accent)">azules</strong> son los de mejor rendimiento (más de 6 Kg) y las <strong style="color:var(--text-danger)">rojas</strong> son módulos con rendimiento bajo (menos de 3 Kg).</p>
+  <p>El módulo estrella es <strong>M11</strong> de Aqu Anqa V con 6.84 Kg/planta, casi el triple que M09 (2.39 Kg/planta). Esta diferencia tan grande entre módulos indica que hay factores de manejo o ubicación que se pueden optimizar.</p>
+  <p>La campaña 2025 mejoró un 9% respecto a 2024, y sumó 7 módulos nuevos (AQ IV y V). AQ III mejoró un 54% entre campañas, lo cual sugiere que los ajustes de manejo están funcionando en esa zona.</p>
+</div>
+
+<div class="st">Peso del fruto: el indicador de calidad</div>
+<div class="ss">El peso promedio de cada arándano determina el calibre (tamaño), que a su vez determina el precio de exportación. Frutos más pesados = mejor precio.</div>
+
+<div class="cw" style="height:280px"><canvas id="c1b" role="img" aria-label="Peso promedio del fruto por módulo">Gráfico de peso</canvas></div>
+
+<div class="ex">
+  <h4><i class="ti ti-scale" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> ¿Por qué importa el peso del fruto?</h4>
+  <p>El arándano Sekoya Pop tiene un peso esperado de <strong>2.5 a 3.5 gramos</strong> por fruto. En C2024, el promedio fue 3.60g (excelente), pero en C2025 bajó a 3.35g. Esta caída del 7% puede deberse a que hubo más frutos por planta en C2025 — la planta "reparte" sus recursos entre más frutos, resultando en frutos más pequeños.</p>
+  <p>Los módulos de AQ I tienen los frutos más pesados (3.3-4.3g), mientras que AQ III tiene los más livianos (3.0-3.2g). Esto está relacionado con las condiciones climáticas de cada zona, como veremos en las siguientes secciones.</p>
+</div>
+
+<div class="st">Flujos de cosecha: la fruta no madura toda junta</div>
+<div class="an">
+  En cada módulo, la cosecha llega en <strong>2 a 3 oleadas</strong> (llamadas "flujos"). Esto ocurre porque las podas se hacen de forma escalonada y porque la floración no es simultánea. Se detectaron en promedio <strong>3 flujos por módulo</strong> en ambas campañas, lo cual es consistente con el manejo de poda escalonada que se usa en Ica.
+</div>
+<div class="an">
+  Desde que una flor se abre hasta que el fruto está listo para cosechar pasan aproximadamente <strong>10 semanas (70 días)</strong>. Este dato es fundamental para planificar: si veo un pico de floración hoy, sé que tendré un pico de cosecha en 10 semanas.
+</div>
+</div>
+
+<!-- ============ LAGS ============ -->
+<div class="sec" id="s-lag">
+
+<div class="st" style="margin-top:0">Los efectos retardados: lo que haces hoy afecta mañana</div>
+<div class="ss">Uno de los descubrimientos más importantes del análisis es que las variables del clima y riego no afectan a la fruta en el momento, sino semanas después. Esto se llama "efecto retardado" o "lag". A continuación mostramos cuántas semanas de retardo tiene cada variable.</div>
+
+<div class="an">
+  <strong>¿Cómo leer este análisis?</strong> Imagina que hoy riegas con mucho potasio (K2O). El efecto no se verá hoy, ni mañana, sino dentro de 11 semanas, cuando los frutos que están en etapa de cuajado se beneficien de ese nutriente. Del mismo modo, una ola de calor extremo hoy no afecta la fruta que cosechas hoy, sino la que cosecharás en 5-7 semanas (la que ahora está llenándose).
+</div>
+
+<div class="cw" style="height:400px"><canvas id="c2" role="img" aria-label="Efecto retardado de cada variable climática sobre peso y frutos">Gráfico de lags</canvas></div>
+
+<div class="ex ex-ok">
+  <h4><i class="ti ti-clock" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> ¿Qué significa cada barra?</h4>
+  <p>Las barras <strong style="color:#2a78d6">azules</strong> muestran la correlación con el <strong>peso</strong> del fruto (qué tan pesado es). Las barras <strong style="color:#eb6834">naranjas</strong> muestran la correlación con la <strong>cantidad de frutos</strong>. Barras largas hacia la derecha (+) significan que la variable ayuda; hacia la izquierda (-) significa que perjudica.</p>
+</div>
+
+<div class="st">Variables que determinan el peso del fruto</div>
+<table class="dt">
+  <thead><tr><th>Variable</th><th>Lag</th><th>Efecto</th><th>Fuerza</th><th>Explicación en lenguaje simple</th></tr></thead>
+  <tbody>
+    <tr><td>GDD (calor acumulado)</td><td>19 sem</td><td class="pos">+0.891</td><td><span class="bd bd-g">Muy fuerte</span></td><td>Más calor durante la floración genera más energía fotosintética, lo que crea reservas que se expresan en frutos pesados 5 meses después</td></tr>
+    <tr><td>Tmax (temp. máxima)</td><td>16 sem</td><td class="pos">+0.889</td><td><span class="bd bd-g">Muy fuerte</span></td><td>Mismo mecanismo que GDD: calor durante floración = reservas = frutos pesados luego</td></tr>
+    <tr><td>DeltaT (amplitud térmica)</td><td>5 sem</td><td class="neg">-0.883</td><td><span class="bd bd-r">Muy fuerte negativo</span></td><td>Diferencia grande entre día y noche estresa a la planta durante el llenado del fruto, produciendo frutos más pequeños</td></tr>
+    <tr><td>Radiación solar</td><td>5 sem</td><td class="neg">-0.877</td><td><span class="bd bd-r">Muy fuerte negativo</span></td><td>Radiación excesiva 5 semanas antes causa "golpe de sol" y estrés durante el llenado</td></tr>
+    <tr><td>ETO (evaporación)</td><td>7 sem</td><td class="neg">-0.859</td><td><span class="bd bd-r">Muy fuerte negativo</span></td><td>Ambiente muy seco 7 semanas antes deshidrata la planta durante el llenado, produciendo frutos más chicos</td></tr>
+    <tr><td>Agua de riego</td><td>13 sem</td><td class="neg">-0.619</td><td><span class="bd bd-y">Paradoja</span></td><td>Parece que más agua = menos peso, pero es una ilusión estadística que resolvimos (ver sección Descubrimientos)</td></tr>
+  </tbody>
+</table>
+
+<div class="ex">
+  <h4><i class="ti ti-bulb" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> La historia completa del peso</h4>
+  <p>El peso del fruto se decide en dos momentos: primero, <strong>4-5 meses antes de la cosecha</strong> (durante la floración), el calor acumulado determina cuánta energía puede producir la planta. Esto fija el "potencial" de peso. Luego, <strong>5-7 semanas antes de la cosecha</strong> (durante el llenado del fruto), el estrés ambiental (calor extremo, sequía, amplitud térmica) puede reducir ese potencial. Es como hornear un pastel: el calor inicial hace crecer la masa (bueno), pero demasiado calor al final la quema (malo).</p>
+</div>
+
+<div class="st">Variables que determinan la cantidad de frutos</div>
+<table class="dt">
+  <thead><tr><th>Variable</th><th>Lag</th><th>Efecto</th><th>Fuerza</th><th>Explicación simple</th></tr></thead>
+  <tbody>
+    <tr><td>K2O (potasio)</td><td>11 sem</td><td class="pos">+0.579</td><td><span class="bd bd-g">Fuerte</span></td><td>El potasio aplicado 11 semanas antes ayuda a que más flores se conviertan en frutos (mejor cuajado)</td></tr>
+    <tr><td>P2O5 (fósforo)</td><td>10 sem</td><td class="pos">+0.544</td><td><span class="bd bd-g">Moderado</span></td><td>El fósforo promueve el desarrollo de raíces y cuajado de frutos 10 semanas antes</td></tr>
+    <tr><td>NO3 (nitrógeno)</td><td>10 sem</td><td class="pos">+0.401</td><td><span class="bd bd-b">Moderado</span></td><td>El nitrógeno promueve crecimiento celular, favoreciendo que más flores cuajen a frutos</td></tr>
+    <tr><td>Agua de riego</td><td>12 sem</td><td class="pos">+0.377</td><td><span class="bd bd-b">Moderado</span></td><td>El riego adecuado durante el cuajado evita que la planta aborte flores por estrés hídrico</td></tr>
+  </tbody>
+</table>
+
+<div class="ex ex-ok">
+  <h4><i class="ti ti-plant" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Nutrientes: el momento importa tanto como la cantidad</h4>
+  <p>Los tres macronutrientes (nitrógeno, fósforo y potasio) tienen su mayor impacto <strong>10-11 semanas antes</strong> de la cosecha, que coincide con la fase de cuajado (cuando las flores se convierten en frutos). Esto significa que la fertilización debe concentrarse en ese período crítico, no distribuirse uniformemente durante toda la campaña.</p>
+  <p>El potasio (K2O) es el nutriente con mayor impacto en la cantidad de frutos (R=+0.58). Facilita el transporte de azúcares desde las hojas hasta los frutos en formación, ayudando a que la planta "retenga" más flores como frutos viables.</p>
+</div>
+</div>
+
+<!-- ============ DESCUBRIMIENTOS ============ -->
+<div class="sec" id="s-int">
+
+<div class="st" style="margin-top:0">Los 4 descubrimientos clave del análisis</div>
+<div class="ss">En la segunda iteración del análisis, creamos variables combinadas que revelaron relaciones más profundas y resolvieron contradicciones aparentes.</div>
+
+<div class="ex ex-ok" style="border-left-width:4px">
+  <h4><i class="ti ti-droplet" aria-hidden="true" style="font-size:18px;margin-right:6px;color:var(--text-accent)"></i> Descubrimiento 1: La paradoja del agua resuelta</h4>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Problema:</strong> Los datos mostraban que más agua de riego = frutos más livianos (R = -0.62). Esto no tiene sentido: ¿cómo puede ser malo regar?</p>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Solución:</strong> Creamos la variable <strong>Riego/ETO</strong> (agua aplicada dividida por la demanda del ambiente). El resultado cambió completamente: R = <strong>+0.73</strong> (positivo).</p>
+  <p><strong>¿Qué pasaba?</strong> En verano se riega mucho más, pero también el ambiente evapora mucho más (ETO alto) y hace mucho calor. Entonces el análisis confundía "verano" (que produce frutos chicos por el calor) con "mucho riego". Al dividir el riego por la evaporación, eliminamos ese efecto estacional y vemos la realidad: cuando el riego cubre bien la demanda del ambiente, los frutos son más pesados.</p>
+  <p><strong>Implicación práctica:</strong> No medir solo cuántos litros se riegan, sino cuántos litros se riegan <em>en relación a lo que el ambiente demanda</em>. El indicador correcto es <strong>Riego/ETO</strong>, no el volumen bruto.</p>
+</div>
+
+<div class="cw" style="height:200px"><canvas id="c3" role="img" aria-label="Comparación de la correlación del agua bruta vs Riego/ETO con el peso">Gráfico comparativo</canvas></div>
+<div class="ex">
+  <h4><i class="ti ti-arrows-cross" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Lectura del gráfico</h4>
+  <p>La barra roja muestra que el agua "bruta" tiene correlación negativa con el peso (-0.62): parece que regar perjudica. Pero cuando normalizamos por ETO (barra verde), la correlación se vuelve positiva (+0.73): regar proporcionalmente SÍ ayuda. La diferencia es enorme y demuestra que sin normalizar, la estacionalidad nos engaña.</p>
+</div>
+
+<div class="ex" style="border-left-color:#7F77DD;border-left-width:4px">
+  <h4><i class="ti ti-temperature" aria-hidden="true" style="font-size:18px;margin-right:6px;color:#7F77DD"></i> Descubrimiento 2: El índice de estrés combinado</h4>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Variable:</strong> Estrés DxE = Amplitud térmica (DeltaT) × Evaporación (ETO)</p>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Resultado:</strong> R = <strong>-0.87</strong> con peso, lag 7 semanas. Es el mejor predictor negativo.</p>
+  <p><strong>¿Qué significa?</strong> Cuando en un mismo día hay mucha diferencia entre la temperatura máxima y mínima (noches frías + días calientes) Y además el ambiente está muy seco (ETO alto), la planta sufre el máximo estrés posible. Este estrés combinado 7 semanas antes de la cosecha reduce drásticamente el tamaño del fruto.</p>
+  <p><strong>Analogía:</strong> Es como una persona trabajando en una oficina que cambia entre aire acondicionado helado y calefacción sofocante, además de estar deshidratada. Cada factor solo es molesto, pero juntos son devastadores.</p>
+</div>
+
+<div class="ex" style="border-left-color:#eb6834;border-left-width:4px">
+  <h4><i class="ti ti-sun" aria-hidden="true" style="font-size:18px;margin-right:6px;color:#eb6834"></i> Descubrimiento 3: La fotosíntesis predice el peso futuro</h4>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Variable:</strong> GDD × Radiación = Calor acumulado × Luz solar</p>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Resultado:</strong> R = <strong>+0.86</strong> con peso, lag 17 semanas (~4 meses).</p>
+  <p><strong>¿Qué significa?</strong> La combinación de calor y luz durante la floración determina cuánta fotosíntesis puede hacer la planta. Más fotosíntesis = más azúcares y reservas de carbono = frutos más pesados cuatro meses después. Es como el "capital inicial" con el que la planta empieza a construir sus frutos.</p>
+</div>
+
+<div class="ex" style="border-left-color:#1baf7a;border-left-width:4px">
+  <h4><i class="ti ti-leaf" aria-hidden="true" style="font-size:18px;margin-right:6px;color:#1baf7a"></i> Descubrimiento 4: La concentración importa más que la cantidad</h4>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Variable:</strong> K2O por metro cúbico de agua (concentración del potasio en la solución de riego)</p>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Resultado:</strong> R = <strong>+0.51</strong> con frutos, lag 10 semanas.</p>
+  <p><strong>¿Qué significa?</strong> No basta con aplicar mucho potasio total; lo que importa es qué tan concentrada está la solución que llega a las raíces. Si diluyes mucho fertilizante en mucha agua, las raíces absorben una solución "débil". Si concentras el fertilizante en menos agua, las raíces reciben una "dosis" más efectiva.</p>
+  <p><strong>Implicación:</strong> Ajustar la receta de fertilización por concentración (mg por litro), no solo por kilos totales aplicados.</p>
+</div>
+
+<div class="st">Resumen visual: todas las interacciones</div>
+<div class="cw" style="height:340px"><canvas id="c4" role="img" aria-label="Correlaciones de todas las variables de interacción">Gráfico de correlaciones</canvas></div>
+
+<div class="ex">
+  <h4><i class="ti ti-list-check" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Lectura del gráfico</h4>
+  <p>Barras <strong style="color:var(--text-success)">verdes</strong> = la variable ayuda (más de ella = más peso o más frutos). Barras <strong style="color:var(--text-danger)">rojas</strong> = la variable perjudica. Las barras más largas indican relaciones más fuertes y confiables. El Estrés DxE tiene la barra roja más larga (-0.87): es el factor más dañino para el peso. El Riego/ETO tiene la barra verde más notable hacia el peso (+0.73): es el mejor indicador positivo.</p>
+</div>
+</div>
+
+<!-- ============ GDD ============ -->
+<div class="sec" id="s-gdd">
+
+<div class="st" style="margin-top:0">El reloj térmico de la planta (GDD)</div>
+<div class="ss">Las plantas no cuentan días en un calendario. Cuentan calor. Los GDD (grados-día de crecimiento) son la forma de medir el "tiempo biológico" de la planta: cuánto calor ha acumulado desde que fue podada.</div>
+
+<div class="an">
+  <strong>¿Cómo funciona?</strong> Cada día, si la temperatura promedio es de 20°C y la base es 10°C, la planta acumula 10 GDD. En un día frío de 12°C, acumula solo 2 GDD. Por eso un módulo en zona cálida alcanza los mismos hitos (floración, cosecha) en menos días calendario que uno en zona fría: acumula calor más rápido.
+</div>
+
+<div class="mg">
+  <div class="mc"><div class="mc-l">GDD a floración</div><div class="mc-v">3,864</div><div class="mc-s">Mediana entre módulos</div></div>
+  <div class="mc"><div class="mc-l">GDD a cosecha F1</div><div class="mc-v">2,996</div><div class="mc-s">Primer flujo (variable)</div></div>
+  <div class="mc"><div class="mc-l">GDD a cosecha F2</div><div class="mc-v">3,196</div><div class="mc-s">Segundo flujo</div></div>
+  <div class="mc"><div class="mc-l">GDD a cosecha F3</div><div class="mc-v">3,556</div><div class="mc-s">Tercer flujo (predecible)</div></div>
+</div>
+
+<div class="cw" style="height:280px"><canvas id="c5" role="img" aria-label="GDD acumulados por hito fenológico">Gráfico de GDD</canvas></div>
+
+<div class="ex ex-ok">
+  <h4><i class="ti ti-flame" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> ¿Son confiables estos umbrales?</h4>
+  <p>Medimos la variabilidad (CV = coeficiente de variación) de los GDD en cada hito entre todos los módulos. Un CV bajo significa que el umbral es consistente y útil para predecir:</p>
+  <p><strong>Flujo 3 (CV = 12%)</strong>: Excelente. Si un módulo ha acumulado ~3,556 GDD desde la poda, con alta confianza está cerca de su tercer pico de cosecha. Este umbral es un predictor confiable.</p>
+  <p><strong>Flujo 2 (CV = 34%)</strong>: Moderado. Útil como referencia pero con margen de error.</p>
+  <p><strong>Flujo 1 (CV = 50%)</strong>: Alto. El primer flujo depende de más factores que solo temperatura (dormancia residual, estado de reservas post-poda), por lo que los GDD solos no bastan para predecirlo.</p>
+  <p><strong>Floración (CV = 42%)</strong>: Alto, pero esto no es ruido: refleja que los módulos se podan en fechas diferentes y en distintas épocas del año, acumulando calor a velocidades distintas.</p>
+</div>
+
+<div class="ex">
+  <h4><i class="ti ti-bulb" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Aplicación práctica del reloj térmico</h4>
+  <p>Conociendo la fecha de poda de un módulo y la temperatura promedio diaria, se puede calcular cuántos GDD va acumulando y estimar cuándo llegará cada flujo de cosecha. Por ejemplo: si un módulo fue podado el 1 de marzo y acumula ~15 GDD por día, alcanzará ~3,200 GDD en ~213 días (alrededor del 30 de septiembre), momento en que se esperaría su segundo flujo de cosecha.</p>
+</div>
+</div>
+
+<!-- ============ TIMING ============ -->
+<div class="sec" id="s-tim">
+
+<div class="st" style="margin-top:0">¿Qué hace que la cosecha se adelante o se atrase?</div>
+<div class="ss">Algunos módulos cosechan en la semana 25, otros en la semana 45. ¿Por qué? Analizamos qué variables predicen cuándo llegará el pico de cosecha.</div>
+
+<div class="ex ex-ok" style="border-left-width:4px">
+  <h4><i class="ti ti-trophy" aria-hidden="true" style="font-size:18px;margin-right:6px;color:var(--text-success)"></i> El hallazgo principal: la temperatura manda</h4>
+  <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px"><strong>Tmax media → Semana de cosecha: R = -0.97</strong></p>
+  <p>Este es el resultado más fuerte de todo el análisis. Los módulos con temperatura máxima más alta cosechan significativamente antes. El signo negativo (-) significa: más calor = cosecha más temprana (semana más baja = más temprano en el año).</p>
+  <p><strong>Magnitud del efecto:</strong> Cada grado centígrado adicional en la temperatura máxima promedio adelanta la cosecha aproximadamente 2 semanas. Un módulo con Tmax media de 28°C cosechará alrededor de 6 semanas antes que uno con Tmax media de 25°C.</p>
+  <p><strong>¿Por qué ocurre?</strong> Mayor temperatura = mayor tasa de acumulación de GDD = la planta alcanza sus umbrales fenológicos (floración, cuajado, maduración) más rápido = cosecha más temprana en el calendario.</p>
+</div>
+
+<div class="cw" style="height:280px"><canvas id="c6" role="img" aria-label="Drivers de timing: correlación con semana de cosecha">Gráfico de timing</canvas></div>
+
+<div class="ex">
+  <h4><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Lectura del gráfico</h4>
+  <p>Las barras muestran qué tan fuerte predice cada variable la semana de cosecha. Barras hacia la <strong>izquierda</strong> (negativas) significan que la variable <strong>adelanta</strong> la cosecha. Barras hacia la <strong>derecha</strong> (positivas) significan que la <strong>atrasa</strong>.</p>
+  <p><strong>Tmax_Media</strong> es la barra más larga a la izquierda (-0.97): más calor = cosecha más temprana. Es el predictor dominante.</p>
+  <p>Las variables como <strong>K2O, Agua y Balance hídrico promedio por semana</strong> muestran correlación positiva: los módulos que reciben más riego y potasio cosechan más tarde. Esto puede significar que los módulos tardíos necesitan más insumos (porque su ciclo es más largo), no que regar más atrasa la cosecha.</p>
+</div>
+
+<div class="st">Las trampas estadísticas que descartamos</div>
+<div class="an">
+  Un hallazgo importante fue identificar <strong>5 variables "espurias"</strong> — correlaciones que parecen fuertes pero son falsas:
+</div>
+<table class="dt">
+  <thead><tr><th>Variable descartada</th><th>R aparente</th><th>¿Por qué es falsa?</th></tr></thead>
+  <tbody>
+    <tr><td>ETO acumulado</td><td>+0.996</td><td>Más semanas pasan = más ETO se acumula. Es como decir "las personas más viejas han comido más comida". No es causal.</td></tr>
+    <tr><td>Radiación acumulada</td><td>+0.997</td><td>Mismo problema: acumulado crece con el tiempo por definición</td></tr>
+    <tr><td>Agua acumulada</td><td>+0.912</td><td>Módulos que cosechan más tarde simplemente han sido regados más semanas</td></tr>
+    <tr><td>NO3 acumulado</td><td>+0.841</td><td>Más tiempo regando = más nitrógeno total aplicado</td></tr>
+    <tr><td>K2O acumulado</td><td>+0.954</td><td>Misma lógica que agua y NO3</td></tr>
+  </tbody>
+</table>
+<div class="ex ex-w">
+  <h4><i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Lección importante sobre datos acumulados</h4>
+  <p>Cualquier variable que se acumula con el tiempo (totales, sumas) tendrá correlación casi perfecta con el tiempo. Esto no significa nada útil. Por eso reemplazamos todas las variables acumuladas por <strong>promedios semanales</strong> (tasas), que sí pueden revelar diferencias reales entre módulos. Este filtro fue aplicado por el agente AgroSekoya, que detectó y descartó estas correlaciones falsas.</p>
+</div>
+</div>
+
+<!-- ============ RECOMENDACIONES ============ -->
+<div class="sec" id="s-rec">
+
+<div class="st" style="margin-top:0">Modelos predictivos propuestos</div>
+<div class="ss">Con los hallazgos validados, proponemos tres modelos para predecir aspectos clave de la producción.</div>
+
+<div class="mg" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+  <div class="mc" style="border-left:3px solid #2a78d6">
+    <div class="mc-l">Modelo 1: predecir el peso</div>
+    <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin:8px 0">Peso = f(Riego/ETO, Estrés, GDD×Rad)</div>
+    <div class="mc-s" style="font-size:12px;line-height:1.6">Con 3 variables: el balance hídrico 13 sem antes, el estrés combinado 7 sem antes, y la fotosíntesis 17 sem antes. Precisión esperada: R² > 0.75 (explica más del 75% de la variación).</div>
+  </div>
+  <div class="mc" style="border-left:3px solid #eb6834">
+    <div class="mc-l">Modelo 2: predecir cantidad</div>
+    <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin:8px 0">Frutos = f(K2O/m³, Confort, NO3/m³)</div>
+    <div class="mc-s" style="font-size:12px;line-height:1.6">La concentración de potasio y nitrógeno en la solución de riego, más la temperatura óptima durante floración, predicen cuántos frutos retendrá la planta.</div>
+  </div>
+  <div class="mc" style="border-left:3px solid #1baf7a">
+    <div class="mc-l">Modelo 3: predecir cuándo</div>
+    <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin:8px 0">Timing = f(Tmax, Poda, GDD)</div>
+    <div class="mc-s" style="font-size:12px;line-height:1.6">La temperatura del módulo predice cuándo cosechará (R=-0.97). Complementar con fecha de poda y GDD acumulados para flujos 2 y 3.</div>
+  </div>
+</div>
+
+<div class="st">Recomendaciones de manejo</div>
+
+<div class="ex ex-ok" style="border-left-width:4px">
+  <h4><i class="ti ti-droplet" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> 1. Riego: medir el ratio, no el volumen</h4>
+  <p>Dejar de evaluar el riego solo en litros/hectárea. Implementar el indicador <strong>Riego/ETO</strong> como métrica principal. Si Riego/ETO > 1.0, el campo está bien abastecido. Si < 0.8, hay déficit. Monitorear este ratio especialmente en las semanas 11-13 antes de cosecha esperada, que es cuando impacta el peso del fruto.</p>
+</div>
+
+<div class="ex" style="border-left-color:#7F77DD;border-left-width:4px">
+  <h4><i class="ti ti-temperature" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> 2. Estrés: sistema de alerta temprana</h4>
+  <p>Crear una alerta automática cuando el índice DeltaT × ETO supere un umbral crítico. Si DeltaT > 12°C y ETO > 5 mm/día simultáneamente, activar riego de enfriamiento o nebulización. Esto es especialmente crítico <strong>7 semanas antes</strong> de la fecha estimada de cosecha, que es cuando el estrés causa mayor daño al calibre.</p>
+</div>
+
+<div class="ex" style="border-left-color:#eb6834;border-left-width:4px">
+  <h4><i class="ti ti-leaf" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> 3. Nutrición: concentración sobre cantidad</h4>
+  <p>Reformular la fertilización en términos de <strong>concentración</strong> (gramos por litro de agua de riego), no solo kilos totales. Concentrar la aplicación de K2O y NO3 en las <strong>semanas 8-12 antes de cosecha</strong> esperada, que coincide con el cuajado. Un fertirriego concentrado en el momento correcto vale más que fertilización difusa durante toda la campaña.</p>
+</div>
+
+<div class="ex" style="border-left-color:#1baf7a;border-left-width:4px">
+  <h4><i class="ti ti-sun" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> 4. Poda: aprovechar la fotosíntesis</h4>
+  <p>Planificar las fechas de poda para que la <strong>floración coincida con semanas de alta radiación y temperatura</strong> (maximizar GDD × Rad). Esto genera el máximo de reservas de carbono, que se traducirán en frutos más pesados 4-5 meses después. Evitar que la floración caiga en semanas nubladas o frías.</p>
+</div>
+
+<div class="ex" style="border-left-color:#2a78d6;border-left-width:4px">
+  <h4><i class="ti ti-calendar-event" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> 5. Planificación: usar temperatura para predecir fechas</h4>
+  <p>Usar la Tmax media histórica de cada módulo para estimar la semana de cosecha con <strong>semanas de anticipación</strong>. Los módulos más cálidos cosechan 2 semanas antes por cada grado de diferencia. Esto permite planificar la logística de empaque, transporte y personal con mayor precisión.</p>
+</div>
+
+<div class="st">Nivel de confianza y limitaciones</div>
+<div class="mg" style="grid-template-columns:repeat(3,1fr)">
+  <div class="mc"><div class="mc-l">Confianza global</div><div class="mc-v">85-90%</div><div class="mc-s">De las relaciones validadas biológicamente</div></div>
+  <div class="mc"><div class="mc-l">Campañas analizadas</div><div class="mc-v">2</div><div class="mc-s">C2024 y C2025 — validar con C2026</div></div>
+  <div class="mc"><div class="mc-l">Espurias descartadas</div><div class="mc-v">5</div><div class="mc-s">Variables acumulativas falsas</div></div>
+</div>
+<div class="ex ex-w">
+  <h4><i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:16px;margin-right:4px"></i> Lo que aún no sabemos</h4>
+  <p>Los lags mayores a 15 semanas podrían estar contaminados por estacionalidad (el clima se repite cada año, lo cual puede crear correlaciones artificiales). Se recomienda validar con regresión parcial controlando por semana del año.</p>
+  <p>Los rendimientos de 3.7-4.1 Kg/planta son inferiores al rango esperado de Sekoya Pop adulto (8-20 Kg/pl). Esto sugiere que las plantas aún son jóvenes o que el campo "nplantaMod" incluye plantas no productivas. Validar este dato con el equipo de campo.</p>
+  <p>Con solo 2 campañas, los patrones encontrados son indicativos pero no definitivos. La campaña C2026 será crucial para confirmar si las relaciones se mantienen.</p>
+</div>
+
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+const cs=getComputedStyle(document.documentElement);
+const tp=cs.getPropertyValue('--text-primary').trim()||'#0b0b0b';
+const tm=cs.getPropertyValue('--text-muted').trim()||'#898781';
+const gc=dk?'rgba(255,255,255,0.06)':'#e1e0d9';
+const ac=dk?'rgba(255,255,255,0.15)':'#c3c2b7';
+
+document.getElementById('nv').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('.nav-bar button').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.querySelectorAll('.sec').forEach(s=>s.classList.remove('show'));document.getElementById('s-'+b.dataset.t).classList.add('show')});
+
+const c25=[['M01',4.41],['M02',4.38],['M03',3.64],['M04',4.55],['M01*',4.61],['M02*',4.40],['M03*',5.82],['M04*',5.15],['M05',4.66],['M06',5.54],['M07',5.71],['M08',3.90],['M09',2.39],['M10A',2.47],['M10B',2.73],['M12',3.93],['M13',2.19],['M14',2.04],['M11',6.84]];
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:c25.map(d=>d[0]),datasets:[{data:c25.map(d=>d[1]),backgroundColor:c25.map(d=>d[1]<3?'#e34948':d[1]>6?'#2a78d6':'#1baf7a'),borderRadius:4,barThickness:18}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(2)+' Kg/pl'}}},scales:{x:{ticks:{color:tm,font:{size:10},maxRotation:45,autoSkip:false},grid:{display:false},border:{color:ac}},y:{ticks:{color:tm,callback:v=>v+' Kg'},grid:{color:gc},border:{display:false}}}}});
+
+const pw=[['M01',3.34],['M02',3.41],['M03',3.23],['M04',3.11],['M01*',3.62],['M02*',3.37],['M03*',3.44],['M04*',3.20],['M05',3.33],['M06',3.16],['M07',3.14],['M08',3.49],['M09',3.05],['M10A',3.18],['M10B',3.58],['M12',3.36],['M13',3.18],['M14',3.26],['M11',3.46]];
+new Chart(document.getElementById('c1b'),{type:'bar',data:{labels:pw.map(d=>d[0]),datasets:[{data:pw.map(d=>d[1]),backgroundColor:pw.map(d=>d[1]>3.5?'#2a78d6':d[1]>3.0?'#1baf7a':'#eda100'),borderRadius:4,barThickness:18}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(2)+' g'}}},scales:{x:{ticks:{color:tm,font:{size:10},maxRotation:45,autoSkip:false},grid:{display:false},border:{color:ac}},y:{min:2.5,max:4.5,ticks:{color:tm,callback:v=>v.toFixed(1)+'g'},grid:{color:gc},border:{display:false}}}}});
+
+const ld=[{v:'GDD',p:0.891,f:-0.556},{v:'Tmax',p:0.889,f:-0.580},{v:'DeltaT',p:-0.883,f:-0.586},{v:'Rad',p:-0.877,f:-0.596},{v:'ETO',p:-0.859,f:-0.618},{v:'Tmin',p:0.877,f:-0.580},{v:'K2O',p:-0.730,f:0.579},{v:'P2O5',p:-0.617,f:0.544},{v:'NO3',p:0.581,f:0.401},{v:'Agua',p:-0.619,f:0.377},{v:'Lluvia',p:0.479,f:0.374}];
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ld.map(d=>d.v),datasets:[{label:'→ Peso',data:ld.map(d=>d.p),backgroundColor:'#2a78d6',borderRadius:3,barThickness:12},{label:'→ Frutos',data:ld.map(d=>d.f),backgroundColor:'#eb6834',borderRadius:3,barThickness:12}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: R=${c.raw>0?'+':''}${c.raw.toFixed(3)}`}}},scales:{x:{min:-1,max:1,ticks:{color:tm,callback:v=>(v>0?'+':'')+v.toFixed(1)},grid:{color:gc},border:{display:false}},y:{ticks:{color:tm,font:{size:12}},grid:{display:false},border:{color:ac}}}}});
+
+new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['Agua bruta → Peso','Riego/ETO → Peso'],datasets:[{data:[-0.619,0.732],backgroundColor:['#e34948','#1baf7a'],borderRadius:6,barThickness:36}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'R = '+(c.raw>0?'+':'')+c.raw.toFixed(3)}}},scales:{x:{min:-1,max:1,ticks:{color:tm,callback:v=>(v>0?'+':'')+v.toFixed(1)},grid:{color:gc},border:{display:false}},y:{ticks:{color:tm,font:{size:13,weight:'500'}},grid:{display:false},border:{color:ac}}}}});
+
+const id=[{v:'Estrés DxE → Peso',r:-0.873},{v:'GDD×Rad → Peso',r:0.856},{v:'Confort → Peso',r:-0.800},{v:'K2O/m³ → Peso',r:-0.754},{v:'Riego/ETO → Peso',r:0.732},{v:'ln(R/ETO) → Peso',r:0.705},{v:'GDD×Rad → Frutos',r:-0.620},{v:'Estrés → Frutos',r:-0.596},{v:'R/ETO → Frutos',r:0.582},{v:'NO3/m³ → Peso',r:0.554},{v:'K2O/m³ → Frutos',r:0.510},{v:'NO3/m³ → Frutos',r:0.460},{v:'Confort → Frutos',r:0.428}];
+new Chart(document.getElementById('c4'),{type:'bar',data:{labels:id.map(d=>d.v),datasets:[{data:id.map(d=>d.r),backgroundColor:id.map(d=>d.r>0?'#1baf7a':'#e34948'),borderRadius:3,barThickness:14}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'R = '+(c.raw>0?'+':'')+c.raw.toFixed(3)}}},scales:{x:{min:-1,max:1,ticks:{color:tm,callback:v=>(v>0?'+':'')+v.toFixed(1)},grid:{color:gc},border:{display:false}},y:{ticks:{color:tm,font:{size:11}},grid:{display:false},border:{color:ac}}}}});
+
+new Chart(document.getElementById('c5'),{type:'bar',data:{labels:['Floración\n(mediana)','Cosecha\nFlujo 1','Cosecha\nFlujo 2','Cosecha\nFlujo 3'],datasets:[{data:[3864,2996,3196,3556],backgroundColor:['#eb6834','#2a78d6','#1baf7a','#eda100'],borderRadius:6,barThickness:44}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toLocaleString()+' GDD'}}},scales:{x:{ticks:{color:tm,font:{size:12}},grid:{display:false},border:{color:ac}},y:{ticks:{color:tm,callback:v=>v.toLocaleString()},grid:{color:gc},border:{display:false}}}}});
+
+const td=[{v:'Tmax media',r:-0.969},{v:'K2O prom/sem',r:0.859},{v:'Balance hídrico',r:0.824},{v:'Agua prom/sem',r:0.821},{v:'NO3 prom/sem',r:0.770},{v:'Días poda→cos.',r:-0.403},{v:'GDD a floración',r:0.292},{v:'GDD prom/sem',r:0.004}];
+new Chart(document.getElementById('c6'),{type:'bar',data:{labels:td.map(d=>d.v),datasets:[{data:td.map(d=>d.r),backgroundColor:td.map(d=>Math.abs(d.r)>0.7?'#2a78d6':Math.abs(d.r)>0.3?'#eda100':'#898781'),borderRadius:4,barThickness:20}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'R = '+(c.raw>0?'+':'')+c.raw.toFixed(3)}}},scales:{x:{ticks:{color:tm,font:{size:11},maxRotation:45,autoSkip:false},grid:{display:false},border:{color:ac}},y:{min:-1.1,max:1.1,ticks:{color:tm,callback:v=>(v>0?'+':'')+v.toFixed(1)},grid:{color:gc},border:{display:false}}}}});
+</script>

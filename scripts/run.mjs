@@ -20,8 +20,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SQL_DIR = join(ROOT, 'db', 'sql')
 
 // Los paquetes Python del monorepo, en orden de instalación: `domain` es la librería que
-// importan los otros dos (ADR-0006), así que va primero.
-const PAQUETES_PYTHON = ['domain', 'etl', join('backend', 'campo-api')]
+// importan los otros dos (ADR-0006), así que va primero. `db/tools` va último y no expone
+// código importable: declara las dependencias del análisis (xgboost, shap, streamlit).
+const PAQUETES_PYTHON = ['domain', 'etl', join('backend', 'campo-api'), join('db', 'tools')]
 
 // ── .env ─────────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -162,6 +163,13 @@ function py(args) {
   return run(findPython(), ['-m', 'aquanqa_etl.cli', ...args], { cwd: join(ROOT, 'etl') })
 }
 
+/** Tablero Streamlit. Se invoca por módulo para no depender de que streamlit.exe esté en PATH. */
+function cmdDashboard(args) {
+  const app = join(ROOT, 'db', 'tools', 'dashboard', 'app.py')
+  if (!existsSync(app)) fail(`No existe ${app}`)
+  return run(findPython(), ['-m', 'streamlit', 'run', app, ...args])
+}
+
 // ── Comandos ─────────────────────────────────────────────────────────────────
 function cmdSetup() {
   step('Entorno Python (conda env `aquanqa`)')
@@ -242,7 +250,8 @@ switch (target) {
   case 'build':    cmdBuild(); break
   case 'migrate':  sqlFolder('10_raw'); cmdBuild(); break
   case 'validate': sqlFolder('90_checks'); break
+  case 'dashboard': cmdDashboard(rest); break
   default:
-    log(`Uso: node scripts/run.mjs <setup|migrate|build|validate|sql <carpeta>|psql <args>|py <args>>`)
+    log(`Uso: node scripts/run.mjs <setup|migrate|build|validate|dashboard|sql <carpeta>|psql <args>|py <args>>`)
     process.exit(target ? 1 : 0)
 }
