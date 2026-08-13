@@ -6,6 +6,7 @@ Streamlit para que portar una vista sea sobre todo un cambio de `st.xxx` por `ui
 
 Sin dash-bootstrap-components ni librería de iconos: `html.Details`/`html.Summary` (HTML
 nativo) dan el plegado de `como_leer`/`glosario` sin JS, y las clases son Tailwind puro.
+Los iconos son SVG propios (`assets/icons/`) recoloreados por CSS — nunca emojis.
 """
 
 from __future__ import annotations
@@ -16,6 +17,56 @@ import pandas as pd
 from dash import dcc, html
 
 from config import GLOSARIO, etiqueta, glosa
+
+# ── Iconos ────────────────────────────────────────────────────────────────────
+
+
+def icono(nombre: str, className: str = "h-4 w-4") -> html.Span:
+    """Ícono SVG recoloreable por `currentColor`, sin librería ni etiqueta `<img>`.
+
+    Misma técnica que el sidebar (`components/layout._icono`): el SVG de `assets/icons/`
+    es una máscara CSS sobre un span con `bg-current`, así el color lo fija la clase
+    `text-...` que se pase (o herede) y un mismo archivo sirve en cualquier color y tamaño.
+    La URL va por `style`, no por una clase `[mask-image:url(...)]`: el escaneo de Tailwind
+    es estático y no vería un nombre de archivo interpolado en un f-string.
+    """
+    ruta = f"url(/assets/icons/{nombre}.svg)"
+    return html.Span(
+        className=f"inline-block shrink-0 bg-current {className}",
+        style={
+            "maskImage": ruta,
+            "WebkitMaskImage": ruta,
+            "maskRepeat": "no-repeat",
+            "WebkitMaskRepeat": "no-repeat",
+            "maskPosition": "center",
+            "WebkitMaskPosition": "center",
+            "maskSize": "contain",
+            "WebkitMaskSize": "contain",
+        },
+    )
+
+
+# ── Vocabulario visual ────────────────────────────────────────────────────────
+#
+# Tres decisiones de estilo que se repiten en todo el tablero, nombradas acá una sola vez
+# para que una página no invente su propia variante: el rótulo en mayúsculas espaciadas
+# (identifica de qué es el número, sin competir con él), el número en monoespaciado con
+# cifras tabulares (así una columna de valores queda alineada por dígito), y el borde
+# cálido tenue (`stone` en lugar de `slate`) que separa sin dibujar una caja pesada.
+
+ROTULO = "text-[0.7rem] font-medium uppercase tracking-[0.12em] text-slate-400"
+CIFRA = "font-mono font-semibold tabular-nums tracking-tight text-slate-900"
+BORDE = "border-stone-200/80"
+
+# Título de una sección dentro de una card: negrita gris, sin mayúsculas. Es deliberadamente
+# más discreto que `ROTULO` — el rótulo identifica un número suelto, esto encabeza un bloque
+# de texto y no debe competir con él.
+SUBTITULO = "text-sm font-semibold text-slate-500"
+
+# Fondo de las cabeceras de sección. `stone-50` de Tailwind es exactamente #FAFAF9, así que
+# se usa la clase en lugar de un valor arbitrario.
+CABECERA = "bg-stone-50"
+
 
 # ── Formato ──────────────────────────────────────────────────────────────────
 
@@ -32,25 +83,36 @@ def entero(v: float) -> str:
 # ── Semáforo / veredicto ─────────────────────────────────────────────────────
 
 _SEMAFORO_ESTILO = {
-    "ok": ("bg-emerald-50 border-emerald-300 text-emerald-900", "check_circle", "text-emerald-600"),
-    "aviso": ("bg-amber-50 border-amber-300 text-amber-900", "warning", "text-amber-600"),
-    "error": ("bg-rose-50 border-rose-300 text-rose-900", "dangerous", "text-rose-600"),
-    "info": ("bg-sky-50 border-sky-300 text-sky-900", "info", "text-sky-600"),
+    "ok": ("bg-emerald-50 border-emerald-200 text-emerald-900", "check-circle", "text-emerald-600"),
+    "aviso": ("bg-amber-50 border-amber-200 text-amber-900", "warning", "text-amber-600"),
+    "error": ("bg-rose-50 border-rose-200 text-rose-900", "x-circle", "text-rose-600"),
+    "info": ("bg-sky-50 border-sky-200 text-sky-900", "info", "text-sky-600"),
 }
-_SEMAFORO_SIMBOLO = {"ok": "✓", "aviso": "⚠", "error": "✕", "info": "ℹ"}
 
 
 def semaforo(estado: str, mensaje: str) -> html.Div:
     """Conclusión con color: verde confirma, ámbar matiza, rojo desmiente."""
-    clases, _, color_texto = _SEMAFORO_ESTILO.get(estado, _SEMAFORO_ESTILO["info"])
+    clases, nombre_icono, color_texto = _SEMAFORO_ESTILO.get(estado, _SEMAFORO_ESTILO["info"])
     return html.Div(
         className=f"flex gap-3 rounded-2xl border p-4 {clases}",
         children=[
             html.Span(
-                _SEMAFORO_SIMBOLO.get(estado, "ℹ"),
-                className=f"flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/70 text-sm font-bold {color_texto}",
+                icono(nombre_icono, "h-5 w-5"),
+                className=f"flex h-6 w-6 shrink-0 items-center justify-center {color_texto}",
             ),
             dcc.Markdown(mensaje, className="prose prose-sm max-w-none"),
+        ],
+    )
+
+
+def _summary_plegable(titulo: str) -> html.Summary:
+    """Cabecera de un `<details>`: ícono de info + título + chevron que gira al abrir."""
+    return html.Summary(
+        className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-slate-600",
+        children=[
+            icono("info", "h-4 w-4 text-slate-400"),
+            html.Span(titulo),
+            icono("chevron-down", "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
         ],
     )
 
@@ -60,10 +122,7 @@ def como_leer(texto: str, titulo: str = "Cómo se lee este gráfico") -> html.De
     return html.Details(
         className="group rounded-2xl border border-slate-200 bg-slate-50 p-3 open:bg-white open:shadow-sm",
         children=[
-            html.Summary(
-                f"ℹ  {titulo}",
-                className="cursor-pointer select-none text-sm font-medium text-slate-600",
-            ),
+            _summary_plegable(titulo),
             html.Div(
                 dcc.Markdown(texto, className="prose prose-sm max-w-none"),
                 className="mt-2",
@@ -84,23 +143,34 @@ def veredicto_de_prueba(pregunta: str, respuesta: str, estado: str, evidencia: s
     )
 
 
-def glosario(claves: Iterable[str] | None = None, titulo: str = "Glosario") -> html.Details:
-    """Despliega qué significa cada variable, en lenguaje llano."""
+def glosario(claves: Iterable[str] | None = None, titulo: str = "Glosario",
+             plano: bool = False) -> html.Details | html.Dl:
+    """Qué significa cada variable, en lenguaje llano.
+
+    Como lista de definiciones (`<dl>`) en dos columnas: el término en su propia línea y la
+    glosa debajo, sin el guion largo que antes los unía — con el término ya en negrita el
+    separador no aportaba nada y ensuciaba el arranque de cada definición.
+
+    `plano=True` devuelve solo la lista, sin el `<details>` ni su marco, para cuando ya va
+    dentro de un `panel` que aporta el título y el borde (si no, es card sobre card).
+    """
     claves = list(claves) if claves is not None else list(GLOSARIO)
     filas = []
     for c in claves:
         texto = glosa(c)
         if texto:
-            filas.append(dcc.Markdown(f"**{etiqueta(c)}** — {texto}", className="text-sm"))
+            filas.append(html.Div([
+                html.Dt(etiqueta(c), className="text-sm font-medium text-slate-900"),
+                html.Dd(texto, className="mt-0.5 text-sm leading-snug text-slate-500"),
+            ]))
+    # Una sola columna: en dos, la vista se lee en zigzag y los términos de la columna
+    # derecha quedan sueltos de la definición que les corresponde a la izquierda.
+    cuerpo = html.Dl(filas, className="divide-y divide-stone-200/80 [&>div]:py-2.5 [&>div:first-child]:pt-0 [&>div:last-child]:pb-0")
+    if plano:
+        return cuerpo
     return html.Details(
         className="group rounded-2xl border border-slate-200 bg-slate-50 p-3 open:bg-white open:shadow-sm",
-        children=[
-            html.Summary(
-                f"ℹ  {titulo}",
-                className="cursor-pointer select-none text-sm font-medium text-slate-600",
-            ),
-            html.Div(filas, className="mt-2 space-y-1"),
-        ],
+        children=[_summary_plegable(titulo), html.Div(cuerpo, className="mt-2")],
     )
 
 
@@ -117,6 +187,140 @@ def escala_correlacion() -> html.P:
 
 
 # ── Tarjetas de métricas ──────────────────────────────────────────────────────
+
+
+def encabezado_pagina(titulo: str, entrada: str | None = None) -> html.Div:
+    """Título de página grande, con una frase de entrada opcional debajo.
+
+    Va después de la migaja de ruta y antes de los KPIs: la migaja dice *dónde estás*, el
+    título dice *qué es esto*. Sin borde ni fondo — el aire lo separa del contenido.
+    """
+    hijos = [html.H1(titulo, className="text-2xl font-semibold tracking-tight text-slate-900")]
+    if entrada:
+        hijos.append(html.P(entrada, className="mt-1 text-sm text-slate-500"))
+    return html.Div(hijos, className="mb-5")
+
+
+def _barras(serie: Iterable[float], className: str = "h-8 w-24") -> html.Div:
+    """Mini-gráfico de barras sin librería: un `div` por valor, alto proporcional.
+
+    Se usa dentro de un KPI para dar la forma de la serie junto al número, no para leer
+    valores — por eso no lleva eje, ni tooltip, ni etiquetas. Con `plotly` costaría una
+    figura y un callback por tarjeta; con divs son cero peticiones y cero JS.
+
+    La altura mínima es 8 % para que un valor de cero siga dibujando una marca visible
+    (una barra de alto 0 desaparece y hace ver la serie más corta de lo que es).
+    """
+    valores = [v for v in serie if pd.notna(v)]
+    if not valores:
+        return html.Div(className=className)
+    techo = max(valores) or 1
+    # Con muchas barras el separador de 1 px se come más ancho que las barras mismas (50
+    # semanas en 6 rem dejarían ~1 px de barra y ~1 px de hueco), así que a partir de ahí
+    # se pegan y la serie se lee como una trama continua.
+    separacion = "gap-px" if len(valores) <= 24 else "gap-0"
+    return html.Div(
+        className=f"flex items-end {separacion} {className}",
+        children=[
+            html.Div(
+                className="flex-1 rounded-sm bg-slate-200",
+                style={"height": f"{max(8, round(100 * v / techo))}%"},
+            )
+            for v in valores
+        ],
+    )
+
+
+def kpi(rotulo: str, valor: str, nota: str | None = None, serie: Iterable[float] | None = None,
+        ayuda: str | None = None, plano: bool = False) -> html.Div:
+    """Tarjeta de un solo número: rótulo arriba, cifra grande, forma de la serie al lado.
+
+    `nota` va bajo una línea divisoria fina, como el pie de las tarjetas de referencia.
+    Ahí va contexto verificable (el rango observado, de qué se compone el número) — no un
+    porcentaje de variación: esta campaña no tiene una anterior con la cual compararse, así
+    que un delta sería inventado.
+
+    La unidad no se repite en la cifra: ya está en el rótulo («kg/ha promedio»), y ponerla
+    dos veces en la misma tarjeta hace leer el número dos veces para entender uno.
+
+    `plano=True` quita el marco, para los KPI que van dentro de un `panel`.
+    """
+    hijos = [
+        html.Div(rotulo, className=ROTULO),
+        html.Div(
+            className="mt-2 flex items-end justify-between gap-3",
+            children=[
+                html.Span(valor, className=f"text-[1.75rem] leading-none {CIFRA}"),
+                _barras(serie) if serie is not None else None,
+            ],
+        ),
+    ]
+    if nota:
+        hijos.append(
+            html.Div(nota, className=f"mt-3 border-t {BORDE} pt-2.5 text-xs leading-snug text-slate-400")
+        )
+    marco = "" if plano else f"rounded-xl border {BORDE} bg-white p-4 transition-shadow hover:shadow-sm"
+    return html.Div(hijos, className=marco, title=ayuda or "")
+
+
+def fila_kpi(items: list[html.Div]) -> html.Div:
+    """Rejilla de KPIs que se reacomoda en pantallas angostas en lugar de comprimirse."""
+    return html.Div(items, className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4")
+
+
+def panel(titulo: str, *children, ayuda: str | None = None, aside=None,
+          plegable: bool = False, abierto: bool = True) -> html.Div | html.Details:
+    """Bloque de contenido con cabecera, como el panel «SALES TREND» de la referencia.
+
+    Es **la única card de su sección**: nada de lo que va dentro debe traer su propio borde
+    ni su propia sombra, o se ve una card dentro de otra. Los componentes que sí dibujan
+    marco (`caja`, `semaforo`, `como_leer`, `glosario`) aceptan `plano=True` justamente para
+    poder vivir acá dentro.
+
+    La cabecera es una banda #FAFAF9 separada del cuerpo por una línea fina. `ayuda` va como
+    tooltip del título, sin ícono: repetir un ⓘ en cada sección lo convierte en ruido en vez
+    de en señal.
+
+    Con `plegable=True` la cabecera pasa a ser el `<summary>` de un `<details>` y gana el
+    chevron que gira al abrir — mismo HTML nativo que `como_leer`, sin JS ni callback. Se usa
+    para las secciones de consulta (un glosario que no se lee de corrido), no para las que
+    llevan la línea argumental de la página.
+    """
+    cuerpo = html.Div(list(children), className="space-y-4 px-4 pb-4 pt-3")
+    marco = f"overflow-hidden rounded-xl border {BORDE} bg-white"
+    cabecera = f"flex items-center gap-2 border-b {BORDE} {CABECERA} px-4 py-2.5"
+
+    if not plegable:
+        return html.Div(
+            className=marco,
+            children=[
+                html.Div(
+                    className=cabecera,
+                    children=[
+                        html.Span(titulo, className=SUBTITULO, title=ayuda or ""),
+                        html.Div(aside, className="ml-auto") if aside is not None else None,
+                    ],
+                ),
+                cuerpo,
+            ],
+        )
+
+    return html.Details(
+        className=f"group {marco}",
+        open=abierto,
+        children=[
+            html.Summary(
+                className=f"cursor-pointer select-none {cabecera}",
+                title=ayuda or "",
+                children=[
+                    html.Span(titulo, className=SUBTITULO),
+                    icono("chevron-down",
+                          "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
+                ],
+            ),
+            cuerpo,
+        ],
+    )
 
 
 def tarjetas(items: list[tuple[str, str, str | None]]) -> html.Div:
@@ -153,6 +357,44 @@ def parrafo(texto: str) -> dcc.Markdown:
 def caja(*children, className: str = "") -> html.Div:
     """Contenedor con borde, equivalente a `st.container(border=True)`."""
     return html.Div(children=list(children), className=f"rounded-2xl border border-slate-200 bg-white p-4 shadow-sm {className}")
+
+
+def subseccion(titulo: str, *children) -> html.Div:
+    """Subdivisión dentro de un `panel`: subtítulo en negrita gris y su contenido debajo.
+
+    Sin ícono, sin color y sin viñetas a propósito. Un check verde y una x roja enfrentados
+    parecen un veredicto de calidad («esto está bien / esto está mal») cuando en realidad
+    solo delimitan alcance, y las viñetas trocean en lista lo que se lee mejor de corrido.
+    El contraste lo hace el subtítulo.
+    """
+    return html.Div(
+        className="space-y-1.5",
+        children=[html.Div(titulo, className=SUBTITULO), *children],
+    )
+
+
+def plegable(titulo: str, *children, abierto: bool = False) -> html.Details:
+    """Detalle plegable **sin marco**, para usar dentro de un `panel`.
+
+    A diferencia de `como_leer`, no dibuja borde ni fondo: la card ya la pone el panel que lo
+    contiene. Lo separa del contenido de arriba una línea fina, así se lee como un pie de
+    sección y no como un bloque aparte. HTML nativo (`<details>`), sin JS ni callback.
+    """
+    return html.Details(
+        className=f"group border-t {BORDE} pt-3",
+        open=abierto,
+        children=[
+            html.Summary(
+                className="flex cursor-pointer select-none items-center gap-2",
+                children=[
+                    html.Span(titulo, className=SUBTITULO),
+                    icono("chevron-down",
+                          "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
+                ],
+            ),
+            html.Div(list(children), className="mt-2 space-y-3"),
+        ],
+    )
 
 
 def tabla_desde_df(

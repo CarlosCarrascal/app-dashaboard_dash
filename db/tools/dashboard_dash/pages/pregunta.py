@@ -21,6 +21,46 @@ def layout():
     return html.Div(id="pregunta-contenido")
 
 
+def _kpis(tabla) -> html.Div:
+    """Fila de KPIs con la forma de cada serie al lado del número.
+
+    Las series son reales y semanales (`nsem`), calculadas acá mismo con un `groupby` sobre
+    el panel ya cargado — no hay callback ni figura de plotly por tarjeta. Ninguna tarjeta
+    muestra variación porcentual: 2025 es la única campaña del panel, así que un «+x % vs.
+    el año pasado» no tendría con qué compararse.
+    """
+    por_semana = tabla.groupby("nsem")
+    kgha_semanal = por_semana.KgHa.mean()
+    semanas = sorted(tabla.nsem.unique())
+    return ui.fila_kpi([
+        ui.kpi(
+            "Celdas módulo × semana",
+            ui.entero(len(tabla)),
+            nota="Cada fila es un módulo observado en una semana concreta.",
+            serie=por_semana.size(),
+        ),
+        ui.kpi(
+            "Módulos",
+            str(tabla.celda.nunique()),
+            nota="Con cosecha registrada en 2025. La serie muestra cuántos estaban "
+                 "activos cada semana.",
+            serie=por_semana.celda.nunique(),
+        ),
+        ui.kpi(
+            "Semanas",
+            str(tabla.nsem.nunique()),
+            nota=f"Con al menos una cosecha, de la {semanas[0]} a la {semanas[-1]}.",
+        ),
+        ui.kpi(
+            "kg/ha promedio",
+            ui.entero(tabla.KgHa.mean()),
+            nota=f"Promedio simple sobre las celdas. Por semana va de "
+                 f"{ui.entero(kgha_semanal.min())} a {ui.entero(kgha_semanal.max())}.",
+            serie=kgha_semanal,
+        ),
+    ])
+
+
 def _que_hace() -> html.Div:
     return html.Div(
         className="space-y-4",
@@ -31,31 +71,49 @@ def _que_hace() -> html.Div:
                 "campaña 2025 el tablero cuantifica asociaciones y aporte predictivo; "
                 "todavía no identifica un efecto causal por variable."
             ),
-            html.Div(
-                className="grid grid-cols-2 gap-4",
-                children=[
-                    ui.caja(
-                        html.P("✓ Lo que sí responde", className="mb-2 font-semibold text-emerald-700"),
-                        ui.parrafo(
-                            "- Qué variables acompañan a las semanas de mayor rendimiento\n"
-                            "- Cuánto de esa relación se confunde con el calendario\n"
-                            "- Qué aporta cada variable o grupo a un modelo fuera de muestra\n"
-                            "- De dónde sale el número de una celda concreta\n"
-                            "- Qué tan confiable es cada cifra, y con qué tamaño de muestra"
-                        ),
-                    ),
-                    ui.caja(
-                        html.P("✕ Lo que NO responde", className="mb-2 font-semibold text-rose-700"),
-                        ui.parrafo(
-                            "- Cuántos kilos se van a cosechar la semana que viene\n"
-                            "- Si subir el riego aumentaría el rendimiento\n"
-                            "- Qué variable **causa** qué — son datos observacionales de una campaña\n"
-                            "- El efecto por fase fenológica observada — M_Poda aporta un reloj "
-                            "proxy, pero todavía no trae la fase fenológica medida"
-                        ),
-                    ),
-                ],
+            ui.subseccion(
+                "Lo que sí responde",
+                ui.parrafo(
+                    "Qué variables acompañan a las semanas de mayor rendimiento y cuánto de "
+                    "esa relación se confunde con el calendario; qué aporta cada variable, o "
+                    "cada grupo de variables, a un modelo evaluado fuera de muestra; de dónde "
+                    "sale el número de una celda concreta; y qué tan confiable es cada cifra, "
+                    "con qué tamaño de muestra detrás."
+                ),
             ),
+            ui.subseccion(
+                "Lo que no responde",
+                ui.parrafo(
+                    "Cuántos kilos se van a cosechar la semana que viene, ni si subir el riego "
+                    "aumentaría el rendimiento. Tampoco qué variable **causa** qué: son datos "
+                    "observacionales de una sola campaña. Ni el efecto por fase fenológica "
+                    "observada: 'M_Poda' aporta un reloj proxy, pero todavía no trae la fase "
+                    "medida."
+                ),
+            ),
+        ],
+    )
+
+
+def _tabla(columnas: list[str], filas: list[tuple]) -> html.Table:
+    """Tabla de pocas filas con el estilo del tablero: cabecera en rótulo, filas sin marco.
+
+    No es `ui.tabla_desde_df` porque estas dos tablas son literales escritas a mano (no
+    salen de un DataFrame) y no necesitan formato por columna.
+    """
+    return html.Table(
+        className="w-full text-left text-sm",
+        children=[
+            html.Thead(html.Tr([
+                html.Th(c, className=f"border-b {ui.BORDE} pb-2 pr-4 {ui.ROTULO}") for c in columnas
+            ])),
+            html.Tbody([
+                html.Tr([
+                    html.Td(str(v), className="border-b border-stone-100 py-2 pr-4 text-slate-600")
+                    for v in fila
+                ])
+                for fila in filas
+            ]),
         ],
     )
 
@@ -70,18 +128,7 @@ def _estado_analitico() -> html.Div:
     return html.Div(
         className="space-y-3",
         children=[
-            ui.titulo_seccion("Qué está medido hoy"),
-            html.Table(
-                className="w-full text-left text-sm",
-                children=[
-                    html.Thead(html.Tr([html.Th(c, className="border-b py-1 pr-4") for c in
-                                        ["Resultado", "Pregunta", "Estado", "Dónde verlo"]])),
-                    html.Tbody([
-                        html.Tr([html.Td(v, className="border-b py-1 pr-4") for v in fila])
-                        for fila in filas
-                    ]),
-                ],
-            ),
+            _tabla(["Resultado", "Pregunta", "Estado", "Dónde verlo"], filas),
             ui.semaforo(
                 "aviso",
                 "La evidencia actual indica que la asociación climática está confundida con "
@@ -107,66 +154,63 @@ def _granularidad(panel) -> html.Div:
     return html.Div(
         className="space-y-3",
         children=[
-            ui.titulo_seccion("A qué grano se mide cada variable"),
             ui.parrafo(
-                f"Las hojas de clima —**Temp Max-Min**, **Rad y ET** y **DPV**— traen "
+                f"Las hojas de clima **Temp Max-Min**, **Rad y ET** y **DPV**, traen "
                 f"**un valor por semana**, no por módulo: el de la semana 1 se aplica a "
                 f"los {panel.n_modulos} módulos de la semana 1, el de la 2 a los de la 2, "
                 "y así."
             ),
-            html.Table(
-                className="w-full text-left text-sm",
-                children=[
-                    html.Thead(html.Tr([html.Th(c, className="border-b py-1 pr-4") for c in
-                                        ["Variable", "Se mide por", "¿Distingue módulos?", "Valores distintos"]])),
-                    html.Tbody([
-                        html.Tr([html.Td(str(v), className="border-b py-1 pr-4") for v in fila])
-                        for fila in filas
-                    ]),
-                ],
-            ),
+            _tabla(["Variable", "Se mide por", "¿Distingue módulos?", "Valores distintos"], filas),
+            # Tres cifras cortas, así que van en fila: son números con su rótulo, no
+            # bloques de texto que necesiten ancho de lectura. Planos y separados por
+            # líneas verticales — el marco lo pone el panel que los contiene.
             html.Div(
-                className="grid grid-cols-[3fr_2fr] gap-4",
+                className="grid divide-y divide-stone-200/80 "
+                          "sm:grid-cols-3 sm:divide-x sm:divide-y-0",
                 children=[
-                    ui.semaforo(
-                        "info",
-                        "**¿Es un problema del dato?** No. Dentro de un mismo fundo la "
-                        "temperatura y el déficit de presión de vapor no cambian de forma "
-                        "apreciable de un módulo al de al lado: medirlos por módulo daría "
-                        "el mismo número repetido. La estructura **representa bien la "
-                        "realidad física**.\n\n"
-                        "**¿Tiene consecuencias?** Dos, y ambas importan:\n\n"
-                        f"1. **El tamaño de muestra real es {ef.n_semanas}, no "
-                        f"{ef.n_celdas}.** Cada valor de clima se repite "
-                        f"{ef.n_celdas / ef.n_semanas:.1f} veces en el panel. Un intervalo "
-                        f"de confianza calculado sobre las celdas saldría "
-                        f"**{ef.factor_inflacion:.1f} veces más estrecho** de lo correcto. "
-                        "Todas las cifras de *Impacto agronómico* usan el n correcto.\n"
-                        "2. **Ninguna variable climática puede explicar las diferencias "
-                        "entre módulos de una misma semana**, porque vale lo mismo para "
-                        "todos. Eso no es una limitación del análisis sino aritmética.",
-                    ),
                     html.Div(
-                        className="space-y-3",
-                        children=[
-                            ui.tarjetas([
-                                ("n aparente", ui.entero(ef.n_celdas), "Filas del panel"),
-                                ("n efectivo", ui.entero(ef.n_semanas), "Mediciones climáticas distintas"),
-                            ]),
-                            ui.caja(
-                                html.Div("Inflación si se usa el n equivocado", className="text-xs text-slate-500"),
-                                html.Div(f"{ef.factor_inflacion:.1f}×", className="mt-1 text-2xl font-semibold"),
-                            ),
-                        ],
-                    ),
+                        ui.kpi(rotulo, valor, nota=nota, plano=True),
+                        className="py-3 sm:px-4 sm:py-0 sm:first:pl-0 sm:last:pr-0",
+                    )
+                    for rotulo, valor, nota in [
+                        ("n aparente", ui.entero(ef.n_celdas), "Filas del panel."),
+                        ("n efectivo", ui.entero(ef.n_semanas),
+                         "Mediciones climáticas distintas."),
+                        ("Inflación si se usa el n equivocado",
+                         f"{ef.factor_inflacion:.1f}×",
+                         "Cuánto más estrecho saldría un intervalo de "
+                         "confianza sobre celdas en vez de semanas."),
+                    ]
                 ],
             ),
-            ui.parrafo(
-                "**¿Convendría enriquecer el dato por módulo?** Para temperatura y DPV, "
-                "no: no hay variación espacial que capturar dentro del fundo. Lo que sí "
-                "falta son variables que **sí** distingan un módulo de otro — fecha de "
-                "poda, variedad, edad de planta, suelo. Ésas son las que podrían explicar "
-                "el tramo que hoy queda sin explicar."
+            # El razonamiento completo se pliega: son dos párrafos y una lista numerada que
+            # sostienen las tres cifras de arriba, no se leen cada vez que se abre la página.
+            ui.plegable(
+                "Por qué importa",
+                ui.parrafo(
+                    "**¿Es un problema del dato?** No. Dentro de un mismo fundo la "
+                    "temperatura y el déficit de presión de vapor no cambian de forma "
+                    "apreciable de un módulo al de al lado: medirlos por módulo daría "
+                    "el mismo número repetido. La estructura **representa bien la "
+                    "realidad física**.\n\n"
+                    "**¿Tiene consecuencias?** Dos, y ambas importan:\n\n"
+                    f"1. **El tamaño de muestra real es {ef.n_semanas}, no "
+                    f"{ef.n_celdas}.** Cada valor de clima se repite "
+                    f"{ef.n_celdas / ef.n_semanas:.1f} veces en el panel. Un intervalo "
+                    f"de confianza calculado sobre las celdas saldría "
+                    f"**{ef.factor_inflacion:.1f} veces más estrecho** de lo correcto. "
+                    "Todas las cifras de *Impacto agronómico* usan el n correcto.\n"
+                    "2. **Ninguna variable climática puede explicar las diferencias "
+                    "entre módulos de una misma semana**, porque vale lo mismo para "
+                    "todos. Eso no es una limitación del análisis sino aritmética."
+                ),
+                ui.parrafo(
+                    "**¿Convendría enriquecer el dato por módulo?** Para temperatura y DPV, "
+                    "no: no hay variación espacial que capturar dentro del fundo. Lo que sí "
+                    "falta son variables que **sí** distingan un módulo de otro — fecha de "
+                    "poda, variedad, edad de planta, suelo. Ésas son las que podrían explicar "
+                    "el tramo que hoy queda sin explicar."
+                ),
             ),
         ],
     )
@@ -178,17 +222,42 @@ def _render(panel):
         return ui.semaforo("aviso", "Cargando el panel…")
     tabla = panel.tabla
     return html.Div(
-        className="space-y-6",
         children=[
-            ui.tarjetas([
-                ("Celdas módulo × semana", ui.entero(len(tabla)), "Cada fila es un módulo en una semana concreta."),
-                ("Módulos", str(panel.n_modulos), "Con cosecha registrada en 2025."),
-                ("Semanas", str(panel.n_semanas), "Semanas del año con al menos una cosecha."),
-                ("kg/ha promedio", ui.entero(tabla.KgHa.mean()), "Promedio simple sobre las celdas del panel."),
-            ]),
-            _que_hace(),
-            _estado_analitico(),
-            _granularidad(panel),
-            ui.glosario(),
+            ui.encabezado_pagina(
+                "Qué responde este tablero",
+                "Clima, riego y rendimiento del fundo en la campaña 2025, medido por módulo "
+                "y semana. Empieza por acá: define el alcance de todo lo demás.",
+            ),
+            html.Div(
+                className="space-y-4",
+                children=[
+                    _kpis(tabla),
+                    ui.panel(
+                        "Alcance del análisis",
+                        _que_hace(),
+                        ayuda="Qué preguntas quedan identificadas con estos datos y cuáles no.",
+                    ),
+                    ui.panel(
+                        "Qué está medido hoy",
+                        _estado_analitico(),
+                        ayuda="Asociación y aporte predictivo sí; efecto causal todavía no.",
+                    ),
+                    ui.panel(
+                        "A qué grano se mide cada variable",
+                        _granularidad(panel),
+                        ayuda="El clima viene por semana, el rendimiento por módulo y semana. "
+                              "Eso tiene consecuencias sobre el tamaño de muestra.",
+                    ),
+                    # Plegado por omisión: es material de consulta, no parte del hilo que
+                    # la página cuenta de arriba a abajo.
+                    ui.panel(
+                        "Qué significa cada variable",
+                        ui.glosario(plano=True),
+                        plegable=True,
+                        abierto=False,
+                        ayuda="Definición en lenguaje llano de cada variable del panel.",
+                    ),
+                ],
+            ),
         ],
     )

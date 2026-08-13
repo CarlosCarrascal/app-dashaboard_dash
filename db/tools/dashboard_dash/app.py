@@ -51,7 +51,7 @@ def _cargar_modulo_sibling(nombre: str, ruta: Path):
 
 _cargar_modulo_sibling("graficos", STREAMLIT_DIR / "vistas" / "graficos.py")
 
-from dash import Input, Output, clientside_callback  # noqa: E402
+from dash import Input, Output, clientside_callback, html  # noqa: E402
 from dash_extensions.enrich import (  # noqa: E402
     DashProxy,
     FileSystemBackend,
@@ -61,7 +61,7 @@ from dash_extensions.enrich import (  # noqa: E402
     callback as ecallback,
 )
 
-from components import layout  # noqa: E402
+from components import layout, ui  # noqa: E402
 from servicios.carga import ORIGEN_STORE, PANEL_STORE  # noqa: E402  (registra su callback)
 
 CACHE_DIR = RAIZ / ".cache"
@@ -91,7 +91,10 @@ def _estado_panel(panel, info):
     if info is None:
         return "Cargando…"
     if info.get("error"):
-        return f"⚠ {info['error']}"
+        return html.Div(
+            className="flex items-center gap-2 text-amber-600",
+            children=[ui.icono("warning", "h-4 w-4"), html.Span(info["error"])],
+        )
     extra = []
     if info.get("poda"):
         extra.append("poda")
