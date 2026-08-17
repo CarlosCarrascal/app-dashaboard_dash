@@ -205,12 +205,12 @@ def mapa_por_modulo(porm: pd.DataFrame, columnas: list[str]) -> go.Figure:
     return _limpio(fig, max(420, 26 * len(porm)), margin={**MARGEN, "t": 30})
 
 
-def ventana_de_cosecha(porm: pd.DataFrame) -> go.Figure:
+def ventana_de_cosecha(porm: pd.DataFrame, clave: str = "TempMin") -> go.Figure:
     """Correlación de cada módulo contra dónde arranca su cosecha.
 
     Es el gráfico que revela que el signo de la correlación lo fija la ventana de cosecha.
     """
-    col = ETIQUETAS["TempMin"]
+    col = ETIQUETAS.get(clave, clave)
     fig = px.scatter(
         porm, x="Inicio", y=col, size="Semanas", color=col,
         color_continuous_scale=DIVERGENTE, range_color=[-1, 1],
