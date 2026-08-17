@@ -10,17 +10,24 @@ anticipa el cuajado, y qué desfase explica mejor cada uno de los cuatro objetiv
 
 from __future__ import annotations
 
+import logging
+
 import dash
-import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
-from dash import dcc, html
+import plotly.graph_objects as go
+from dash import Input as DashInput
+from dash import Output as DashOutput
+from dash import clientside_callback, dcc, html
 from dash_extensions.enrich import Input, Output, callback
+from plotly.subplots import make_subplots
 
 from analitica import nucleo
 from analitica.config import AZUL, GRIS, ROJO, etiqueta
 from components import ui
+from servicios.cache_analisis import obtener, precargar
 from servicios.carga import PANEL_STORE
+
+_LOGGER = logging.getLogger(__name__)
 
 dash.register_page(__name__, path="/impacto/frutos-peso", name="Frutos y peso", order=3, grupo="Impacto agronómico")
 
@@ -31,8 +38,83 @@ _COLUMNA_PRE_PEAK = {
 }
 
 
+def _sem(panel):
+    return obtener(
+        panel,
+        "fp:semana",
+        lambda: nucleo.clima.agregar_por_semana(panel.tabla),
+    )
+
+
+def _tray(panel):
+    return obtener(
+        panel,
+        "fp:trayectorias",
+        lambda: nucleo.clima.trayectorias_frutos_peso(panel.tabla),
+    )
+
+
+def _descomp(panel, sem):
+    return obtener(
+        panel,
+        "fp:descomposicion",
+        lambda: nucleo.clima.descomponer_frutos_peso(sem),
+    )
+
+
+def _picos(panel):
+    return obtener(
+        panel,
+        "fp:picos",
+        lambda: nucleo.clima.resumen_picos_frutos_peso(panel.tabla),
+    )
+
+
+def _rezago(panel, sem):
+    return obtener(
+        panel,
+        "fp:mejor-rezago",
+        lambda: nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla),
+    )
+
+
+def _rezagos(panel, sem):
+    return obtener(
+        panel,
+        "fp:rezagos",
+        lambda: nucleo.clima.rezagos_todos(sem, panel.tabla),
+    )
+
+
+def _precargar_lecturas(panel, sem):
+    """Programa las tablas que usan varias secciones y callbacks."""
+    precargar(
+        panel,
+        {
+            "fp:trayectorias": lambda: nucleo.clima.trayectorias_frutos_peso(panel.tabla),
+            "fp:descomposicion": lambda: nucleo.clima.descomponer_frutos_peso(sem),
+            "fp:picos": lambda: nucleo.clima.resumen_picos_frutos_peso(panel.tabla),
+            "fp:mejor-rezago": lambda: nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla),
+            "fp:rezagos": lambda: nucleo.clima.rezagos_todos(sem, panel.tabla),
+        },
+    )
+
+
 def layout():
-    return html.Div(id="fp-contenido")
+    return html.Div(
+        id="fp-contenido",
+        children=[
+            *[
+                dcc.Store(id=f"fp-listo-{parte}", data=False)
+                for parte in (
+                    "resumen", "descomposicion", "trayectoria", "picos",
+                    "picos-grafico", "peso", "peso-grafico",
+                )
+            ],
+            html.Div(id="fp-carga-inicial", children=ui.esqueleto_pagina()),
+            html.Div(id="fp-pagina-lista", style={"display": "none"}, children=_estructura()),
+        ],
+    )
 
 
 def _estilo_figura(fig, altura: int):
@@ -54,8 +136,7 @@ def _formato_p(p: float) -> str:
     return "p < 0,001" if p < 0.001 else f"p = {p:.3f}".replace(".", ",")
 
 
-def _resumen(sem, tray) -> html.Div:
-    descomp = nucleo.clima.descomponer_frutos_peso(sem)
+def _resumen(descomp, tray) -> html.Div:
     frutos = descomp[descomp.Objetivo == "Frutos"]
     peso = descomp[descomp.Objetivo == "Peso"]
     sobreviven_frutos = int(frutos.Sobrevive.sum())
@@ -86,8 +167,7 @@ def _resumen(sem, tray) -> html.Div:
     ])
 
 
-def _respuesta_corta(sem, tray) -> html.Div:
-    descomp = nucleo.clima.descomponer_frutos_peso(sem)
+def _respuesta_corta(descomp) -> html.Div:
     frutos = descomp[descomp.Objetivo == "Frutos"]
     peso = descomp[descomp.Objetivo == "Peso"]
     quedan_frutos = frutos.loc[frutos.Sobrevive, "Variable"].tolist()
@@ -129,22 +209,18 @@ def _respuesta_corta(sem, tray) -> html.Div:
     )
 
 
-@callback(Output("fp-contenido", "children"), Input(PANEL_STORE, "data"))
-def _shell(panel):
-    if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+def _cargando(id_: str, altura: str = "h-56") -> html.Div:
+    """Reserva el espacio de una sección con un skeleton, no con un bloque en blanco."""
+    return html.Div(id=id_, children=ui.esqueleto_seccion(altura))
 
-    sem = nucleo.clima.agregar_por_semana(panel.tabla)
-    if sem.Frutos.notna().sum() < 10:
-        return ui.semaforo(
-            "aviso",
-            "No hay suficientes semanas con Frutos y Peso cargados para esta sección "
-            "(la hoja «Kg Reales» no está, o el formato cambió — ver Datos y calidad).",
-        )
 
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
-    modulos = tray["Módulo"].tolist()
+def _estructura():
+    """Estructura estable: ningún callback apunta a un componente creado por otro.
 
+    Dash registra todos estos IDs en el mismo render inicial de la página. Así se evita la
+    carrera que producía «nonexistent object» y también se reserva todo el espacio antes de
+    que lleguen los gráficos.
+    """
     return html.Div(
         children=[
             ui.encabezado_pagina(
@@ -155,11 +231,10 @@ def _shell(panel):
             html.Div(
                 className="space-y-4",
                 children=[
-                    _resumen(sem, tray),
-                    _respuesta_corta(sem, tray),
+                    _cargando("fp-resumen-body"),
                     ui.panel(
                         "1 · Separar frutos y peso cambia la pregunta",
-                        _descomposicion_narrativa(sem),
+                        _cargando("fp-descomposicion-body", "h-64"),
                         ayuda="Comparación de asociaciones crudas y controladas para cuajado y tamaño.",
                     ),
                     ui.panel(
@@ -173,35 +248,79 @@ def _shell(panel):
                                     "y si el peso termina por encima o por debajo de su inicio."
                                 ),
                                 dcc.Dropdown(
-                                    id="fp-modulo", options=modulos,
-                                    value=modulos[0] if modulos else None,
+                                    id="fp-modulo", options=[], value=None,
                                     clearable=False, className="max-w-sm",
+                                    persistence=True, persistence_type="session",
                                 ),
-                                html.Div(id="fp-trayectoria-body"),
-                            ],
-                        ),
+                                 _cargando("fp-trayectoria-body"),
+                             ],
+                         ),
                         ayuda="Lectura de una trayectoria concreta, sin confundirla con el promedio del fundo.",
                     ),
                     ui.panel(
                         "3 · Cuándo aparece el peak entre módulos",
-                        _picos_narrativa(panel),
+                        _cargando("fp-picos-narrativa"),
+                        ui.plegable(
+                            "Explorar el clima de las cuatro semanas pre-peak",
+                            dcc.Dropdown(
+                                id="fp-picos-clima",
+                                options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
+                                value="TempMin", clearable=False,
+                                persistence=True, persistence_type="session",
+                            ),
+                            _cargando("fp-picos-body", "h-48"),
+                        ),
                         ayuda="Distribución del peak observado y clima de las semanas previas.",
                     ),
                     ui.panel(
                         "4 · Qué acompaña el cambio de peso",
-                        _peso_narrativa(panel),
+                        _cargando("fp-peso-narrativa"),
+                        dcc.Dropdown(
+                            id="fp-peso-clima",
+                            options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
+                            value="TempMin", clearable=False, className="max-w-sm",
+                            persistence=True, persistence_type="session",
+                        ),
+                        _cargando("fp-peso-body", "h-48"),
                         ayuda="Relación exploratoria entre exposición pre-peak y cambio observado de peso.",
                     ),
                     ui.panel(
                         "5 · ¿La floración anticipa el cuajado?",
-                        _floracion_shell(panel),
+                        ui.parrafo(
+                            "Compara dos mediciones biológicas reales —flores y frutos— y "
+                            "descuenta tanto el calendario como el promedio de cada módulo."
+                        ),
+                        dcc.RadioItems(
+                            id="fp-floracion-objetivo",
+                            options=[
+                                {"label": "Frutos (cuajado)", "value": "Frutos"},
+                                {"label": "kg/ha (cosecha)", "value": "KgHa"},
+                            ],
+                            value="Frutos", inline=True, className="flex gap-4 text-sm",
+                            persistence=True, persistence_type="session",
+                        ),
+                        _cargando("fp-floracion-body", "h-64"),
                         plegable=True,
                         abierto=False,
                         ayuda="Control más exigente con dos mediciones biológicas reales.",
                     ),
                     ui.panel(
                         "6 · Qué desfase explica cada resultado",
-                        _desfases_shell(sem, panel.tabla),
+                        _cargando("fp-desfase-resumen", "h-48"),
+                        html.Div(
+                            className="grid grid-cols-2 gap-3",
+                            children=[
+                                dcc.Dropdown(
+                                    id="fp-desfase-objetivo", options=[], value=None,
+                                    clearable=False, persistence=True, persistence_type="session",
+                                ),
+                                dcc.Dropdown(
+                                    id="fp-desfase-variable", options=[], value=None,
+                                    clearable=False, persistence=True, persistence_type="session",
+                                ),
+                            ],
+                        ),
+                        _cargando("fp-desfase-body", "h-48"),
                         plegable=True,
                         abierto=False,
                         ayuda="Búsqueda exploratoria de ventanas temporales para cada objetivo.",
@@ -212,11 +331,116 @@ def _shell(panel):
     )
 
 
-@callback(Output("fp-trayectoria-body", "children"), Input(PANEL_STORE, "data"), Input("fp-modulo", "value"))
+clientside_callback(
+    """
+    function() {
+        const listos = Array.prototype.slice.call(arguments)
+        const terminado = listos.length > 0 && listos.every(Boolean)
+        return terminado
+            ? [{'display': 'none'}, {'display': 'block'}]
+            : [{'display': 'block'}, {'display': 'none'}]
+    }
+    """,
+    DashOutput("fp-carga-inicial", "style"),
+    DashOutput("fp-pagina-lista", "style"),
+    *[
+        DashInput(f"fp-listo-{parte}", "data")
+        for parte in (
+            # El primer viewport se revela junto: KPIs y explicación comparativa. Las
+            # trayectorias y secciones 3–6 continúan debajo y no retienen toda la página
+            # mientras Plotly prepara gráficos que todavía están fuera de pantalla.
+            "resumen", "descomposicion",
+        )
+    ],
+)
+
+
+@callback(
+    Output("fp-resumen-body", "children"),
+    Output("fp-modulo", "options"),
+    Output("fp-modulo", "value"),
+    Output("fp-listo-resumen", "data"),
+    Input(PANEL_STORE, "data"),
+)
+def _render_resumen(panel):
+    if panel is None:
+        return ui.esqueleto_pagina(), [], None, False
+    try:
+        sem = _sem(panel)
+        _precargar_lecturas(panel, sem)
+        tray = _tray(panel)
+        descomp = _descomp(panel, sem)
+        modulos = tray["Módulo"].tolist()
+        contenido = html.Div(
+            [_resumen(descomp, tray), _respuesta_corta(descomp)], className="space-y-4"
+        )
+        return contenido, modulos, (modulos[0] if modulos else None), True
+    except Exception:  # pragma: no cover - la página principal ya muestra el error legible
+        _LOGGER.exception("No se pudo renderizar el resumen de Frutos y peso")
+        return (
+            ui.semaforo("error", "No se pudo preparar el resumen de Frutos y Peso."),
+            [], None, True,
+        )
+
+
+@callback(
+    Output("fp-descomposicion-body", "children"),
+    Output("fp-listo-descomposicion", "data"),
+    Input(PANEL_STORE, "data"),
+)
+def _render_descomposicion(panel):
+    if panel is None:
+        return ui.esqueleto_seccion("h-64"), False
+    sem = _sem(panel)
+    return _descomposicion_narrativa(_descomp(panel, sem)), True
+
+
+@callback(
+    Output("fp-picos-narrativa", "children"),
+    Output("fp-listo-picos", "data"),
+    Input(PANEL_STORE, "data"),
+)
+def _render_picos_narrativa(panel):
+    if panel is None:
+        return ui.esqueleto_seccion("h-64"), False
+    return _picos_narrativa(panel), True
+
+
+@callback(
+    Output("fp-peso-narrativa", "children"),
+    Output("fp-listo-peso", "data"),
+    Input(PANEL_STORE, "data"),
+)
+def _render_peso_narrativa(panel):
+    if panel is None:
+        return ui.esqueleto_seccion("h-48"), False
+    return _peso_narrativa(panel), True
+
+
+@callback(
+    Output("fp-desfase-resumen", "children"),
+    Output("fp-desfase-objetivo", "options"),
+    Output("fp-desfase-objetivo", "value"),
+    Input(PANEL_STORE, "data"),
+)
+def _render_desfases_shell(panel):
+    if panel is None:
+        return ui.esqueleto_seccion("h-48"), [], None
+    sem = _sem(panel)
+    resumen = _rezago(panel, sem)
+    objetivos = resumen.Objetivo.unique().tolist() if not resumen.empty else []
+    return _desfases_shell(sem, panel.tabla, resumen), objetivos, (objetivos[0] if objetivos else None)
+
+
+@callback(
+    Output("fp-trayectoria-body", "children"),
+    Output("fp-listo-trayectoria", "data"),
+    Input(PANEL_STORE, "data"), Input("fp-modulo", "value", allow_optional=True),
+)
 def _render_trayectoria(panel, modulo):
     if panel is None or modulo is None:
-        return None
-    trayectorias = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+        return ui.esqueleto_seccion("h-64"), False
+    trayectorias = _tray(panel)
     serie = panel.tabla[panel.tabla.celda == modulo].dropna(subset=["Frutos", "Peso"]).sort_values("nsem")
     fila = trayectorias.loc[trayectorias["Módulo"] == modulo].iloc[0]
     usa_poda = "dias_desde_poda" in serie.columns and serie.dias_desde_poda.notna().any()
@@ -331,12 +555,11 @@ def _render_trayectoria(panel, modulo):
             "Cambio neto peso (g)": "{:+.2f}", "Pendiente peso (g/sem)": "{:+.3f}",
         }),
     ))
-    return html.Div(bloques, className="space-y-3")
+    return html.Div(bloques, className="space-y-3"), True
 
 
-def _descomposicion_narrativa(sem) -> html.Div:
+def _descomposicion_narrativa(tabla) -> html.Div:
     """Una sola lectura comparativa: qué queda para Frutos y qué queda para Peso."""
-    tabla = nucleo.clima.descomponer_frutos_peso(sem)
     filas = [("Frutos", "Frutos por planta"), ("Peso", "Peso del fruto")]
     fig = make_subplots(
         rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.14,
@@ -519,17 +742,25 @@ def _floracion_shell(panel) -> html.Div:
                 id="fp-floracion-objetivo",
                 options=[{"label": "Frutos (cuajado)", "value": "Frutos"}, {"label": "kg/ha (cosecha)", "value": "KgHa"}],
                 value="Frutos", inline=True, className="flex gap-4 text-sm",
+                persistence=True, persistence_type="session",
             ),
-            html.Div(id="fp-floracion-body"),
+            html.Div(id="fp-floracion-body", children=ui.esqueleto_seccion("h-64")),
         ],
     )
 
 
-@callback(Output("fp-floracion-body", "children"), Input(PANEL_STORE, "data"), Input("fp-floracion-objetivo", "value"))
+@callback(
+    Output("fp-floracion-body", "children"),
+    Input(PANEL_STORE, "data"), Input("fp-floracion-objetivo", "value", allow_optional=True),
+)
 def _render_floracion(panel, objetivo_flor):
     if panel is None or objetivo_flor is None:
-        return None
-    rezago = nucleo.clima.rezago_floracion(panel.tabla, objetivo=objetivo_flor)
+        return ui.esqueleto_seccion("h-64")
+    rezago = obtener(
+        panel,
+        f"fp:floracion:{objetivo_flor}",
+        lambda: nucleo.clima.rezago_floracion(panel.tabla, objetivo=objetivo_flor),
+    )
     if rezago.empty:
         return ui.semaforo("info", f"No hay suficiente solapamiento entre floración y {objetivo_flor} para esta prueba.")
 
@@ -600,8 +831,7 @@ def _render_floracion(panel, objetivo_flor):
     )
 
 
-def _desfases_shell(sem, tabla) -> html.Div:
-    resumen = nucleo.clima.mejor_rezago_por_variable(sem, tabla)
+def _desfases_shell(sem, tabla, resumen) -> html.Div:
     if resumen.empty:
         return html.Div([
             ui.titulo_seccion("Qué desfase explica mejor kg/ha, Frutos, Peso y Floración", "h4"),
@@ -646,27 +876,18 @@ def _desfases_shell(sem, tabla) -> html.Div:
         "contemporánea."
     ))
 
-    objetivos = resumen.Objetivo.unique().tolist()
-    bloques.append(html.Div(
-        className="grid grid-cols-2 gap-3",
-        children=[
-            dcc.Dropdown(id="fp-desfase-objetivo", options=objetivos, value=objetivos[0], clearable=False),
-            dcc.Dropdown(id="fp-desfase-variable", clearable=False),
-        ],
-    ))
-    bloques.append(html.Div(id="fp-desfase-body"))
     return html.Div(bloques, className="space-y-3")
 
 
 @callback(
     Output("fp-desfase-variable", "options"), Output("fp-desfase-variable", "value"),
-    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value"),
+    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value", allow_optional=True),
 )
 def _opciones_desfase_variable(panel, objetivo_sel):
     if panel is None or objetivo_sel is None:
         return [], None
-    sem = nucleo.clima.agregar_por_semana(panel.tabla)
-    resumen = nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla)
+    sem = _sem(panel)
+    resumen = _rezago(panel, sem)
     claves = resumen.loc[resumen.Objetivo == objetivo_sel, "clave"].tolist()
     opciones = [{"label": etiqueta(c), "value": c} for c in claves]
     return opciones, (claves[0] if claves else None)
@@ -674,13 +895,14 @@ def _opciones_desfase_variable(panel, objetivo_sel):
 
 @callback(
     Output("fp-desfase-body", "children"),
-    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value"), Input("fp-desfase-variable", "value"),
+    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value", allow_optional=True),
+    Input("fp-desfase-variable", "value", allow_optional=True),
 )
 def _render_desfase(panel, objetivo_sel, variable_sel):
     if panel is None or objetivo_sel is None or variable_sel is None:
-        return None
-    sem = nucleo.clima.agregar_por_semana(panel.tabla)
-    todos = nucleo.clima.rezagos_todos(sem, panel.tabla)
+        return ui.esqueleto_seccion("h-48")
+    sem = _sem(panel)
+    todos = _rezagos(panel, sem)
     d = todos[(todos.Objetivo == objetivo_sel) & (todos.clave == variable_sel)]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=d.Rezago, y=d["r bruto"], mode="lines+markers", name="Sin descontar la estación", line={"color": ROJO}))
@@ -692,8 +914,8 @@ def _render_desfase(panel, objetivo_sel, variable_sel):
 
 
 def _picos_narrativa(panel) -> html.Div:
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
-    resumen = nucleo.clima.resumen_picos_frutos_peso(panel.tabla)
+    tray = _tray(panel)
+    resumen = _picos(panel)
     if tray.empty or resumen.empty:
         return ui.semaforo("info", "No hay suficientes pares Frutos–Peso para comparar el momento del peak.")
 
@@ -734,15 +956,6 @@ def _picos_narrativa(panel) -> html.Div:
                 "la ventana observada; no demuestra por sí sola una fase biológica."
             ),
             ui.plegable(
-                "Explorar el clima de las cuatro semanas pre-peak",
-                dcc.Dropdown(
-                    id="fp-picos-clima",
-                    options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
-                    value="TempMin", clearable=False,
-                ),
-                html.Div(id="fp-picos-body"),
-            ),
-            ui.plegable(
                 "Ver el resumen por posición relativa",
                 ui.parrafo(
                     "La posición relativa sirve como descriptor del tramo observado, pero "
@@ -762,8 +975,8 @@ def _picos_narrativa(panel) -> html.Div:
 
 
 def _picos_shell(panel) -> html.Div:
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
-    resumen = nucleo.clima.resumen_picos_frutos_peso(panel.tabla)
+    tray = _tray(panel)
+    resumen = _picos(panel)
     if tray.empty or resumen.empty:
         return html.Div([
             ui.titulo_seccion("Por qué el peak de frutos aparece al inicio, medio o final", "h4"),
@@ -835,11 +1048,15 @@ def _picos_shell(panel) -> html.Div:
     return html.Div(bloques, className="space-y-3")
 
 
-@callback(Output("fp-picos-body", "children"), Input(PANEL_STORE, "data"), Input("fp-picos-clima", "value"))
+@callback(
+    Output("fp-picos-body", "children"),
+    Output("fp-listo-picos-grafico", "data"),
+    Input(PANEL_STORE, "data"), Input("fp-picos-clima", "value", allow_optional=True),
+)
 def _render_picos(panel, variable):
     if panel is None or variable is None:
-        return None
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+        return ui.esqueleto_seccion("h-48"), False
+    tray = _tray(panel)
     columna = _COLUMNA_PRE_PEAK[variable]
     x = "Días desde poda peak" if tray["Días desde poda peak"].notna().any() else "Semana peak frutos"
     fig = px.scatter(
@@ -850,11 +1067,11 @@ def _render_picos(panel, variable):
     fig.update_layout(height=330, margin={"l": 10, "r": 10, "t": 10, "b": 10},
                       xaxis_title="días desde poda del peak" if x.startswith("Días") else "semana del peak",
                       yaxis_title=f"{etiqueta(variable)}: promedio de 4 semanas pre-peak")
-    return dcc.Graph(figure=fig, config={"displaylogo": False})
+    return dcc.Graph(figure=fig, config={"displaylogo": False}), True
 
 
 def _peso_narrativa(panel) -> html.Div:
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+    tray = _tray(panel)
     if tray.empty:
         return ui.semaforo("info", "No hay suficientes trayectorias de peso para esta comparación.")
     cambio = tray["Cambio neto peso (g)"]
@@ -868,18 +1085,12 @@ def _peso_narrativa(panel) -> html.Div:
                 "sea su causa. La nube siguiente sirve para comprobar si alguna exposición "
                 "de las cuatro semanas pre-peak acompaña ese cambio."
             ),
-            dcc.Dropdown(
-                id="fp-peso-clima",
-                options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
-                value="TempMin", clearable=False, className="max-w-sm",
-            ),
-            html.Div(id="fp-peso-body"),
         ],
     )
 
 
 def _peso_shell(panel) -> html.Div:
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+    tray = _tray(panel)
     if tray.empty:
         return None
     return html.Div(
@@ -896,11 +1107,15 @@ def _peso_shell(panel) -> html.Div:
     )
 
 
-@callback(Output("fp-peso-body", "children"), Input(PANEL_STORE, "data"), Input("fp-peso-clima", "value"))
+@callback(
+    Output("fp-peso-body", "children"),
+    Output("fp-listo-peso-grafico", "data"),
+    Input(PANEL_STORE, "data"), Input("fp-peso-clima", "value", allow_optional=True),
+)
 def _render_peso(panel, variable):
     if panel is None or variable is None:
-        return None
-    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+        return ui.esqueleto_seccion("h-48"), False
+    tray = _tray(panel)
     columna = _COLUMNA_PRE_PEAK[variable]
     fig = px.scatter(
         tray, x=columna, y="Cambio neto peso (g)", color="Posición del peak", hover_name="Módulo",
@@ -933,4 +1148,4 @@ def _render_peso(panel, variable):
             f"comprobar si esas trayectorias cambian junto con {etiqueta(variable)} "
             "antes del peak; la asociación sigue siendo observacional."
         ),
-    ], className="space-y-3")
+    ], className="space-y-3"), True

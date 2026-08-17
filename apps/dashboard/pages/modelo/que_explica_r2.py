@@ -8,10 +8,7 @@ y quedan guardadas en memoria para que volver a ella sea inmediato.
 
 from __future__ import annotations
 
-from threading import Lock
-
 import dash
-import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash_extensions.enrich import Input, Output, callback
@@ -21,6 +18,7 @@ from analitica import nucleo
 from analitica.config import AZUL, FEATURES, GRIS, NARANJA, ROJO
 from analitica.visualizaciones import graficos as g
 from components import ui
+from servicios.cache_analisis import obtener, precargar
 from servicios.carga import PANEL_STORE
 
 dash.register_page(__name__, path="/modelo/r2", name="Qué explica el R²", order=0, grupo="Modelo predictivo")
@@ -33,8 +31,17 @@ BLOQUES = {
 }
 
 _PESADOS = ("grupos", "aporte", "esquemas")
-_R2_DATA: dict[str, dict[str, object]] = {}
-_R2_LOCK = Lock()
+
+
+def _tareas_pesadas(panel):
+    return {
+        "r2:grupos": lambda: nucleo.aporte_por_grupo(panel.tabla),
+        "r2:aporte": lambda: nucleo.aporte_por_variable(panel.tabla),
+        # Los baselines descriptivos de tabla_validacion se calculan sobre toda la
+        # muestra y no son comparables con las filas fuera de muestra. La página muestra
+        # solo los siete cruces del plan, que sí comparten una pregunta de validación.
+        "r2:esquemas": lambda: nucleo.tabla_validacion(panel.tabla, referencias=()),
+    }
 
 
 def layout():
@@ -46,17 +53,16 @@ def layout():
                 "El R² depende de la información disponible y de cómo se separan las semanas. "
                 "Aquí distinguimos el techo, la generalización y el aporte de cada señal.",
             ),
-            html.Div(id="r2-resumen"),
+            html.Div(id="r2-resumen", children=ui.esqueleto_pagina()),
             dcc.Tabs(
                 id="r2-tabs",
                 value="techo",
                 children=[dcc.Tab(label=nombre, value=clave) for clave, nombre in BLOQUES.items()],
             ),
-            dcc.Loading(
-                id="r2-loading",
-                type="dot",
-                color=AZUL,
-                children=html.Div(id="r2-contenido", className="pt-4"),
+            html.Div(
+                id="r2-contenido",
+                className="pt-4",
+                children=ui.esqueleto_seccion("h-64"),
             ),
         ],
     )
@@ -76,42 +82,14 @@ def _estilo_figura(fig: go.Figure, altura: int) -> go.Figure:
     return fig
 
 
-def _panel_key(panel) -> str:
-    tabla = panel.tabla
-    columnas = [c for c in ("nsem", "celda", "KgHa") if c in tabla.columns]
-    huella = int(pd.util.hash_pandas_object(tabla[columnas], index=True).sum())
-    return f"{tabla.shape}:{huella}"
-
-
-def _calcular_pesado(panel, bloque: str):
-    calculos = {
-        "grupos": lambda: nucleo.aporte_por_grupo(panel.tabla),
-        "aporte": lambda: nucleo.aporte_por_variable(panel.tabla),
-        # Los baselines descriptivos de tabla_validacion se calculan sobre toda la
-        # muestra y no son comparables con las filas fuera de muestra. La página muestra
-        # solo los siete cruces del plan, que sí comparten una pregunta de validación.
-        "esquemas": lambda: nucleo.tabla_validacion(panel.tabla, referencias=()),
-    }
-    key = _panel_key(panel)
-    with _R2_LOCK:
-        dato = _R2_DATA.get(key, {}).get(bloque)
-    if dato is not None:
-        return dato, None
-
-    try:
-        resultado = calculos[bloque]()
-    except Exception as exc:  # pragma: no cover - salvaguarda de la interfaz
-        return None, str(exc)
-
-    with _R2_LOCK:
-        _R2_DATA.setdefault(key, {})[bloque] = resultado
-    return resultado, None
-
-
 def _dato_pesado(panel, bloque: str):
     if bloque not in _PESADOS:
         return None, f"Bloque desconocido: {bloque}"
-    return _calcular_pesado(panel, bloque)
+    try:
+        dato = obtener(panel, f"r2:{bloque}", _tareas_pesadas(panel)[f"r2:{bloque}"])
+    except Exception as exc:  # pragma: no cover - salvaguarda de la interfaz
+        return None, str(exc)
+    return dato, None
 
 
 def _kpis(pct_entre: float, pct_dentro: float, n: int, semanas: int) -> html.Div:
@@ -186,7 +164,11 @@ def _respuesta_corta(pct_entre: float, pct_dentro: float) -> html.Div:
 )
 def _render_resumen(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_pagina()
+    # Se inicia una sola vez al entrar. Las pestañas no necesitan un clic para empezar
+    # y, si el usuario llega antes de que termine, espera la misma tarea en vez de crear
+    # otro entrenamiento.
+    precargar(panel, _tareas_pesadas(panel))
     pct_entre, pct_dentro = nucleo.descomposicion_varianza(panel.tabla)
     base = panel.tabla.dropna(subset=[*FEATURES, "KgHa"])
     return html.Div(
@@ -443,7 +425,7 @@ def _esquemas(tabla) -> html.Div:
 )
 def _render(panel, bloque):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_seccion("h-64")
     if bloque == "techo":
         return _techo(panel)
     dato, error = _dato_pesado(panel, bloque)

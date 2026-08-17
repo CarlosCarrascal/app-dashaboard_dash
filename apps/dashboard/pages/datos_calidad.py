@@ -42,7 +42,7 @@ def layout():
     return html.Div(
         className="space-y-6",
         children=[
-            html.Div(id="calidad-hallazgos"),
+            html.Div(id="calidad-hallazgos", children=ui.esqueleto_seccion("h-40")),
             html.Hr(className="border-slate-200"),
             ui.titulo_seccion("Panel consolidado y exportación"),
             html.Div(
@@ -156,7 +156,7 @@ def _filtrar(tabla: pd.DataFrame, fundos, modulos, semanas, kgha, excluir_riego)
 )
 def _inicializar(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…"), [], [], 0, 1, [0, 1], 0.0, 1.0, [0.0, 1.0]
+        return ui.esqueleto_seccion("h-40"), [], [], 0, 1, [0, 1], 0.0, 1.0, [0.0, 1.0]
 
     graves = panel.graves()
     orden = {"alta": 0, "media": 1, "baja": 2}

@@ -68,6 +68,45 @@ SUBTITULO = "text-sm font-semibold text-slate-500"
 CABECERA = "bg-stone-50"
 
 
+def esqueleto_seccion(altura: str = "h-56") -> html.Div:
+    """Boceto neutro de una sección mientras llega su callback.
+
+    Mantiene el alto aproximado del contenido real para que la página no salte ni parezca
+    vacía. No usa `dcc.Loading`: el propio contenido fantasma es el estado de espera.
+    """
+    return html.Div(
+        className="aq-skeleton animate-pulse space-y-3",
+        **{"aria-hidden": "true"},
+        children=[
+            html.Div(className="h-4 w-1/3 rounded bg-slate-200"),
+            html.Div(className=f"w-full rounded-xl bg-slate-100 {altura}"),
+            html.Div(className="h-3 w-5/6 rounded bg-slate-100"),
+            html.Div(className="h-3 w-2/3 rounded bg-slate-100"),
+        ],
+    )
+
+
+def esqueleto_pagina() -> html.Div:
+    """Boceto para salidas de página que todavía no recibieron el panel."""
+    return html.Div(
+        className="aq-skeleton animate-pulse space-y-4",
+        **{"aria-hidden": "true"},
+        children=[
+            html.Div(className="h-8 w-2/3 rounded bg-slate-200"),
+            html.Div(className="h-4 w-5/6 rounded bg-slate-100"),
+            html.Div(
+                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
+                children=[
+                    html.Div(className="h-28 rounded-xl border border-slate-100 bg-slate-50")
+                    for _ in range(4)
+                ],
+            ),
+            esqueleto_seccion("h-64"),
+            esqueleto_seccion("h-40"),
+        ],
+    )
+
+
 # ── Formato ──────────────────────────────────────────────────────────────────
 
 

@@ -18,7 +18,7 @@ dash.register_page(__name__, path="/", name="Pregunta, datos y límites", order=
 
 
 def layout():
-    return html.Div(id="pregunta-contenido")
+    return html.Div(id="pregunta-contenido", children=ui.esqueleto_pagina())
 
 
 def _kpis(tabla) -> html.Div:
@@ -233,7 +233,7 @@ def _granularidad(panel) -> html.Div:
 @callback(Output("pregunta-contenido", "children"), Input(PANEL_STORE, "data"))
 def _render(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_pagina()
     tabla = panel.tabla
     return html.Div(
         children=[

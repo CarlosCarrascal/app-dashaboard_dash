@@ -10,6 +10,7 @@ la app. La capa de caché vive en `servicios/`.
 from __future__ import annotations
 
 import io
+import re
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -368,8 +369,9 @@ def _agregar_frutos_peso(
 
     Es una tabla pivote de Excel exportada sin limpiar: dos bloques de columnas lado a
     lado (uno con nombres tipo «Suma de Kg/Ha», otro ya limpio con Fundo/Modulo/Semana).
-    Se lee el bloque limpio por posición (columnas 9 a 15) porque los nombres se
-    duplican entre bloques y pandas los renombra de forma poco predecible.
+    Se localiza el bloque por sus encabezados, en vez de depender de que siempre empiece
+    en la columna 10; así una exportación de Excel con una columna adicional no elimina
+    Frutos y Peso al desplegar.
 
     Si la hoja no está, o cambió de forma y las tres primeras columnas del bloque ya no
     son Fundo/Módulo/Semana, se degrada sin romper: el panel sigue sin estas dos
@@ -382,24 +384,60 @@ def _agregar_frutos_peso(
         return tabla
 
     crudo = _norm(xl.parse("Kg Reales", header=3))
-    if crudo.shape[1] < 16:
+    nombres = [
+        re.sub(r"\.\d+$", "", str(c).strip().lower())
+        .rstrip(".")
+        .replace("ó", "o")
+        .replace("�", "o")
+        .replace(" ", "")
+        for c in crudo.columns
+    ]
+    inicio = None
+    for i in range(len(nombres) - 2):
+        if nombres[i : i + 3] == ["fundo", "modulo", "semana"]:
+            inicio = i
+            break
+
+    if inicio is None:
         hallazgos.append(Hallazgo(
             "frutos_peso_formato", "«Kg Reales» no tiene el formato esperado", "baja",
-            f"La hoja trae {crudo.shape[1]} columnas; se esperaban al menos 16.",
+            "No se encontró un bloque con las columnas Fundo/Módulo/Semana.",
             "No se cargan Frutos ni Peso. El resto del panel no se ve afectado.",
         ))
         return tabla
 
-    bloque = crudo.iloc[:, 9:16].copy()
-    bloque.columns = ["Fundo", "Modulo", "Semana", "Kg_kgreales", "Frutos", "Peso",
-                      "KgHa_kgreales"]
-    bloque = bloque.dropna(subset=["Fundo", "Modulo", "Semana"])
-
-    if bloque.empty or not bloque.Semana.astype(str).str.match(r"^S\d+$").all():
+    siguientes = nombres[inicio + 3 :]
+    try:
+        i_frutos = inicio + 3 + siguientes.index("frutos")
+        i_peso = inicio + 3 + siguientes.index("peso")
+    except ValueError:
         hallazgos.append(Hallazgo(
             "frutos_peso_formato", "«Kg Reales» no tiene el formato esperado", "baja",
-            "Las columnas en la posición esperada (10ª a 16ª) no tienen la forma "
-            "Fundo/Módulo/Semana/Kg/Frutos/Peso/Kg·Ha que se esperaba.",
+            "El bloque Fundo/Módulo/Semana no contiene también Frutos y Peso.",
+            "No se cargan Frutos ni Peso. El resto del panel no se ve afectado.",
+        ))
+        return tabla
+
+    bloque = crudo.iloc[:, [inicio, inicio + 1, inicio + 2, i_frutos, i_peso]].copy()
+    bloque.columns = ["Fundo", "Modulo", "Semana", "Frutos", "Peso"]
+    bloque = bloque.dropna(subset=["Fundo", "Modulo", "Semana"])
+
+    semana_num = pd.to_numeric(
+        bloque.Semana.astype(str).str.extract(r"(\d+)", expand=False), errors="coerce"
+    )
+    panel_semanas = tabla.Semana.astype(str)
+    semana_valida = False
+    if panel_semanas.str.match(r"^S\d+$").all() and semana_num.notna().all():
+        bloque["Semana"] = "S" + semana_num.astype(int).astype(str).str.zfill(2)
+        semana_valida = True
+    elif semana_num.notna().all() and not panel_semanas.str.match(r"^S\d+$").all():
+        bloque["Semana"] = semana_num.astype(int)
+        semana_valida = True
+
+    if bloque.empty or not semana_valida:
+        hallazgos.append(Hallazgo(
+            "frutos_peso_formato", "«Kg Reales» no tiene el formato esperado", "baja",
+            "La columna Semana no se pudo convertir al mismo formato que usa el panel.",
             "No se cargan Frutos ni Peso. El resto del panel no se ve afectado.",
         ))
         return tabla

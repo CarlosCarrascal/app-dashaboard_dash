@@ -119,7 +119,7 @@ def layout():
         children=[
             _que_hace(),
             html.Hr(className="border-slate-200"),
-            html.Div(id="modelo-auditoria-ventanas"),
+            html.Div(id="modelo-auditoria-ventanas", children=ui.esqueleto_seccion("h-40")),
             html.Hr(className="border-slate-200"),
             html.Div(
                 className="space-y-3",
@@ -148,7 +148,7 @@ def layout():
 @callback(Output("modelo-auditoria-ventanas", "children"), Input(PANEL_STORE, "data"))
 def _auditar_ventanas(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_seccion("h-40")
     # La ventana todavía no es configurable desde esta interfaz (el control del sidebar
     # del Streamlit no se portó — cambiarla implica rearmar el panel completo). Se usa
     # siempre `LAGS_POR_DEFECTO` de `servicios/carga.py`.
@@ -214,7 +214,7 @@ def _comparar_familias(panel, activo):
     if not activo:
         return ui.parrafo("_Activá el interruptor para entrenar y comparar las seis familias._")
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_seccion("h-40")
     comparacion = nucleo.comparar_familias(panel.tabla)
     piso = comparacion.loc[comparacion.Modelo == "Predecir la media", "R² deja-un-bloque"].iloc[0]
     xgb_r2 = comparacion.loc[comparacion.Modelo == "XGBoost (el del tablero)", "R² deja-un-bloque"].iloc[0]

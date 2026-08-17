@@ -21,7 +21,7 @@ dash.register_page(__name__, path="/impacto/por-modulo", name="Por módulo", ord
 
 
 def layout():
-    return html.Div(id="por-modulo-contenido")
+    return html.Div(id="por-modulo-contenido", children=ui.esqueleto_pagina())
 
 
 def _estilo_figura(fig, altura: int):
@@ -135,7 +135,7 @@ def _detalle_dependencia(dep) -> html.Div:
 @callback(Output("por-modulo-contenido", "children"), Input(PANEL_STORE, "data"))
 def _render(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_pagina()
 
     porm = nucleo.clima.por_modulo(panel.tabla)
     dep = nucleo.clima.signo_depende_de_la_ventana(porm)

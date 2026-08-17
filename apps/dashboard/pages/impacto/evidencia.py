@@ -22,7 +22,7 @@ dash.register_page(__name__, path="/impacto/evidencia", name="Evidencia", order=
 
 
 def layout():
-    return html.Div(id="evidencia-contenido")
+    return html.Div(id="evidencia-contenido", children=ui.esqueleto_pagina())
 
 
 def _kpis(sem, panel) -> html.Div:
@@ -332,7 +332,7 @@ def _prueba_3_shell() -> html.Div:
 @callback(Output("evidencia-contenido", "children"), Input(PANEL_STORE, "data"))
 def _render(panel):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_pagina()
 
     sem = nucleo.clima.agregar_por_semana(panel.tabla)
     return html.Div(

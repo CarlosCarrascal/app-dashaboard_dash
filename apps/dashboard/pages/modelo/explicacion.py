@@ -49,7 +49,11 @@ def layout():
                 options=[{"label": v, "value": k} for k, v in BLOQUES.items()],
                 value="global", inline=True, className="flex gap-4 text-sm",
             ),
-            html.Div(id="explicacion-contenido", className="pt-2"),
+            html.Div(
+                id="explicacion-contenido",
+                className="pt-2",
+                children=ui.esqueleto_pagina(),
+            ),
         ],
     )
 
@@ -61,7 +65,7 @@ def layout():
 )
 def _shell(panel, bloque):
     if panel is None:
-        return ui.semaforo("aviso", "Cargando el panel…")
+        return ui.esqueleto_pagina()
 
     if bloque == "celda":
         modulos = sorted(panel.tabla.celda.unique())
@@ -81,7 +85,7 @@ def _shell(panel, bloque):
                         ]),
                     ],
                 ),
-                html.Div(id="celda-contenido"),
+                html.Div(id="celda-contenido", children=ui.esqueleto_seccion("h-64")),
             ],
         )
 
@@ -101,7 +105,7 @@ def _shell(panel, bloque):
                     clearable=False, className="max-w-xs",
                 ),
             ]),
-            html.Div(id="explicacion-global-body"),
+            html.Div(id="explicacion-global-body", children=ui.esqueleto_pagina()),
         ],
     )
 
@@ -194,7 +198,7 @@ def _summary(panel, ajuste, unidad: str) -> html.Div:
 def _render_global(panel, objetivo):
     if panel is None or objetivo is None:
         return None
-    ajuste = entrenar(panel.tabla, objetivo=objetivo)
+    ajuste = entrenar(panel, objetivo=objetivo)
     etiqueta_obj, unidad = OBJETIVOS_SHAP[objetivo]
     return html.Div(
         className="space-y-6",
@@ -250,7 +254,10 @@ def _render_global(panel, objetivo):
                         options=[{"label": etiqueta(c), "value": c} for c in FEATURES],
                         value=FEATURES[0], clearable=False, className="max-w-xs",
                     ),
-                    html.Div(id="explicacion-dep-body"),
+                    html.Div(
+                        id="explicacion-dep-body",
+                        children=ui.esqueleto_seccion("h-64"),
+                    ),
                 ],
             ),
             ui.glosario(list(FEATURES)),
@@ -264,8 +271,8 @@ def _render_global(panel, objetivo):
 )
 def _render_dependencia(panel, objetivo, var):
     if panel is None or objetivo is None or var is None:
-        return None
-    ajuste = entrenar(panel.tabla, objetivo=objetivo)
+        return ui.esqueleto_seccion("h-64")
+    ajuste = entrenar(panel, objetivo=objetivo)
     etiqueta_obj, unidad = OBJETIVOS_SHAP[objetivo]
     j = list(ajuste.X.columns).index(var)
     valores = ajuste.X[var].to_numpy()
@@ -336,12 +343,12 @@ def _ecuacion(base: float, contribuciones: pd.Series, prediccion: float) -> str:
 )
 def _render_celda(panel, modulo, semana):
     if panel is None or modulo is None or semana is None:
-        return None
+        return ui.esqueleto_seccion("h-64")
 
     tabla = panel.tabla
     indice = tabla.index[(tabla.celda == modulo) & (tabla.Semana == semana)][0]
     fila = tabla.loc[indice]
-    ajuste = entrenar(tabla, objetivo="KgHa")
+    ajuste = entrenar(panel, objetivo="KgHa")
 
     if not ajuste.tiene(indice):
         return html.Div([
