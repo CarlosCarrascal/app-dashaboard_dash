@@ -51,3 +51,4 @@ Thumbs.db
 # Serverside son archivos temporales locales, no estado a versionar.
 apps/dashboard/bin/
 apps/dashboard/.cache/
+.md
