@@ -11,9 +11,9 @@ anticipa el cuajado, y qué desfase explica mejor cada uno de los cuatro objetiv
 from __future__ import annotations
 
 import dash
-import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 from dash import dcc, html
 from dash_extensions.enrich import Input, Output, callback
 
@@ -35,6 +35,100 @@ def layout():
     return html.Div(id="fp-contenido")
 
 
+def _estilo_figura(fig, altura: int):
+    """Acabado común para que el gráfico acompañe la explicación, no compita con ella."""
+    fig.update_layout(
+        height=altura,
+        margin={"l": 8, "r": 8, "t": 26, "b": 8},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "ui-sans-serif, system-ui, sans-serif", "color": "#475569"},
+        hoverlabel={"bgcolor": "#ffffff", "bordercolor": "#d6d3d1"},
+    )
+    fig.update_xaxes(gridcolor="#e7e5e4", zeroline=False)
+    fig.update_yaxes(gridcolor="#f5f5f4", zeroline=False)
+    return fig
+
+
+def _formato_p(p: float) -> str:
+    return "p < 0,001" if p < 0.001 else f"p = {p:.3f}".replace(".", ",")
+
+
+def _resumen(sem, tray) -> html.Div:
+    descomp = nucleo.clima.descomponer_frutos_peso(sem)
+    frutos = descomp[descomp.Objetivo == "Frutos"]
+    peso = descomp[descomp.Objetivo == "Peso"]
+    sobreviven_frutos = int(frutos.Sobrevive.sum())
+    sobreviven_peso = int(peso.Sobrevive.sum())
+    cambio = tray["Cambio neto peso (g)"]
+    return ui.fila_kpi([
+        ui.kpi(
+            "Módulos con Frutos y Peso",
+            str(len(tray)),
+            nota="Módulos con al menos tres semanas observadas de ambos componentes.",
+        ),
+        ui.kpi(
+            "Peak observado",
+            f"{int(tray['Semana peak frutos'].min())}–{int(tray['Semana peak frutos'].max())}",
+            nota=f"Semanas del peak; la mediana es S{int(tray['Semana peak frutos'].median())}.",
+            serie=sorted(tray["Semana peak frutos"].tolist()),
+        ),
+        ui.kpi(
+            "Peso baja al cierre",
+            f"{int((cambio < 0).sum())} / {len(cambio)}",
+            nota="Comparación entre la primera y la última semana observada; no es causalidad.",
+        ),
+        ui.kpi(
+            "Cuajado / tamaño",
+            f"{sobreviven_frutos} / {sobreviven_peso}",
+            nota="Señales que sobreviven al control del calendario: Frutos / Peso.",
+        ),
+    ])
+
+
+def _respuesta_corta(sem, tray) -> html.Div:
+    descomp = nucleo.clima.descomponer_frutos_peso(sem)
+    frutos = descomp[descomp.Objetivo == "Frutos"]
+    peso = descomp[descomp.Objetivo == "Peso"]
+    quedan_frutos = frutos.loc[frutos.Sobrevive, "Variable"].tolist()
+    quedan_peso = peso.loc[peso.Sobrevive, "Variable"].tolist()
+    respuesta = (
+        "**La separación sí aporta una lectura nueva.** Después de descontar el "
+        f"calendario queda señal para **Frutos** en {', '.join(quedan_frutos) or 'ninguna variable'} "
+        f"y para **Peso** en {', '.join(quedan_peso) or 'ninguna variable'}. "
+        "Eso orienta si la relación aparece en el cuajado o en el tamaño, pero sigue "
+        "siendo una asociación observacional."
+    )
+    conexion = html.Div(
+        className="grid gap-4",
+        children=[
+            html.Div([
+                html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
+                html.P(
+                    "Si el clima y el riego acompañan a la cantidad de frutos, al peso "
+                    "del fruto o a ambos por mecanismos distintos.",
+                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                ),
+            ]),
+            html.Div([
+                html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
+                html.P(
+                    "Evita entrenar una sola historia de kg/ha. El modelo puede probar por "
+                    "separado cuajado y tamaño, con sus propias ventanas de tiempo y sus "
+                    "propios límites de evidencia.",
+                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                ),
+            ]),
+        ],
+    )
+    return ui.panel(
+        "Respuesta corta",
+        ui.semaforo("aviso", respuesta),
+        conexion,
+        ayuda="La conclusión ejecutiva sobre los dos componentes del kg/ha.",
+    )
+
+
 @callback(Output("fp-contenido", "children"), Input(PANEL_STORE, "data"))
 def _shell(panel):
     if panel is None:
@@ -48,45 +142,72 @@ def _shell(panel):
             "(la hoja «Kg Reales» no está, o el formato cambió — ver Datos y calidad).",
         )
 
-    modulos = nucleo.clima.trayectorias_frutos_peso(panel.tabla)["Módulo"].tolist()
+    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+    modulos = tray["Módulo"].tolist()
 
     return html.Div(
-        className="space-y-8",
         children=[
-            ui.parrafo(
-                "kg/ha no se mide directo: sale de multiplicar **cuántos frutos** hay "
-                "por planta y **cuánto pesa cada uno**, por la densidad de plantación. "
-                "La hoja «Kg Reales» trae esos dos componentes por separado. "
-                "Correlacionarlos contra el clima y el riego, cada uno por su lado, "
-                "responde una pregunta que kg/ha solo no puede: ¿el efecto es sobre el "
-                "**cuajado** de fruta o sobre su **tamaño**?"
-            ),
-            ui.semaforo(
-                "info",
-                "**Qué representa `Frutos`.** El archivo contiene frutos por planta, "
-                "no el total absoluto del módulo. Para estimar frutos totales se "
-                "necesita además el número efectivo de plantas productivas por módulo "
-                "y campaña; no se inventa ese total.",
+            ui.encabezado_pagina(
+                "¿Qué cambia: cuántos frutos o cuánto pesa cada fruto?",
+                "kg/ha mezcla dos procesos. Los separamos para saber qué relación aparece "
+                "en el cuajado, cuál en el tamaño y qué puede pasar al modelo predictivo.",
             ),
             html.Div(
-                className="space-y-3",
+                className="space-y-4",
                 children=[
-                    ui.titulo_seccion("Cuándo aparece el peak y cómo cambia el peso"),
-                    dcc.Dropdown(id="fp-modulo", options=modulos, value=modulos[0] if modulos else None,
-                                clearable=False, className="max-w-sm"),
-                    html.Div(id="fp-trayectoria-body"),
+                    _resumen(sem, tray),
+                    _respuesta_corta(sem, tray),
+                    ui.panel(
+                        "1 · Separar frutos y peso cambia la pregunta",
+                        _descomposicion_narrativa(sem),
+                        ayuda="Comparación de asociaciones crudas y controladas para cuajado y tamaño.",
+                    ),
+                    ui.panel(
+                        "2 · Cómo evoluciona un módulo durante la campaña",
+                        html.Div(
+                            className="space-y-3",
+                            children=[
+                                ui.parrafo(
+                                    "Selecciona un módulo para ver tres lecturas distintas: "
+                                    "la sincronía temporal de Frutos y Peso, el momento del peak "
+                                    "y si el peso termina por encima o por debajo de su inicio."
+                                ),
+                                dcc.Dropdown(
+                                    id="fp-modulo", options=modulos,
+                                    value=modulos[0] if modulos else None,
+                                    clearable=False, className="max-w-sm",
+                                ),
+                                html.Div(id="fp-trayectoria-body"),
+                            ],
+                        ),
+                        ayuda="Lectura de una trayectoria concreta, sin confundirla con el promedio del fundo.",
+                    ),
+                    ui.panel(
+                        "3 · Cuándo aparece el peak entre módulos",
+                        _picos_narrativa(panel),
+                        ayuda="Distribución del peak observado y clima de las semanas previas.",
+                    ),
+                    ui.panel(
+                        "4 · Qué acompaña el cambio de peso",
+                        _peso_narrativa(panel),
+                        ayuda="Relación exploratoria entre exposición pre-peak y cambio observado de peso.",
+                    ),
+                    ui.panel(
+                        "5 · ¿La floración anticipa el cuajado?",
+                        _floracion_shell(panel),
+                        plegable=True,
+                        abierto=False,
+                        ayuda="Control más exigente con dos mediciones biológicas reales.",
+                    ),
+                    ui.panel(
+                        "6 · Qué desfase explica cada resultado",
+                        _desfases_shell(sem, panel.tabla),
+                        plegable=True,
+                        abierto=False,
+                        ayuda="Búsqueda exploratoria de ventanas temporales para cada objetivo.",
+                    ),
                 ],
-            ) if modulos else None,
-            html.Hr(className="border-slate-200"),
-            _descomposicion(sem),
-            html.Hr(className="border-slate-200"),
-            _floracion_shell(panel),
-            html.Hr(className="border-slate-200"),
-            _desfases_shell(sem, panel.tabla),
-            html.Hr(className="border-slate-200"),
-            _picos_shell(panel),
-            html.Hr(className="border-slate-200"),
-            _peso_shell(panel),
+            ),
         ],
     )
 
@@ -100,41 +221,83 @@ def _render_trayectoria(panel, modulo):
     fila = trayectorias.loc[trayectorias["Módulo"] == modulo].iloc[0]
     usa_poda = "dias_desde_poda" in serie.columns and serie.dias_desde_poda.notna().any()
     eje_x = "dias_desde_poda" if usa_poda else "nsem"
-    x = serie[eje_x].to_numpy(dtype=float)
-    y_peso = serie.Peso.to_numpy(dtype=float)
-    y_tendencia = np.polyval(np.polyfit(x, y_peso, 1), x) if len(x) >= 2 else y_peso
     peak = int(fila["Semana peak frutos"])
     huecos = int(fila["Huecos de calendario"])
     titulo_x = "días desde poda (proxy)" if usa_poda else "semana calendario"
 
-    fig_juntas = go.Figure()
-    fig_juntas.add_trace(go.Scatter(x=serie[eje_x], y=serie.Frutos, mode="lines+markers", name="Frutos/planta", line={"color": AZUL, "width": 2.5}))
-    fig_juntas.add_trace(go.Scatter(x=serie[eje_x], y=serie.Peso, mode="lines+markers", name="Peso (g)", yaxis="y2", line={"color": ROJO, "width": 2.5}))
-    fig_juntas.update_layout(
-        height=400, xaxis_title=titulo_x, yaxis_title="frutos por planta",
-        yaxis2={"title": "peso del fruto (g)", "overlaying": "y", "side": "right", "showgrid": False},
-        margin={"l": 10, "r": 10, "t": 10, "b": 10}, legend={"orientation": "h", "y": 1.14},
+    x_peak = float(fila["Días desde poda peak"]) if usa_poda else peak
+    fig_juntas = make_subplots(
+        rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.14,
+        subplot_titles=("Cuántos frutos hay", "Cuánto pesa cada fruto"),
     )
+    fig_juntas.add_trace(
+        go.Scatter(
+            x=serie[eje_x], y=serie.Frutos, mode="lines+markers", name="Frutos/planta",
+            line={"color": AZUL, "width": 2.5},
+            hovertemplate="%{x}<br>frutos/planta = %{y:.1f}<extra></extra>",
+        ), row=1, col=1,
+    )
+    fig_juntas.add_trace(
+        go.Scatter(
+            x=serie[eje_x], y=serie.Peso, mode="lines+markers", name="Peso (g)",
+            line={"color": ROJO, "width": 2.5},
+            hovertemplate="%{x}<br>peso = %{y:.2f} g<extra></extra>",
+        ), row=2, col=1,
+    )
+    fig_juntas.add_vline(x=x_peak, line_dash="dash", line_color="#94a3b8", row=1, col=1)
+    fig_juntas.add_vline(x=x_peak, line_dash="dash", line_color="#94a3b8", row=2, col=1)
+    fig_juntas.update_yaxes(title_text="frutos/planta", row=1, col=1)
+    fig_juntas.update_yaxes(title_text="peso (g)", row=2, col=1)
+    fig_juntas.update_xaxes(title_text=titulo_x, row=2, col=1)
+    _estilo_figura(fig_juntas, 470)
+    fig_juntas.update_layout(showlegend=False, hovermode="x unified")
 
     fig_frutos = go.Figure(go.Scatter(x=serie[eje_x], y=serie.Frutos, mode="lines+markers", name="Frutos/planta", line={"color": AZUL, "width": 2.8}))
-    fig_frutos.add_vline(x=float(fila["Días desde poda peak"]) if usa_poda else peak, line_dash="dash", line_color=ROJO)
-    fig_frutos.add_annotation(x=float(fila["Días desde poda peak"]) if usa_poda else peak, y=float(fila["Peak frutos/planta"]),
+    fig_frutos.add_vline(x=x_peak, line_dash="dash", line_color=ROJO)
+    fig_frutos.add_annotation(x=x_peak, y=float(fila["Peak frutos/planta"]),
                               text=f"peak S{peak}", showarrow=True, arrowhead=2)
-    fig_frutos.update_layout(height=360, xaxis_title=titulo_x, yaxis_title="frutos por planta", margin={"l": 10, "r": 10, "t": 20, "b": 10})
+    fig_frutos.update_layout(xaxis_title=titulo_x, yaxis_title="frutos por planta")
+    _estilo_figura(fig_frutos, 360)
 
     fig_peso = go.Figure()
-    fig_peso.add_trace(go.Scatter(x=serie[eje_x], y=serie.Peso, mode="lines+markers", name="Peso observado", line={"color": ROJO, "width": 2.8}))
-    fig_peso.add_trace(go.Scatter(x=serie[eje_x], y=y_tendencia, mode="lines", name="Tendencia lineal", line={"color": GRIS, "dash": "dash"}))
-    fig_peso.update_layout(height=360, xaxis_title=titulo_x, yaxis_title="peso del fruto (g)", margin={"l": 10, "r": 10, "t": 20, "b": 10})
+    fig_peso.add_trace(
+        go.Scatter(
+            x=serie[eje_x], y=serie.Peso, mode="lines+markers", name="Peso observado",
+            line={"color": ROJO, "width": 2.8},
+            hovertemplate="%{x}<br>peso = %{y:.2f} g<extra></extra>",
+        )
+    )
+    fig_peso.add_trace(
+        go.Scatter(
+            x=[serie[eje_x].iloc[0], serie[eje_x].iloc[-1]],
+            y=[serie.Peso.iloc[0], serie.Peso.iloc[-1]],
+            mode="markers+text", name="Inicio y final",
+            marker={"color": [AZUL, ROJO], "size": 9},
+            text=["inicio", "final"], textposition="top center",
+        )
+    )
+    fig_peso.update_layout(xaxis_title=titulo_x, yaxis_title="peso del fruto (g)", showlegend=False)
+    _estilo_figura(fig_peso, 360)
 
     bloques = [
-        ui.tarjetas([
-            ("Peak de frutos", f"S{peak}", f"Aparece en la posición {fila['Posición del peak'].lower()} de la ventana observada."),
-            ("Frutos en el peak", f"{fila['Peak frutos/planta']:.1f}/planta", "Es un peak semanal; no es todavía el total de la campaña."),
-            ("Peso: inicio → final", f"{fila['Peso inicial (g)']:.2f} → {fila['Peso final (g)']:.2f} g",
-             f"La recta global es {fila['Sentido de la recta']} ({fila['Pendiente peso (g/sem)']:+.3f} g/sem)."),
-            ("Frutos acumulados observados", f"{fila['Frutos acumulados observados/planta']:.1f}/planta",
-             "Suma de semanas observadas; no se extrapola a semanas faltantes."),
+        ui.fila_kpi([
+            ui.kpi(
+                "Peak de frutos", f"S{peak}",
+                nota=f"Aparece en la posición {fila['Posición del peak'].lower()} de la ventana observada.",
+            ),
+            ui.kpi(
+                "Frutos en el peak", f"{fila['Peak frutos/planta']:.1f}",
+                nota="Peak semanal por planta; no es el total de la campaña.",
+            ),
+            ui.kpi(
+                "Peso: inicio → final",
+                f"{fila['Peso inicial (g)']:.2f} → {fila['Peso final (g)']:.2f}",
+                nota="Gramos por fruto; compara solo semanas observadas.",
+            ),
+            ui.kpi(
+                "Cambios de sentido", str(int(fila["Cambios de sentido"])),
+                nota="La curva no es monotónica; por eso se evita una recta como conclusión.",
+            ),
         ]),
     ]
     if huecos:
@@ -149,22 +312,102 @@ def _render_trayectoria(panel, modulo):
         dcc.Tab(label="Peak de frutos", children=dcc.Graph(figure=fig_frutos, config={"displaylogo": False})),
         dcc.Tab(label="Curva de peso", children=dcc.Graph(figure=fig_peso, config={"displaylogo": False})),
     ]))
-    bloques.append(ui.tabla_desde_df(trayectorias, formato={
-        "Peak frutos/planta": "{:.2f}", "Frutos acumulados observados/planta": "{:.1f}",
-        "Peso inicial (g)": "{:.2f}", "Peso final (g)": "{:.2f}",
-        "Cambio neto peso (g)": "{:+.2f}", "Pendiente peso (g/sem)": "{:+.3f}",
-    }))
-    bloques.append(ui.como_leer(
-        "**Posición del peak** divide la ventana observada de cada módulo en tres "
-        "partes: inicio, medio y final. Es una descripción útil, pero todavía usa "
-        "semana calendario. La comparación agronómica correcta será con días desde "
-        "poda o fase fenológica.\n\n"
-        "**Pendiente del peso** resume el cambio neto como `des+` o `des-`. Si hay "
-        "cambios de sentido, la serie tiene olas y una sola recta oculta parte del "
-        "proceso; por eso se muestran también la curva y el número de giros.",
-        "Cómo leer el peak y la pendiente",
+    bloques.append(ui.parrafo(
+        f"El módulo acumula **{fila['Frutos acumulados observados/planta']:.1f} frutos/planta "
+        "observados**, pero tiene "
+        f"**{huecos} huecos de calendario**; no se presenta como total anual. "
+        f"La curva de peso cambia de dirección {int(fila['Cambios de sentido'])} veces, "
+        "así que su lectura principal es el inicio y el final observados, no una recta global."
+    ))
+    bloques.append(ui.plegable(
+        "Ver el detalle de todos los módulos",
+        ui.parrafo(
+            "La posición del peak divide la ventana observada en tres partes. Es una "
+            "descripción del registro disponible, no una fase fenológica medida."
+        ),
+        ui.tabla_desde_df(trayectorias, formato={
+            "Peak frutos/planta": "{:.2f}", "Frutos acumulados observados/planta": "{:.1f}",
+            "Peso inicial (g)": "{:.2f}", "Peso final (g)": "{:.2f}",
+            "Cambio neto peso (g)": "{:+.2f}", "Pendiente peso (g/sem)": "{:+.3f}",
+        }),
     ))
     return html.Div(bloques, className="space-y-3")
+
+
+def _descomposicion_narrativa(sem) -> html.Div:
+    """Una sola lectura comparativa: qué queda para Frutos y qué queda para Peso."""
+    tabla = nucleo.clima.descomponer_frutos_peso(sem)
+    filas = [("Frutos", "Frutos por planta"), ("Peso", "Peso del fruto")]
+    fig = make_subplots(
+        rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.14,
+        subplot_titles=("Frutos por planta · cuajado", "Peso del fruto · tamaño"),
+    )
+    lecturas = []
+    for i, (objetivo, titulo) in enumerate(filas, start=1):
+        sub = tabla[tabla.Objetivo == objetivo].sort_values(
+            "r sin controlar", key=lambda s: s.abs(), ascending=False
+        )
+        fig.add_trace(
+            go.Bar(
+                y=sub.Variable, x=sub["r sin controlar"], orientation="h",
+                name="Sin controlar", legendgroup="cruda", showlegend=i == 1,
+                marker_color=ROJO, opacity=0.8,
+                hovertemplate="%{y}<br>r cruda = %{x:+.3f}<extra></extra>",
+            ), row=i, col=1,
+        )
+        fig.add_trace(
+            go.Bar(
+                y=sub.Variable, x=sub["r control no lineal"], orientation="h",
+                name="Descontando el calendario", legendgroup="control", showlegend=i == 1,
+                marker_color=AZUL,
+                hovertemplate="%{y}<br>r controlada = %{x:+.3f}<extra></extra>",
+            ), row=i, col=1,
+        )
+        fig.add_vline(x=0, line_color="#888", row=i, col=1)
+        fig.update_yaxes(title_text=titulo, row=i, col=1)
+        sobreviven = sub.loc[sub.Sobrevive]
+        nombres = ", ".join(
+            f"{r.Variable} ({r['r control no lineal']:+.2f})" for _, r in sobreviven.iterrows()
+        ) or "ninguna variable"
+        cruda = sub.loc[sub["r sin controlar"].abs().idxmax()]
+        lecturas.append(
+            f"**{titulo}:** la asociación cruda más fuerte es {cruda.Variable} "
+            f"(r = {cruda['r sin controlar']:+.2f}); después del control sobreviven "
+            f"{nombres}."
+        )
+    fig.update_xaxes(range=[-1, 1], title_text="correlación", row=2, col=1)
+    _estilo_figura(fig, 620)
+    fig.update_layout(barmode="group", legend={"orientation": "h", "y": 1.06})
+    frutos = tabla[tabla.Objetivo == "Frutos"]
+    peso = tabla[tabla.Objetivo == "Peso"]
+    sobreviven_frutos = frutos.loc[frutos.Sobrevive, "Variable"].tolist()
+    sobreviven_peso = peso.loc[peso.Sobrevive, "Variable"].tolist()
+    mensaje = (
+        "**El calendario cambia la historia.** "
+        f"En Frutos queda: {', '.join(sobreviven_frutos) or 'ninguna señal'}. "
+        f"En Peso queda: {', '.join(sobreviven_peso) or 'ninguna señal'}. "
+        "Las barras rojas no son todavía efectos: son asociaciones antes del control."
+    )
+    return html.Div(
+        className="space-y-3",
+        children=[
+            ui.parrafo(
+                "La misma variable puede asociarse con cuántos frutos hay y con cuánto "
+                "pesa cada fruto de forma distinta. La comparación correcta es entre la "
+                "barra roja —sin controlar el calendario— y la azul —después de descontarlo—."
+            ),
+            dcc.Graph(figure=fig, config={"displaylogo": False}),
+            ui.semaforo("aviso", mensaje),
+            ui.parrafo(" ".join(lecturas)),
+            ui.plegable(
+                "Ver los valores estadísticos",
+                ui.tabla_desde_df(tabla, ocultar=["clave"], formato={
+                    "r sin controlar": "{:+.3f}", "p sin controlar": "{:.4f}",
+                    "r control no lineal": "{:+.3f}", "p control no lineal": "{:.4f}",
+                }),
+            ),
+        ],
+    )
 
 
 def _descomposicion(sem) -> html.Div:
@@ -448,6 +691,76 @@ def _render_desfase(panel, objetivo_sel, variable_sel):
     return dcc.Graph(figure=fig, config={"displaylogo": False})
 
 
+def _picos_narrativa(panel) -> html.Div:
+    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+    resumen = nucleo.clima.resumen_picos_frutos_peso(panel.tabla)
+    if tray.empty or resumen.empty:
+        return ui.semaforo("info", "No hay suficientes pares Frutos–Peso para comparar el momento del peak.")
+
+    fig = px.scatter(
+        tray.sort_values("Semana peak frutos"),
+        x="Semana peak frutos", y="Módulo", size="Peak frutos/planta",
+        color="Días desde poda peak", color_continuous_scale="Viridis",
+        hover_name="Módulo",
+        hover_data=["Semana inicial", "Semana final", "Peak frutos/planta", "Posición del peak"],
+        labels={
+            "Semana peak frutos": "semana del peak de frutos",
+            "Días desde poda peak": "días desde poda",
+            "Peak frutos/planta": "frutos/planta en el peak",
+        },
+    )
+    fig.update_xaxes(dtick=2)
+    _estilo_figura(fig, max(430, 28 * len(tray)))
+    fig.update_layout(margin={"l": 8, "r": 8, "t": 18, "b": 8})
+
+    peaks = tray["Semana peak frutos"]
+    posicion = tray["Posición del peak"].value_counts().reindex(["Inicio", "Medio", "Final"], fill_value=0)
+    return html.Div(
+        className="space-y-3",
+        children=[
+            ui.parrafo(
+                f"El peak observado cae entre **S{int(peaks.min())} y S{int(peaks.max())}**, "
+                f"con mediana en **S{int(peaks.median())}**. Cada punto es un módulo; el "
+                "tamaño representa cuántos frutos/planta había en ese peak y el color "
+                "indica los días desde poda. Aquí mostramos la semana real del peak, no "
+                "solo su posición relativa dentro de una ventana incompleta."
+            ),
+            dcc.Graph(figure=fig, config={"displaylogo": False}),
+            ui.semaforo(
+                "info",
+                f"**Lectura del registro actual:** {int(posicion.get('Inicio', 0))} módulos "
+                f"quedan clasificados en Inicio, {int(posicion.get('Medio', 0))} en Medio y "
+                f"{int(posicion.get('Final', 0))} en Final. Esta clasificación describe "
+                "la ventana observada; no demuestra por sí sola una fase biológica."
+            ),
+            ui.plegable(
+                "Explorar el clima de las cuatro semanas pre-peak",
+                dcc.Dropdown(
+                    id="fp-picos-clima",
+                    options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
+                    value="TempMin", clearable=False,
+                ),
+                html.Div(id="fp-picos-body"),
+            ),
+            ui.plegable(
+                "Ver el resumen por posición relativa",
+                ui.parrafo(
+                    "La posición relativa sirve como descriptor del tramo observado, pero "
+                    "no debe leerse como una fase fenológica medida."
+                ),
+                ui.tabla_desde_df(resumen, formato={
+                    "DAP peak medio": "{:.0f}", "Poda dispersion dias media": "{:.0f}",
+                    "Semana peak media": "{:.1f}", "Frutos peak medio": "{:.1f}",
+                    "Peso peak medio (g)": "{:.2f}", "TempMin pre-peak": "{:.2f}",
+                    "DPV pre-peak": "{:.2f}", "Rad pre-peak": "{:.1f}",
+                    "ETo pre-peak": "{:.1f}", "Riego pre-peak": "{:.2f}",
+                    "GDD pre-peak": "{:.1f}",
+                }),
+            ),
+        ],
+    )
+
+
 def _picos_shell(panel) -> html.Div:
     tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
     resumen = nucleo.clima.resumen_picos_frutos_peso(panel.tabla)
@@ -540,6 +853,31 @@ def _render_picos(panel, variable):
     return dcc.Graph(figure=fig, config={"displaylogo": False})
 
 
+def _peso_narrativa(panel) -> html.Div:
+    tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
+    if tray.empty:
+        return ui.semaforo("info", "No hay suficientes trayectorias de peso para esta comparación.")
+    cambio = tray["Cambio neto peso (g)"]
+    return html.Div(
+        className="space-y-3",
+        children=[
+            ui.parrafo(
+                f"En el registro actual, el peso termina por debajo del inicio en "
+                f"**{int((cambio < 0).sum())} de {len(cambio)} módulos**. Eso describe una "
+                "caída observada en el intervalo disponible; no significa que el clima "
+                "sea su causa. La nube siguiente sirve para comprobar si alguna exposición "
+                "de las cuatro semanas pre-peak acompaña ese cambio."
+            ),
+            dcc.Dropdown(
+                id="fp-peso-clima",
+                options=[{"label": etiqueta(c), "value": c} for c in VARIABLES_PRE_PEAK],
+                value="TempMin", clearable=False, className="max-w-sm",
+            ),
+            html.Div(id="fp-peso-body"),
+        ],
+    )
+
+
 def _peso_shell(panel) -> html.Div:
     tray = nucleo.clima.trayectorias_frutos_peso(panel.tabla)
     if tray.empty:
@@ -570,14 +908,24 @@ def _render_peso(panel, variable):
         color_discrete_sequence=[AZUL, "#7f8c8d", ROJO],
     )
     fig.add_hline(y=0, line_color="#888")
-    fig.update_layout(height=380, margin={"l": 10, "r": 10, "t": 10, "b": 10},
-                      xaxis_title=f"{etiqueta(variable)}: promedio de 4 semanas pre-peak", yaxis_title="cambio neto del peso observado (g)")
+    fig.update_layout(
+        xaxis_title=f"{etiqueta(variable)}: promedio de 4 semanas pre-peak",
+        yaxis_title="cambio neto del peso observado (g)",
+    )
+    _estilo_figura(fig, 380)
 
     positivo = int((tray["Cambio neto peso (g)"] > 0).sum())
     negativo = int((tray["Cambio neto peso (g)"] < 0).sum())
     olas = int((tray["Cambios de sentido"] > 0).sum())
+    r = float(tray[columna].corr(tray["Cambio neto peso (g)"]))
     return html.Div([
         dcc.Graph(figure=fig, config={"displaylogo": False}),
+        ui.semaforo(
+            "info",
+            f"**La relación es débil en esta exploración:** r = {r:+.2f}. "
+            "La nube no basta para afirmar que una exposición pre-peak explique la "
+            "caída del peso.",
+        ),
         ui.parrafo(
             f"**Lectura dinámica:** en los módulos con suficientes datos, el peso "
             f"termina por encima del inicio en {positivo}, por debajo en {negativo}, y "

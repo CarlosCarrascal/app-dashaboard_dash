@@ -259,7 +259,7 @@ def kpi(rotulo: str, valor: str, nota: str | None = None, serie: Iterable[float]
         hijos.append(
             html.Div(nota, className=f"mt-3 border-t {BORDE} pt-2.5 text-xs leading-snug text-slate-400")
         )
-    marco = "" if plano else f"rounded-xl border {BORDE} bg-white p-4 shadow-[0_0_6px_rgba(0,0,0,0.1)]"
+    marco = "" if plano else f"min-h-[10.2rem] rounded-xl border {BORDE} bg-white p-4 shadow-[0_0_6px_rgba(0,0,0,0.1)]"
     return html.Div(hijos, className=marco, title=ayuda or "")
 
 
