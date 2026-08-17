@@ -1,7 +1,7 @@
 # Relación clima / riego ↔ kg/ha — campaña 2025
 
 **Fecha:** 2026-08-07 · **Fuente:** `docs/data/IA.final.xlsx` (5 hojas) · **Tablero:**
-`db/tools/dashboard/app.py` (`npm run dashboard`).
+`apps/dashboard/dashboard/app.py` (`npm run dashboard`).
 
 ---
 

@@ -37,6 +37,7 @@ __pycache__/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+*.log
 .DS_Store
 Thumbs.db
 
@@ -48,5 +49,5 @@ Thumbs.db
 # Tablero Dash: el binario standalone de Tailwind no es una dependencia npm (ADR-0006) —
 # cada equipo lo descarga una vez (ver scripts/run.mjs::findTailwind) — y la caché de
 # Serverside son archivos temporales locales, no estado a versionar.
-db/tools/dashboard_dash/bin/
-db/tools/dashboard_dash/.cache/
+apps/dashboard/bin/
+apps/dashboard/.cache/

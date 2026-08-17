@@ -1,0 +1,50 @@
+[project]
+name = "aquanqa-analitica"
+version = "0.1.0"
+description = "Núcleo analítico reutilizable sobre el modelo de datos Aqu Anqa"
+requires-python = ">=3.12"
+# Este paquete no conoce ninguna interfaz; mantenerlo separado evita que una librería de
+# cálculo arrastre un servidor web.
+#
+# Sin pyodbc ni fastapi a propósito: el análisis lee de PostgreSQL y de Excel, no del
+# Access histórico ni por HTTP (ADR-0006).
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "openpyxl>=3.1",        # lectura del Excel de campaña
+    "xlsxwriter>=3.2",      # escritura del Excel de resultados, con formato
+    "scipy>=1.14",          # pruebas de hipotesis del estudio climatico
+    "psycopg[binary]>=3.2", # los scripts que leen el panel desde reporting
+    "python-dotenv>=1.0",
+    "scikit-learn>=1.5",    # metricas y esquemas de validacion cruzada
+    "xgboost>=2.1",
+    "shap>=0.46",
+    "matplotlib>=3.9",      # figuras de los reportes HTML
+    "plotly>=5.24",         # figuras reutilizables por las interfaces
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
+deploy = ["gunicorn>=23"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["analitica", "analitica.nucleo", "analitica.visualizaciones"]
+
+[tool.setuptools.package-dir]
+analitica = "."
+"analitica.nucleo" = "nucleo"
+"analitica.visualizaciones" = "visualizaciones"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["analitica"]

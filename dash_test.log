@@ -1,9 +1,0 @@
-
-> aquanqa-data-platform@0.1.0 dashboard:dash
-> node scripts/run.mjs dashboard-dash
-
-[2m  $ C:\Users\CCARRASCAL\miniconda3\envs\aquanqa\python.exe C:\Users\CCARRASCAL\Proyectos\aquanqa-data-platform\db\tools\dashboard_dash\app.py[0m
-Dash is running on http://127.0.0.1:8050/
-
- * Serving Flask app 'app'
- * Debug mode: on

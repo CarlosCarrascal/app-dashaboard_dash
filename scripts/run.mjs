@@ -19,10 +19,15 @@ import { homedir } from 'node:os'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SQL_DIR = join(ROOT, 'db', 'sql')
 
-// Los paquetes Python del monorepo, en orden de instalación: `domain` es la librería que
-// importan los otros dos (ADR-0006), así que va primero. `db/tools` va último y no expone
-// código importable: declara las dependencias del análisis (xgboost, shap, streamlit).
-const PAQUETES_PYTHON = ['domain', 'etl', join('backend', 'campo-api'), join('db', 'tools')]
+// Los paquetes Python del monorepo, en orden de instalación. Las aplicaciones se instalan
+// después de sus librerías; el dashboard Streamlit legado no forma parte del entorno oficial.
+const PAQUETES_PYTHON = [
+  'domain',
+  'etl',
+  join('backend', 'campo-api'),
+  join('packages', 'analitica'),
+  join('apps', 'dashboard'),
+]
 
 // ── .env ─────────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -163,21 +168,14 @@ function py(args) {
   return run(findPython(), ['-m', 'aquanqa_etl.cli', ...args], { cwd: join(ROOT, 'etl') })
 }
 
-/** Tablero Streamlit. Se invoca por módulo para no depender de que streamlit.exe esté en PATH. */
+/** Dashboard oficial Dash. El proyecto es autocontenido en `apps/dashboard`. */
 function cmdDashboard(args) {
-  const app = join(ROOT, 'db', 'tools', 'dashboard', 'app.py')
+  const app = join(ROOT, 'apps', 'dashboard', 'app.py')
   if (!existsSync(app)) fail(`No existe ${app}`)
-  return run(findPython(), ['-m', 'streamlit', 'run', app, ...args])
+  return run(findPython(), [app, ...args], { cwd: DASHBOARD_DIR })
 }
 
-const DASHBOARD_DASH_DIR = join(ROOT, 'db', 'tools', 'dashboard_dash')
-
-/** Tablero Dash (sucesor del Streamlit, conviven durante la migración). */
-function cmdDashboardDash(args) {
-  const app = join(DASHBOARD_DASH_DIR, 'app.py')
-  if (!existsSync(app)) fail(`No existe ${app}`)
-  return run(findPython(), [app, ...args])
-}
+const DASHBOARD_DIR = join(ROOT, 'apps', 'dashboard')
 
 /**
  * CLI standalone de Tailwind: un binario suelto, sin `npm install` ni `node_modules`.
@@ -185,12 +183,12 @@ function cmdDashboardDash(args) {
  * que compilar el CSS del tablero Dash con él no rompe esa regla.
  *
  * Descarga manual (una vez): https://github.com/tailwindlabs/tailwindcss/releases
- * → guardar el binario como `db/tools/dashboard_dash/bin/tailwindcss.exe` (Windows) o
+ * → guardar el binario como `apps/dashboard/bin/tailwindcss.exe` (Windows) o
  * definir TAILWIND_EXE en `.env` con la ruta completa.
  */
 function findTailwind() {
   if (env.TAILWIND_EXE && existsSync(env.TAILWIND_EXE)) return env.TAILWIND_EXE
-  const local = join(DASHBOARD_DASH_DIR, 'bin', process.platform === 'win32' ? 'tailwindcss.exe' : 'tailwindcss')
+  const local = join(DASHBOARD_DIR, 'bin', process.platform === 'win32' ? 'tailwindcss.exe' : 'tailwindcss')
   if (existsSync(local)) return local
   const onPath = which('tailwindcss')
   if (onPath) return onPath
@@ -198,7 +196,7 @@ function findTailwind() {
     'No encuentro el CLI standalone de Tailwind.\n' +
       '  Descargalo de https://github.com/tailwindlabs/tailwindcss/releases (el binario\n' +
       '  standalone, no el paquete npm) y guardalo en\n' +
-      `  ${join('db', 'tools', 'dashboard_dash', 'bin', 'tailwindcss.exe')}\n` +
+      `  ${join('apps', 'dashboard', 'bin', 'tailwindcss.exe')}\n` +
       '  o definí TAILWIND_EXE en .env con la ruta completa.'
   )
 }
@@ -207,8 +205,8 @@ function cmdTailwind(args) {
   const watch = args.includes('--watch')
   const tailwind = findTailwind()
   const flags = [
-    '-i', join(DASHBOARD_DASH_DIR, 'src', 'input.css'),
-    '-o', join(DASHBOARD_DASH_DIR, 'assets', 'tailwind.css'),
+    '-i', join(DASHBOARD_DIR, 'src', 'input.css'),
+    '-o', join(DASHBOARD_DIR, 'assets', 'tailwind.css'),
   ]
   if (watch) flags.push('--watch')
   else flags.push('--minify')
@@ -296,12 +294,12 @@ switch (target) {
   case 'migrate':  sqlFolder('10_raw'); cmdBuild(); break
   case 'validate': sqlFolder('90_checks'); break
   case 'dashboard': cmdDashboard(rest); break
-  case 'dashboard-dash': cmdDashboardDash(rest); break
+  case 'dashboard-dash': cmdDashboard(rest); break
   case 'tailwind': cmdTailwind(rest); break
   default:
     log(
       'Uso: node scripts/run.mjs ' +
-        '<setup|migrate|build|validate|dashboard|dashboard-dash|tailwind [--watch]|' +
+        '<setup|migrate|build|validate|dashboard|tailwind [--watch]|' +
         'sql <carpeta>|psql <args>|py <args>>'
     )
     process.exit(target ? 1 : 0)

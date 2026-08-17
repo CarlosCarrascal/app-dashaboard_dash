@@ -1,0 +1,15 @@
+.git/
+.claude/
+.codex-wheel-check/
+**/__pycache__/
+**/*.py[cod]
+**/.cache/
+**/bin/
+**/.ruff_cache/
+**/.pytest_cache/
+data/entrada/
+data/salida/
+docs/historico-access/pbi/
+*.log
+.env
+.env.local

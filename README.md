@@ -19,6 +19,7 @@ npm run extract             # .accdb + xlsx  →  CSV en data/salida/  (origen e
 npm run load                # CSV            →  esquema raw
 npm run build               # raw → stg → core → dim/fact → reporting
 npm run validate            # contrato de aceptación: cada cifra contra la auditoría
+npm run dashboard            # dashboard Dash oficial
 ```
 
 Solo hacen falta **Python y PostgreSQL**. `scripts/run.mjs` localiza `psql.exe` y el Python del
@@ -32,18 +33,25 @@ db/            PostgreSQL como código: las capas SQL y el contrato de aceptaci�
 domain/        reglas de negocio y acceso tipado a core — la importan el ETL y el backend
 etl/           ingesta por lotes del histórico de Access y de los Excel (solo Windows)
 backend/       campo-api: la API que reciben la app Flutter y las proyecciones en Excel
+packages/      librerías reutilizables (`analitica` y, progresivamente, `domain`)
+apps/          aplicaciones desplegables (`dashboard` y, progresivamente, `campo-api`)
 bi/            modelo semántico TMDL, medidas DAX, reapuntado del origen
 docs/          auditoría congelada · ADR · runbooks · diccionario de datos
 infra/         despliegue en AWS (fase posterior)
 ```
 
-`db/` y `domain/` son el terreno común; los otros tres se apoyan en ellos:
+El dashboard ya no vive dentro de `db/`: `apps/dashboard` es una aplicación independiente y
+`packages/analitica` contiene únicamente el cálculo que puede reutilizarse desde distintas
+interfaces. El dashboard Dash es la única interfaz web mantenida.
 
 ```
-etl/         backend/campo-api/
-   \                |
-    ▼               ▼
-          domain/  ──▶  db/  (PostgreSQL)  ──▶  bi/
+pipelines/etl/       backend/campo-api/       apps/dashboard/
+       \                  |                       |
+        ▼                 ▼                       ▼
+      domain/  ───────▶  db/              packages/analitica
+                                               |
+                                               ▼
+                                           docs/data
 ```
 
 Tres reglas sostienen esa frontera, y CI las verifica: `domain/` no importa `fastapi` ni
@@ -109,3 +117,7 @@ y más fundos que el origen—, no errores. El detalle está en el
 La app Flutter vive en **su propio repositorio** y consume `backend/campo-api` solo por contrato
 (el OpenAPI que publica). El ciclo de release de una app móvil no comparte ritmo con el de un
 backend de datos.
+
+El dashboard se despliega aparte del resto de la plataforma. El contenedor reproducible está en
+[`apps/dashboard/Dockerfile`](apps/dashboard/Dockerfile) y su criterio de retiro de Streamlit en
+[`docs/runbooks/04-migracion-dashboard-dash.md`](docs/runbooks/04-migracion-dashboard-dash.md).
