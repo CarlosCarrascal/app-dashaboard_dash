@@ -314,6 +314,17 @@ def _rezago_efecto_fijo(
     desplazar, igual que `_rolling_por_modulo` en `datos.py`, para no desplazar sobre
     huecos de cosecha.
     """
+    # Floración es un archivo opcional. En Render puede no existir el cruce de flores
+    # con el panel productivo; en ese caso la prueba no aplica, pero tampoco debe tumbar
+    # el callback ni dejar el skeleton esperando indefinidamente.
+    if (
+        predictor not in tabla.columns
+        or objetivo not in tabla.columns
+        or "celda" not in tabla.columns
+        or "nsem" not in tabla.columns
+    ):
+        return pd.DataFrame()
+
     piezas = []
     for celda, g in tabla.groupby("celda"):
         g = g.set_index("nsem").sort_index()
@@ -324,6 +335,8 @@ def _rezago_efecto_fijo(
             "pred": g[predictor].to_numpy(dtype=float),
             "obj": g[objetivo].to_numpy(dtype=float),
         }))
+    if not piezas:
+        return pd.DataFrame()
     largo = pd.concat(piezas, ignore_index=True)
 
     filas = []
@@ -376,6 +389,9 @@ def rezagos_floracion_clima(tabla: pd.DataFrame) -> pd.DataFrame:
     Devuelve el mismo esquema de columnas que `rezagos()` para que `rezagos_todos` y
     `mejor_rezago_por_variable` no necesiten distinguir el origen.
     """
+    if "flores_promedio" not in tabla.columns:
+        return pd.DataFrame()
+
     piezas = []
     for var in REZAGOS_PREDICTORES:
         r = _rezago_efecto_fijo(tabla, var, "flores_promedio")

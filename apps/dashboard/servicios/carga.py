@@ -21,7 +21,7 @@ from pathlib import Path
 from dash_extensions.enrich import Input, Output, Serverside, callback
 
 from analitica import nucleo, settings
-from servicios.cache_analisis import panel_key, precargar
+from servicios.cache_analisis import panel_key
 
 PANEL_STORE = "panel-store"
 ORIGEN_STORE = "origen-info"
@@ -33,26 +33,15 @@ LAGS_POR_DEFECTO = {"riego": 7, "Rad": 3, "ETo": 2, "DPV": 6, "gdd": 7}
 
 
 def _precargar_dashboard(panel) -> None:
-    """Usa el tiempo de lectura de la portada para preparar las vistas más costosas."""
-    sem = nucleo.clima.agregar_por_semana(panel.tabla)
-    precargar(
-        panel,
-        {
-            # Primero Frutos y peso: son las piezas visibles de la página más gráfica.
-            "fp:semana": lambda: sem,
-            "fp:trayectorias": lambda: nucleo.clima.trayectorias_frutos_peso(panel.tabla),
-            "fp:descomposicion": lambda: nucleo.clima.descomponer_frutos_peso(sem),
-            "fp:picos": lambda: nucleo.clima.resumen_picos_frutos_peso(panel.tabla),
-            "fp:mejor-rezago": lambda: nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla),
-            "fp:rezagos": lambda: nucleo.clima.rezagos_todos(sem, panel.tabla),
-            # Las pestañas de R² empiezan sin que el usuario tenga que abrirlas.
-            "r2:grupos": lambda: nucleo.aporte_por_grupo(panel.tabla),
-            "r2:aporte": lambda: nucleo.aporte_por_variable(panel.tabla),
-            "r2:esquemas": lambda: nucleo.tabla_validacion(panel.tabla, referencias=()),
-            # SHAP global por defecto; las otras metas se calculan solo si se seleccionan.
-            "modelo:ajuste:KgHa": lambda: nucleo.entrenar(panel.tabla, objetivo="KgHa"),
-        },
-    )
+    """Deja el panel listo sin iniciar análisis que el usuario todavía no pidió.
+
+    Las páginas disparan su propia precarga cuando entran en pantalla. Mantener una cola
+    global de todos los módulos hacía que una visita a R², Modelo o Frutos tuviera que
+    esperar análisis de páginas que el usuario nunca abrió; además acumulaba trabajo en
+    Render durante una sesión larga. La caché de resultados sigue intacta: solo cambia el
+    momento en que se programa cada cálculo.
+    """
+    return None
 
 
 def _leer_si_existe(ruta: Path) -> bytes | None:

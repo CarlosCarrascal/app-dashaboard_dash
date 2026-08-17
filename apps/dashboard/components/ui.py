@@ -308,7 +308,8 @@ def fila_kpi(items: list[html.Div]) -> html.Div:
 
 
 def panel(titulo: str, *children, ayuda: str | None = None, aside=None,
-          plegable: bool = False, abierto: bool = True) -> html.Div | html.Details:
+          plegable: bool = False, abierto: bool = True, id: str | None = None,
+          resumen_id: str | None = None) -> html.Div | html.Details:
     """Bloque de contenido con cabecera, como el panel «SALES TREND» de la referencia.
 
     Es **la única card de su sección**: nada de lo que va dentro debe traer su propio borde
@@ -344,11 +345,18 @@ def panel(titulo: str, *children, ayuda: str | None = None, aside=None,
             ],
         )
 
+    resumen_props = {"id": resumen_id} if resumen_id else {}
+    if resumen_id:
+        resumen_props["n_clicks"] = 0
+
+    details_props = {"id": id} if id else {}
     return html.Details(
+        **details_props,
         className=f"group {marco}",
         open=abierto,
         children=[
             html.Summary(
+                **resumen_props,
                 className=f"cursor-pointer select-none {cabecera}",
                 title=ayuda or "",
                 children=[

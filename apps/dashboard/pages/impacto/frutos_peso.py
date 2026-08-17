@@ -94,8 +94,6 @@ def _precargar_lecturas(panel, sem):
             "fp:trayectorias": lambda: nucleo.clima.trayectorias_frutos_peso(panel.tabla),
             "fp:descomposicion": lambda: nucleo.clima.descomponer_frutos_peso(sem),
             "fp:picos": lambda: nucleo.clima.resumen_picos_frutos_peso(panel.tabla),
-            "fp:mejor-rezago": lambda: nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla),
-            "fp:rezagos": lambda: nucleo.clima.rezagos_todos(sem, panel.tabla),
         },
     )
 
@@ -302,6 +300,8 @@ def _estructura():
                         _cargando("fp-floracion-body", "h-64"),
                         plegable=True,
                         abierto=False,
+                        id="fp-floracion-panel",
+                        resumen_id="fp-floracion-trigger",
                         ayuda="Control más exigente con dos mediciones biológicas reales.",
                     ),
                     ui.panel(
@@ -323,6 +323,8 @@ def _estructura():
                         _cargando("fp-desfase-body", "h-48"),
                         plegable=True,
                         abierto=False,
+                        id="fp-desfases-panel",
+                        resumen_id="fp-desfases-trigger",
                         ayuda="Búsqueda exploratoria de ventanas temporales para cada objetivo.",
                     ),
                 ],
@@ -422,9 +424,10 @@ def _render_peso_narrativa(panel):
     Output("fp-desfase-objetivo", "options"),
     Output("fp-desfase-objetivo", "value"),
     Input(PANEL_STORE, "data"),
+    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _render_desfases_shell(panel):
-    if panel is None:
+def _render_desfases_shell(panel, clics):
+    if panel is None or not clics:
         return ui.esqueleto_seccion("h-48"), [], None
     sem = _sem(panel)
     resumen = _rezago(panel, sem)
@@ -751,10 +754,12 @@ def _floracion_shell(panel) -> html.Div:
 
 @callback(
     Output("fp-floracion-body", "children"),
-    Input(PANEL_STORE, "data"), Input("fp-floracion-objetivo", "value", allow_optional=True),
+    Input(PANEL_STORE, "data"),
+    Input("fp-floracion-objetivo", "value", allow_optional=True),
+    Input("fp-floracion-trigger", "n_clicks", allow_optional=True),
 )
-def _render_floracion(panel, objetivo_flor):
-    if panel is None or objetivo_flor is None:
+def _render_floracion(panel, objetivo_flor, clics):
+    if panel is None or objetivo_flor is None or not clics:
         return ui.esqueleto_seccion("h-64")
     rezago = obtener(
         panel,
@@ -881,10 +886,12 @@ def _desfases_shell(sem, tabla, resumen) -> html.Div:
 
 @callback(
     Output("fp-desfase-variable", "options"), Output("fp-desfase-variable", "value"),
-    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value", allow_optional=True),
+    Input(PANEL_STORE, "data"),
+    Input("fp-desfase-objetivo", "value", allow_optional=True),
+    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _opciones_desfase_variable(panel, objetivo_sel):
-    if panel is None or objetivo_sel is None:
+def _opciones_desfase_variable(panel, objetivo_sel, clics):
+    if panel is None or objetivo_sel is None or not clics:
         return [], None
     sem = _sem(panel)
     resumen = _rezago(panel, sem)
@@ -895,11 +902,13 @@ def _opciones_desfase_variable(panel, objetivo_sel):
 
 @callback(
     Output("fp-desfase-body", "children"),
-    Input(PANEL_STORE, "data"), Input("fp-desfase-objetivo", "value", allow_optional=True),
+    Input(PANEL_STORE, "data"),
+    Input("fp-desfase-objetivo", "value", allow_optional=True),
     Input("fp-desfase-variable", "value", allow_optional=True),
+    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _render_desfase(panel, objetivo_sel, variable_sel):
-    if panel is None or objetivo_sel is None or variable_sel is None:
+def _render_desfase(panel, objetivo_sel, variable_sel, clics):
+    if panel is None or objetivo_sel is None or variable_sel is None or not clics:
         return ui.esqueleto_seccion("h-48")
     sem = _sem(panel)
     todos = _rezagos(panel, sem)
