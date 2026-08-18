@@ -445,13 +445,15 @@ def plegable(titulo: str, *children, abierto: bool = False) -> html.Details:
 
 
 def tabla_desde_df(
-    df: pd.DataFrame, formato: dict[str, str] | None = None, ocultar: Iterable[str] = ()
+    df: pd.DataFrame, formato: dict[str, str] | None = None, ocultar: Iterable[str] = (),
+    plano: bool = False,
 ) -> html.Div:
     """Tabla HTML simple a partir de un DataFrame.
 
     Sin gradiente de color ni ordenamiento — para eso el gráfico de arriba ya hace el
-    trabajo visual. Para tablas grandes (cientos de filas) usar `dash_ag_grid` en su
-    lugar, no esto (ver `pages/datos_calidad.py`).
+    trabajo visual. ``plano=True`` quita el segundo marco cuando la tabla ya vive dentro
+    de un ``panel``. Para tablas grandes (cientos de filas) usar ``dash_ag_grid`` en su
+    lugar, no esto (ver ``pages/datos_calidad.py``).
     """
     formato = formato or {}
     columnas = [c for c in df.columns if c not in set(ocultar)]
@@ -465,8 +467,9 @@ def tabla_desde_df(
         except (ValueError, TypeError):
             return str(v)
 
+    marco = "overflow-x-auto" if plano else "overflow-x-auto rounded-2xl border border-slate-200 shadow-sm"
     return html.Div(
-        className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm",
+        className=marco,
         children=html.Table(
             className="w-full min-w-max text-left text-sm",
             children=[

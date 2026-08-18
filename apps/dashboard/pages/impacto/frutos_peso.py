@@ -94,6 +94,11 @@ def _precargar_lecturas(panel, sem):
             "fp:trayectorias": lambda: nucleo.clima.trayectorias_frutos_peso(panel.tabla),
             "fp:descomposicion": lambda: nucleo.clima.descomponer_frutos_peso(sem),
             "fp:picos": lambda: nucleo.clima.resumen_picos_frutos_peso(panel.tabla),
+            # Los puntos 5 y 6 forman parte de la lectura principal. Se preparan detrás
+            # de las piezas visibles para no bloquear el primer viewport.
+            "fp:floracion:Frutos": lambda: nucleo.clima.rezago_floracion(panel.tabla, objetivo="Frutos"),
+            "fp:mejor-rezago": lambda: nucleo.clima.mejor_rezago_por_variable(sem, panel.tabla),
+            "fp:rezagos": lambda: nucleo.clima.rezagos_todos(sem, panel.tabla),
         },
     )
 
@@ -298,10 +303,6 @@ def _estructura():
                             persistence=True, persistence_type="session",
                         ),
                         _cargando("fp-floracion-body", "h-64"),
-                        plegable=True,
-                        abierto=False,
-                        id="fp-floracion-panel",
-                        resumen_id="fp-floracion-trigger",
                         ayuda="Control más exigente con dos mediciones biológicas reales.",
                     ),
                     ui.panel(
@@ -321,10 +322,6 @@ def _estructura():
                             ],
                         ),
                         _cargando("fp-desfase-body", "h-48"),
-                        plegable=True,
-                        abierto=False,
-                        id="fp-desfases-panel",
-                        resumen_id="fp-desfases-trigger",
                         ayuda="Búsqueda exploratoria de ventanas temporales para cada objetivo.",
                     ),
                 ],
@@ -424,13 +421,20 @@ def _render_peso_narrativa(panel):
     Output("fp-desfase-objetivo", "options"),
     Output("fp-desfase-objetivo", "value"),
     Input(PANEL_STORE, "data"),
-    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _render_desfases_shell(panel, clics):
-    if panel is None or not clics:
+def _render_desfases_shell(panel):
+    if panel is None:
         return ui.esqueleto_seccion("h-48"), [], None
     sem = _sem(panel)
-    resumen = _rezago(panel, sem)
+    try:
+        resumen = _rezago(panel, sem)
+    except (KeyError, TypeError, ValueError) as exc:
+        _LOGGER.warning("No se pudo preparar la tabla de desfases: %s", exc)
+        return ui.semaforo(
+            "info",
+            "La lectura de desfases no está disponible para esta fuente de datos; "
+            "las demás lecturas de Frutos y Peso sí pueden consultarse.",
+        ), [], None
     objetivos = resumen.Objetivo.unique().tolist() if not resumen.empty else []
     return _desfases_shell(sem, panel.tabla, resumen), objetivos, (objetivos[0] if objetivos else None)
 
@@ -756,16 +760,23 @@ def _floracion_shell(panel) -> html.Div:
     Output("fp-floracion-body", "children"),
     Input(PANEL_STORE, "data"),
     Input("fp-floracion-objetivo", "value", allow_optional=True),
-    Input("fp-floracion-trigger", "n_clicks", allow_optional=True),
 )
-def _render_floracion(panel, objetivo_flor, clics):
-    if panel is None or objetivo_flor is None or not clics:
+def _render_floracion(panel, objetivo_flor):
+    if panel is None or objetivo_flor is None:
         return ui.esqueleto_seccion("h-64")
-    rezago = obtener(
-        panel,
-        f"fp:floracion:{objetivo_flor}",
-        lambda: nucleo.clima.rezago_floracion(panel.tabla, objetivo=objetivo_flor),
-    )
+    try:
+        rezago = obtener(
+            panel,
+            f"fp:floracion:{objetivo_flor}",
+            lambda: nucleo.clima.rezago_floracion(panel.tabla, objetivo=objetivo_flor),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        _LOGGER.warning("Floración opcional no disponible: %s", exc)
+        return ui.semaforo(
+            "info",
+            "La fuente opcional de floración no está disponible en este despliegue; "
+            "el resto del análisis de Frutos y Peso sí puede consultarse.",
+        )
     if rezago.empty:
         return ui.semaforo("info", f"No hay suficiente solapamiento entre floración y {objetivo_flor} para esta prueba.")
 
@@ -888,13 +899,16 @@ def _desfases_shell(sem, tabla, resumen) -> html.Div:
     Output("fp-desfase-variable", "options"), Output("fp-desfase-variable", "value"),
     Input(PANEL_STORE, "data"),
     Input("fp-desfase-objetivo", "value", allow_optional=True),
-    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _opciones_desfase_variable(panel, objetivo_sel, clics):
-    if panel is None or objetivo_sel is None or not clics:
+def _opciones_desfase_variable(panel, objetivo_sel):
+    if panel is None or objetivo_sel is None:
         return [], None
     sem = _sem(panel)
-    resumen = _rezago(panel, sem)
+    try:
+        resumen = _rezago(panel, sem)
+    except (KeyError, TypeError, ValueError) as exc:
+        _LOGGER.warning("No se pudieron preparar las opciones de desfase: %s", exc)
+        return [], None
     claves = resumen.loc[resumen.Objetivo == objetivo_sel, "clave"].tolist()
     opciones = [{"label": etiqueta(c), "value": c} for c in claves]
     return opciones, (claves[0] if claves else None)
@@ -905,14 +919,30 @@ def _opciones_desfase_variable(panel, objetivo_sel, clics):
     Input(PANEL_STORE, "data"),
     Input("fp-desfase-objetivo", "value", allow_optional=True),
     Input("fp-desfase-variable", "value", allow_optional=True),
-    Input("fp-desfases-trigger", "n_clicks", allow_optional=True),
 )
-def _render_desfase(panel, objetivo_sel, variable_sel, clics):
-    if panel is None or objetivo_sel is None or variable_sel is None or not clics:
+def _render_desfase(panel, objetivo_sel, variable_sel):
+    if panel is None:
         return ui.esqueleto_seccion("h-48")
+    if objetivo_sel is None or variable_sel is None:
+        return ui.semaforo(
+            "info",
+            "No hay suficientes datos para buscar un desfase en esta fuente de datos.",
+        )
     sem = _sem(panel)
-    todos = _rezagos(panel, sem)
+    try:
+        todos = _rezagos(panel, sem)
+    except (KeyError, TypeError, ValueError) as exc:
+        _LOGGER.warning("No se pudo renderizar el detalle de desfase: %s", exc)
+        return ui.semaforo(
+            "info",
+            "El detalle de desfases no está disponible para esta fuente de datos.",
+        )
     d = todos[(todos.Objetivo == objetivo_sel) & (todos.clave == variable_sel)]
+    if d.empty:
+        return ui.semaforo(
+            "info",
+            "No hay observaciones suficientes para ese objetivo y variable.",
+        )
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=d.Rezago, y=d["r bruto"], mode="lines+markers", name="Sin descontar la estación", line={"color": ROJO}))
     fig.add_trace(go.Scatter(x=d.Rezago, y=d["r sin tendencia"], mode="lines+markers", name="Descontando la estación", line={"color": AZUL, "dash": "dot"}))

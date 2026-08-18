@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 
@@ -47,12 +48,13 @@ def test_outputs_interactivos_existen_en_el_primer_layout():
         "fp-peso-body",
         "fp-floracion-objetivo",
         "fp-floracion-body",
-        "fp-floracion-trigger",
         "fp-desfase-objetivo",
         "fp-desfase-variable",
         "fp-desfase-body",
-        "fp-desfases-trigger",
     } <= ids
+    serializado = repr(frutos_peso.layout().to_plotly_json())
+    assert "5 · ¿La floración anticipa el cuajado?" in serializado
+    assert "6 · Qué desfase explica cada resultado" in serializado
 
 
 def test_frutos_tiene_un_solo_estado_de_carga_inicial():
@@ -71,6 +73,27 @@ def test_floracion_opcional_no_deja_fallar_el_calculo_si_no_hay_columna():
 
     assert clima.rezago_floracion(tabla).empty
     assert clima.rezagos_floracion_clima(tabla).empty
+    sem = pd.DataFrame({
+        "nsem": range(13),
+        "kg_ha": [float(i) for i in range(13)],
+        **{c: [float(i + 1) for i in range(13)] for c in clima.REZAGOS_PREDICTORES},
+    })
+    resultado = clima.rezagos_todos(sem, tabla)
+    assert "Floración" not in set(resultado.get("Objetivo", []))
+
+
+def test_callback_de_floracion_devuelve_aviso_en_vez_de_500():
+    tabla = pd.DataFrame({"celda": ["M01"], "nsem": [1], "Frutos": [10.0]})
+    salida = frutos_peso._render_floracion(SimpleNamespace(tabla=tabla), "Frutos")
+
+    assert salida is not None
+
+
+def test_callback_de_desfase_no_deja_un_skeleton_infinito_sin_datos():
+    tabla = pd.DataFrame({"celda": ["M01"], "nsem": [1], "Frutos": [10.0]})
+    salida = frutos_peso._render_desfase(SimpleNamespace(tabla=tabla), None, None)
+
+    assert "No hay suficientes datos" in repr(salida.to_plotly_json())
 
 
 def test_panel_plegable_sin_id_sigue_siendo_valido():

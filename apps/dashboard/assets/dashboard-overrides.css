@@ -1,0 +1,44 @@
+/* Acabado de los controles Dash que no pasan por Tailwind. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Dash/Tailwind deja visibles los hijos de <details> cerrados; eso crea scroll
+   fantasma cuando el cuerpo contiene tablas largas. */
+details:not([open]) > :not(summary) {
+  display: none !important;
+}
+
+.aq-data-filters .rc-slider-track,
+.aq-data-filters .dash-slider-track {
+  background-color: #3b7dd8;
+}
+
+.aq-data-filters .rc-slider-handle,
+.aq-data-filters .dash-slider-thumb {
+  background-color: #ffffff !important;
+  border-color: #3b7dd8;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.aq-data-filters .rc-slider-handle:active,
+.aq-data-filters .rc-slider-handle:focus,
+.aq-data-filters .rc-slider-handle:hover,
+.aq-data-filters .dash-slider-thumb:active,
+.aq-data-filters .dash-slider-thumb:focus,
+.aq-data-filters .dash-slider-thumb:hover {
+  border-color: #285fa9;
+  box-shadow: 0 0 0 3px rgba(59, 125, 216, 0.18);
+}
+
+.aq-data-filters .rc-slider-dot-active,
+.aq-data-filters .dash-slider-range {
+  background-color: #3b7dd8 !important;
+}
+
+.aq-data-filters .rc-slider-dot-active,
+.aq-data-filters .dash-slider-mark {
+  border-color: #3b7dd8;
+}

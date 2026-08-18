@@ -202,7 +202,18 @@ def rezagos(sem: pd.DataFrame, objetivo: str = "kg_ha",
     jorobas y sube la correlación aunque no haya nada físico detrás. La fila «detrended»
     es la que decide.
     """
+    if (
+        not isinstance(sem, pd.DataFrame)
+        or sem.empty
+        or "nsem" not in sem.columns
+        or objetivo not in sem.columns
+    ):
+        return pd.DataFrame()
+
     s = sem.set_index("nsem").sort_index()
+    variables = tuple(c for c in variables if c in s.columns)
+    if not variables:
+        return pd.DataFrame()
     filas = []
     for c in variables:
         for k in LAGS:
@@ -249,6 +260,8 @@ def rezagos_todos(sem: pd.DataFrame, tabla: pd.DataFrame | None = None) -> pd.Da
     piezas = []
     for objetivo, etiqueta_obj in OBJETIVOS_REZAGO:
         if objetivo == "flores_promedio" and tabla is not None:
+            if "flores_promedio" not in tabla.columns:
+                continue
             r = rezagos_floracion_clima(tabla)
         else:
             if objetivo not in sem.columns or sem[objetivo].notna().sum() < 13:
@@ -318,7 +331,9 @@ def _rezago_efecto_fijo(
     # con el panel productivo; en ese caso la prueba no aplica, pero tampoco debe tumbar
     # el callback ni dejar el skeleton esperando indefinidamente.
     if (
-        predictor not in tabla.columns
+        not isinstance(tabla, pd.DataFrame)
+        or tabla.empty
+        or predictor not in tabla.columns
         or objetivo not in tabla.columns
         or "celda" not in tabla.columns
         or "nsem" not in tabla.columns
@@ -374,6 +389,8 @@ def _rezago_efecto_fijo(
 
 def rezago_floracion(tabla: pd.DataFrame, objetivo: str = "Frutos") -> pd.DataFrame:
     """¿La floración de hace k semanas explica mejor el objetivo que la de esta semana?"""
+    if not isinstance(tabla, pd.DataFrame) or "flores_promedio" not in tabla.columns:
+        return pd.DataFrame()
     return _rezago_efecto_fijo(tabla, "flores_promedio", objetivo)
 
 
@@ -389,7 +406,7 @@ def rezagos_floracion_clima(tabla: pd.DataFrame) -> pd.DataFrame:
     Devuelve el mismo esquema de columnas que `rezagos()` para que `rezagos_todos` y
     `mejor_rezago_por_variable` no necesiten distinguir el origen.
     """
-    if "flores_promedio" not in tabla.columns:
+    if not isinstance(tabla, pd.DataFrame) or "flores_promedio" not in tabla.columns:
         return pd.DataFrame()
 
     piezas = []

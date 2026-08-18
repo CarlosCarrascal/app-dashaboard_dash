@@ -63,7 +63,7 @@ def _fuentes() -> html.Div:
         for titulo, archivo, aporta, limite in FUENTES
     ])
     return html.Div([
-        ui.tabla_desde_df(filas),
+        ui.tabla_desde_df(filas, plano=True),
         html.P(f"Carpeta revisada: {carpeta}", className="mt-1 text-xs text-slate-500"),
     ])
 
@@ -89,10 +89,15 @@ def _capas() -> html.Div:
             "Estado": "No identificable con la campaña actual",
         },
     ])
-    return html.Div([
-        ui.titulo_seccion("Tres resultados que deben mantenerse separados"),
-        ui.tabla_desde_df(filas),
-    ])
+    return ui.panel(
+        "1 · Tres resultados que deben mantenerse separados",
+        ui.parrafo(
+            "El tablero separa asociación, predicción y efecto agronómico porque cada "
+            "pregunta necesita datos y supuestos distintos. Una capa no reemplaza a la otra."
+        ),
+        ui.tabla_desde_df(filas, plano=True),
+        ayuda="Frontera entre lo que observamos, lo que predecimos y lo que podríamos atribuir.",
+    )
 
 
 def _datos_faltantes() -> html.Div:
@@ -112,9 +117,14 @@ def _datos_faltantes() -> html.Div:
         ],
         columns=["Campo", "Para qué se necesita", "Estado actual"],
     )
-    return html.Div([
-        ui.titulo_seccion("Tabla agronómica necesaria antes de DML"),
-        ui.tabla_desde_df(filas),
+    return ui.panel(
+        "3 · Qué falta para estimar un efecto agronómico",
+        ui.parrafo(
+            "La campaña actual permite asociación y diagnóstico predictivo. Para hablar de "
+            "cuánto cambiaría el resultado al modificar una exposición faltan controles, "
+            "tratamientos y replicación suficientes."
+        ),
+        ui.tabla_desde_df(filas, plano=True),
         ui.semaforo(
             "aviso",
             "Frutos y peso deben analizarse como **resultados secundarios** para "
@@ -122,21 +132,111 @@ def _datos_faltantes() -> html.Div:
             "como controles posteriores al clima o al riego. La fecha de poda ya se usa "
             "como control temporal proxy; la fase fenológica observada aún falta.",
         ),
+        ayuda="Inventario de información necesaria antes de una estimación causal.",
+    )
+
+
+def _resumen() -> html.Div:
+    carpeta = settings.XLSX_REPO.parent / "new.info"
+    disponibles = sum((carpeta / archivo).is_file() for _, archivo, _, _ in FUENTES)
+    faltantes = 0
+    parciales = 0
+    filas = [
+        ("Campaña", "Separar año, estación y decisiones de manejo", "Falta replicación"),
+        ("Fundo y módulo", "Unidad observacional y agrupación", "Disponible"),
+        ("Fecha de poda", "Origen del tiempo agronómico", "Disponible en M_Poda, a nivel lote"),
+        ("Días desde poda", "Alinear módulos con calendarios distintos", "Derivable; proxy de módulo"),
+        ("Fase fenológica", "Asignar la exposición al proceso biológico correcto", "Falta"),
+        ("Clima por fase", "Temperatura, DPV, radiación y ETo en ventanas reales", "Falta"),
+        ("Riego con cadencia", "Distinguir día, semana, cero y dato faltante", "Parcial"),
+        ("Variedad y edad", "Confusores y modificadores del efecto", "Parcial en M_Poda"),
+        ("Densidad", "Convertir componentes por planta a total comparable", "Falta"),
+        ("Fertilización y eventos", "Evitar atribuir al clima decisiones operativas", "Falta"),
+        ("Frutos y peso", "Resultados biológicos secundarios, no controles del kg/ha", "Parcial"),
+    ]
+    for _, _, estado in filas:
+        faltantes += estado == "Falta"
+        parciales += estado.startswith("Parcial")
+    return ui.fila_kpi([
+        ui.kpi(
+            "Capas de análisis",
+            "3",
+            nota="Asociación, predicción y efecto agronómico.",
+        ),
+        ui.kpi(
+            "Fuentes revisadas",
+            str(len(FUENTES)),
+            nota="Referencias usadas para justificar decisiones de método.",
+        ),
+        ui.kpi(
+            "PDF disponibles",
+            f"{disponibles} / {len(FUENTES)}",
+            nota="Archivos encontrados en la carpeta local del proyecto.",
+        ),
+        ui.kpi(
+            "Campos pendientes",
+            str(faltantes),
+            nota=f"{parciales} campos están disponibles solo de forma parcial.",
+        ),
     ])
+
+
+def _respuesta_corta() -> html.Div:
+    return ui.panel(
+        "Respuesta corta",
+        ui.semaforo(
+            "aviso",
+            "**El tablero ya separa tres preguntas, pero no puede convertir asociación "
+            "en causalidad con esta campaña.** Las referencias sirven para justificar el "
+            "método y sus límites; no aportan coeficientes transferibles a Aqu Anqa.",
+        ),
+        html.Div(
+            className="grid gap-4",
+            children=[
+                html.Div([
+                    html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
+                    html.P(
+                        "Qué sostiene cada capa del tablero, qué referencias orientan la "
+                        "elección y qué información todavía falta.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]),
+                html.Div([
+                    html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
+                    html.P(
+                        "Evita mezclar evidencia observacional, capacidad predictiva y "
+                        "efectos causales en una sola conclusión.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]),
+            ],
+        ),
+        ayuda="La conclusión metodológica que conecta Referencia con el resto del dashboard.",
+    )
 
 
 def layout():
     return html.Div(
-        className="space-y-6",
+        className="space-y-4",
         children=[
-            ui.parrafo(
-                "Las referencias justifican decisiones de método; no aportan "
-                "coeficientes transferibles a Aqu Anqa. Los PDFs pesqueros se conservan "
-                "como apoyo de bioestadística, estimación e incertidumbre, no como "
-                "evidencia agronómica directa."
+            ui.encabezado_pagina(
+                "¿Qué podemos afirmar y qué todavía no?",
+                "El marco metodológico mantiene separadas la asociación, la predicción y "
+                "la estimación de un efecto agronómico.",
             ),
+            _resumen(),
+            _respuesta_corta(),
             _capas(),
-            html.Div([ui.titulo_seccion("Fuentes académicas revisadas"), _fuentes()]),
+            ui.panel(
+                "2 · Fuentes académicas revisadas",
+                ui.parrafo(
+                    "Las referencias justifican decisiones de método; no aportan coeficientes "
+                    "transferibles a Aqu Anqa. Los PDFs se conservan como apoyo de bioestadística, "
+                    "estimación e incertidumbre, no como evidencia agronómica directa."
+                ),
+                _fuentes(),
+                ayuda="Qué ideas se tomaron de cada fuente y qué límites impiden trasladarlas directamente.",
+            ),
             _datos_faltantes(),
         ],
     )
