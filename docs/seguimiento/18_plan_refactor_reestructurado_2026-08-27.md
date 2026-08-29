@@ -2843,3 +2843,18 @@ Sus `26` archivos se consideran código y pruebas válidos y se integran en un c
 sin mezclarlos con los artefactos preservados. Después de esa integración, los únicos archivos que
 deben seguir fuera de `packages/analitica` serán artefactos/evidencias locales y no código fuente
 pendiente. La retirada de fachadas seguirá esperando la ventana de compatibilidad documentada.
+
+## Consolidación final de artefactos locales (2026-08-29)
+
+Después de integrar horizonte se volvió a ejecutar la suite completa y volvió a terminar con
+`946 passed, 3 skipped`, sin fallos. Se consolidaron los resultados temporales en el archivo local
+ignorado `.artifacts/refactor-auditoria-20260829.zip` (`71` entradas), se conservaron solo los
+wheels canónicos (`5`) y quedaron únicamente dos entradas operativas en `.tmp`: una para el panel
+por defecto de expertos y otra para las transiciones de parámetros. Las copias de builds, smoke
+tests, snapshots de código, ruedas duplicadas y logs de ejecución fueron eliminadas.
+
+Estado final de la fuente: `packages/analitica` tiene `409` archivos fuente/pruebas y `0` archivos
+no versionados pendientes; el repositorio tiene `0` cachés/builds/bytecode residuales. `mlflow.db`,
+el diagnóstico temporal, los entregables y los snapshots ETL permanecen preservados y excluidos
+localmente de Git. La única modificación tracked fuera de estos commits es `CODEOWNERS` eliminado
+en el árbol de trabajo, que se deja intacto por ser un cambio ajeno a esta limpieza.
