@@ -2834,3 +2834,12 @@ excluir los artefactos preservados, las salidas de datos y el trabajo paralelo r
 validación mínima posterior al checkpoint será `python -m pytest`, Ruff sin caché y `python -m
 pip check`; cualquier prueba que regenere cachés se ejecutará antes de la comprobación final del
 árbol.
+
+## Cierre del bloque de horizonte (2026-08-29)
+
+La suite completa posterior a la limpieza terminó con `946 passed, 3 skipped` en `632.29s`, sin
+fallos. Esto incluye las pruebas del bloque de horizonte que estaba separado temporalmente.
+Sus `26` archivos se consideran código y pruebas válidos y se integran en un commit independiente,
+sin mezclarlos con los artefactos preservados. Después de esa integración, los únicos archivos que
+deben seguir fuera de `packages/analitica` serán artefactos/evidencias locales y no código fuente
+pendiente. La retirada de fachadas seguirá esperando la ventana de compatibilidad documentada.
