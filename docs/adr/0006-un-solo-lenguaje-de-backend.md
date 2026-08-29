@@ -110,8 +110,8 @@ un DAG que cruza capas— sin resolver nada.
   `domain/` ya está trazada y mover la carpeta será barato.
 - **Reorganizar `db/sql` por dominio de negocio** (`domains/mediciones/` con su raw, su stg, su
   core y su carga juntos). Es el patrón correcto para microservicios y el equivocado para un
-  pipeline: el orden de ejecución es un DAG que cruza capas —`core.lote` tiene que existir antes
-  de que `core.baya_medicion` lo referencie—, y agrupar por dominio no elimina esa dependencia,
+  pipeline: el orden de ejecución es un DAG que cruza capas —`core.m_lote` tiene que existir antes
+  de que `core.ev_baya_medicion` lo referencie—, y agrupar por dominio no elimina esa dependencia,
   la esconde y obliga a reintroducir el orden *entre* carpetas.
 - **Mover `stg`/`qua` a Python "para abaratar cómputo de RDS".** El problema no existe a esta
   escala: la carga completa de packing (117.536 filas) tarda 8,2 s, y forecast (150 K filas)

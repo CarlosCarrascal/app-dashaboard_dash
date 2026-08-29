@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS stg.mapa_lote (
                      coalesce(modulo_norm, '') || '|' ||
                      coalesce(lote_norm, '')
                  ) STORED,
-    lote_id      integer REFERENCES core.lote(lote_id),
+    lote_id      integer REFERENCES core.m_lote(lote_id),
     motivo       text,
     fuentes      text NOT NULL,
     filas        bigint NOT NULL DEFAULT 0,
@@ -47,26 +47,27 @@ SELECT fuente, fundo_norm, modulo_norm, lote_norm, count(*) AS filas
 FROM (
     SELECT 'e01_ramas' AS fuente, stg.fn_norm_texto(fundo) AS fundo_norm,
            stg.fn_norm_modulo(modulo) AS modulo_norm, stg.fn_norm_lote(lote) AS lote_norm
-    FROM raw.e01_ramas
+    FROM raw.v_e01_ramas_vigente
     UNION ALL SELECT 'e02_conteo_flores', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.e02_conteo_flores
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_e02_conteo_flores_vigente
     UNION ALL SELECT 'e03_conteo_estados', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.e03_conteo_estados
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_e03_conteo_estados_vigente
     UNION ALL SELECT 'e04_brotes', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.e04_brotes
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_e04_brotes_vigente
     -- E05 no trae fundo, solo módulo, turno y lote.
     UNION ALL SELECT 'e05_diametros_bayas', NULL,
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.e05_diametros_bayas
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_e05_diametros_bayas_vigente
     UNION ALL SELECT 'h00_volumen_campo', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.h00_volumen_campo
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_h00_volumen_campo_vigente
     UNION ALL SELECT 'h01_prod_historica', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.h01_prod_historica
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_h01_prod_historica_vigente
     UNION ALL SELECT 'm_poda', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.m_poda
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_m_poda_vigente
     UNION ALL SELECT 'm_n_muestra', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.m_n_muestra
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.v_m_n_muestra_vigente
     UNION ALL SELECT 'r09_forecast_semanal', stg.fn_norm_texto(fundo),
-           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote) FROM raw.r09_forecast_semanal
+           stg.fn_norm_modulo(modulo), stg.fn_norm_lote(lote)
+           FROM raw.v_r09_forecast_semanal_historico
 ) t
 GROUP BY fuente, fundo_norm, modulo_norm, lote_norm;
 
@@ -106,7 +107,7 @@ END;
 $$;
 
 COMMENT ON PROCEDURE stg.sp_refrescar_mapa_lote() IS
-    'Recalcula el mapa. Hay que llamarlo después de cargar core.lote y cada vez que cambie el '
+    'Recalcula el mapa. Hay que llamarlo después de cargar core.m_lote y cada vez que cambie el '
     'maestro o se añada un alias de fundo.';
 
 -- Resolución lista para usar desde los hechos: JOIN por clave única, no llamada por fila.

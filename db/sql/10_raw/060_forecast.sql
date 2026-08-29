@@ -78,6 +78,48 @@ CREATE TABLE IF NOT EXISTS raw.r09_forecast_semanal (
     fundo          text
 );
 
+-- Historial de copias anteriores. Permite cargar C2025 y luego C2026 sin convertir los
+-- Excel semanales en una segunda base maestra. Cada bloque conserva el snapshot Access
+-- físico que lo originó; la vista contractual elimina filas idénticas entre copias.
+CREATE TABLE IF NOT EXISTS raw.r09_forecast_semanal_snapshot (
+    snapshot_row_id bigserial PRIMARY KEY,
+    source_snapshot_id bigint NOT NULL REFERENCES raw.source_snapshot(source_snapshot_id),
+    archivado_en    timestamptz NOT NULL DEFAULT now(),
+    campania       text,
+    pasada         text,
+    modulo         text,
+    turno          text,
+    lote           text,
+    area           text,
+    fecha_cos_ant  text,
+    fecha_cos      text,
+    sem            text,
+    frt_cos        text,
+    peso           text,
+    frutos_total   text,
+    rend           text,
+    kg             text,
+    dr             text,
+    version        text,
+    fund_ppto      text,
+    fundo          text
+);
+
+CREATE INDEX IF NOT EXISTS ix_r09_snapshot_fuente
+    ON raw.r09_forecast_semanal_snapshot (source_snapshot_id);
+
+CREATE OR REPLACE VIEW raw.v_r09_forecast_semanal_historico AS
+SELECT campania, pasada, modulo, turno, lote, area, fecha_cos_ant, fecha_cos,
+       sem, frt_cos, peso, frutos_total, rend, kg, dr, version, fund_ppto, fundo
+FROM raw.r09_forecast_semanal
+UNION
+SELECT campania, pasada, modulo, turno, lote, area, fecha_cos_ant, fecha_cos,
+       sem, frt_cos, peso, frutos_total, rend, kg, dr, version, fund_ppto, fundo
+FROM raw.r09_forecast_semanal_snapshot;
+
+COMMENT ON VIEW raw.v_r09_forecast_semanal_historico IS
+    'Unión deduplicada de la copia Access vigente y snapshots R09 de campañas anteriores.';
+
 COMMENT ON TABLE raw.r09_forecast_semanal IS
     'R09_Forecast_Semanal — 48.368 filas. Proyección semanal a nivel de lote: más granular y '
     'de horizonte más corto que R08. Acumula 46 versiones S01..S32 con sufijos _v2/_v3/_V2 '

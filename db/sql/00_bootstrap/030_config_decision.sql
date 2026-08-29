@@ -8,7 +8,7 @@
 -- Cambiar una decisión = UPDATE + REFRESH de las vistas materializadas. No re-migrar.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS core.config_decision (
+CREATE TABLE IF NOT EXISTS core.cfg_decision (
     clave        text PRIMARY KEY,
     valor        text NOT NULL,
     descripcion  text NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE IF NOT EXISTS core.config_decision (
     actualizado_en timestamptz NOT NULL DEFAULT now()
 );
 
-COMMENT ON TABLE core.config_decision IS
+COMMENT ON TABLE core.cfg_decision IS
     'Supuestos de negocio en uso. estado=provisional significa que el valor se eligió por '
     'inferencia y debe confirmarlo el área indicada en "decide".';
-COMMENT ON COLUMN core.config_decision.valor IS
+COMMENT ON COLUMN core.cfg_decision.valor IS
     'Valor en texto; cada consumidor lo interpreta según su clave.';
 
-INSERT INTO core.config_decision (clave, valor, descripcion, hallazgo, estado, decide) VALUES
+INSERT INTO core.cfg_decision (clave, valor, descripcion, hallazgo, estado, decide) VALUES
 
     ('forecast.columna_kg',
      'kg_exp',
@@ -49,7 +49,7 @@ INSERT INTO core.config_decision (clave, valor, descripcion, hallazgo, estado, d
      'derivado',
      'De dónde salen las fechas de corte de cada campaña productiva. derivado = del rango '
      'real observado en H00/H01/M_Poda por campaña. Cuando Planeamiento entregue el '
-     'calendario oficial, pasa a "declarado" y se cargan en core.campania.',
+     'calendario oficial, pasa a "declarado" y se cargan en core.t_campania.',
      'H-04 caso 5 / D-2', 'provisional', 'Planeamiento'),
 
     ('cosecha.origen_referencia_kg',
@@ -87,7 +87,7 @@ INSERT INTO core.config_decision (clave, valor, descripcion, hallazgo, estado, d
      'exacta de M10A (23,03) y M10B (23,90). Se reparte agua_m3 proporcional al área '
      'real de cada uno (~49,1% / ~50,9%); lamina_mm NO se reparte, porque es una medida '
      'intensiva (mm aplicados), no un volumen. Las filas resultantes quedan marcadas '
-     'core.riego_semanal.estimado = true.',
+     'core.op_riego_semanal.estimado = true.',
      'D-7', 'provisional', 'Riego / Agronomía'),
 
     ('riego.modulo11_fundo_origen',
@@ -106,7 +106,7 @@ ON CONFLICT (clave) DO NOTHING;
 -- D-8 se confirmó en la sesión de análisis del 2026-08-06, no por un memo formal de
 -- Riego — se deja constancia de quién y cuándo, igual que exige el resto de la tabla
 -- para cualquier fila en estado 'confirmado'.
-UPDATE core.config_decision
+UPDATE core.cfg_decision
    SET confirmado_por = 'eangulo (sesión de análisis, respuesta directa a la pregunta '
                          'de resolución de módulo)',
        confirmado_en = '2026-08-06T00:00:00-05'::timestamptz
@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION core.fn_config(p_clave text)
 RETURNS text
 LANGUAGE sql STABLE
 AS $$
-    SELECT valor FROM core.config_decision WHERE clave = p_clave;
+    SELECT valor FROM core.cfg_decision WHERE clave = p_clave;
 $$;
 
 COMMENT ON FUNCTION core.fn_config(text) IS

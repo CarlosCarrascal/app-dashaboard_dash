@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Dashboard Dash de análisis de clima, riego y rendimiento de Aqu Anqa"
 requires-python = ">=3.12"
 dependencies = [
-    "aquanqa-analitica",
+    "aquanqa-analitica==0.1.0",
     "dash>=4.4.1",
     "dash-extensions>=2.0",
     "dash-ag-grid>=31",
@@ -21,14 +21,22 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = ["app"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+assets = ["*.css", "*.png", "*.svg", "icons/*.svg"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["components*", "pages*", "servicios*"]
+include = ["assets*", "components*", "pages*", "servicios*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.py[cod]"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = ["build", "dist*", ".cache", ".tmp*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

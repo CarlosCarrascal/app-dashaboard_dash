@@ -31,10 +31,10 @@ correspondiente, en lugar de dejar la columna vacía.
 
 ```sql
 -- Antes
-modulo_id smallint REFERENCES core.modulo(modulo_id)          -- puede ser NULL
+modulo_id smallint REFERENCES core.m_modulo(modulo_id)          -- puede ser NULL
 
 -- Ahora
-modulo_id smallint NOT NULL REFERENCES core.modulo(modulo_id)  -- el motor garantiza que nunca lo es
+modulo_id smallint NOT NULL REFERENCES core.m_modulo(modulo_id)  -- el motor garantiza que nunca lo es
 ```
 
 Cada dimensión que participa en una FK con nulos reales lleva su propia fila centinela:
@@ -42,7 +42,7 @@ Cada dimensión que participa en una FK con nulos reales lleva su propia fila ce
 que solo pueda existir una:
 
 ```sql
-CREATE UNIQUE INDEX ... ON core.modulo ((true)) WHERE es_sentinel;
+CREATE UNIQUE INDEX ... ON core.m_modulo ((true)) WHERE es_sentinel;
 ```
 
 La cadena se crea en `core.sp_cargar_ubicacion()`, antes de cargar los datos reales:
@@ -66,8 +66,8 @@ columna `ambiguo`. Convertirlo a centinela sería redundante.
 - Power BI puede tratar "Sin identificar" como una categoría visible y filtrable —
   `es_sentinel = false` para el análisis normal, o dejarla para auditar cuánto volumen no se
   pudo ubicar — en vez de una categoría en blanco sin explicación.
-- Los recuentos de filas en `core.forecast_campania` (101.714), `core.forecast_semanal`
-  (48.368) y `core.cosecha` (30.540) **no cambian**: el centinela repuebla el valor, no
+- Los recuentos de filas en `core.op_forecast_campania` (101.714), `core.op_forecast_semanal`
+  (48.368) y `core.op_cosecha` (30.540) **no cambian**: el centinela repuebla el valor, no
   excluye la fila. Lo que cambia es que ahora se puede saber cuántas filas de cada hecho
   quedaron sin identidad completa: `SELECT count(*) FROM fact.x JOIN dim.y USING(id) WHERE
   y.es_sentinel`.

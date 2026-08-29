@@ -18,11 +18,22 @@ from analitica.config import AZUL, CLIMA, GRIS, ROJO, etiqueta
 from components import ui
 from servicios.carga import PANEL_STORE
 
-dash.register_page(__name__, path="/impacto/evidencia", name="Evidencia", order=1, grupo="Impacto agronómico")
+dash.register_page(
+    __name__,
+    path="/impacto/evidencia",
+    name="Evidencia",
+    order=1,
+    grupo="Histórico · Excel/Access",
+)
 
 
 def layout():
-    return html.Div(id="evidencia-contenido", children=ui.esqueleto_pagina())
+    return html.Div(
+        children=[
+            ui.fuente_historica(),
+            html.Div(id="evidencia-contenido", children=ui.esqueleto_pagina()),
+        ]
+    )
 
 
 def _kpis(sem, panel) -> html.Div:
@@ -31,31 +42,33 @@ def _kpis(sem, panel) -> html.Div:
     ef = nucleo.clima.tamano_efectivo(panel.tabla)
     corr = nucleo.clima.correlaciones_semanales(sem)
     parcial = nucleo.clima.correlacion_parcial(sem)
-    return ui.fila_kpi([
-        ui.kpi(
-            "Señal más visible",
-            f"{ver.r_mas_alta:+.2f}".replace(".", ","),
-            nota=f"{ver.variable_mas_asociada}. Asociación inicial con el kg/ha.",
-            serie=corr["r (Pearson)"].abs(),
-        ),
-        ui.kpi(
-            "Señales que se sostienen",
-            f"{len(ver.sobreviven_al_control)} / {len(CLIMA)}",
-            nota="Variables que siguen asociadas tras controlar la estación.",
-            serie=parcial["r control no lineal"].abs(),
-        ),
-        ui.kpi(
-            "Semanas efectivas",
-            str(ef.n_semanas),
-            nota=f"El clima tiene {ef.n_semanas} observaciones distintas, no {ef.n_celdas}.",
-        ),
-        ui.kpi(
-            "Control de realidad",
-            f"{ver.r_placebo:+.2f}".replace(".", ","),
-            nota=f"{ver.placebo_mas_fuerte}. Serie inventada que sigue el calendario.",
-            serie=[abs(ver.r_mas_alta), abs(ver.r_placebo)],
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Señal más visible",
+                f"{ver.r_mas_alta:+.2f}".replace(".", ","),
+                nota=f"{ver.variable_mas_asociada}. Asociación inicial con el kg/ha.",
+                serie=corr["r (Pearson)"].abs(),
+            ),
+            ui.kpi(
+                "Señales que se sostienen",
+                f"{len(ver.sobreviven_al_control)} / {len(CLIMA)}",
+                nota="Variables que siguen asociadas tras controlar la estación.",
+                serie=parcial["r control no lineal"].abs(),
+            ),
+            ui.kpi(
+                "Semanas efectivas",
+                str(ef.n_semanas),
+                nota=f"El clima tiene {ef.n_semanas} observaciones distintas, no {ef.n_celdas}.",
+            ),
+            ui.kpi(
+                "Control de realidad",
+                f"{ver.r_placebo:+.2f}".replace(".", ","),
+                nota=f"{ver.placebo_mas_fuerte}. Serie inventada que sigue el calendario.",
+                serie=[abs(ver.r_mas_alta), abs(ver.r_placebo)],
+            ),
+        ]
+    )
 
 
 def _respuesta_corta(sem, panel) -> html.Div:
@@ -140,17 +153,23 @@ def _prueba_1(sem) -> html.Div:
     corr = nucleo.clima.correlaciones_semanales(sem)
     d = corr.sort_values("r (Pearson)")
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        y=d.Variable, x=d["r (Pearson)"], orientation="h",
-        marker={"color": [ROJO if s else GRIS for s in d.Significativa]},
-        error_x={
-            "type": "data", "symmetric": False,
-            "array": d["IC 95% superior"] - d["r (Pearson)"],
-            "arrayminus": d["r (Pearson)"] - d["IC 95% inferior"],
-            "color": "#888", "thickness": 1.4,
-        },
-        hovertemplate="%{y}<br>r = %{x:+.3f}<extra></extra>",
-    ))
+    fig.add_trace(
+        go.Bar(
+            y=d.Variable,
+            x=d["r (Pearson)"],
+            orientation="h",
+            marker={"color": [ROJO if s else GRIS for s in d.Significativa]},
+            error_x={
+                "type": "data",
+                "symmetric": False,
+                "array": d["IC 95% superior"] - d["r (Pearson)"],
+                "arrayminus": d["r (Pearson)"] - d["IC 95% inferior"],
+                "color": "#888",
+                "thickness": 1.4,
+            },
+            hovertemplate="%{y}<br>r = %{x:+.3f}<extra></extra>",
+        )
+    )
     fig.add_vline(x=0, line_color="#888")
     fig.update_layout(xaxis_title="correlación con el kg/ha", xaxis_range=[-1, 1])
     _estilo_figura(fig, 340)
@@ -174,11 +193,15 @@ def _prueba_1(sem) -> html.Div:
                     "no sobre las celdas repetidas entre módulos."
                 ),
                 ui.tabla_desde_df(
-                    corr, ocultar=["clave"],
+                    corr,
+                    ocultar=["clave"],
                     formato={
-                        "r (Pearson)": "{:+.3f}", "p": "{:.4f}",
-                        "IC 95% inferior": "{:+.3f}", "IC 95% superior": "{:+.3f}",
-                        "Spearman": "{:+.3f}", "p Spearman": "{:.4f}",
+                        "r (Pearson)": "{:+.3f}",
+                        "p": "{:.4f}",
+                        "IC 95% inferior": "{:+.3f}",
+                        "IC 95% superior": "{:+.3f}",
+                        "Spearman": "{:+.3f}",
+                        "p Spearman": "{:.4f}",
                         "Varianza explicada": "{:.1%}",
                     },
                 ),
@@ -192,13 +215,32 @@ def _prueba_2(sem) -> html.Div:
     parcial = nucleo.clima.correlacion_parcial(sem)
     d = parcial.sort_values("r sin controlar")
     fig = go.Figure()
-    fig.add_trace(go.Bar(y=d.Variable, x=d["r sin controlar"], orientation="h",
-                         name="Sin controlar", marker_color=ROJO, opacity=0.85))
-    fig.add_trace(go.Bar(y=d.Variable, x=d["r control no lineal"], orientation="h",
-                         name="Descontando el calendario", marker_color=AZUL))
+    fig.add_trace(
+        go.Bar(
+            y=d.Variable,
+            x=d["r sin controlar"],
+            orientation="h",
+            name="Sin controlar",
+            marker_color=ROJO,
+            opacity=0.85,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            y=d.Variable,
+            x=d["r control no lineal"],
+            orientation="h",
+            name="Descontando el calendario",
+            marker_color=AZUL,
+        )
+    )
     fig.add_vline(x=0, line_color="#888")
-    fig.update_layout(barmode="group", xaxis_title="correlación con el kg/ha",
-                      xaxis_range=[-1, 1], legend={"orientation": "h", "y": 1.16})
+    fig.update_layout(
+        barmode="group",
+        xaxis_title="correlación con el kg/ha",
+        xaxis_range=[-1, 1],
+        legend={"orientation": "h", "y": 1.16},
+    )
     _estilo_figura(fig, 380)
 
     sobreviven = parcial.loc[parcial.Sobrevive, "Variable"].tolist()
@@ -235,11 +277,15 @@ def _prueba_2(sem) -> html.Div:
                     "parte de la estacionalidad y haría parecer que la relación sobrevive."
                 ),
                 ui.tabla_desde_df(
-                    parcial, ocultar=["clave"],
+                    parcial,
+                    ocultar=["clave"],
                     formato={
-                        "r sin controlar": "{:+.3f}", "r control lineal": "{:+.3f}",
-                        "p lineal": "{:.4f}", "r control no lineal": "{:+.3f}",
-                        "p no lineal": "{:.4f}", "Queda": "{:.0%}",
+                        "r sin controlar": "{:+.3f}",
+                        "r control lineal": "{:+.3f}",
+                        "p lineal": "{:.4f}",
+                        "r control no lineal": "{:+.3f}",
+                        "p no lineal": "{:.4f}",
+                        "Queda": "{:.0%}",
                     },
                 ),
             ),
@@ -251,11 +297,15 @@ def _prueba_4(sem) -> html.Div:
 
     pl = nucleo.clima.placebo(sem)
     d = pl.sort_values("r con kg/ha")
-    fig = go.Figure(go.Bar(
-        y=d.Serie, x=d["r con kg/ha"], orientation="h",
-        marker={"color": [AZUL if real else ROJO for real in d.Real]},
-        hovertemplate="%{y}<br>r = %{x:+.3f}<extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Bar(
+            y=d.Serie,
+            x=d["r con kg/ha"],
+            orientation="h",
+            marker={"color": [AZUL if real else ROJO for real in d.Real]},
+            hovertemplate="%{y}<br>r = %{x:+.3f}<extra></extra>",
+        )
+    )
     fig.add_vline(x=0, line_color="#888")
     fig.update_layout(xaxis_title="correlación con el kg/ha", xaxis_range=[-1, 1])
     _estilo_figura(fig, 420)
@@ -276,16 +326,20 @@ def _prueba_4(sem) -> html.Div:
                 "curva, no el clima."
             ),
             dcc.Graph(figure=fig, config={"displaylogo": False}),
-            html.P("Azul: variables reales medidas en campo. Rojo: series inventadas.",
-                   className="text-xs text-slate-500"),
+            html.P(
+                "Azul: variables reales medidas en campo. Rojo: series inventadas.",
+                className="text-xs text-slate-500",
+            ),
             ui.semaforo(
                 "error" if gana else "ok",
-                (f"**Sí, y más.** «{top.Serie}» da r = {top['r con kg/ha']:+.3f}, por "
-                 f"encima de {mejor_real.Serie} ({mejor_real['r con kg/ha']:+.3f}). Una "
-                 "onda que solo conoce la semana describe mejor la forma de la cosecha."
-                 if gana else
-                 f"**No.** La mejor serie inventada («{top.Serie}») llega a "
-                 f"{top['r con kg/ha']:+.3f}, por debajo de {mejor_real.Serie}."),
+                (
+                    f"**Sí, y más.** «{top.Serie}» da r = {top['r con kg/ha']:+.3f}, por "
+                    f"encima de {mejor_real.Serie} ({mejor_real['r con kg/ha']:+.3f}). Una "
+                    "onda que solo conoce la semana describe mejor la forma de la cosecha."
+                    if gana
+                    else f"**No.** La mejor serie inventada («{top.Serie}») llega a "
+                    f"{top['r con kg/ha']:+.3f}, por debajo de {mejor_real.Serie}."
+                ),
             ),
             ui.plegable(
                 "Qué demuestra este control",
@@ -395,15 +449,31 @@ def _prueba_3_callback(panel, variable):
     d = lags[lags.clave == variable]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=d.Rezago, y=d["r bruto"], mode="lines+markers",
-                             name="Sin descontar la estación", line={"color": ROJO}))
-    fig.add_trace(go.Scatter(x=d.Rezago, y=d["r sin tendencia"], mode="lines+markers",
-                             name="Descontando la estación",
-                             line={"color": AZUL, "dash": "dot"}))
+    fig.add_trace(
+        go.Scatter(
+            x=d.Rezago,
+            y=d["r bruto"],
+            mode="lines+markers",
+            name="Sin descontar la estación",
+            line={"color": ROJO},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=d.Rezago,
+            y=d["r sin tendencia"],
+            mode="lines+markers",
+            name="Descontando la estación",
+            line={"color": AZUL, "dash": "dot"},
+        )
+    )
     fig.add_hline(y=0, line_color="#888")
-    fig.update_layout(xaxis_title="semanas de rezago",
-                      yaxis_title="correlación con el kg/ha", yaxis_range=[-1, 1],
-                      legend={"orientation": "h", "y": 1.16})
+    fig.update_layout(
+        xaxis_title="semanas de rezago",
+        yaxis_title="correlación con el kg/ha",
+        yaxis_range=[-1, 1],
+        legend={"orientation": "h", "y": 1.16},
+    )
     _estilo_figura(fig, 380)
 
     bruto = d.loc[d["r bruto"].abs().idxmax()]

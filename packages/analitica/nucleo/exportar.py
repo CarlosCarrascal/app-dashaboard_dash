@@ -26,24 +26,57 @@ class Hoja:
     nota: str
     datos: pd.DataFrame
     porcentajes: tuple[str, ...] = ()
+    oculta: bool = False
 
 
 def _formatos(libro) -> dict:
     return {
-        "titulo": libro.add_format({"bold": True, "font_size": 15, "font_color": "#1A2733"}),
-        "nota": libro.add_format({"font_size": 10, "font_color": "#5A6472",
-                                  "text_wrap": True, "valign": "top"}),
-        "cabecera": libro.add_format({
-            "bold": True, "font_size": 10, "font_color": "#FFFFFF", "bg_color": "#3B7DD8",
-            "border": 1, "border_color": "#2C5FA8", "text_wrap": True, "valign": "vcenter",
-        }),
+        "titulo": libro.add_format({"bold": True, "font_size": 16, "font_color": "#123F33"}),
+        "nota": libro.add_format(
+            {"font_size": 10, "font_color": "#5A6472", "text_wrap": True, "valign": "top"}
+        ),
+        "cabecera": libro.add_format(
+            {
+                "bold": True,
+                "font_size": 10,
+                "font_color": "#FFFFFF",
+                "bg_color": "#0F6B55",
+                "border": 0,
+                "text_wrap": True,
+                "valign": "vcenter",
+            }
+        ),
         "texto": libro.add_format({"font_size": 10, "valign": "top", "text_wrap": True}),
-        "numero": libro.add_format({"font_size": 10, "num_format": "#,##0.000"}),
+        "numero": libro.add_format({"font_size": 10, "num_format": "#,##0.00"}),
         "entero": libro.add_format({"font_size": 10, "num_format": "#,##0"}),
         "porcentaje": libro.add_format({"font_size": 10, "num_format": "0.0%"}),
-        "seccion": libro.add_format({"bold": True, "font_size": 11,
-                                     "font_color": "#1A2733", "bottom": 2,
-                                     "border_color": "#3B7DD8"}),
+        "fecha": libro.add_format({"font_size": 10, "num_format": "dd/mm/yyyy"}),
+        "seccion": libro.add_format(
+            {
+                "bold": True,
+                "font_size": 11,
+                "font_color": "#123F33",
+                "bottom": 2,
+                "border_color": "#0F6B55",
+            }
+        ),
+        "portada_titulo": libro.add_format(
+            {
+                "bold": True,
+                "font_size": 22,
+                "font_color": "#FFFFFF",
+                "bg_color": "#0F6B55",
+                "valign": "vcenter",
+            }
+        ),
+        "portada_subtitulo": libro.add_format(
+            {
+                "font_size": 11,
+                "font_color": "#DDF3EA",
+                "bg_color": "#0F6B55",
+                "valign": "vcenter",
+            }
+        ),
     }
 
 
@@ -57,6 +90,8 @@ def _ancho(serie: pd.Series, encabezado: str) -> int:
 
 def _escribir(hoja_xl, libro, fmt: dict, h: Hoja) -> None:
     """Vuelca una hoja con título, nota, cabecera congelada y autofiltro."""
+    hoja_xl.hide_gridlines(2)
+    hoja_xl.set_tab_color("#0F6B55")
     hoja_xl.write(0, 0, h.titulo, fmt["titulo"])
     hoja_xl.merge_range(1, 0, 1, max(1, len(h.datos.columns) - 1), h.nota, fmt["nota"])
     hoja_xl.set_row(1, 30)
@@ -67,6 +102,13 @@ def _escribir(hoja_xl, libro, fmt: dict, h: Hoja) -> None:
         serie = h.datos[col]
         if col in h.porcentajes:
             formato = fmt["porcentaje"]
+        elif pd.api.types.is_datetime64_any_dtype(serie):
+            formato = fmt["fecha"]
+        elif any(
+            clave in str(col).casefold()
+            for clave in ("kg", "kilos", "plantas", "semana", "paña", "pasada")
+        ) and pd.api.types.is_numeric_dtype(serie):
+            formato = fmt["entero"]
         elif pd.api.types.is_float_dtype(serie):
             formato = fmt["numero"]
         elif pd.api.types.is_integer_dtype(serie):
@@ -89,15 +131,38 @@ def _escribir(hoja_xl, libro, fmt: dict, h: Hoja) -> None:
     hoja_xl.freeze_panes(fila0 + 1, 0)
     if len(h.datos):
         hoja_xl.autofilter(fila0, 0, fila0 + len(h.datos), len(h.datos.columns) - 1)
+        hoja_xl.conditional_format(
+            fila0 + 1,
+            0,
+            fila0 + len(h.datos),
+            len(h.datos.columns) - 1,
+            {
+                "type": "formula",
+                "criteria": "=MOD(ROW(),2)=0",
+                "format": libro.add_format({"bg_color": "#F3F8F6"}),
+            },
+        )
+    if h.oculta:
+        hoja_xl.hide()
 
 
-def _portada(hoja_xl, libro, fmt: dict, meta: list[tuple[str, str]]) -> None:
+def _portada(
+    hoja_xl,
+    libro,
+    fmt: dict,
+    meta: list[tuple[str, str]],
+    titulo: str,
+    subtitulo: str,
+) -> None:
     hoja_xl.hide_gridlines(2)
     hoja_xl.set_column(0, 0, 30)
     hoja_xl.set_column(1, 1, 88)
-    hoja_xl.write(0, 0, "Aqu Anqa · Relación clima-riego / rendimiento", fmt["titulo"])
-    hoja_xl.write(1, 0, "Exportación del tablero de análisis", fmt["nota"])
-    fila = 3
+    hoja_xl.merge_range(0, 0, 1, 1, titulo, fmt["portada_titulo"])
+    hoja_xl.merge_range(2, 0, 2, 1, subtitulo, fmt["portada_subtitulo"])
+    hoja_xl.set_row(0, 30)
+    hoja_xl.set_row(1, 18)
+    hoja_xl.set_row(2, 24)
+    fila = 5
     for clave, valor in meta:
         if valor is None:
             hoja_xl.write(fila, 0, clave, fmt["seccion"])
@@ -108,7 +173,13 @@ def _portada(hoja_xl, libro, fmt: dict, meta: list[tuple[str, str]]) -> None:
         fila += 1
 
 
-def construir_libro(hojas: list[Hoja], meta: list[tuple[str, str]]) -> bytes:
+def construir_libro(
+    hojas: list[Hoja],
+    meta: list[tuple[str, str]],
+    *,
+    titulo_portada: str = "Aqu Anqa · Informe analítico",
+    subtitulo_portada: str = "Exportación trazable de la plataforma de datos",
+) -> bytes:
     """Arma el .xlsx completo en memoria y devuelve sus bytes."""
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -116,7 +187,7 @@ def construir_libro(hojas: list[Hoja], meta: list[tuple[str, str]]) -> bytes:
         fmt = _formatos(libro)
 
         portada = libro.add_worksheet("Portada")
-        _portada(portada, libro, fmt, meta)
+        _portada(portada, libro, fmt, meta, titulo_portada, subtitulo_portada)
 
         for h in hojas:
             # Excel limita los nombres de hoja a 31 caracteres y prohíbe algunos signos.

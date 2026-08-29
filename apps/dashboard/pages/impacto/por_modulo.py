@@ -17,11 +17,22 @@ from analitica.visualizaciones import graficos as g
 from components import ui
 from servicios.carga import PANEL_STORE
 
-dash.register_page(__name__, path="/impacto/por-modulo", name="Por módulo", order=2, grupo="Impacto agronómico")
+dash.register_page(
+    __name__,
+    path="/impacto/por-modulo",
+    name="Por módulo",
+    order=2,
+    grupo="Histórico · Excel/Access",
+)
 
 
 def layout():
-    return html.Div(id="por-modulo-contenido", children=ui.esqueleto_pagina())
+    return html.Div(
+        children=[
+            ui.fuente_historica(),
+            html.Div(id="por-modulo-contenido", children=ui.esqueleto_pagina()),
+        ]
+    )
 
 
 def _estilo_figura(fig, altura: int):
@@ -48,32 +59,33 @@ def _kpis(porm, dep) -> html.Div:
     r = float(fila["r (inicio de cosecha ↔ correlación del módulo)"])
     inicio = porm.Inicio.astype(int)
     semanas = porm.Semanas.astype(int)
-    return ui.fila_kpi([
-        ui.kpi(
-            "Módulos analizados",
-            str(len(porm)),
-            nota="Módulos con al menos 10 semanas de cosecha observada.",
-        ),
-        ui.kpi(
-            "Inicio de cosecha",
-            f"{inicio.min()}–{inicio.max()}",
-            nota="Rango de semanas en que comienza la cosecha entre módulos.",
-            serie=sorted(inicio.tolist()),
-        ),
-        ui.kpi(
-            "Ventana por módulo",
-            f"{semanas.min()}–{semanas.max()}",
-            nota="Semanas observadas por módulo; la mediana es "
-                 f"{int(semanas.median())}.",
-            serie=sorted(semanas.tolist()),
-        ),
-        ui.kpi(
-            "Calendario ↔ señal",
-            f"{r:+.2f}".replace(".", ","),
-            nota=f"{fila.Variable}; {_formato_p(float(fila.p))}.",
-            serie=dep["r (inicio de cosecha ↔ correlación del módulo)"].abs(),
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Módulos analizados",
+                str(len(porm)),
+                nota="Módulos con al menos 10 semanas de cosecha observada.",
+            ),
+            ui.kpi(
+                "Inicio de cosecha",
+                f"{inicio.min()}–{inicio.max()}",
+                nota="Rango de semanas en que comienza la cosecha entre módulos.",
+                serie=sorted(inicio.tolist()),
+            ),
+            ui.kpi(
+                "Ventana por módulo",
+                f"{semanas.min()}–{semanas.max()}",
+                nota=f"Semanas observadas por módulo; la mediana es {int(semanas.median())}.",
+                serie=sorted(semanas.tolist()),
+            ),
+            ui.kpi(
+                "Calendario ↔ señal",
+                f"{r:+.2f}".replace(".", ","),
+                nota=f"{fila.Variable}; {_formato_p(float(fila.p))}.",
+                serie=dep["r (inicio de cosecha ↔ correlación del módulo)"].abs(),
+            ),
+        ]
+    )
 
 
 def _respuesta_corta(porm, dep) -> html.Div:
@@ -93,7 +105,9 @@ def _respuesta_corta(porm, dep) -> html.Div:
         children=[
             html.Div(
                 children=[
-                    html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
+                    html.Div(
+                        "Este análisis responde", className="text-sm font-semibold text-slate-700"
+                    ),
                     html.P(
                         "Si una relación climática se repite dentro de cada módulo o si "
                         "cambia según la ventana en la que ese módulo empieza a cosechar.",
@@ -103,7 +117,9 @@ def _respuesta_corta(porm, dep) -> html.Div:
             ),
             html.Div(
                 children=[
-                    html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
+                    html.Div(
+                        "Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"
+                    ),
                     html.P(
                         "Evita tratar una correlación aislada por módulo como un efecto "
                         "fisiológico. La señal debe acompañarse de variables de calendario "
@@ -191,7 +207,8 @@ def _render(panel):
                             f"Para {variable}, el eje horizontal marca cuándo empieza a "
                             "cosechar cada módulo y el vertical muestra su correlación con "
                             f"el kg/ha. La relación entre ambos es r = {r:+.2f}: los módulos "
-                            f"que empiezan más tarde tienden a ser {('más positivos' if r >= 0 else 'más negativos')} "
+                            "que empiezan más tarde tienden a ser "
+                            f"{('más positivos' if r >= 0 else 'más negativos')} "
                             "porque se solapan con otra parte de la curva estacional."
                         ),
                         dcc.Graph(figure=ventana, config={"displaylogo": False}),

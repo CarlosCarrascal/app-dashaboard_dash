@@ -25,6 +25,9 @@ class Tabla:
     """Pares (nombre en el origen, nombre en raw), en el orden del origen."""
     filas_esperadas: int | None = None
     nota: str = ""
+    origen_alternativas: tuple[str, ...] = ()
+    columnas_alternativas: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    columnas_opcionales: tuple[str, ...] = ()
 
     @property
     def cols_origen(self) -> tuple[str, ...]:
@@ -34,10 +37,20 @@ class Tabla:
     def cols_destino(self) -> tuple[str, ...]:
         return tuple(d for _, d in self.columnas)
 
-    def select(self) -> str:
+    def select(
+        self,
+        origen: str | None = None,
+        columnas_origen: tuple[str | None, ...] | None = None,
+    ) -> str:
         """SELECT con los nombres de origen entre corchetes, como exige Jet/ACE."""
-        cols = ", ".join(f"[{c}]" for c in self.cols_origen)
-        return f"SELECT {cols} FROM [{self.origen}]"
+        seleccion = columnas_origen or self.cols_origen
+        cols = ", ".join(
+            f"NULL AS [{destino}]" if origen_resuelto is None else f"[{origen_resuelto}]"
+            for (origen, destino), origen_resuelto in zip(
+                self.columnas, seleccion, strict=True
+            )
+        )
+        return f"SELECT {cols} FROM [{origen or self.origen}]"
 
 
 # ── Evaluaciones fenológicas ────────────────────────────────────────────────────
@@ -91,6 +104,7 @@ E03_CONTEO_ESTADOS = Tabla(
     origen="E03_ConteoEstados",
     destino="e03_conteo_estados",
     filas_esperadas=18_714,
+    columnas_alternativas=(("F16", ("Hora",)),),
     columnas=(
         ("Item", "item"),
         ("Fecha", "fecha"),
@@ -153,6 +167,33 @@ E05_DIAMETROS_BAYAS = Tabla(
     ),
 )
 
+E05_SEGUIMIENTO = Tabla(
+    origen="E05_Seguimiento",
+    destino="e05_seguimiento",
+    filas_esperadas=None,
+    nota=(
+        "Una fila por planta y evaluación con 25 pares diámetro/estado. Se normaliza en stg "
+        "para el modelo de bayas de la app."
+    ),
+    columnas=(
+        ("Id", "id_origen"),
+        ("Fecha", "fecha"),
+        ("Evaluador", "evaluador"),
+        ("Fundo", "fundo"),
+        ("Modulo", "modulo"),
+        ("Lote", "lote"),
+        ("Hora", "hora"),
+        ("Cortina", "cortina"),
+        ("Hilera", "hilera"),
+        ("Planta", "planta"),
+        *tuple(
+            item
+            for i in range(1, 26)
+            for item in ((f"D{i:02d}", f"d{i:02d}"), (f"E{i:02d}", f"e{i:02d}"))
+        ),
+    ),
+)
+
 # ── Cosecha y packing ───────────────────────────────────────────────────────────
 
 H00_VOLUMEN_CAMPO = Tabla(
@@ -188,6 +229,32 @@ H01_PROD_HISTORICA = Tabla(
         ("KG", "kg"),
         ("Paña", "pana"),
         ("Peso", "peso"),
+    ),
+)
+
+H01_DETALLE_COSECHA = Tabla(
+    origen="H01_Detalle_Cosecha",
+    destino="h01_detalle_cosecha",
+    filas_esperadas=None,
+    columnas=(
+        ("Fecha_Cosecha", "fecha_cosecha"),
+        ("Fundo_Campo", "fundo_campo"),
+        ("Fundo_Planta", "fundo_planta"),
+        ("GRUPO", "grupo"),
+        ("Módulo Planta", "modulo_planta"),
+        ("Turno Planta", "turno_planta"),
+        ("Módulo", "modulo"),
+        ("Turno", "turno"),
+        ("Lote", "lote"),
+        ("Variedad", "variedad"),
+        ("Área", "area"),
+        ("Kg_Cosechados", "kg_cosechados"),
+        ("Kg_Kg Entierro", "kg_entierro"),
+        ("Kg_Ingreso_Planta", "kg_ingreso_planta"),
+        ("Kg_Descarte", "kg_descarte"),
+        ("Kg_Descarte_Congelado", "kg_descarte_congelado"),
+        ("Kg_Exportable", "kg_exportable"),
+        ("# Jarras", "jarras"),
     ),
 )
 
@@ -275,7 +342,9 @@ M_LOTES = Tabla(
     origen="M_Lotes",
     destino="m_lotes",
     filas_esperadas=860,
-    nota="Se migra por trazabilidad histórica; el maestro vigente es M_Lotes.xlsx (ADR-0003).",
+    nota="Se migra por trazabilidad y como maestro primario de identidad; M_Lotes.xlsx queda "
+         "como contraste externo (ADR-0012).",
+    columnas_opcionales=("Moduloo", "kk", "KeyFun", "KeyMod"),
     columnas=(
         ("Fundo", "fundo"),
         ("FundoPPto", "fundo_ppto"),
@@ -292,6 +361,8 @@ M_LOTES = Tabla(
         ("Fundo_pptom5", "fundo_pptom5"),
         ("Moduloo", "moduloo"),
         ("kk", "kk"),
+        ("KeyFun", "key_fun"),
+        ("KeyMod", "key_mod"),
     ),
 )
 
@@ -371,6 +442,21 @@ M_EQUIVALENCIA_ELIFAB = Tabla(
     ),
 )
 
+M_PRESUPUESTO_MO = Tabla(
+    origen="M_PresupuestoMO",
+    destino="m_presupuesto_mo",
+    filas_esperadas=None,
+    nota="Tabla de presupuesto de mano de obra; se conserva en raw para trazabilidad.",
+    origen_alternativas=("M_PresupuetoMO",),
+    columnas=(
+        ("Año", "anio"),
+        ("Semana", "semana"),
+        ("Fundo", "fundo"),
+        ("Evaluación", "evaluacion"),
+        ("MOSem", "mo_sem"),
+    ),
+)
+
 # ── Forecast ────────────────────────────────────────────────────────────────────
 
 R08_FORECAST_CAMPANIA = Tabla(
@@ -403,6 +489,41 @@ R08_FORECAST_CAMPANIA = Tabla(
     ),
 )
 
+R08_FORECAST_CAMPANIA_24 = Tabla(
+    origen="R08_Forecast_Campaña_24",
+    destino="r08_forecast_campania_24",
+    filas_esperadas=None,
+    columnas=(
+        ("Version", "version"),
+        ("FundoPPto", "fundo_ppto"),
+        ("Modulo", "modulo"),
+        ("Año", "anio"),
+        ("Semana", "semana"),
+        ("KG", "kg"),
+    ),
+)
+
+R08_FORECAST_CAMPANIA_25 = Tabla(
+    origen="R08_Forecast_Campaña_25",
+    destino="r08_forecast_campania_25",
+    filas_esperadas=None,
+    columnas=(
+        ("Version", "version"),
+        ("Fundo", "fundo"),
+        ("Modulo", "modulo"),
+        ("PlnFundo", "pln_fundo"),
+        ("PlntMod", "plnt_mod"),
+        ("Turno", "turno"),
+        ("Plantas", "plantas"),
+        ("Camp", "camp"),
+        ("Año", "anio"),
+        ("Sem", "sem"),
+        ("desc", "desc"),
+        ("Kg", "kg"),
+        ("frtTotal", "frt_total"),
+    ),
+)
+
 R09_FORECAST_SEMANAL = Tabla(
     origen="R09_Forecast_Semanal",
     destino="r09_forecast_semanal",
@@ -429,9 +550,32 @@ R09_FORECAST_SEMANAL = Tabla(
     ),
 )
 
+R09_FORECAST_SEMANAL_25 = Tabla(
+    origen="R09_Forecast_Semanal_25",
+    destino="r09_forecast_semanal_25",
+    filas_esperadas=None,
+    columnas=(
+        ("Campaña", "campania"),
+        ("Fundo", "fundo"),
+        ("Mod", "modulo"),
+        ("Turno", "turno"),
+        ("Lote", "lote"),
+        ("Area", "area"),
+        ("FCosAnt", "fecha_cos_ant"),
+        ("FCos", "fecha_cos"),
+        ("Sem", "sem"),
+        ("FrtCos", "frt_cos"),
+        ("Rend", "rend"),
+        ("Kg", "kg"),
+        ("Dr", "dr"),
+        ("Version", "version"),
+        ("FundPPTo", "fund_ppto"),
+    ),
+)
+
 
 TOTAL_FILAS_ORIGEN = 654_598
-"""Suma verificada de las 18 tablas del origen.
+"""Suma histórica verificada de las 18 tablas del origen auditado.
 
 Los cuatro documentos de auditoría publican 683.180. Los recuentos tabla por tabla que dan
 son correctos, pero la suma no: el total real es 654.598, con 28.582 filas de diferencia
@@ -444,7 +588,9 @@ CATALOGO_ACCESS: tuple[Tabla, ...] = (
     E03_CONTEO_ESTADOS,
     E04_BROTES,
     E05_DIAMETROS_BAYAS,
+    E05_SEGUIMIENTO,
     H00_VOLUMEN_CAMPO,
+    H01_DETALLE_COSECHA,
     H01_PROD_HISTORICA,
     H02_BD_ELIFAB,
     H05_CLIMA,
@@ -453,11 +599,16 @@ CATALOGO_ACCESS: tuple[Tabla, ...] = (
     M_LOTES,
     M_N_MUESTRA,
     M_PODA,
+    M_PRESUPUESTO_MO,
     M_TIME,
     R08_FORECAST_CAMPANIA,
+    R08_FORECAST_CAMPANIA_24,
+    R08_FORECAST_CAMPANIA_25,
     R09_FORECAST_SEMANAL,
+    R09_FORECAST_SEMANAL_25,
 )
-"""Las 17 tablas que se migran. Suman TOTAL_FILAS_ORIGEN (654.598) filas."""
+"""Las tablas base Access que se migran a raw. Las cifras históricas solo sirven como referencia;
+el conteo contractual de cada snapshot se obtiene directamente de la extracción."""
 
 DESCARTADAS: dict[str, str] = {
     "Errores de pegado": (

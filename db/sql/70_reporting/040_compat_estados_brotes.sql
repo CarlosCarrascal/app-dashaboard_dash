@@ -173,7 +173,7 @@ COMMENT ON VIEW reporting."0402_ConteoBrotes" IS
 
 -- ── E — CORREGIDA (H-04 caso 4) ──────────────────────────────────────────────
 -- Rota en Access: pedía E03_ConteoEstados.Actividad, columna que solo existe en E01_Ramas.
--- Se construye con el mismo criterio que ya usa core.rama_medicion para su propia
+-- Se construye con el mismo criterio que ya usa core.ev_rama_medicion para su propia
 -- Actividad ('ConteoRamas'): un literal por tipo de evaluación, ya que Actividad nunca varió
 -- dentro de cada tabla (era una constante, no un dato capturado).
 CREATE OR REPLACE VIEW reporting."E" AS

@@ -15,6 +15,7 @@ AS $$
 DECLARE
     v_tablas text[] := ARRAY[
         'maestro_lote', 'e01_ramas', 'e02_flores', 'e03_estados', 'e04_brotes', 'e05_bayas',
+        'e05_seguimiento',
         'h00_cosecha', 'h01_cosecha', 'h02_packing', 'h05_clima',
         'm_poda', 'm_evaluadores', 'm_n_muestra', 'm_time', 'r08_forecast', 'r09_forecast'
     ];

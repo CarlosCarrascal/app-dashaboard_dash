@@ -1,11 +1,11 @@
 -- ============================================================================
 -- 050 · raw · Maestros del origen (M_*)
 --
--- Nota importante: M_Lotes se carga por trazabilidad, NO como maestro vigente. El maestro
--- de referencia es data/entrada/M_Lotes.xlsx (879 lotes, 6 fundos), en 070_maestro_vigente.
+-- Nota importante: M_Lotes de Access es el maestro primario de identidad según ADR-0012.
+-- M_Lotes.xlsx se carga en una tabla separada y se usa únicamente como contraste externo.
 -- ============================================================================
 
--- ── M_Lotes (histórico de Access) ───────────────────────────────────────────
+-- ── M_Lotes (Access, maestro primario) ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS raw.m_lotes (
     fundo          text,
     fundo_ppto     text,
@@ -21,19 +21,25 @@ CREATE TABLE IF NOT EXISTS raw.m_lotes (
     key_map        text,
     fundo_pptom5   text,
     moduloo        text,
-    kk             text
+    kk             text,
+    key_fun        text,
+    key_mod        text
 );
 
+ALTER TABLE raw.m_lotes
+    ADD COLUMN IF NOT EXISTS key_fun text,
+    ADD COLUMN IF NOT EXISTS key_mod text;
+
 COMMENT ON TABLE raw.m_lotes IS
-    'M_Lotes — 860 filas. Era la tabla central del origen: 33 de las 40 consultas dependen '
-    'de ella. Se carga solo por trazabilidad histórica; el maestro vigente es '
+    'M_Lotes de Access — maestro primario de identidad y tabla central del origen: 33 de las '
+    '40 consultas dependen de ella. El Excel se conserva como contraste externo en '
     'raw.m_lotes_maestro. Es también el epicentro de H-01: contiene tres de los cuatro '
     'vocabularios de fundo en tres columnas distintas, y ninguno coincide con el que usan '
     'E01_Ramas y E04_Brotes.';
 COMMENT ON COLUMN raw.m_lotes.fundo IS
     '[Fundo] — vocabulario A, nombre comercial con ubicación: Aqu Anqa II - Ampliacion, '
-    '- Vivadis, - Sta.Teresa, Aqu Anqa - ArenaAzul. El maestro vigente lo sustituye por '
-    'fundos físicos numerados Aqu Anqa 1..6 (N-5).';
+    '- Vivadis, - Sta.Teresa, Aqu Anqa - ArenaAzul. Se conserva para trazabilidad; la '
+    'normalización de identidad se resolverá en stg/core con esta fuente primaria (N-5).';
 COMMENT ON COLUMN raw.m_lotes.fundo_ppto IS
     '[FundoPPto] — vocabulario B, agrupación presupuestal = empresa: Aqu Anqa / Aqu Anqa II.';
 COMMENT ON COLUMN raw.m_lotes.fundo_pptom5 IS
@@ -43,11 +49,17 @@ COMMENT ON COLUMN raw.m_lotes.turno IS
     'origen (raw.m_poda.turno, raw.m_n_muestra.turno, etc.). Solo H01 y E05 lo conservan hasta '
     '`stg`; en M_Poda, M_nMuestra y R09 se descarta un paso antes, al construir la vista de '
     '`stg`, y nunca llega a compararse contra el turno resuelto por lote (N-18). El turno de '
-    'M_Lotes en sí es histórico (860 filas de Access): el maestro vigente para resolver lote '
-    'es raw.m_lotes_maestro.';
+    'M_Lotes es la fuente primaria actual de identidad (ADR-0012); raw.m_lotes_maestro es una '
+    'fuente externa de contraste y no reemplaza esta tabla.';
 COMMENT ON COLUMN raw.m_lotes.moduloo IS '[Moduloo] — typo que duplica [Modulo]. Se descarta.';
 COMMENT ON COLUMN raw.m_lotes.kk IS
     '[kk] — prefijo de KeyMap hasta la letra L. Derivable, se descarta.';
+COMMENT ON COLUMN raw.m_lotes.key_fun IS
+    '[KeyFun] — clave auxiliar presente en la copia actual; se conserva sin usarla para '
+    'resolver identidad hasta cerrar su semántica.';
+COMMENT ON COLUMN raw.m_lotes.key_mod IS
+    '[KeyMod] — clave auxiliar presente en la copia actual; se conserva sin usarla para '
+    'resolver identidad hasta cerrar su semántica.';
 COMMENT ON COLUMN raw.m_lotes.key_map IS
     '[KeyMap] — clave de ubicación en el mapa. 53 lotes la tienen nula, y de ahí que el '
     'cálculo de kk falle en silencio en la consulta 0106_RaFloYem.';
@@ -147,4 +159,4 @@ CREATE TABLE IF NOT EXISTS raw.m_equivalencia_elifab (
 COMMENT ON TABLE raw.m_equivalencia_elifab IS
     'M_EquivalenciaElifab — 15 filas. Traduce el nombre de productor que usa la empacadora '
     'al de la empresa. Es la única tabla del origen que resuelve explícitamente un problema '
-    'de vocabulario, y por eso es el precedente interno que justifica core.fundo_alias.';
+    'de vocabulario, y por eso es el precedente interno que justifica core.m_fundo_alias.';

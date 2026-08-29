@@ -21,7 +21,7 @@ salvo el dominio de personal.
 ```powershell
 cd C:\Users\CCARRASCAL\Proyectos\aquanqa-data-platform
 
-npm run setup      # entorno, base, esquemas, roles, decisiones parametrizadas
+npm run setup      # entorno, base, tablas raw, esquemas, roles y decisiones parametrizadas
 npm run extract    # .accdb + xlsx → data/salida/*.csv   (~10 min, solo lectura)
 npm run load       # CSV → raw
 npm run build      # stg → qua → dim → fact → reporting

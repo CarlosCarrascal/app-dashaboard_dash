@@ -41,8 +41,13 @@ def test_datos_y_calidad_conserva_filtros_y_tabla_en_el_layout():
     serializado = _serializado(layout)
 
     assert {
-        "calidad-hallazgos", "panel-grid", "f-fundo", "f-modulo",
-        "f-semanas", "f-kgha", "f-sin-riego",
+        "calidad-hallazgos",
+        "panel-grid",
+        "f-fundo",
+        "f-modulo",
+        "f-semanas",
+        "f-kgha",
+        "f-sin-riego",
     } <= ids
     assert "¿Qué tan confiables son los datos que alimentan el análisis?" in serializado
     assert "Filtros del panel consolidado" in serializado

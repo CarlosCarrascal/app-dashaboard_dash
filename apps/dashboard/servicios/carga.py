@@ -69,9 +69,7 @@ def _panel_repo_cacheado(
 
     poda_contenido = _leer_si_existe(Path(firma_poda[0]))
     floracion_contenido = _leer_si_existe(Path(firma_floracion[0]))
-    panel = nucleo.cargar_panel(
-        contenido, LAGS_POR_DEFECTO, poda_contenido, floracion_contenido
-    )
+    panel = nucleo.cargar_panel(contenido, LAGS_POR_DEFECTO, poda_contenido, floracion_contenido)
     panel_key(panel)
     _precargar_dashboard(panel)
     info = {

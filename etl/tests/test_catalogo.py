@@ -99,6 +99,23 @@ def test_no_hay_destinos_repetidos():
     assert len(destinos) == len(set(destinos))
 
 
+def test_catalogo_access_cubre_las_23_tablas_de_la_copia_actual():
+    assert len(CATALOGO_ACCESS) == 23
+    assert {t.destino for t in CATALOGO_ACCESS} >= {
+        "e05_seguimiento",
+        "h01_detalle_cosecha",
+        "m_presupuesto_mo",
+        "r08_forecast_campania_24",
+        "r08_forecast_campania_25",
+        "r09_forecast_semanal_25",
+    }
+
+
+def test_e05_seguimiento_preserva_pares_diametro_estado_en_orden_de_origen():
+    tabla = next(t for t in CATALOGO_ACCESS if t.destino == "e05_seguimiento")
+    assert tabla.cols_destino[10:14] == ("d01", "e01", "d02", "e02")
+
+
 def test_no_hay_columnas_destino_repetidas_en_una_tabla():
     for tabla in CATALOGO_ACCESS:
         cols = list(tabla.cols_destino)

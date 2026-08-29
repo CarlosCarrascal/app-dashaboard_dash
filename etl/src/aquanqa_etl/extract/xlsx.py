@@ -1,7 +1,7 @@
-"""Extracción de los orígenes Excel: el maestro de lotes vigente y el tareo de personal.
+"""Extracción de orígenes Excel externos: contraste de lotes y tareo de personal.
 
-El maestro no es un origen secundario: es la **fuente de identidad de los lotes** (ADR-0003).
-Access queda como referencia histórica.
+M_Lotes.xlsx se conserva como fuente independiente de contraste. La fuente primaria de
+identidad de lotes es M_Lotes de Access (ADR-0012).
 """
 
 from __future__ import annotations
@@ -79,8 +79,8 @@ def extraer_maestro_lotes(config: Config, registrar=print) -> ResultadoExtraccio
     if not ruta.exists():
         raise FileNotFoundError(
             f"No encuentro el maestro de lotes en {ruta}.\n"
-            "  Es la fuente de identidad de los lotes: sin él no se puede resolver ningún "
-            "hecho (ADR-0003). Revisa MAESTRO_LOTES_PATH en .env."
+            "  Es una fuente externa de contraste; la identidad primaria se carga desde "
+            "M_Lotes de Access (ADR-0012). Revisa MAESTRO_LOTES_PATH en .env."
         )
 
     inicio = dt.datetime.now(dt.UTC)

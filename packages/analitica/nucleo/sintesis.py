@@ -35,7 +35,9 @@ from . import evaluacion as _ev
 from . import modelo as _modelo
 
 OBJETIVOS: tuple[tuple[str, str], ...] = (
-    ("KgHa", "kg/ha"), ("Frutos", "Frutos"), ("Peso", "Peso"),
+    ("KgHa", "kg/ha"),
+    ("Frutos", "Frutos"),
+    ("Peso", "Peso"),
     ("flores_promedio", "Floración"),
 )
 
@@ -54,18 +56,21 @@ def aporte_conjunto_por_objetivo(tabla: pd.DataFrame) -> pd.DataFrame:
             continue
         ajuste = _modelo.entrenar(tabla, objetivo=objetivo)
         for variable, valor in ajuste.importancia.items():
-            filas.append({
-                "Objetivo": nombre,
-                "Variable": etiqueta(variable),
-                "clave": variable,
-                "Aporte SHAP medio (|valor|)": float(valor),
-                "n filas del ajuste": len(ajuste.X),
-            })
+            filas.append(
+                {
+                    "Objetivo": nombre,
+                    "Variable": etiqueta(variable),
+                    "clave": variable,
+                    "Aporte SHAP medio (|valor|)": float(valor),
+                    "n filas del ajuste": len(ajuste.X),
+                }
+            )
     return pd.DataFrame(filas)
 
 
 def honesto_por_objetivo(
-    tabla: pd.DataFrame, particion_clave: str = "por_bloque",
+    tabla: pd.DataFrame,
+    particion_clave: str = "por_bloque",
 ) -> pd.DataFrame:
     """R² y MAE fuera de muestra del modelo de 7 variables, para cada objetivo.
 
@@ -83,12 +88,14 @@ def honesto_por_objetivo(
         base = tabla.dropna(subset=[*FEATURES, objetivo])
         piso = float(np.mean((base[objetivo] - base[objetivo].mean()) ** 2))
         m = _ev.medir(tabla, conjunto, particion, objetivo=objetivo)
-        filas.append({
-            "Objetivo": nombre,
-            "R² honesto": m.r2,
-            "MAE honesto": m.mae,
-            "n filas": len(base),
-            "Varianza del objetivo (referencia)": piso,
-            "Hiperparámetros propios": objetivo == "KgHa",
-        })
+        filas.append(
+            {
+                "Objetivo": nombre,
+                "R² honesto": m.r2,
+                "MAE honesto": m.mae,
+                "n filas": len(base),
+                "Varianza del objetivo (referencia)": piso,
+                "Hiperparámetros propios": objetivo == "KgHa",
+            }
+        )
     return pd.DataFrame(filas)

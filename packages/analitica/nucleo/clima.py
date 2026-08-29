@@ -50,8 +50,11 @@ def agregar_por_semana(tabla: pd.DataFrame) -> pd.DataFrame:
     # climática nueva — pero permite reusar `rezagos()` para preguntar si el clima de antes
     # explica la floración, la pieza que falta en la cadena clima → floración → Frutos.
     for columna in (
-        "dias_desde_poda", "poda_dispersion_dias", "gdd_acum_poda_obs",
-        "edad_planta_anos", "flores_promedio",
+        "dias_desde_poda",
+        "poda_dispersion_dias",
+        "gdd_acum_poda_obs",
+        "edad_planta_anos",
+        "flores_promedio",
     ):
         if columna in tabla.columns:
             valores[columna] = g[columna].mean()
@@ -173,25 +176,34 @@ def correlacion_control_poda(sem: pd.DataFrame) -> pd.DataFrame:
         rv = _sin_tendencia(v, xx, min(grado, len(xx) - 1))
         ry = _sin_tendencia(yy, xx, min(grado, len(xx) - 1))
         r, p = stats.pearsonr(rv, ry)
-        filas.append({
-            "Variable": etiqueta(c),
-            "clave": c,
-            "r control poda": float(r),
-            "p control poda": float(p),
-            "Sobrevive poda": bool(p < 0.05),
-            "Grado control": min(grado, len(xx) - 1),
-            "n semanas": int(m.sum()),
-        })
+        filas.append(
+            {
+                "Variable": etiqueta(c),
+                "clave": c,
+                "r control poda": float(r),
+                "p control poda": float(p),
+                "Sobrevive poda": bool(p < 0.05),
+                "Grado control": min(grado, len(xx) - 1),
+                "n semanas": int(m.sum()),
+            }
+        )
     return pd.DataFrame(filas).sort_values("r control poda", key=abs, ascending=False)
 
 
 REZAGOS_PREDICTORES: tuple[str, ...] = (
-    "DPV", "riego_lt_planta", "Rad", "ETo", "TempMax", "TempMin", "gdd_semana",
+    "DPV",
+    "riego_lt_planta",
+    "Rad",
+    "ETo",
+    "TempMax",
+    "TempMin",
+    "gdd_semana",
 )
 
 
-def rezagos(sem: pd.DataFrame, objetivo: str = "kg_ha",
-           variables: tuple[str, ...] = CLIMA) -> pd.DataFrame:
+def rezagos(
+    sem: pd.DataFrame, objetivo: str = "kg_ha", variables: tuple[str, ...] = CLIMA
+) -> pd.DataFrame:
     """Correlación a k semanas de rezago, antes y después de quitar la tendencia.
 
     `objetivo` permite repetir la misma prueba contra Frutos o Peso, no solo kg/ha: el
@@ -238,7 +250,9 @@ def rezagos(sem: pd.DataFrame, objetivo: str = "kg_ha",
 
 
 OBJETIVOS_REZAGO: tuple[tuple[str, str], ...] = (
-    ("kg_ha", "kg/ha"), ("Frutos", "Frutos"), ("Peso", "Peso"),
+    ("kg_ha", "kg/ha"),
+    ("Frutos", "Frutos"),
+    ("Peso", "Peso"),
     ("flores_promedio", "Floración"),
 )
 
@@ -280,7 +294,8 @@ def rezagos_frutos_peso(sem: pd.DataFrame) -> pd.DataFrame:
 
 
 def mejor_rezago_por_variable(
-    sem: pd.DataFrame, tabla: pd.DataFrame | None = None,
+    sem: pd.DataFrame,
+    tabla: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Para kg/ha, Frutos, Peso y Floración: qué rezago (semanas) maximiza |r sin tendencia|.
 
@@ -297,16 +312,20 @@ def mejor_rezago_por_variable(
     for (objetivo, clave), g in todo.groupby(["Objetivo", "clave"]):
         i = g["r sin tendencia"].abs().idxmax()
         mejor = g.loc[i]
-        filas.append({
-            "Objetivo": objetivo,
-            "Variable": mejor.Variable,
-            "clave": clave,
-            "Mejor rezago (semanas)": int(mejor.Rezago),
-            "r sin tendencia en el mejor rezago": float(mejor["r sin tendencia"]),
-            "r sin tendencia en rezago 0": float(
-                g.loc[g.Rezago == 0, "r sin tendencia"].iloc[0]
-            ) if (g.Rezago == 0).any() else np.nan,
-        })
+        filas.append(
+            {
+                "Objetivo": objetivo,
+                "Variable": mejor.Variable,
+                "clave": clave,
+                "Mejor rezago (semanas)": int(mejor.Rezago),
+                "r sin tendencia en el mejor rezago": float(mejor["r sin tendencia"]),
+                "r sin tendencia en rezago 0": float(
+                    g.loc[g.Rezago == 0, "r sin tendencia"].iloc[0]
+                )
+                if (g.Rezago == 0).any()
+                else np.nan,
+            }
+        )
     return pd.DataFrame(filas).sort_values(["Objetivo"]).reset_index(drop=True)
 
 
@@ -314,7 +333,10 @@ FLORACION_REZAGOS = range(9)
 
 
 def _rezago_efecto_fijo(
-    tabla: pd.DataFrame, predictor: str, objetivo: str, ventanas=FLORACION_REZAGOS,
+    tabla: pd.DataFrame,
+    predictor: str,
+    objetivo: str,
+    ventanas=FLORACION_REZAGOS,
 ) -> pd.DataFrame:
     """¿El predictor de hace k semanas explica mejor el objetivo que el de esta semana?
 
@@ -344,12 +366,16 @@ def _rezago_efecto_fijo(
     for celda, g in tabla.groupby("celda"):
         g = g.set_index("nsem").sort_index()
         g = g.reindex(range(int(g.index.min()), int(g.index.max()) + 1))
-        piezas.append(pd.DataFrame({
-            "celda": celda,
-            "nsem": g.index.to_numpy(dtype=float),
-            "pred": g[predictor].to_numpy(dtype=float),
-            "obj": g[objetivo].to_numpy(dtype=float),
-        }))
+        piezas.append(
+            pd.DataFrame(
+                {
+                    "celda": celda,
+                    "nsem": g.index.to_numpy(dtype=float),
+                    "pred": g[predictor].to_numpy(dtype=float),
+                    "obj": g[objetivo].to_numpy(dtype=float),
+                }
+            )
+        )
     if not piezas:
         return pd.DataFrame()
     largo = pd.concat(piezas, ignore_index=True)
@@ -373,17 +399,19 @@ def _rezago_efecto_fijo(
         obj_mc = _sin_tendencia(obj_m.to_numpy(), d.nsem.to_numpy(), max(grado, 1))
         r_completo, p_completo = stats.pearsonr(pred_mc, obj_mc)
 
-        filas.append({
-            "Rezago": k,
-            "r bruto": float(bruto),
-            "p bruto": float(p_bruto),
-            "r control módulo": float(r_modulo),
-            "p control módulo": float(p_modulo),
-            "r control módulo y calendario": float(r_completo),
-            "p control módulo y calendario": float(p_completo),
-            "n": int(len(d)),
-            "módulos": int(d.celda.nunique()),
-        })
+        filas.append(
+            {
+                "Rezago": k,
+                "r bruto": float(bruto),
+                "p bruto": float(p_bruto),
+                "r control módulo": float(r_modulo),
+                "p control módulo": float(p_modulo),
+                "r control módulo y calendario": float(r_completo),
+                "p control módulo y calendario": float(p_completo),
+                "n": int(len(d)),
+                "módulos": int(d.celda.nunique()),
+            }
+        )
     return pd.DataFrame(filas)
 
 
@@ -442,17 +470,20 @@ def placebo(sem: pd.DataFrame, semilla: int = 0) -> pd.DataFrame:
         for nombre, v in series.items()
     ]
     for c in CLIMA:
-        filas.append({"Serie": etiqueta(c),
-                      "r con kg/ha": float(np.corrcoef(sem[c], y)[0, 1]), "Real": True})
+        filas.append(
+            {"Serie": etiqueta(c), "r con kg/ha": float(np.corrcoef(sem[c], y)[0, 1]), "Real": True}
+        )
     return pd.DataFrame(filas).sort_values("r con kg/ha", key=abs, ascending=False)
 
 
 def forma_de_la_relacion(sem: pd.DataFrame, variable: str, n_grupos: int = 5) -> pd.DataFrame:
     """Promedio del kg/ha por quintil de la variable: la forma, sin suponer que es recta."""
     q = pd.qcut(sem[variable], n_grupos, duplicates="drop")
-    tab = sem.groupby(q, observed=True).agg(
-        semanas=("kg_ha", "size"), kg_ha=("kg_ha", "mean"), valor=(variable, "mean")
-    ).reset_index(drop=True)
+    tab = (
+        sem.groupby(q, observed=True)
+        .agg(semanas=("kg_ha", "size"), kg_ha=("kg_ha", "mean"), valor=(variable, "mean"))
+        .reset_index(drop=True)
+    )
     tab["Tramo"] = [f"{i + 1}º quinto" for i in range(len(tab))]
     return tab
 
@@ -542,7 +573,12 @@ class Veredicto:
 
 
 FRUTOS_PESO_PREDICTORES: tuple[str, ...] = (
-    "DPV", "riego_lt_planta", "Rad", "ETo", "TempMax", "TempMin",
+    "DPV",
+    "riego_lt_planta",
+    "Rad",
+    "ETo",
+    "TempMax",
+    "TempMin",
 )
 
 
@@ -618,7 +654,8 @@ def trayectorias_frutos_peso(tabla: pd.DataFrame) -> pd.DataFrame:
         pre_peak = grupo[grupo.nsem.between(max(inicio, semana_peak - 3), semana_peak)]
         dap_peak = (
             float(g_frutos.loc[i_peak, "dias_desde_poda"])
-            if "dias_desde_poda" in g_frutos.columns and pd.notna(g_frutos.loc[i_peak, "dias_desde_poda"])
+            if "dias_desde_poda" in g_frutos.columns
+            and pd.notna(g_frutos.loc[i_peak, "dias_desde_poda"])
             else np.nan
         )
         dispersion_poda = (
@@ -647,41 +684,46 @@ def trayectorias_frutos_peso(tabla: pd.DataFrame) -> pd.DataFrame:
         diferencias = np.diff(peso)
         signos = np.sign(diferencias[np.abs(diferencias) > 1e-9])
         cambios = int(np.sum(signos[1:] != signos[:-1])) if len(signos) > 1 else 0
-        filas.append({
-            "Módulo": celda,
-            "Semana inicial": inicio,
-            "Semana final": fin,
-            "Semana peak frutos": semana_peak,
-            "Días desde poda peak": dap_peak,
-            "Poda dispersion dias": dispersion_poda,
-            "Peak frutos/planta": float(g_frutos.loc[i_peak, "Frutos"]),
-            "Posición del peak": tramo,
-            "Frutos acumulados observados/planta": float(g_frutos.Frutos.sum()),
-            "Huecos de calendario": huecos,
-            "Peso inicial (g)": peso_inicial,
-            "Peso final (g)": peso_final,
-            "Cambio neto peso (g)": (
-                float(peso_final - peso_inicial)
-                if pd.notna(peso_inicial) and pd.notna(peso_final) else np.nan
-            ),
-            "Pendiente peso (g/sem)": pendiente,
-            "Peso peak (g)": peso_peak,
-            "TempMin 4sem pre-peak": float(pre_peak.TempMin.mean()),
-            "DPV 4sem pre-peak": float(pre_peak.DPV.mean()),
-            "Rad 4sem pre-peak": float(pre_peak.Rad.mean()),
-            "ETo 4sem pre-peak": float(pre_peak.ETo.mean()),
-            "Riego 4sem pre-peak": float(pre_peak.riego_lt_planta.mean()),
-            "GDD 4sem pre-peak": float(pre_peak.gdd_semana.mean()),
-            "Semanas pre-peak observadas": int(len(pre_peak)),
-            "Sentido de la recta": (
-                "des+" if pd.notna(pendiente) and pendiente > 0
-                else "des-" if pd.notna(pendiente) and pendiente < 0
-                else "sin datos"
-            ),
-            "Cambios de sentido": cambios,
-            "Semanas observadas": len(g_frutos),
-            "Semanas peso observadas": len(g_peso),
-        })
+        filas.append(
+            {
+                "Módulo": celda,
+                "Semana inicial": inicio,
+                "Semana final": fin,
+                "Semana peak frutos": semana_peak,
+                "Días desde poda peak": dap_peak,
+                "Poda dispersion dias": dispersion_poda,
+                "Peak frutos/planta": float(g_frutos.loc[i_peak, "Frutos"]),
+                "Posición del peak": tramo,
+                "Frutos acumulados observados/planta": float(g_frutos.Frutos.sum()),
+                "Huecos de calendario": huecos,
+                "Peso inicial (g)": peso_inicial,
+                "Peso final (g)": peso_final,
+                "Cambio neto peso (g)": (
+                    float(peso_final - peso_inicial)
+                    if pd.notna(peso_inicial) and pd.notna(peso_final)
+                    else np.nan
+                ),
+                "Pendiente peso (g/sem)": pendiente,
+                "Peso peak (g)": peso_peak,
+                "TempMin 4sem pre-peak": float(pre_peak.TempMin.mean()),
+                "DPV 4sem pre-peak": float(pre_peak.DPV.mean()),
+                "Rad 4sem pre-peak": float(pre_peak.Rad.mean()),
+                "ETo 4sem pre-peak": float(pre_peak.ETo.mean()),
+                "Riego 4sem pre-peak": float(pre_peak.riego_lt_planta.mean()),
+                "GDD 4sem pre-peak": float(pre_peak.gdd_semana.mean()),
+                "Semanas pre-peak observadas": int(len(pre_peak)),
+                "Sentido de la recta": (
+                    "des+"
+                    if pd.notna(pendiente) and pendiente > 0
+                    else "des-"
+                    if pd.notna(pendiente) and pendiente < 0
+                    else "sin datos"
+                ),
+                "Cambios de sentido": cambios,
+                "Semanas observadas": len(g_frutos),
+                "Semanas peso observadas": len(g_peso),
+            }
+        )
     return pd.DataFrame(filas).sort_values(["Semana peak frutos", "Módulo"])
 
 
@@ -690,24 +732,21 @@ def resumen_picos_frutos_peso(tabla: pd.DataFrame) -> pd.DataFrame:
     trayectorias = trayectorias_frutos_peso(tabla)
     if trayectorias.empty:
         return pd.DataFrame()
-    agrupado = (
-        trayectorias.groupby("Posición del peak", as_index=False)
-        .agg(
-            Módulos=("Módulo", "size"),
-            **{
-                "DAP peak medio": ("Días desde poda peak", "mean"),
-                "Poda dispersion dias media": ("Poda dispersion dias", "mean"),
-                "Semana peak media": ("Semana peak frutos", "mean"),
-                "Frutos peak medio": ("Peak frutos/planta", "mean"),
-                "Peso peak medio (g)": ("Peso peak (g)", "mean"),
-                "TempMin pre-peak": ("TempMin 4sem pre-peak", "mean"),
-                "DPV pre-peak": ("DPV 4sem pre-peak", "mean"),
-                "Rad pre-peak": ("Rad 4sem pre-peak", "mean"),
-                "ETo pre-peak": ("ETo 4sem pre-peak", "mean"),
-                "Riego pre-peak": ("Riego 4sem pre-peak", "mean"),
-                "GDD pre-peak": ("GDD 4sem pre-peak", "mean"),
-            }
-        )
+    agrupado = trayectorias.groupby("Posición del peak", as_index=False).agg(
+        Módulos=("Módulo", "size"),
+        **{
+            "DAP peak medio": ("Días desde poda peak", "mean"),
+            "Poda dispersion dias media": ("Poda dispersion dias", "mean"),
+            "Semana peak media": ("Semana peak frutos", "mean"),
+            "Frutos peak medio": ("Peak frutos/planta", "mean"),
+            "Peso peak medio (g)": ("Peso peak (g)", "mean"),
+            "TempMin pre-peak": ("TempMin 4sem pre-peak", "mean"),
+            "DPV pre-peak": ("DPV 4sem pre-peak", "mean"),
+            "Rad pre-peak": ("Rad 4sem pre-peak", "mean"),
+            "ETo pre-peak": ("ETo 4sem pre-peak", "mean"),
+            "Riego pre-peak": ("Riego 4sem pre-peak", "mean"),
+            "GDD pre-peak": ("GDD 4sem pre-peak", "mean"),
+        },
     )
     orden = pd.CategoricalDtype(["Inicio", "Medio", "Final"], ordered=True)
     agrupado["Posición del peak"] = agrupado["Posición del peak"].astype(orden)

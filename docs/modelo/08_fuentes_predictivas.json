@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "fecha": "2026-08-20",
+  "principio": "Access es el origen operativo, PostgreSQL es la fuente de ejecución y cada variable tiene una sola fuente preferida.",
+  "fuentes": [
+    {
+      "familia": "identidad_y_capacidad",
+      "variables": ["empresa", "fundo", "modulo", "turno", "lote", "variedad", "area_ha", "n_plantas"],
+      "preferida": "dim.lote",
+      "origen_upstream": "Access",
+      "respaldo": null,
+      "uso": "predictor_y_reconciliacion"
+    },
+    {
+      "familia": "cosecha_real",
+      "variables": ["kg", "peso_baya", "plantas_cosechadas", "pana", "fecha"],
+      "preferida": "stg.v_h01_cosecha",
+      "origen_upstream": "Access H01_Prod_Historica",
+      "respaldo": "IA.final.xlsx solo como fallback local explícito",
+      "uso": "objetivo_y_evaluacion"
+    },
+    {
+      "familia": "poda",
+      "variables": ["fecha_inicio", "fecha_siembra", "tipo_poda", "podador"],
+      "preferida": "stg.v_m_poda",
+      "origen_upstream": "Access M_Poda",
+      "respaldo": "docs/data/M_Poda.xlsx",
+      "uso": "predictor_asof"
+    },
+    {
+      "familia": "fenologia",
+      "variables": ["flores", "e1", "e2", "e3", "e4", "e5", "brotes", "ramas", "diametro_baya"],
+      "preferida": "stg.v_e02_flores, stg.v_e03_estados, stg.v_e04_brotes, stg.v_e01_ramas, stg.v_e05_bayas",
+      "origen_upstream": "Access",
+      "respaldo": "IA.final.xlsx solo si falta una extracción y queda identificado el backfill",
+      "uso": "predictor_asof"
+    },
+    {
+      "familia": "clima",
+      "variables": ["temperatura", "humedad", "punto_rocio", "eto", "lluvia", "radiacion", "dpv", "gdd"],
+      "preferida": "stg.v_h05_clima",
+      "origen_upstream": "Access H05_Clima",
+      "respaldo": "IA.final.xlsx o Datos mes.xlsx con contrato y procedencia explícitos",
+      "uso": "predictor_asof"
+    },
+    {
+      "familia": "riego",
+      "variables": ["agua_m3", "lamina_mm", "area_ha"],
+      "preferida": "stg.v_riego_diario",
+      "origen_upstream": "Access/ETL de riego",
+      "respaldo": "IA.final.xlsx cuando tenga mayor cobertura comprobada",
+      "uso": "predictor_asof_si_supera_calidad"
+    },
+    {
+      "familia": "nutricion",
+      "variables": ["dosis", "elemento", "fecha_aplicacion"],
+      "preferida": null,
+      "origen_upstream": null,
+      "respaldo": "archivo complementario por definir",
+      "uso": "bloqueado_hasta_contrato_y_cobertura"
+    },
+    {
+      "familia": "forecast_semanal_r09",
+      "variables": ["kg", "frutos_por_planta", "peso_baya", "fecha_cosecha", "version"],
+      "preferida": "stg.v_r09_forecast",
+      "origen_upstream": "Access R09_Forecast_Semanal",
+      "respaldo": "Excel semanal solo como backfill provisional identificado",
+      "uso": "baseline_y_comparacion; nunca predictor del modelo nuevo"
+    },
+    {
+      "familia": "forecast_campania_r08",
+      "variables": ["kg_exportable", "version", "campania", "modulo"],
+      "preferida": "stg.v_r08_forecast",
+      "origen_upstream": "Access R08",
+      "respaldo": null,
+      "uso": "baseline_de_poda_y_campania; pendiente mapear emision/version"
+    },
+    {
+      "familia": "clima_futuro",
+      "variables": ["temperatura_min", "temperatura_max", "eto", "radiacion", "lluvia", "dpv"],
+      "preferida": "analytics.weather_forecast_snapshot",
+      "origen_upstream": "Open-Meteo mediante adaptador reemplazable",
+      "respaldo": "climatologia o año analogo declarados como escenario",
+      "uso": "escenario_futuro; no entrenar con clima observado posterior"
+    }
+  ],
+  "reglas": [
+    "No mezclar preferida y respaldo en una misma variable sin columna de procedencia.",
+    "No consultar archivos accdb desde el dashboard.",
+    "No utilizar R09 como predictor, gate o calendario oculto del challenger.",
+    "Toda variable fechada debe cumplir fecha_dato <= fecha_emision.",
+    "Una fuente complementaria no se habilita hasta definir grano, clave, unidad, cobertura y control antes/despues de la union."
+  ]
+}

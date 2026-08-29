@@ -5,16 +5,17 @@
  * Existe para que un solo comando funcione en cualquier equipo Windows sin activar conda
  * ni añadir psql al PATH — la fricción que hace fallar el arranque de un proyecto nuevo.
  *
- *   node scripts/run.mjs sql 00_bootstrap      ejecuta en orden los .sql de esa carpeta
+ *   node scripts/run.mjs sql 00_bootstrap --database aquanqa_migracion
+ *                                            ejecuta en orden los .sql de esa carpeta
  *   node scripts/run.mjs psql -c "select 1"    psql suelto con el entorno ya resuelto
  *   node scripts/run.mjs py extract --all      python -m aquanqa_etl.cli extract --all
- *   node scripts/run.mjs setup | build | validate
+ *   node scripts/run.mjs setup | build | validate | validate-fixture
  */
 import { spawnSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync, mkdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SQL_DIR = join(ROOT, 'db', 'sql')
@@ -63,30 +64,68 @@ function which(cmd) {
   return ejecutable ?? rutas[0] ?? null
 }
 
-function findPsql() {
-  if (env.PSQL_EXE && existsSync(env.PSQL_EXE)) return env.PSQL_EXE
-  const onPath = which('psql')
+function findPostgresTool(name, envKeys) {
+  for (const key of envKeys) if (env[key] && existsSync(env[key])) return env[key]
+  const onPath = which(name)
   if (onPath) return onPath
   for (const v of ['18', '17', '16', '15']) {
-    const p = `C:\\Program Files\\PostgreSQL\\${v}\\bin\\psql.exe`
+    const p = `C:\\Program Files\\PostgreSQL\\${v}\\bin\\${name}.exe`
     if (existsSync(p)) return p
   }
+  return null
+}
+
+function findPsql() {
+  const psql = findPostgresTool('psql', ['PSQL_EXE'])
+  if (psql) return psql
   fail(
     'No encuentro psql. Instala PostgreSQL o define PSQL_EXE en .env con la ruta completa\n' +
       '  (habitualmente C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe).'
   )
 }
 
+function findPgDump() {
+  const pgDump = findPostgresTool('pg_dump', ['PGDUMP_EXE', 'PG_DUMP_EXE'])
+  if (pgDump) return pgDump
+  fail(
+    'No encuentro pg_dump. Instala PostgreSQL o define PGDUMP_EXE en .env con la ruta completa\n' +
+      '  (habitualmente C:\\Program Files\\PostgreSQL\\18\\bin\\pg_dump.exe).'
+  )
+}
+
+function findPgRestore() {
+  const pgRestore = findPostgresTool('pg_restore', ['PGRESTORE_EXE', 'PG_RESTORE_EXE'])
+  if (pgRestore) return pgRestore
+  fail(
+    'No encuentro pg_restore. Instala PostgreSQL o define PGRESTORE_EXE en .env con la ruta completa\n' +
+      '  (habitualmente C:\\Program Files\\PostgreSQL\\18\\bin\\pg_restore.exe).'
+  )
+}
+
 /** Python del entorno conda `aquanqa`; si no existe, el del PATH. */
 function findPython() {
   if (env.PYTHON_EXE && existsSync(env.PYTHON_EXE)) return env.PYTHON_EXE
+  const conda = findConda()
+  if (conda) {
+    const resolved = spawnSync(
+      conda,
+      ['run', '--no-capture-output', '-n', 'aquanqa', 'python', '-c', 'import sys; print(sys.executable)'],
+      { encoding: 'utf8', env }
+    )
+    const condaPython = (resolved.stdout ?? '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .reverse()
+      .find((line) => line && existsSync(line))
+    if (condaPython) return condaPython
+  }
   const candidates = [
     join(homedir(), 'miniconda3', 'envs', 'aquanqa', 'python.exe'),
     join(homedir(), 'anaconda3', 'envs', 'aquanqa', 'python.exe'),
     'C:\\tools\\Anaconda3\\envs\\aquanqa\\python.exe',
   ]
   for (const c of candidates) if (existsSync(c)) return c
-  const onPath = which('python') || which('python3')
+  const onPath = which('python') || which('python3') || which('py')
   if (onPath) return onPath
   fail('No encuentro Python. Ejecuta `npm run setup` o define PYTHON_EXE en .env.')
 }
@@ -139,33 +178,134 @@ function requirePassword() {
 }
 
 /** psql con ON_ERROR_STOP: un error a mitad de un script no debe dejar la base a medias. */
-function psql(args, { db } = {}) {
+function psql(args, { db, allowFail = false } = {}) {
   requirePassword()
   const base = [
     '-v', 'ON_ERROR_STOP=1',
     '--no-psqlrc',
+    '-P', 'pager=off',
     '-h', env.PGHOST ?? 'localhost',
     '-p', env.PGPORT ?? '5432',
     '-U', env.PGUSER ?? 'postgres',
     '-d', db ?? env.PGDATABASE ?? 'aquanqa',
   ]
-  return run(findPsql(), [...base, ...args])
+  return run(findPsql(), [...base, ...args], { allowFail })
 }
 
-function sqlFolder(folder) {
+function sqlFile(file, { db, allowFail = false } = {}) {
+  if (!existsSync(file)) fail(`No existe ${file}`)
+  return psql(['-f', file], { db, allowFail })
+}
+
+function sqlFolder(folder, { db, allowFail = false, exclude = [] } = {}) {
   const dir = join(SQL_DIR, folder)
   if (!existsSync(dir)) fail(`No existe ${dir}`)
-  const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql') && !exclude.includes(f))
+    .sort()
   if (files.length === 0) {
     log(`${C.yellow}  (sin archivos .sql todavía en ${folder})${C.off}`)
-    return
+    return 0
   }
   step(`${folder} — ${files.length} archivo(s)`)
-  for (const f of files) psql(['-f', join(dir, f)])
+  for (const f of files) {
+    const status = sqlFile(join(dir, f), { db, allowFail })
+    if (status !== 0) return status
+  }
+  return 0
+}
+
+/** Cita un identificador PostgreSQL sin interpolar comillas del entorno. */
+function quoteIdentifier(identifier) {
+  return `"${String(identifier).replaceAll('"', '""')}"`
 }
 
 function py(args) {
   return run(findPython(), ['-m', 'aquanqa_etl.cli', ...args], { cwd: join(ROOT, 'etl') })
+}
+
+function optionValue(args, option) {
+  const index = args.indexOf(option)
+  if (index < 0) return null
+  if (!args[index + 1] || args[index + 1].startsWith('--')) {
+    fail(`Falta el valor de ${option}`)
+  }
+  return args[index + 1]
+}
+
+/** Backup físico + línea base de conteos. No cambia la base origen. */
+function cmdBackup(args) {
+  requirePassword()
+  const db = optionValue(args, '--database') ?? env.PGDATABASE ?? 'aquanqa'
+  const marca = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+  const outputArg = optionValue(args, '--output')
+  const dumpFile = resolve(ROOT, outputArg ?? join('data', 'salida', 'guardas', `${db}_${marca}.dump`))
+  const baselineArg = optionValue(args, '--baseline')
+  const baselineFile = resolve(
+    ROOT,
+    baselineArg ?? dumpFile.replace(/\.dump$/i, '.baseline.json'),
+  )
+  mkdirSync(dirname(dumpFile), { recursive: true })
+  step(`Backup físico de ${db}`)
+  run(findPgDump(), [
+    '--no-password', '--format=custom', '--file', dumpFile,
+    '--no-owner', '--no-privileges',
+    '-h', env.PGHOST ?? 'localhost', '-p', env.PGPORT ?? '5432',
+    '-U', env.PGUSER ?? 'postgres', '-d', db,
+  ])
+  step(`Baseline de ${db}`)
+  return py(['baseline', '--database', db, '--output', baselineFile])
+}
+
+/** Construye únicamente la primera etapa de migración: esquema raw y sus controles. */
+function cmdRawOnly(args) {
+  const db = optionValue(args, '--database') ?? env.PGDATABASE ?? 'aquanqa_migracion'
+  if (db === 'aquanqa') {
+    fail('raw-only bloqueado para aquanqa: esa base es la línea operativa del dashboard. Use --database aquanqa_migracion.')
+  }
+  step(`Modelo mínimo raw de ${db}`)
+  psql(['-c', 'CREATE SCHEMA IF NOT EXISTS raw'], { db })
+  return sqlFolder('10_raw', { db })
+}
+
+const FASES_PROTEGIDAS_DASHBOARD = new Set([
+  '00_bootstrap', '10_raw', '20_core', '30_stg', '40_qua', '50_carga_core',
+  '60_dim_fact', '70_reporting', '80_analytics',
+])
+
+function cmdSql(args) {
+  const folder = args[0]
+  if (!folder || folder.startsWith('--')) fail('uso: run.mjs sql <carpeta> [--database <bd>]')
+  const db = optionValue(args, '--database') ?? env.PGDATABASE ?? 'aquanqa'
+  if (db === 'aquanqa' && FASES_PROTEGIDAS_DASHBOARD.has(folder)) {
+    fail(`SQL bloqueado para aquanqa: ${folder} pertenece al modelo protegido del dashboard. Use --database aquanqa_migracion.`)
+  }
+  return sqlFolder(folder, { db })
+}
+
+function cmdPreflight(args) {
+  const db = optionValue(args, '--database') ?? env.PGDATABASE ?? 'aquanqa_migracion'
+  if (db !== 'aquanqa_migracion') {
+    fail(`preflight bloqueado para ${db}: solo puede validar aquanqa_migracion.`)
+  }
+  return sqlFile(join(ROOT, 'db', 'tools', 'preflight_migracion.sql'), { db })
+}
+
+function cmdAnalytics(args) {
+  return run(findPython(), ['-m', 'analitica.cli', ...args], { cwd: ROOT })
+}
+
+function cmdMlflow(args) {
+  const artifactRoot = resolve(ROOT, env.MLFLOW_ARTIFACT_ROOT ?? join('data', 'salida', 'mlflow'))
+  mkdirSync(artifactRoot, { recursive: true })
+  const backend = env.MLFLOW_BACKEND_STORE_URI
+  if (!backend) fail('Falta MLFLOW_BACKEND_STORE_URI en .env para iniciar MLflow.')
+  return run(findPython(), [
+    '-m', 'mlflow', 'server', '--backend-store-uri', backend,
+    '--default-artifact-root', artifactRoot,
+    '--host', env.MLFLOW_HOST ?? '127.0.0.1', '--port', env.MLFLOW_PORT ?? '5000',
+    ...args,
+  ])
 }
 
 /** Dashboard oficial Dash. El proyecto es autocontenido en `apps/dashboard`. */
@@ -252,6 +392,10 @@ function cmdSetup() {
   }
 
   sqlFolder('00_bootstrap')
+  // La carga ETL necesita que las tablas raw existan antes de recibir el primer CSV.
+  // También se repite en `build` porque ambos comandos son idempotentes y así se puede
+  // reconstruir una base recién reiniciada sin recordar una orden oculta.
+  sqlFolder('10_raw')
 
   // Las contraseñas de los roles no viven en el SQL versionado: se aplican aquí desde .env.
   step('Contraseñas de los roles')
@@ -259,6 +403,7 @@ function cmdSetup() {
     [env.APP_DB_USER ?? 'aquanqa_app', 'APP_DB_PASSWORD'],
     [env.BI_DB_USER ?? 'aquanqa_bi', 'BI_DB_PASSWORD'],
     [env.ETL_DB_USER ?? 'aquanqa_etl', 'ETL_DB_PASSWORD'],
+    [env.ANALYTICS_DB_USER ?? 'aquanqa_analytics', 'ANALYTICS_DB_PASSWORD'],
   ]) {
     if (env[key]) {
       psql(['-q', '-c', `ALTER ROLE ${role} PASSWORD '${env[key].replace(/'/g, "''")}'`])
@@ -273,34 +418,240 @@ function cmdSetup() {
 
 /**
  * Orden de las capas. El número del directorio ES la dependencia: no reordenar.
- * Incluye 00_bootstrap para que `build` funcione también justo después de un `db:reset`.
+ * Incluye 00_bootstrap y 10_raw para que `build` funcione también justo después de un
+ * `db:reset`, o si alguien ejecuta el flujo sin pasar por `setup`.
  */
 const CAPAS_MODELO = [
-  '00_bootstrap', '20_core', '30_stg', '40_qua', '50_carga_core', '60_dim_fact', '70_reporting',
+  '00_bootstrap', '10_raw', '20_core', '30_stg', '40_qua', '50_carga_core', '60_dim_fact',
+  '70_reporting', '80_analytics',
 ]
 
-function cmdBuild() {
-  for (const f of CAPAS_MODELO) sqlFolder(f)
+function cmdBuild({ db, allowFail = false, skipRoles = false, full = false, excludeFiles = [] } = {}) {
+  if (db === 'aquanqa') {
+    fail('build/migrate bloqueado para aquanqa: esa base es la línea operativa del dashboard. Use --database aquanqa_migracion.')
+  }
+  if (!full) {
+    log(`${C.yellow}  build/migrate en ${db}: fase incremental; solo se construye raw. Use --full únicamente para un entorno efímero o una reconstrucción legacy.${C.off}`)
+    return cmdRawOnly(['--database', db])
+  }
+  for (const f of CAPAS_MODELO) {
+    const exclude = [
+      ...(skipRoles && f === '00_bootstrap' ? ['020_roles.sql'] : []),
+      ...(f === '50_carga_core' ? excludeFiles : []),
+    ]
+    const status = sqlFolder(f, { db, allowFail, exclude })
+    if (status !== 0) return status
+  }
   log(`${C.green}✓ Modelo construido. Siguiente: npm run validate${C.off}`)
+  return 0
+}
+
+/**
+ * Ejecuta los checks contra un clon efímero de PGDATABASE.
+ *
+ * Algunos checks reconstruyen qua.control y funciones auxiliares. El contrato público de
+ * `validate` sigue siendo el mismo (valida el estado de la base configurada), pero esas
+ * mutaciones ocurren exclusivamente en el clon y nunca en la base de trabajo.
+ */
+function cmdValidate() {
+  const sourceDb = env.PGDATABASE ?? 'aquanqa'
+  const db = `aquanqa_ci_validate_${process.pid}_${Date.now()}`
+  const dumpFile = join(tmpdir(), `${db}.dump`)
+  let status = 1
+  let created = false
+  let restoredFromDump = false
+
+  try {
+    step(
+      `Validación aislada: base temporal ${db} (clon de ${sourceDb}; ` +
+        `${sourceDb} no se modificará)`
+    )
+    status = psql(
+      ['-c', `CREATE DATABASE ${quoteIdentifier(db)} TEMPLATE ${quoteIdentifier(sourceDb)}`],
+      { db: 'postgres', allowFail: true }
+    )
+    if (status === 0) created = true
+
+    // CREATE DATABASE ... TEMPLATE es rápido, pero PostgreSQL lo rechaza si el origen
+    // tiene sesiones activas. En ese caso se conserva el mismo aislamiento con un dump
+    // consistente y una restauración en template0, sin desconectar ni terminar sesiones.
+    if (status !== 0) {
+      log(`${C.yellow}  No se pudo clonar por TEMPLATE; se usará dump/restauración aislados${C.off}`)
+      requirePassword()
+      const pgDump = findPgDump()
+      const pgRestore = findPgRestore()
+      status = run(
+        pgDump,
+        [
+          '--no-password',
+          '--format=custom',
+          '--file', dumpFile,
+          '--no-owner',
+          '--no-privileges',
+          '-h', env.PGHOST ?? 'localhost',
+          '-p', env.PGPORT ?? '5432',
+          '-U', env.PGUSER ?? 'postgres',
+          '-d', sourceDb,
+        ],
+        { allowFail: true }
+      )
+      if (status === 0) {
+        status = psql(
+          ['-c', `CREATE DATABASE ${quoteIdentifier(db)} ENCODING 'UTF8' TEMPLATE template0`],
+          { db: 'postgres', allowFail: true }
+        )
+      }
+      if (status === 0) {
+        created = true
+        restoredFromDump = true
+        status = run(
+          pgRestore,
+          [
+            '--no-password',
+            '--exit-on-error',
+            '--no-owner',
+            '--no-privileges',
+            '-h', env.PGHOST ?? 'localhost',
+            '-p', env.PGPORT ?? '5432',
+            '-U', env.PGUSER ?? 'postgres',
+            '-d', db,
+            dumpFile,
+          ],
+          { allowFail: true }
+        )
+      }
+    }
+    if (status === 0) {
+      if (restoredFromDump) log(`${C.dim}  Origen restaurado en la base temporal${C.off}`)
+      status = sqlFolder('90_checks', { db, allowFail: true })
+    }
+  } finally {
+    if (created) {
+      const cleanup = psql(
+        ['-c', `DROP DATABASE ${quoteIdentifier(db)}`],
+        { db: 'postgres', allowFail: true }
+      )
+      if (status === 0 && cleanup !== 0) status = cleanup
+    }
+    try {
+      rmSync(dumpFile, { force: true })
+    } catch (error) {
+      if (status === 0) status = 1
+      console.error(`${C.red}✗ No pude eliminar el dump temporal ${dumpFile}: ${error.message}${C.off}`)
+    }
+  }
+  return status
+}
+
+/**
+ * Ejecuta el gate completo sobre una base efímera y un fixture sintético.
+ *
+ * La base destino nunca es PGDATABASE: siempre se crea con un nombre generado por este
+ * proceso, se valida y se elimina. Esto permite ejecutar la compuerta positiva tanto en CI
+ * como en un equipo local sin riesgo de truncar la base de trabajo.
+ */
+function cmdValidateFixture() {
+  const db = `aquanqa_ci_positive_${process.pid}_${Date.now()}`
+  const fixture = join(ROOT, 'db', 'ci', 'fixtures', 'positive_gate.sql')
+  let status = 1
+  let created = false
+
+  try {
+    step(`Base efímera ${db}`)
+    status = psql(
+      ['-c', `CREATE DATABASE "${db}" ENCODING 'UTF8' TEMPLATE template0`],
+      { db: 'postgres', allowFail: true }
+    )
+    if (status === 0) {
+      created = true
+      // 020_roles.sql modifica roles/default privileges del clúster; no forma parte
+      // de la prueba de contrato y se excluye para mantener el harness aislado.
+      status = cmdBuild({
+        db,
+        allowFail: true,
+        skipRoles: true,
+        full: true,
+        excludeFiles: ['090_ejecutar.sql'],
+      })
+      if (status === 0) {
+        status = sqlFile(join(SQL_DIR, '90_checks', '010_contrato.sql'), { db, allowFail: true })
+      }
+      if (status === 0) {
+        status = sqlFile(join(SQL_DIR, '90_checks', '020_funciones.sql'), { db, allowFail: true })
+      }
+      if (status === 0) status = sqlFile(fixture, { db, allowFail: true })
+      if (status === 0) {
+        // El fixture declara un universo vacío, pero el contrato contiene controles que
+        // consultan tablas materializadas de stg directamente. Se materializan todas las
+        // vistas vacías para que el smoke test mida el contrato completo y no confunda una
+        // tabla aún no creada con un error de datos. En una migración real esta operación
+        // sigue siendo selectiva por bloque.
+        status = psql(
+          ['-c', "CALL stg.sp_materializar(); CALL core.sp_cargar_ubicacion();"],
+          { db, allowFail: true }
+        )
+      }
+      if (status === 0) {
+        status = sqlFile(join(SQL_DIR, '90_checks', '030_analytics.sql'), { db, allowFail: true })
+      }
+      if (status === 0) {
+        status = sqlFile(join(SQL_DIR, '90_checks', '090_informe.sql'), { db, allowFail: true })
+      }
+      if (status === 0) log(`${C.green}✓ Compuerta positiva aceptó el fixture aislado${C.off}`)
+    }
+  } finally {
+    if (created) {
+      const cleanup = psql(
+        ['-c', `DROP DATABASE "${db}"`],
+        { db: 'postgres', allowFail: true }
+      )
+      if (status === 0 && cleanup !== 0) status = cleanup
+    }
+  }
+  return status
 }
 
 const [target, ...rest] = process.argv.slice(2)
 switch (target) {
   case 'setup':    cmdSetup(); break
-  case 'sql':      if (!rest[0]) fail('uso: run.mjs sql <carpeta>'); sqlFolder(rest[0]); break
+  case 'sql':      cmdSql(rest); break
   case 'psql':     psql(rest); break
+  case 'preflight': cmdPreflight(rest); break
   case 'py':       py(rest); break
-  case 'build':    cmdBuild(); break
-  case 'migrate':  sqlFolder('10_raw'); cmdBuild(); break
-  case 'validate': sqlFolder('90_checks'); break
+  case 'build':    cmdBuild({ db: optionValue(rest, '--database') ?? env.PGDATABASE ?? 'aquanqa', full: rest.includes('--full') }); break
+  case 'migrate':  cmdBuild({ db: optionValue(rest, '--database') ?? env.PGDATABASE ?? 'aquanqa', full: rest.includes('--full') }); break
+  case 'validate': {
+    const status = cmdValidate()
+    if (status !== 0) fail(`validate terminó con código ${status}`)
+    break
+  }
+  case 'validate-fixture': {
+    const status = cmdValidateFixture()
+    if (status !== 0) fail(`validate-fixture terminó con código ${status}`)
+    break
+  }
+  case 'backup': {
+    const status = cmdBackup(rest)
+    if (status !== 0) fail(`backup terminó con código ${status}`)
+    break
+  }
+  case 'raw-only': {
+    const status = cmdRawOnly(rest)
+    if (status !== 0) fail(`raw-only terminó con código ${status}`)
+    break
+  }
   case 'dashboard': cmdDashboard(rest); break
   case 'dashboard-dash': cmdDashboard(rest); break
   case 'tailwind': cmdTailwind(rest); break
+  case 'analytics': cmdAnalytics(rest); break
+  case 'mlflow': cmdMlflow(rest); break
   default:
     log(
       'Uso: node scripts/run.mjs ' +
-        '<setup|migrate|build|validate|dashboard|tailwind [--watch]|' +
-        'sql <carpeta>|psql <args>|py <args>>'
+      '<setup|migrate|build [--full]|validate|validate-fixture|dashboard|tailwind [--watch]|' +
+        'backup [--database <bd>]|raw-only [--database <bd>]|sql <carpeta> [--database <bd>]|' +
+        'preflight [--database aquanqa_migracion]|psql <args>|py <args>|' +
+        'analytics <comando>|mlflow>'
     )
     process.exit(target ? 1 : 0)
 }

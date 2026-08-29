@@ -7,10 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY packages/analitica /app/packages/analitica
 COPY apps/dashboard /app/apps/dashboard
 COPY docs/data /app/docs/data
+COPY docs/cientifico /app/docs/cientifico
+COPY constraints-analitica.txt /app/constraints-analitica.txt
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir /app/packages/analitica \
-    && pip install --no-cache-dir "/app/apps/dashboard[deploy]"
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir -c /app/constraints-analitica.txt /app/packages/analitica \
+    && python -m pip install --no-cache-dir -c /app/constraints-analitica.txt "/app/apps/dashboard[deploy]"
 
 WORKDIR /app/apps/dashboard
 

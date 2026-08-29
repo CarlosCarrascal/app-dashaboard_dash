@@ -8,7 +8,6 @@ y quedan guardadas en memoria para que volver a ella sea inmediato.
 
 from __future__ import annotations
 
-import dash
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash_extensions.enrich import Input, Output, callback
@@ -21,7 +20,15 @@ from components import ui
 from servicios.cache_analisis import obtener, precargar
 from servicios.carga import PANEL_STORE
 
-dash.register_page(__name__, path="/modelo/r2", name="Qué explica el R²", order=0, grupo="Modelo predictivo")
+from ._legacy import registrar_pagina_legacy
+
+registrar_pagina_legacy(
+    __name__,
+    path="/modelo/r2",
+    name="Legacy · Qué explica el R²",
+    order=0,
+    grupo="Legacy / Exploración",
+)
 
 BLOQUES = {
     "techo": "Techo",
@@ -48,6 +55,7 @@ def layout():
     return html.Div(
         className="space-y-4",
         children=[
+            ui.fuente_historica(),
             ui.encabezado_pagina(
                 "¿Qué parte aprende el modelo y qué parte solo memoriza?",
                 "El R² depende de la información disponible y de cómo se separan las semanas. "
@@ -93,28 +101,30 @@ def _dato_pesado(panel, bloque: str):
 
 
 def _kpis(pct_entre: float, pct_dentro: float, n: int, semanas: int) -> html.Div:
-    return ui.fila_kpi([
-        ui.kpi(
-            "Techo entre semanas",
-            f"{pct_entre:.0f}%",
-            nota="Parte de la variación que puede ver el clima semanal.",
-        ),
-        ui.kpi(
-            "Variación semanal",
-            f"{pct_dentro:.0f}%",
-            nota="Diferencias entre módulos que el clima común no distingue.",
-        ),
-        ui.kpi(
-            "Muestra comparable",
-            f"{n} / {semanas}",
-            nota="Filas / semanas con las 7 variables completas.",
-        ),
-        ui.kpi(
-            "Variables predictoras",
-            str(len(FEATURES)),
-            nota="Señales que recibe el modelo general.",
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Techo entre semanas",
+                f"{pct_entre:.0f}%",
+                nota="Parte de la variación que puede ver el clima semanal.",
+            ),
+            ui.kpi(
+                "Variación semanal",
+                f"{pct_dentro:.0f}%",
+                nota="Diferencias entre módulos que el clima común no distingue.",
+            ),
+            ui.kpi(
+                "Muestra comparable",
+                f"{n} / {semanas}",
+                nota="Filas / semanas con las 7 variables completas.",
+            ),
+            ui.kpi(
+                "Variables predictoras",
+                str(len(FEATURES)),
+                nota="Señales que recibe el modelo general.",
+            ),
+        ]
+    )
 
 
 def _respuesta_corta(pct_entre: float, pct_dentro: float) -> html.Div:
@@ -127,22 +137,31 @@ def _respuesta_corta(pct_entre: float, pct_dentro: float) -> html.Div:
     conexion = html.Div(
         className="grid gap-4",
         children=[
-            html.Div([
-                html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
-                html.P(
-                    "Cuánto generaliza el modelo cuando cambia la semana y cuánto de su "
-                    "rendimiento puede venir de reconocer la forma de la campaña.",
-                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                ),
-            ]),
-            html.Div([
-                html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
-                html.P(
-                    "Fija el número que se debe reportar, separa la señal física del calendario "
-                    "y evita leer SHAP o aportes marginales como si fueran efectos causales.",
-                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                ),
-            ]),
+            html.Div(
+                [
+                    html.Div(
+                        "Este análisis responde", className="text-sm font-semibold text-slate-700"
+                    ),
+                    html.P(
+                        "Cuánto generaliza el modelo cuando cambia la semana y cuánto de su "
+                        "rendimiento puede venir de reconocer la forma de la campaña.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        "Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"
+                    ),
+                    html.P(
+                        "Fija el número que se debe reportar, separa la señal física "
+                        "del calendario "
+                        "y evita leer SHAP o aportes marginales como si fueran efectos causales.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]
+            ),
         ],
     )
     return ui.panel(
@@ -213,15 +232,17 @@ def _techo(panel) -> html.Div:
 
 def _grupos(grupos) -> html.Div:
     orden = grupos.sort_values("Aporte marginal del grupo")
-    fig = go.Figure(go.Bar(
-        x=orden["Aporte marginal del grupo"],
-        y=orden.Familia,
-        orientation="h",
-        marker_color=AZUL,
-        text=[f"{v:+.3f}" for v in orden["Aporte marginal del grupo"]],
-        textposition="outside",
-        hovertemplate="%{y}<br>aporte marginal = %{x:+.3f}<extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Bar(
+            x=orden["Aporte marginal del grupo"],
+            y=orden.Familia,
+            orientation="h",
+            marker_color=AZUL,
+            text=[f"{v:+.3f}" for v in orden["Aporte marginal del grupo"]],
+            textposition="outside",
+            hovertemplate="%{y}<br>aporte marginal = %{x:+.3f}<extra></extra>",
+        )
+    )
     fig.add_vline(x=0, line_color="#94a3b8")
     fig.update_layout(
         xaxis_title="pérdida de R² al retirar la familia",
@@ -352,16 +373,18 @@ def _esquemas(tabla) -> html.Div:
             colores.append("#7c3aed")
         else:
             colores.append(GRIS)
-    fig = go.Figure(go.Bar(
-        x=orden["R²"],
-        y=orden.Esquema,
-        orientation="h",
-        marker_color=colores,
-        text=[f"{v:+.3f}" for v in orden["R²"]],
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate="%{y}<br>R² = %{x:+.3f}<extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Bar(
+            x=orden["R²"],
+            y=orden.Esquema,
+            orientation="h",
+            marker_color=colores,
+            text=[f"{v:+.3f}" for v in orden["R²"]],
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate="%{y}<br>R² = %{x:+.3f}<extra></extra>",
+        )
+    )
     fig.add_vline(x=0, line_color="#94a3b8")
     fig.update_layout(
         xaxis_title="R² fuera de muestra",
@@ -414,7 +437,10 @@ def _esquemas(tabla) -> html.Div:
                 formato={"R²": "{:+.3f}", "MAE (kg/ha)": "{:.0f}"},
             ),
         ),
-        ayuda="Comparación de generalización y de conjuntos de variables bajo particiones explícitas.",
+        ayuda=(
+            "Comparación de generalización y de conjuntos de variables bajo "
+            "particiones explícitas."
+        ),
     )
 
 

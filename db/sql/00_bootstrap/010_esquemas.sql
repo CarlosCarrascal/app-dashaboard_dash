@@ -39,6 +39,16 @@ COMMENT ON SCHEMA reporting IS
     'Contrato estable de salida para Power BI: vistas base y las 40 consultas de Access '
     'con su nombre original. Prohibidos los filtros fijos de campaña.';
 
+CREATE SCHEMA IF NOT EXISTS mlflow;
+COMMENT ON SCHEMA mlflow IS
+    'Backend de MLflow para experimentos, firmas y registro de modelos. Sus tablas las '
+    'administra MLflow: el SQL de negocio no depende de su estructura interna.';
+
+CREATE SCHEMA IF NOT EXISTS analytics;
+COMMENT ON SCHEMA analytics IS
+    'Resultados versionados del ciclo analítico: snapshots, backtests, proyecciones, '
+    'evidencia, decisiones champion-challenger y artefactos. No contiene datos raw.';
+
 -- Extensiones -----------------------------------------------------------------
 -- unaccent: comparar vocabularios de fundo escritos con y sin acento
 --           ('Aqu Anqa II - Ampliación' vs '... Ampliacion').

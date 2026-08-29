@@ -15,17 +15,17 @@ AS $$
 DECLARE
     v_cab integer; v_det integer; v_dup integer; v_conf integer;
 BEGIN
-    TRUNCATE core.rama_medicion, core.evaluacion_ramas RESTART IDENTITY CASCADE;
+    TRUNCATE core.ev_rama_medicion, core.ev_evaluacion_ramas RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E01_Ramas', 'core.evaluacion_ramas', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+    SELECT 'E01_Ramas', 'core.ev_evaluacion_ramas', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote de la evaluación.', to_jsonb(v)
     FROM stg.e01_ramas v
     WHERE lote_id IS NULL;
 
     -- Cabecera: una fila por planta evaluada. Los conteos declarados vienen repetidos en
     -- todas las filas de la planta, así que basta con tomar el máximo (N-1).
-    INSERT INTO core.evaluacion_ramas (lote_id, fecha, cortina, hilera, planta,
+    INSERT INTO core.ev_evaluacion_ramas (lote_id, fecha, cortina, hilera, planta,
                                        evaluador_id, ramas_menor5, ramas_mayor5)
     SELECT v.lote_id, v.fecha, v.cortina, v.hilera, v.planta,
            max(stg.fn_resolver_evaluador(v.dni)),
@@ -49,25 +49,25 @@ BEGIN
           AND v.cortina IS NOT NULL AND v.hilera IS NOT NULL AND v.planta IS NOT NULL
           AND v.nro_rama IS NOT NULL AND v.diametro IS NOT NULL
     )
-    INSERT INTO core.rama_medicion (evaluacion_ramas_id, nro_rama, diametro, sospechoso, id_origen)
+    INSERT INTO core.ev_rama_medicion (evaluacion_ramas_id, nro_rama, diametro, sospechoso, id_origen)
     SELECT c.evaluacion_ramas_id, d.nro_rama, d.diametro,
            -- Una rama de arándano no pasa de 50 mm. Los valores mayores se cargan igual
            -- —las cifras de control los incluyen— pero quedan marcados (N-13).
            NOT stg.fn_diametro_valido(d.diametro::numeric, 50),
            d.id_origen
     FROM distintas d
-    JOIN core.evaluacion_ramas c
+    JOIN core.ev_evaluacion_ramas c
       ON c.lote_id = d.lote_id AND c.fecha = d.fecha AND c.cortina = d.cortina
      AND c.hilera = d.hilera AND c.planta = d.planta;
 
     GET DIAGNOSTICS v_det = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E01_Ramas', 'core.rama_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
+    SELECT 'E01_Ramas', 'core.ev_rama_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
            'Diámetro de rama físicamente imposible: ' || diametro || ' mm. Se carga igual, '
            'porque las cifras de control de la auditoría lo incluyen.',
            jsonb_build_object('rama_medicion_id', rama_medicion_id, 'diametro', diametro)
-    FROM core.rama_medicion WHERE sospechoso;
+    FROM core.ev_rama_medicion WHERE sospechoso;
 
     -- Duplicados exactos apartados por la deduplicación (H-03).
     SELECT count(*) - v_det INTO v_dup
@@ -77,7 +77,7 @@ BEGIN
       AND planta IS NOT NULL;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E01_Ramas', 'core.rama_medicion', 'DUPLICADO_EXACTO', 'H-03',
+    SELECT 'E01_Ramas', 'core.ev_rama_medicion', 'DUPLICADO_EXACTO', 'H-03',
            'Fila idéntica repetida ' || (n - 1) || ' vez/veces por una recarga.',
            jsonb_build_object('lote_id', lote_id, 'fecha', fecha, 'cortina', cortina,
                               'hilera', hilera, 'planta', planta, 'nro_rama', nro_rama,
@@ -92,7 +92,7 @@ BEGIN
     -- La misma rama con dos diámetros distintos: no es una recarga, es un conflicto de
     -- captura, y se deja a la vista en lugar de resolverlo por sorteo (N-1).
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E01_Ramas', 'core.rama_medicion', 'CONFLICTO_DIAMETRO_RAMA', 'N-1',
+    SELECT 'E01_Ramas', 'core.ev_rama_medicion', 'CONFLICTO_DIAMETRO_RAMA', 'N-1',
            'La rama ' || nro_rama || ' de esta planta tiene ' || n_diam || ' diámetros distintos.',
            jsonb_build_object('lote_id', lote_id, 'fecha', fecha, 'cortina', cortina,
                               'hilera', hilera, 'planta', planta, 'nro_rama', nro_rama,
@@ -125,24 +125,24 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.flores RESTART IDENTITY CASCADE;
+    TRUNCATE core.ev_flores RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E02_ConteoFlores', 'core.flores', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+    SELECT 'E02_ConteoFlores', 'core.ev_flores', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote.', to_jsonb(v)
     FROM stg.e02_flores v WHERE lote_id IS NULL OR fecha IS NULL;
 
     -- Un conteo negativo es imposible: se carga como NULL y queda constancia (N-13).
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E02_ConteoFlores', 'core.flores', 'CONTEO_NEGATIVO', 'N-12',
+    SELECT 'E02_ConteoFlores', 'core.ev_flores', 'CONTEO_NEGATIVO', 'N-12',
            'Conteo con valor negativo en el origen; se carga como no medido.',
            jsonb_build_object('fecha', stg.fn_a_fecha(fecha), 'modulo', modulo, 'lote', lote,
                               'n_flores', n_flores, 'cuajo', cuajo, 'ya', ya, 'yp', yp)
-    FROM raw.e02_conteo_flores
+    FROM raw.v_e02_conteo_flores_vigente
     WHERE stg.fn_a_entero(n_flores) < 0 OR stg.fn_a_entero(cuajo) < 0
        OR stg.fn_a_entero(ya) < 0 OR stg.fn_a_entero(yp) < 0;
 
-    INSERT INTO core.flores (lote_id, fecha, cortina, hilera, planta, evaluador_id,
+    INSERT INTO core.ev_flores (lote_id, fecha, cortina, hilera, planta, evaluador_id,
                              n_flores, cuajo, yemas_abiertas, yemas_por_abrir, hora, item)
     SELECT lote_id, fecha, coalesce(cortina, 0), coalesce(hilera, 0), coalesce(planta, 0),
            stg.fn_resolver_evaluador(dni),
@@ -155,7 +155,7 @@ BEGIN
     -- E02 no tiene ninguna clave natural única (N-9): se cargan todas las filas con clave
     -- sustituta y se anotan los conflictos para que alguien pueda mirarlos.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E02_ConteoFlores', 'core.flores', 'CLAVE_NATURAL_REPETIDA', 'N-9',
+    SELECT 'E02_ConteoFlores', 'core.ev_flores', 'CLAVE_NATURAL_REPETIDA', 'N-9',
            'La misma planta y fecha aparece ' || n || ' veces; se conservan todas.',
            jsonb_build_object('lote_id', lote_id, 'fecha', fecha, 'cortina', cortina,
                               'hilera', hilera, 'planta', planta, 'item', item, 'veces', n)
@@ -176,14 +176,14 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.estados RESTART IDENTITY CASCADE;
+    TRUNCATE core.ev_estados RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E03_ConteoEstados', 'core.estados', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+    SELECT 'E03_ConteoEstados', 'core.ev_estados', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote.', to_jsonb(v)
     FROM stg.e03_estados v WHERE lote_id IS NULL OR fecha IS NULL;
 
-    INSERT INTO core.estados (lote_id, fecha, cortina, hilera, planta, evaluador_id,
+    INSERT INTO core.ev_estados (lote_id, fecha, cortina, hilera, planta, evaluador_id,
                               e1, e2, e3, e4, e5, total_origen, hora, item)
     SELECT lote_id, fecha, coalesce(cortina, 0), coalesce(hilera, 0), coalesce(planta, 0),
            stg.fn_resolver_evaluador(dni),
@@ -194,8 +194,8 @@ BEGIN
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
     RAISE NOTICE 'Estados: % filas (Total vs E1..E5 en el origen: % frutos de diferencia, % con hora de captura)',
-        v_n, (SELECT coalesce(sum(total_origen) - sum(total), 0) FROM core.estados),
-        (SELECT count(*) FROM core.estados WHERE hora IS NOT NULL);
+        v_n, (SELECT coalesce(sum(total_origen) - sum(total), 0) FROM core.ev_estados),
+        (SELECT count(*) FROM core.ev_estados WHERE hora IS NOT NULL);
 END;
 $$;
 
@@ -206,21 +206,21 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.brotes RESTART IDENTITY CASCADE;
+    TRUNCATE core.ev_brotes RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E04_Brotes', 'core.brotes', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+    SELECT 'E04_Brotes', 'core.ev_brotes', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote.', to_jsonb(v)
     FROM stg.e04_brotes v WHERE lote_id IS NULL OR fecha IS NULL;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E04_Brotes', 'core.brotes', 'CONTEO_NEGATIVO', 'N-12',
+    SELECT 'E04_Brotes', 'core.ev_brotes', 'CONTEO_NEGATIVO', 'N-12',
            'Conteo de brotes negativo en el origen; se carga como cero.',
            jsonb_build_object('fecha', stg.fn_a_fecha(fecha), 'modulo', modulo, 'lote', lote,
                               'brotes', brotes)
-    FROM raw.e04_brotes WHERE stg.fn_a_entero(brotes) < 0;
+    FROM raw.v_e04_brotes_vigente WHERE stg.fn_a_entero(brotes) < 0;
 
-    INSERT INTO core.brotes (lote_id, fecha, piso, cortina, hilera, planta,
+    INSERT INTO core.ev_brotes (lote_id, fecha, piso, cortina, hilera, planta,
                              evaluador_id, brotes, des1, des2, des3, hora)
     SELECT lote_id, fecha, coalesce(piso, '(sin piso)'),
            coalesce(cortina, 0), coalesce(hilera, 0), coalesce(planta, 0),
@@ -241,16 +241,16 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.baya_medicion RESTART IDENTITY CASCADE;
+    TRUNCATE core.ev_baya_medicion RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E05_DiametrosBayas', 'core.baya_medicion',
+    SELECT 'E05_DiametrosBayas', 'core.ev_baya_medicion',
            coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote. E05 no trae fundo, así que solo se puede resolver '
            'cuando el par (módulo, lote) es único.', to_jsonb(v)
     FROM stg.e05_bayas v WHERE lote_id IS NULL OR fecha IS NULL;
 
-    INSERT INTO core.baya_medicion (lote_id, fecha, cortina, hilera, nro_muestra,
+    INSERT INTO core.ev_baya_medicion (lote_id, fecha, cortina, hilera, nro_muestra,
                                     diametro, sospechoso)
     SELECT lote_id, fecha, coalesce(cortina, 0), coalesce(hilera, 0), nro_muestra, diametro,
            -- Una baya de arándano no pasa de 40 mm; el origen llega a 13.381 (N-13).
@@ -262,13 +262,13 @@ BEGIN
     GET DIAGNOSTICS v_n = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'E05_DiametrosBayas', 'core.baya_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
+    SELECT 'E05_DiametrosBayas', 'core.ev_baya_medicion', 'DIAMETRO_FUERA_DE_RANGO', 'N-12',
            'Diámetro de baya físicamente imposible: ' || diametro || ' mm.',
            jsonb_build_object('baya_medicion_id', baya_medicion_id, 'diametro', diametro)
-    FROM core.baya_medicion WHERE sospechoso;
+    FROM core.ev_baya_medicion WHERE sospechoso;
 
     RAISE NOTICE 'Bayas: % mediciones, % con diámetro imposible', v_n,
-        (SELECT count(*) FROM core.baya_medicion WHERE sospechoso);
+        (SELECT count(*) FROM core.ev_baya_medicion WHERE sospechoso);
 END;
 $$;
 
@@ -279,17 +279,17 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.poda RESTART IDENTITY CASCADE;
+    TRUNCATE core.evt_poda RESTART IDENTITY CASCADE;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'M_Poda', 'core.poda', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
+    SELECT 'M_Poda', 'core.evt_poda', coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'No se pudo identificar el lote.', to_jsonb(v)
     FROM stg.m_poda v WHERE lote_id IS NULL;
 
-    INSERT INTO core.poda (lote_id, campania_id, fecha_inicio, fecha_siembra, area_ha)
+    INSERT INTO core.evt_poda (lote_id, campania_id, fecha_inicio, fecha_siembra, area_ha)
     SELECT p.lote_id, c.campania_id, min(p.fecha_inicio), min(p.fecha_siembra), max(p.area_ha)
     FROM stg.m_poda p
-    JOIN core.campania c ON c.codigo = p.campania
+    JOIN core.t_campania c ON c.codigo = p.campania
     WHERE p.lote_id IS NOT NULL
     GROUP BY p.lote_id, c.campania_id;
 
@@ -303,14 +303,14 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer;
 BEGIN
-    TRUNCATE core.muestra_requerida RESTART IDENTITY CASCADE;
+    TRUNCATE core.cfg_muestra_requerida RESTART IDENTITY CASCADE;
 
     -- N-23: este era el único procedimiento que descartaba filas sin dejar rastro. El filtro
     -- de abajo aparta las que no resuelven lote, igual que en el resto de los hechos, pero
     -- aquí no se registraba nada — y una fila que desaparece en silencio es exactamente lo
     -- que la migración existe para evitar. Se registra primero, se carga después.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'M_nMuestra', 'core.muestra_requerida',
+    SELECT 'M_nMuestra', 'core.cfg_muestra_requerida',
            coalesce(motivo, 'SIN_IDENTIFICADORES'),
            CASE WHEN coalesce(motivo, 'SIN_IDENTIFICADORES') = 'SIN_IDENTIFICADORES'
                 THEN 'H-06' ELSE 'N-3' END,
@@ -319,7 +319,7 @@ BEGIN
     FROM stg.m_n_muestra m
     WHERE lote_id IS NULL OR muestras IS NULL;
 
-    INSERT INTO core.muestra_requerida (lote_id, evaluacion, cortina, hilera, planta, muestras)
+    INSERT INTO core.cfg_muestra_requerida (lote_id, evaluacion, cortina, hilera, planta, muestras)
     SELECT lote_id, evaluacion, cortina, hilera, planta, muestras
     FROM stg.m_n_muestra
     WHERE lote_id IS NOT NULL AND muestras IS NOT NULL

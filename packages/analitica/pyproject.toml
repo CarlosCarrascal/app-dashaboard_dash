@@ -16,15 +16,36 @@ dependencies = [
     "scipy>=1.14",          # pruebas de hipotesis del estudio climatico
     "psycopg[binary]>=3.2", # los scripts que leen el panel desde reporting
     "python-dotenv>=1.0",
+    "joblib>=1.4",          # paralelización explícita del servicio Bhattacharya
     "scikit-learn>=1.5",    # metricas y esquemas de validacion cruzada
     "xgboost>=2.1",
     "shap>=0.46",
     "matplotlib>=3.9",      # figuras de los reportes HTML
     "plotly>=5.24",         # figuras reutilizables por las interfaces
+    "statsmodels>=0.14.4",  # modelos mixtos, ARDL, HAC y pruebas múltiples
+    "statsforecast>=2.0",   # baselines temporales y validación rolling-origin
+    "hierarchicalforecast>=1.2", # reconciliación lote→módulo→fundo
+    "mapie>=1.0",           # intervalos conformales para challengers ML
+    "mlflow>=3.0",          # tracking, firmas y model registry
+    "pandera[pandas]>=0.25",# contratos de DataFrame en las fronteras
+    "pyarrow>=18",          # artefactos Parquet auditables
 ]
 
+[project.scripts]
+aquanqa-analytics = "analitica.cli:main"
+
 [project.optional-dependencies]
-dev = ["ruff>=0.6"]
+dev = [
+    "build>=1.2",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+]
+operativo = [
+    "python-calamine>=0.3",
+    "pyodbc>=5.1",
+]
 deploy = ["gunicorn>=23"]
 
 [build-system]
@@ -32,16 +53,52 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["analitica", "analitica.nucleo", "analitica.visualizaciones"]
+packages = [
+    "analitica",
+    "analitica.nucleo",
+    "analitica.proyeccion",
+    "analitica.proyeccion.compartido",
+    "analitica.proyeccion.candidatos",
+    "analitica.proyeccion.relaciones_partes",
+    "analitica.proyeccion.fenologico",
+    "analitica.proyeccion.hibrido",
+    "analitica.proyeccion.horizonte",
+    "analitica.proyeccion.infraestructura",
+    "analitica.proyeccion.operativo",
+    "analitica.proyeccion.parametros",
+    "analitica.proyeccion.persistencia",
+    "analitica.visualizaciones",
+    "analitica.commands",
+    "analitica.servicios",
+    "analitica.servicios.infraestructura",
+    "analitica.scripts",
+]
 
 [tool.setuptools.package-dir]
 analitica = "."
 "analitica.nucleo" = "nucleo"
+"analitica.proyeccion" = "proyeccion"
+"analitica.proyeccion.compartido" = "proyeccion/compartido"
+"analitica.proyeccion.candidatos" = "proyeccion/candidatos"
+"analitica.proyeccion.relaciones_partes" = "proyeccion/relaciones_partes"
+"analitica.proyeccion.fenologico" = "proyeccion/fenologico"
+"analitica.proyeccion.hibrido" = "proyeccion/hibrido"
+"analitica.proyeccion.horizonte" = "proyeccion/horizonte"
+"analitica.proyeccion.persistencia" = "proyeccion/persistencia"
+"analitica.proyeccion.parametros" = "proyeccion/parametros"
+"analitica.proyeccion.operativo" = "proyeccion/operativo"
 "analitica.visualizaciones" = "visualizaciones"
+"analitica.commands" = "commands"
+"analitica.servicios" = "servicios"
+"analitica.scripts" = "scripts"
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.py[cod]"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = ["build", "dist*", ".cache", ".tmp*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

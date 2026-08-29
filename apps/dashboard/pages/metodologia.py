@@ -12,8 +12,11 @@ from analitica import settings
 from components import ui
 
 dash.register_page(
-    __name__, path="/metodologia", name="Marco metodológico y referencias",
-    order=1, grupo="Referencia",
+    __name__,
+    path="/metodologia",
+    name="Marco metodológico y referencias",
+    order=1,
+    grupo="Referencia",
 )
 
 FUENTES = (
@@ -52,43 +55,49 @@ FUENTES = (
 
 def _fuentes() -> html.Div:
     carpeta = settings.XLSX_REPO.parent / "new.info"
-    filas = pd.DataFrame([
-        {
-            "Fuente": titulo,
-            "Archivo local": archivo,
-            "Qué sustenta": aporta,
-            "Qué no autoriza": limite,
-            "Disponible": "Sí" if (carpeta / archivo).is_file() else "No",
-        }
-        for titulo, archivo, aporta, limite in FUENTES
-    ])
-    return html.Div([
-        ui.tabla_desde_df(filas, plano=True),
-        html.P(f"Carpeta revisada: {carpeta}", className="mt-1 text-xs text-slate-500"),
-    ])
+    filas = pd.DataFrame(
+        [
+            {
+                "Fuente": titulo,
+                "Archivo local": archivo,
+                "Qué sustenta": aporta,
+                "Qué no autoriza": limite,
+                "Disponible": "Sí" if (carpeta / archivo).is_file() else "No",
+            }
+            for titulo, archivo, aporta, limite in FUENTES
+        ]
+    )
+    return html.Div(
+        [
+            ui.tabla_desde_df(filas, plano=True),
+            html.P(f"Carpeta revisada: {carpeta}", className="mt-1 text-xs text-slate-500"),
+        ]
+    )
 
 
 def _capas() -> html.Div:
-    filas = pd.DataFrame([
-        {
-            "Capa": "Asociación estadística",
-            "Pregunta": "¿Qué variables se mueven junto con kg/ha, frutos o peso?",
-            "Herramientas": "Pearson, Spearman, forma, rezagos, placebo, control temporal",
-            "Estado": "Implementada",
-        },
-        {
-            "Capa": "Aporte predictivo",
-            "Pregunta": "¿Qué mejora la predicción fuera de muestra?",
-            "Herramientas": "R², ablación, grupos, XGBoost y validación temporal",
-            "Estado": "Implementada",
-        },
-        {
-            "Capa": "Efecto agronómico estimado",
-            "Pregunta": "¿Cuánto cambiaría el resultado al cambiar la exposición?",
-            "Herramientas": "DML/CATE con tratamiento, confusores, solapamiento e IC",
-            "Estado": "No identificable con la campaña actual",
-        },
-    ])
+    filas = pd.DataFrame(
+        [
+            {
+                "Capa": "Asociación estadística",
+                "Pregunta": "¿Qué variables se mueven junto con kg/ha, frutos o peso?",
+                "Herramientas": "Pearson, Spearman, forma, rezagos, placebo, control temporal",
+                "Estado": "Implementada",
+            },
+            {
+                "Capa": "Aporte predictivo",
+                "Pregunta": "¿Qué mejora la predicción fuera de muestra?",
+                "Herramientas": "R², ablación, grupos, XGBoost y validación temporal",
+                "Estado": "Implementada",
+            },
+            {
+                "Capa": "Efecto agronómico estimado",
+                "Pregunta": "¿Cuánto cambiaría el resultado al cambiar la exposición?",
+                "Herramientas": "DML/CATE con tratamiento, confusores, solapamiento e IC",
+                "Estado": "No identificable con la campaña actual",
+            },
+        ]
+    )
     return ui.panel(
         "1 · Tres resultados que deben mantenerse separados",
         ui.parrafo(
@@ -106,14 +115,22 @@ def _datos_faltantes() -> html.Div:
             ("Campaña", "Separar año, estación y decisiones de manejo", "Falta replicación"),
             ("Fundo y módulo", "Unidad observacional y agrupación", "Disponible"),
             ("Fecha de poda", "Origen del tiempo agronómico", "Disponible en M_Poda, a nivel lote"),
-            ("Días desde poda", "Alinear módulos con calendarios distintos", "Derivable; proxy de módulo"),
+            (
+                "Días desde poda",
+                "Alinear módulos con calendarios distintos",
+                "Derivable; proxy de módulo",
+            ),
             ("Fase fenológica", "Asignar la exposición al proceso biológico correcto", "Falta"),
             ("Clima por fase", "Temperatura, DPV, radiación y ETo en ventanas reales", "Falta"),
             ("Riego con cadencia", "Distinguir día, semana, cero y dato faltante", "Parcial"),
             ("Variedad y edad", "Confusores y modificadores del efecto", "Parcial en M_Poda"),
             ("Densidad", "Convertir componentes por planta a total comparable", "Falta"),
             ("Fertilización y eventos", "Evitar atribuir al clima decisiones operativas", "Falta"),
-            ("Frutos y peso", "Resultados biológicos secundarios, no controles del kg/ha", "Parcial"),
+            (
+                "Frutos y peso",
+                "Resultados biológicos secundarios, no controles del kg/ha",
+                "Parcial",
+            ),
         ],
         columns=["Campo", "Para qué se necesita", "Estado actual"],
     )
@@ -145,7 +162,11 @@ def _resumen() -> html.Div:
         ("Campaña", "Separar año, estación y decisiones de manejo", "Falta replicación"),
         ("Fundo y módulo", "Unidad observacional y agrupación", "Disponible"),
         ("Fecha de poda", "Origen del tiempo agronómico", "Disponible en M_Poda, a nivel lote"),
-        ("Días desde poda", "Alinear módulos con calendarios distintos", "Derivable; proxy de módulo"),
+        (
+            "Días desde poda",
+            "Alinear módulos con calendarios distintos",
+            "Derivable; proxy de módulo",
+        ),
         ("Fase fenológica", "Asignar la exposición al proceso biológico correcto", "Falta"),
         ("Clima por fase", "Temperatura, DPV, radiación y ETo en ventanas reales", "Falta"),
         ("Riego con cadencia", "Distinguir día, semana, cero y dato faltante", "Parcial"),
@@ -157,28 +178,30 @@ def _resumen() -> html.Div:
     for _, _, estado in filas:
         faltantes += estado == "Falta"
         parciales += estado.startswith("Parcial")
-    return ui.fila_kpi([
-        ui.kpi(
-            "Capas de análisis",
-            "3",
-            nota="Asociación, predicción y efecto agronómico.",
-        ),
-        ui.kpi(
-            "Fuentes revisadas",
-            str(len(FUENTES)),
-            nota="Referencias usadas para justificar decisiones de método.",
-        ),
-        ui.kpi(
-            "PDF disponibles",
-            f"{disponibles} / {len(FUENTES)}",
-            nota="Archivos encontrados en la carpeta local del proyecto.",
-        ),
-        ui.kpi(
-            "Campos pendientes",
-            str(faltantes),
-            nota=f"{parciales} campos están disponibles solo de forma parcial.",
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Capas de análisis",
+                "3",
+                nota="Asociación, predicción y efecto agronómico.",
+            ),
+            ui.kpi(
+                "Fuentes revisadas",
+                str(len(FUENTES)),
+                nota="Referencias usadas para justificar decisiones de método.",
+            ),
+            ui.kpi(
+                "PDF disponibles",
+                f"{disponibles} / {len(FUENTES)}",
+                nota="Archivos encontrados en la carpeta local del proyecto.",
+            ),
+            ui.kpi(
+                "Campos pendientes",
+                str(faltantes),
+                nota=f"{parciales} campos están disponibles solo de forma parcial.",
+            ),
+        ]
+    )
 
 
 def _respuesta_corta() -> html.Div:
@@ -193,22 +216,31 @@ def _respuesta_corta() -> html.Div:
         html.Div(
             className="grid gap-4",
             children=[
-                html.Div([
-                    html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
-                    html.P(
-                        "Qué sostiene cada capa del tablero, qué referencias orientan la "
-                        "elección y qué información todavía falta.",
-                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                    ),
-                ]),
-                html.Div([
-                    html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
-                    html.P(
-                        "Evita mezclar evidencia observacional, capacidad predictiva y "
-                        "efectos causales en una sola conclusión.",
-                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                    ),
-                ]),
+                html.Div(
+                    [
+                        html.Div(
+                            "Este análisis responde",
+                            className="text-sm font-semibold text-slate-700",
+                        ),
+                        html.P(
+                            "Qué sostiene cada capa del tablero, qué referencias orientan la "
+                            "elección y qué información todavía falta.",
+                            className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                        ),
+                    ]
+                ),
+                html.Div(
+                    [
+                        html.Div(
+                            "Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"
+                        ),
+                        html.P(
+                            "Evita mezclar evidencia observacional, capacidad predictiva y "
+                            "efectos causales en una sola conclusión.",
+                            className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                        ),
+                    ]
+                ),
             ],
         ),
         ayuda="La conclusión metodológica que conecta Referencia con el resto del dashboard.",
@@ -235,7 +267,10 @@ def layout():
                     "estimación e incertidumbre, no como evidencia agronómica directa."
                 ),
                 _fuentes(),
-                ayuda="Qué ideas se tomaron de cada fuente y qué límites impiden trasladarlas directamente.",
+                ayuda=(
+                    "Qué ideas se tomaron de cada fuente y qué límites impiden "
+                    "trasladarlas directamente."
+                ),
             ),
             _datos_faltantes(),
         ],

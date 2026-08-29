@@ -12,7 +12,7 @@
 
 CREATE OR REPLACE VIEW dim.empresa AS
 SELECT empresa_id, nombre AS empresa, activo, es_sentinel
-FROM core.empresa;
+FROM core.m_empresa;
 
 COMMENT ON VIEW dim.empresa IS
     'La fila con es_sentinel=true ("Sin identificar") existe para que ninguna FK de una '
@@ -29,8 +29,8 @@ SELECT f.fundo_id,
        f.codigo || ' · ' || coalesce(f.alias_operativo, '') AS etiqueta,
        f.activo,
        f.es_sentinel
-FROM core.fundo f
-JOIN core.empresa e USING (empresa_id);
+FROM core.m_fundo f
+JOIN core.m_empresa e USING (empresa_id);
 
 COMMENT ON VIEW dim.fundo IS
     'Los seis fundos físicos con su empresa. Sustituye a la columna calculada en DAX que '
@@ -48,16 +48,16 @@ SELECT m.modulo_id,
        -- El código de módulo no es único: M01 a M04 están en dos fundos (N-4).
        m.codigo || ' (' || f.codigo || ')' AS etiqueta,
        m.es_sentinel
-FROM core.modulo m
-JOIN core.fundo f USING (fundo_id)
-JOIN core.empresa e ON e.empresa_id = f.empresa_id;
+FROM core.m_modulo m
+JOIN core.m_fundo f USING (fundo_id)
+JOIN core.m_empresa e ON e.empresa_id = f.empresa_id;
 
 COMMENT ON VIEW dim.modulo IS
     'La fila es_sentinel=true ("Sin identificar") es donde apuntan las 624 filas de '
     'forecast_campania cuyo módulo no resolvía contra el maestro vigente (ADR-0005, N-15).';
 
 CREATE OR REPLACE VIEW dim.turno AS
-SELECT turno_id, codigo AS turno, es_sentinel FROM core.turno;
+SELECT turno_id, codigo AS turno, es_sentinel FROM core.m_turno;
 
 CREATE OR REPLACE VIEW dim.lote AS
 SELECT l.lote_id,
@@ -85,18 +85,18 @@ SELECT l.lote_id,
        m.codigo || '-' || l.codigo AS etiqueta,
        m.codigo || t.codigo        AS mod_turno,
        l.es_sentinel
-FROM core.lote l
-JOIN core.modulo m USING (modulo_id)
-JOIN core.fundo f  ON f.fundo_id = m.fundo_id
-JOIN core.empresa e ON e.empresa_id = f.empresa_id
-JOIN core.turno t  ON t.turno_id = l.turno_id
-LEFT JOIN core.variedad v ON v.variedad_id = l.variedad_id;
+FROM core.m_lote l
+JOIN core.m_modulo m USING (modulo_id)
+JOIN core.m_fundo f  ON f.fundo_id = m.fundo_id
+JOIN core.m_empresa e ON e.empresa_id = f.empresa_id
+JOIN core.m_turno t  ON t.turno_id = l.turno_id
+LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id;
 
 COMMENT ON VIEW dim.lote IS
-    'Los 879 lotes del maestro + 1 fila centinela "Sin identificar" (ADR-0005), con su '
+    'Los 882 lotes del maestro primario + 1 fila centinela "Sin identificar" (ADR-0005), con su '
     'jerarquía completa: empresa, fundo, módulo y turno. `clave_negocio` es el identificador '
     'correcto — (empresa, módulo, lote), ADR-0003. El área viene de aquí y NO debe sumarse '
-    'desde un hecho: sumar core.cosecha.area repetiría la superficie una vez por paña y es '
+    'desde un hecho: sumar core.op_cosecha.area repetiría la superficie una vez por paña y es '
     'el error de la medida KG/HA (hallazgo B-4).';
 
 CREATE OR REPLACE VIEW dim.tiempo AS
@@ -115,7 +115,7 @@ SELECT c.fecha,
        c.mes_sem,
        c.campanias_activas,
        c.anio * 100 + c.mes   AS anio_mes_num
-FROM core.calendario c;
+FROM core.t_calendario c;
 
 COMMENT ON VIEW dim.tiempo IS
     'Dimensión de tiempo con grano de día. Reemplaza a M_Time y a la tabla BD_Calendario que '
@@ -126,7 +126,7 @@ COMMENT ON VIEW dim.tiempo IS
 CREATE OR REPLACE VIEW dim.semana_evaluacion AS
 SELECT anio, sem_ev_conteo, fecha_inicio, fecha_fin, dias,
        anio || '-S' || lpad(sem_ev_conteo::text, 2, '0') AS etiqueta
-FROM core.semana_evaluacion;
+FROM core.t_semana_evaluacion;
 
 COMMENT ON VIEW dim.semana_evaluacion IS
     'Grano SEMANAL. Unir aquí y nunca contra dim.tiempo por sem_ev_conteo: eso es lo que '
@@ -135,7 +135,7 @@ COMMENT ON VIEW dim.semana_evaluacion IS
 CREATE OR REPLACE VIEW dim.campania AS
 SELECT campania_id, codigo AS campania, fecha_inicio, fecha_fin, origen_fechas,
        (fecha_fin - fecha_inicio) + 1 AS dias
-FROM core.campania;
+FROM core.t_campania;
 
 CREATE OR REPLACE VIEW dim.evaluador AS
 SELECT e.evaluador_id,
@@ -148,7 +148,7 @@ SELECT e.evaluador_id,
        e.inicio_labores,
        e.activo,
        e.en_maestro
-FROM core.evaluador e;
+FROM core.m_evaluador e;
 
 COMMENT ON VIEW dim.evaluador IS
     'Los evaluadores, enlazados por DNI (H-09). `en_maestro` = false marca a quienes capturan '
@@ -157,14 +157,14 @@ COMMENT ON VIEW dim.evaluador IS
 
 CREATE OR REPLACE VIEW dim.calibre AS
 SELECT calibre_id, etiqueta AS calibre, mm, orden, es_descarte
-FROM core.calibre;
+FROM core.m_calibre;
 
 COMMENT ON VIEW dim.calibre IS
     'Calibre comercial ORDENADO por `orden`: en el origen era texto y se ordenaba '
     'alfabéticamente, con 10 antes que 2 (H-10).';
 
 CREATE OR REPLACE VIEW dim.variedad AS
-SELECT variedad_id, nombre AS variedad, es_sentinel FROM core.variedad;
+SELECT variedad_id, nombre AS variedad, es_sentinel FROM core.m_variedad;
 
 COMMENT ON VIEW dim.variedad IS
     'La fila es_sentinel=true ("Sin identificar") es donde apuntan las 4 filas de cosecha '
@@ -173,7 +173,7 @@ COMMENT ON VIEW dim.variedad IS
 
 CREATE OR REPLACE VIEW dim.version_forecast AS
 SELECT version_id, sistema, codigo AS version, semana_emision, iteracion, es_presupuesto
-FROM core.version_forecast;
+FROM core.m_version_forecast;
 
 COMMENT ON VIEW dim.version_forecast IS
     'Escenarios de proyección. TODA medida sobre forecast debe filtrar una versión: sin filtro '

@@ -3,17 +3,21 @@
 Reutiliza el paquete analítico independiente `analitica`, que no importa Dash. La interfaz
 (`pages/`) y la caché (`servicios/`) viven directamente en esta aplicación.
 
-División de páginas (ver el hilo de diseño): «Impacto agronómico» cuenta la asociación
-observada sin mezclar XGBoost/SHAP; «Modelo predictivo» concentra el modelo y su
-validación.
+División de páginas: «Plataforma analítica» contiene las relaciones, explicaciones,
+backtesting y proyecciones oficiales. Las páginas históricas ``/modelo/*`` se conservan
+para auditoría, pero Dash no las descubre ni registra salvo que se habiliten explícitamente
+con ``AQUANQA_ENABLE_LEGACY_MODEL=true``.
 
 Uso:
     npm run dashboard
     python app.py   # desde apps/dashboard
 """
 
+# ruff: noqa: E402 -- el checkout añade sus paquetes locales antes de importar Dash.
+
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -28,13 +32,21 @@ from dash import Input, Output, clientside_callback, html  # noqa: E402
 from dash_extensions.enrich import (  # noqa: E402
     DashProxy,
     FileSystemBackend,
-    Input as EInput,
-    Output as EOutput,
     ServersideOutputTransform,
+)
+from dash_extensions.enrich import (
+    Input as EInput,
+)
+from dash_extensions.enrich import (
+    Output as EOutput,
+)
+from dash_extensions.enrich import (
     callback as ecallback,
 )
 
+from analitica import settings  # noqa: E402
 from components import layout, ui  # noqa: E402
+from pages.modelo._legacy import legacy_habilitado  # noqa: E402
 from servicios.carga import ORIGEN_STORE, PANEL_STORE  # noqa: E402
 
 CACHE_DIR = RAIZ / ".cache"
@@ -57,12 +69,50 @@ app = DashProxy(
     suppress_callback_exceptions=True,
 )
 server = app.server
+
+# Dash omite los módulos históricos durante el descubrimiento automático. La importación
+# explícita conserva una salida de auditoría reproducible, pero solo se ejecuta cuando la
+# persona operadora pide el modo legacy de manera consciente.
+if legacy_habilitado():
+    from pages.modelo import explicacion as _legacy_explicacion  # noqa: F401,E402
+    from pages.modelo import modelo as _legacy_modelo  # noqa: F401,E402
+    from pages.modelo import que_explica_r2 as _legacy_r2  # noqa: F401,E402
+
+
+# Endpoint de readiness para Render/orquestadores: el proceso puede estar vivo aunque
+# PostgreSQL no esté disponible, pero eso no debe anunciarse como servicio sano.
+@server.route("/health")
+def health():
+    dsn = settings.postgres_dsn()
+    if not dsn:
+        return {"status": "degraded", "detail": "PostgreSQL no está configurado"}, 503
+    try:
+        import psycopg
+
+        with psycopg.connect(dsn, connect_timeout=1) as conexion, conexion.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except Exception as exc:
+        detalle = f"PostgreSQL no disponible: {type(exc).__name__}"
+        return {"status": "degraded", "detail": detalle}, 503
+    return {"status": "ok"}, 200
+
+
 app.layout = layout.armar()
 
 
-@ecallback(EOutput("estado-panel", "children"), EInput(PANEL_STORE, "data"), EInput(ORIGEN_STORE, "data"))
-def _estado_panel(panel, info):
+@ecallback(
+    EOutput("estado-panel", "children"),
+    EInput(PANEL_STORE, "data"),
+    EInput(ORIGEN_STORE, "data"),
+    EInput("_url", "pathname"),
+)
+def _estado_panel(panel, info, pathname):
     """Pie de la barra lateral: qué se cargó, igual que `_pie()` en el Streamlit."""
+    # Las rutas oficiales no consumen el libro analítico global. Mostrar aquí IA.final.xlsx
+    # induciría a pensar que ese archivo alimenta cualquiera de sus resultados.
+    if pathname and pathname.startswith("/analitica/"):
+        return "Plataforma analítica\nPostgreSQL · datos publicados"
     if info is None:
         return "Cargando…"
     if info.get("error"):
@@ -104,7 +154,9 @@ clientside_callback(
                 icono.classList.toggle('bg-slate-400', !activo)
             }
         })
-        return window.dash_clientside.no_update
+        // El valor no se muestra; devolverlo evita que Dash intente resolver `no_update`
+        // antes de que el contenedor oculto exista durante una recarga en modo debug.
+        return pathname || ''
     }
     """,
     Output("_resaltado_nav", "title"),
@@ -113,4 +165,7 @@ clientside_callback(
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8050)
+    # El panel de depuración de Dash tapa gráficos y controles en el uso diario.
+    # Se habilita solo cuando el desarrollador lo solicita explícitamente.
+    debug = os.getenv("DASH_DEBUG", "0").strip().casefold() in {"1", "true", "yes", "on"}
+    app.run(debug=debug, host="127.0.0.1", port=8050)

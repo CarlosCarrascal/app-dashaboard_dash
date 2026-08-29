@@ -212,11 +212,11 @@ SELECT t.anio    AS "Año",
             WHEN abs(cl.temp_alta - cl.temp_baja) < 9.9  THEN '+-9.9'
             ELSE '>9.9' END AS "catVar",
        cl.vel_viento AS "VelViento"
-FROM core.clima cl
+FROM core.op_clima cl
 LEFT JOIN dim.tiempo t ON t.fecha = cl.fecha_hora::date;
 
 COMMENT ON VIEW reporting."H0501_VariablesClima" IS
-    'Compatibilidad. Lee core.clima directo (no fact.clima) porque necesita temp y las dos '
+    'Compatibilidad. Lee core.op_clima directo (no fact.clima) porque necesita temp y las dos '
     'temperaturas por separado en la misma fila. Los 2.079 instantes duplicados por recarga '
     '(H-08) ya quedaron fuera en la carga.';
 
@@ -272,8 +272,8 @@ FROM dim.lote l
 WHERE NOT l.es_sentinel;
 
 COMMENT ON VIEW reporting."M_Lote_turno" IS
-    'Compatibilidad. Pase directo del maestro vigente (879 lotes), no del M_Lotes de Access '
-    '(860, sustituido por ADR-0003).';
+    'Compatibilidad. Pase directo del maestro primario de Access (882 lotes actuales). '
+    'M_Lotes.xlsx se conserva como fuente externa de contraste (ADR-0012).';
 
 -- ── M_Mod ─────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE VIEW reporting."M_Mod" AS
@@ -288,8 +288,8 @@ WHERE NOT l.es_sentinel
 GROUP BY l.empresa, l.modulo;
 
 COMMENT ON VIEW reporting."M_Mod" IS
-    'Compatibilidad. Del maestro vigente, no del M_Lotes de Access. Fundo_pptom5 sin '
-    'equivalente en el maestro vigente, NULL documentado (N-21).';
+    'Compatibilidad. Del maestro primario de Access. Fundo_pptom5 se conserva desde la fuente '
+    'primaria; M_Lotes.xlsx no reemplaza el maestro (ADR-0012).';
 
 -- ── TPlantas ──────────────────────────────────────────────────────────────────
 CREATE OR REPLACE VIEW reporting."TPlantas" AS

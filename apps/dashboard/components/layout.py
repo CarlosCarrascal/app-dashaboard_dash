@@ -1,5 +1,4 @@
-"""Estructura de la interfaz: barra lateral agrupada por área + contenedor de páginas.
-"""
+"""Estructura de la interfaz: barra lateral agrupada por área + contenedor de páginas."""
 
 from __future__ import annotations
 
@@ -10,7 +9,13 @@ from servicios.carga import BOOT_STORE, ORIGEN_STORE, PANEL_STORE
 
 # Orden de los grupos en el menú. Un grupo que no aparece acá se muestra al final, en el
 # orden en que Python recorra el registro.
-ORDEN_GRUPOS = ["General", "Impacto agronómico", "Modelo predictivo", "Referencia"]
+ORDEN_GRUPOS = [
+    "General",
+    "Plataforma analítica",
+    "Histórico · Excel/Access",
+    "Referencia",
+    "Legacy / Exploración",
+]
 
 
 ICONOS = {
@@ -24,6 +29,15 @@ ICONOS = {
     "/modelo/explicacion": "explicacion",
     "/datos-calidad": "datos-calidad",
     "/metodologia": "metodologia",
+    "/analitica/relaciones": "evidencia",
+    "/analitica/descubrimientos": "descubrimientos",
+    "/analitica/modelo": "modelo",
+    "/analitica/explicacion": "explicacion",
+    "/analitica/proyeccion": "r2",
+    "/analitica/backtesting": "por-modulo",
+    "/analitica/trazabilidad": "datos-calidad",
+    "/analitica/fundamento": "metodologia",
+    "/analitica/bhattacharya": "frutos-peso",
 }
 
 
@@ -62,7 +76,10 @@ def _icono(nombre: str) -> html.Span:
         "WebkitMaskSize": "contain",
     }
     return html.Span(
-        className="nav-icon-caja flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors",
+        className=(
+            "nav-icon-caja flex h-6 w-6 shrink-0 items-center justify-center rounded-md "
+            "transition-colors"
+        ),
         children=html.Span(
             className="nav-icon h-3.5 w-3.5 bg-slate-400 transition-colors",
             style=estilo_mascara,
@@ -77,8 +94,10 @@ def _enlace(pagina: dict) -> dcc.Link:
             html.Span(pagina["name"]),
         ],
         href=pagina["path"],
-        className="nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-slate-600 "
-        "transition-colors hover:bg-white/70 hover:text-slate-900",
+        className=(
+            "nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm "
+            "text-slate-600 transition-colors hover:bg-white/70 hover:text-slate-900"
+        ),
         # El resaltado de la página activa lo hace el clientside_callback de `app.py`:
         # comparar `pathname` en cada navegación no necesita ida y vuelta al servidor por
         # algo puramente visual. Recolorea `.nav-icon`/`.nav-icon-caja` a la vez que el
@@ -109,20 +128,25 @@ def _barra_lateral() -> html.Nav:
         className="flex w-64 shrink-0 flex-col border-r border-stone-200/70 bg-stone-50 px-2 py-4",
         children=[
             html.Div(
-                className="flex items-center gap-3 px-2.5 pb-4",
+                className="flex shrink-0 items-center gap-3 px-2.5 pb-4",
                 style={"overflow": "hidden"},
                 children=[
                     html.Div(
                         className="flex shrink-0 items-center justify-center rounded-lg",
-                        style={"width": "100px", "height": "40px", "backgroundColor": "#000000", "overflow": "hidden"},
+                        style={
+                            "width": "100px",
+                            "height": "40px",
+                            "backgroundColor": "#000000",
+                            "overflow": "hidden",
+                        },
                         children=html.Img(
                             src="/assets/aqp_logo.png",
                             style={
-                                "width": "100%", 
-                                "height": "100%", 
-                                "objectFit": "cover", 
+                                "width": "100%",
+                                "height": "100%",
+                                "objectFit": "cover",
                                 "objectPosition": "center",
-                                "transform": "scale(1.2)"
+                                "transform": "scale(1.2)",
                             },
                         ),
                     ),
@@ -130,31 +154,77 @@ def _barra_lateral() -> html.Nav:
                         style={"minWidth": "0", "flex": "1"},
                         children=[
                             html.Div(
-                                "Aqu Anqa", 
+                                "Aqu Anqa",
                                 className="text-sm font-bold text-slate-900",
-                                style={"whiteSpace": "nowrap", "overflow": "hidden", "textOverflow": "ellipsis"}
+                                style={
+                                    "whiteSpace": "nowrap",
+                                    "overflow": "hidden",
+                                    "textOverflow": "ellipsis",
+                                },
                             ),
                             html.Div(
                                 "Clima, riego y rendimiento · 2025",
                                 className="text-xs text-slate-500",
-                                style={"whiteSpace": "nowrap", "overflow": "hidden", "textOverflow": "ellipsis"}
+                                style={
+                                    "whiteSpace": "nowrap",
+                                    "overflow": "hidden",
+                                    "textOverflow": "ellipsis",
+                                },
                             ),
                         ],
                     ),
                 ],
             ),
-            *secciones,
+            # Las secciones son la única zona elástica: con 18 páginas en 5 grupos la lista
+            # supera la altura del viewport, así que scrollea ella y no el shell. `min-h-0`
+            # es imprescindible — sin él, un hijo flex no baja de su altura de contenido y
+            # `overflow-y-auto` nunca llega a activarse.
+            html.Div(
+                className="barra-lateral-scroll min-h-0 flex-1 overflow-y-auto",
+                children=secciones,
+            ),
             html.Div(
                 id="estado-panel",
-                className="mt-auto rounded-xl bg-white px-3 py-3 text-xs leading-relaxed text-slate-400 shadow-sm",
+                className=(
+                    "mt-3 shrink-0 rounded-xl bg-white px-3 py-3 text-xs leading-relaxed "
+                    "text-slate-400 shadow-sm"
+                ),
             ),
+        ],
+    )
+
+
+def _menu_movil() -> html.Details:
+    """Navegación compacta para campo; evita que la barra lateral ocupe todo el móvil."""
+    grupos = _paginas_por_grupo()
+    orden = [*ORDEN_GRUPOS, *[g for g in grupos if g not in ORDEN_GRUPOS]]
+    enlaces = []
+    for grupo in orden:
+        paginas = grupos.get(grupo)
+        if not paginas:
+            continue
+        enlaces.append(html.Div(grupo, className="aq-mobile-nav-group"))
+        enlaces.extend(
+            dcc.Link(pagina["name"], href=pagina["path"], className="aq-mobile-nav-link")
+            for pagina in paginas
+        )
+    return html.Details(
+        className="aq-mobile-nav",
+        children=[
+            html.Summary(
+                [
+                    html.Span("Aqu Anqa"),
+                    html.Span("Menú", className="aq-mobile-nav-pill"),
+                ]
+            ),
+            html.Nav(enlaces, className="aq-mobile-nav-links"),
         ],
     )
 
 
 def armar() -> html.Div:
     return html.Div(
-        className="flex h-screen items-stretch bg-slate-100 p-4",
+        className="aq-app-shell flex h-screen items-stretch bg-slate-100 p-4",
         children=[
             dcc.Store(id=BOOT_STORE, data=0),
             dcc.Store(id=PANEL_STORE),
@@ -162,18 +232,27 @@ def armar() -> html.Div:
             dcc.Location(id="_url"),
             html.Div(id="_resaltado_nav", style={"display": "none"}),
             html.Div(
-                className="flex w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
+                className=(
+                    "flex w-full overflow-hidden rounded-2xl border border-slate-200 "
+                    "bg-white shadow-sm"
+                ),
                 children=[
                     _barra_lateral(),
                     html.Main(
                         className="flex-1 overflow-y-auto",
-                        children=html.Div(
-                            [
-                                html.Div(id="ruta-actual", className="mb-4 flex items-center gap-1.5 text-sm"),
-                                dash.page_container,
-                            ],
-                            className="mx-auto max-w-5xl px-8 py-8",
-                        ),
+                        children=[
+                            _menu_movil(),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        id="ruta-actual",
+                                        className="mb-4 flex items-center gap-1.5 text-sm",
+                                    ),
+                                    dash.page_container,
+                                ],
+                                className="aq-page-container mx-auto max-w-5xl px-8 py-8",
+                            ),
+                        ],
                     ),
                 ],
             ),

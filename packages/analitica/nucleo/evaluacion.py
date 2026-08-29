@@ -88,8 +88,9 @@ class Medicion:
 
 CONJUNTOS: dict[str, Conjunto] = {
     "completo": Conjunto("completo", f"Las {len(FEATURES)} variables", FEATURES),
-    "clima": Conjunto("clima", "Solo clima (sin riego)",
-                      tuple(c for c in FEATURES if c != "riego_lag")),
+    "clima": Conjunto(
+        "clima", "Solo clima (sin riego)", tuple(c for c in FEATURES if c != "riego_lag")
+    ),
     "riego": Conjunto("riego", "Solo riego", ("riego_lag",)),
     "calendario": Conjunto("calendario", "Solo el número de semana", ("nsem",)),
 }
@@ -226,20 +227,43 @@ class Paso:
 
 
 PLAN_VALIDACION: tuple[Paso, ...] = (
-    Paso("(a) 5-fold aleatorio", "completo", "aleatoria",
-         "OPTIMISTA: mete módulos de la misma semana en train y test."),
-    Paso("(b) Deja-un-módulo-fuera", "completo", "por_modulo",
-         "¿Sirve para un módulo nuevo?"),
-    Paso("(c) Deja-una-semana-fuera", "completo", "por_semana",
-         "¿Sirve para una semana no vista? Aún interpola entre semanas vecinas."),
-    Paso("(d) Deja-un-bloque-de-10-semanas-fuera", "completo", "por_bloque",
-         "HONESTA: sin semanas vecinas en el entrenamiento."),
-    Paso("(e) Solo el número de semana", "calendario", "por_semana",
-         "Referencia: el calendario sin ninguna variable física."),
-    Paso("(f) Solo clima (sin riego)", "clima", "por_semana",
-         "Compárese contra (e): si el almanaque gana, el clima no aporta física."),
-    Paso("(g) Solo riego", "riego", "por_semana",
-         "La única variable que distingue un módulo de otro."),
+    Paso(
+        "(a) 5-fold aleatorio",
+        "completo",
+        "aleatoria",
+        "OPTIMISTA: mete módulos de la misma semana en train y test.",
+    ),
+    Paso("(b) Deja-un-módulo-fuera", "completo", "por_modulo", "¿Sirve para un módulo nuevo?"),
+    Paso(
+        "(c) Deja-una-semana-fuera",
+        "completo",
+        "por_semana",
+        "¿Sirve para una semana no vista? Aún interpola entre semanas vecinas.",
+    ),
+    Paso(
+        "(d) Deja-un-bloque-de-10-semanas-fuera",
+        "completo",
+        "por_bloque",
+        "HONESTA: sin semanas vecinas en el entrenamiento.",
+    ),
+    Paso(
+        "(e) Solo el número de semana",
+        "calendario",
+        "por_semana",
+        "Referencia: el calendario sin ninguna variable física.",
+    ),
+    Paso(
+        "(f) Solo clima (sin riego)",
+        "clima",
+        "por_semana",
+        "Compárese contra (e): si el almanaque gana, el clima no aporta física.",
+    ),
+    Paso(
+        "(g) Solo riego",
+        "riego",
+        "por_semana",
+        "La única variable que distingue un módulo de otro.",
+    ),
 )
 
 
@@ -268,8 +292,11 @@ def en_paralelo(tareas: Sequence[Callable[[], object]]) -> list:
 
 
 def predecir_fuera_de_muestra(
-    tabla: pd.DataFrame, conjunto: Conjunto, particion: Particion,
-    params: dict | None = None, objetivo: str = OBJETIVO,
+    tabla: pd.DataFrame,
+    conjunto: Conjunto,
+    particion: Particion,
+    params: dict | None = None,
+    objetivo: str = OBJETIVO,
 ) -> np.ndarray:
     """Predicción de cada fila por un modelo que no la vio durante el entrenamiento."""
     X = tabla[list(conjunto.columnas)]
@@ -282,9 +309,13 @@ def predecir_fuera_de_muestra(
 
 
 def medir(
-    tabla: pd.DataFrame, conjunto: Conjunto, particion: Particion,
-    etiqueta_fila: str | None = None, lectura: str | None = None,
-    params: dict | None = None, objetivo: str = OBJETIVO,
+    tabla: pd.DataFrame,
+    conjunto: Conjunto,
+    particion: Particion,
+    etiqueta_fila: str | None = None,
+    lectura: str | None = None,
+    params: dict | None = None,
+    objetivo: str = OBJETIVO,
 ) -> Medicion:
     """Evalúa un conjunto de variables bajo una partición.
 
@@ -342,11 +373,14 @@ def tabla_validacion(
 ) -> pd.DataFrame:
     """Las referencias y el plan completo, en una sola tabla comparable."""
     mediciones = [medir_referencia(tabla, r) for r in referencias]
-    mediciones += en_paralelo([
-        partial(medir, tabla, CONJUNTOS[p.conjunto], PARTICIONES[p.particion],
-                p.etiqueta, p.lectura)
-        for p in plan
-    ])
+    mediciones += en_paralelo(
+        [
+            partial(
+                medir, tabla, CONJUNTOS[p.conjunto], PARTICIONES[p.particion], p.etiqueta, p.lectura
+            )
+            for p in plan
+        ]
+    )
     return _a_dataframe(mediciones)
 
 
@@ -416,16 +450,16 @@ def aporte_por_grupo(
         sin = Conjunto(f"sin_grupo_{len(filas)}", f"Sin {nombre}", restantes)
         r2_solo = medir(base, solo, particion).r2
         r2_sin = medir(base, sin, particion).r2 if restantes else 0.0
-        filas.append({
-            "Familia": nombre,
-            "Variables": ", ".join(etiqueta(c) for c in columnas),
-            "R² solo grupo": r2_solo,
-            "R² del modelo sin grupo": r2_sin,
-            "Aporte marginal del grupo": completo - r2_sin,
-        })
-    resultado = pd.DataFrame(filas).sort_values(
-        "Aporte marginal del grupo", ascending=False
-    )
+        filas.append(
+            {
+                "Familia": nombre,
+                "Variables": ", ".join(etiqueta(c) for c in columnas),
+                "R² solo grupo": r2_solo,
+                "R² del modelo sin grupo": r2_sin,
+                "Aporte marginal del grupo": completo - r2_sin,
+            }
+        )
+    resultado = pd.DataFrame(filas).sort_values("Aporte marginal del grupo", ascending=False)
     resultado.attrs["completo"] = completo
     resultado.attrs["particion"] = particion.nombre
     resultado.attrs["n"] = len(base)
@@ -434,7 +468,6 @@ def aporte_por_grupo(
 
 
 # ── Análisis descriptivo (sin modelo) ────────────────────────────────────────
-
 
 
 def descomposicion_varianza(tabla: pd.DataFrame) -> tuple[float, float]:
@@ -447,7 +480,6 @@ def descomposicion_varianza(tabla: pd.DataFrame) -> tuple[float, float]:
     entre = float(tabla.groupby("nsem")[OBJETIVO].transform("mean").var())
     pct = 100 * entre / total
     return pct, 100 - pct
-
 
 
 def comparar_familias(tabla: pd.DataFrame) -> pd.DataFrame:
@@ -466,21 +498,34 @@ def comparar_familias(tabla: pd.DataFrame) -> pd.DataFrame:
     from sklearn.tree import DecisionTreeRegressor
 
     familias = [
-        ("Predecir la media", DummyRegressor(strategy="mean"),
-         "El piso: no usa ninguna variable."),
-        ("Regresión lineal", make_pipeline(StandardScaler(), LinearRegression()),
-         "Supone efecto lineal y aditivo de cada variable."),
-        ("Ridge (lineal regularizada)",
-         make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-3, 3, 25))),
-         f"Lineal, con las {len(FEATURES)} variables colineales penalizadas."),
-        ("Árbol único (prof. 3)", DecisionTreeRegressor(max_depth=3, random_state=0),
-         "No lineal, pero un solo árbol: muy inestable."),
-        ("Random Forest",
-         RandomForestRegressor(n_estimators=300, max_depth=6, min_samples_leaf=5,
-                               random_state=0, n_jobs=2),
-         "Muchos árboles independientes, promediados."),
-        ("XGBoost (el del tablero)", xgb.XGBRegressor(**PARAMS),
-         "Árboles en secuencia, cada uno corrigiendo el error del anterior."),
+        ("Predecir la media", DummyRegressor(strategy="mean"), "El piso: no usa ninguna variable."),
+        (
+            "Regresión lineal",
+            make_pipeline(StandardScaler(), LinearRegression()),
+            "Supone efecto lineal y aditivo de cada variable.",
+        ),
+        (
+            "Ridge (lineal regularizada)",
+            make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-3, 3, 25))),
+            f"Lineal, con las {len(FEATURES)} variables colineales penalizadas.",
+        ),
+        (
+            "Árbol único (prof. 3)",
+            DecisionTreeRegressor(max_depth=3, random_state=0),
+            "No lineal, pero un solo árbol: muy inestable.",
+        ),
+        (
+            "Random Forest",
+            RandomForestRegressor(
+                n_estimators=300, max_depth=6, min_samples_leaf=5, random_state=0, n_jobs=2
+            ),
+            "Muchos árboles independientes, promediados.",
+        ),
+        (
+            "XGBoost (el del tablero)",
+            xgb.XGBRegressor(**PARAMS),
+            "Árboles en secuencia, cada uno corrigiendo el error del anterior.",
+        ),
     ]
 
     # Descarta filas sin ventana de rezago completa: LinearRegression/Ridge/RandomForest
@@ -495,25 +540,30 @@ def comparar_familias(tabla: pd.DataFrame) -> pd.DataFrame:
         return float(r2_score(y, pred)), float(mean_absolute_error(y, pred))
 
     # Doce evaluaciones independientes (seis familias x dos particiones), en paralelo.
-    tareas = [partial(evaluar, est, clave)
-              for _, est, _ in familias
-              for clave in ("por_semana", "por_bloque")]
+    tareas = [
+        partial(evaluar, est, clave)
+        for _, est, _ in familias
+        for clave in ("por_semana", "por_bloque")
+    ]
     res = en_paralelo(tareas)
 
-    return pd.DataFrame([
-        {
-            "Modelo": nombre,
-            "R² deja-una-semana": res[2 * i][0],
-            "R² deja-un-bloque": res[2 * i + 1][0],
-            "MAE bloque (kg/ha)": res[2 * i + 1][1],
-            "Qué supone": nota,
-        }
-        for i, (nombre, _, nota) in enumerate(familias)
-    ])
+    return pd.DataFrame(
+        [
+            {
+                "Modelo": nombre,
+                "R² deja-una-semana": res[2 * i][0],
+                "R² deja-un-bloque": res[2 * i + 1][0],
+                "MAE bloque (kg/ha)": res[2 * i + 1][1],
+                "Qué supone": nota,
+            }
+            for i, (nombre, _, nota) in enumerate(familias)
+        ]
+    )
 
 
 def correlaciones_con_objetivo(
-    tabla: pd.DataFrame, metodo: str = "pearson",
+    tabla: pd.DataFrame,
+    metodo: str = "pearson",
     variables: Sequence[str] = FEATURES,
 ) -> pd.DataFrame:
     """Matriz de correlación del objetivo contra `variables`, con etiquetas legibles.

@@ -16,15 +16,15 @@
 -- M_Time solo tiene 7 columnas. CampProAra intentaba aproximar el concepto de "campaña de
 -- producción de arándano", que aquí ya existe resuelto y sin ambigüedad en
 -- fact.forecast_campania.campania_id — no hace falta derivarlo de año+semana. Trimestre se
--- toma de core.calendario, con año+semana como clave de búsqueda.
+-- toma de core.t_calendario, con año+semana como clave de búsqueda.
 CREATE OR REPLACE VIEW reporting."R0801_Forecast_Campaña_SemMes" AS
 WITH tim AS (
     SELECT anio, semana, min(mes_sem) AS mes_sem, min(trimestre) AS trimestre
-    FROM core.calendario
+    FROM core.t_calendario
     GROUP BY anio, semana
 ),
 plantas_modulo AS (
-    SELECT modulo_id, sum(n_plantas) AS n_plantas FROM core.lote GROUP BY modulo_id
+    SELECT modulo_id, sum(n_plantas) AS n_plantas FROM core.m_lote GROUP BY modulo_id
 )
 SELECT cp.campania    AS "CampProAra",
        cp.campania    AS "Campaña",
@@ -85,7 +85,7 @@ GROUP BY vf.version, em.empresa, mo.modulo, f.anio, cp.campania, mm."Area", mm."
 
 COMMENT ON VIEW reporting."R0801_ResCampaña" IS
     'Compatibilidad. KG es SUM(KG Exp) — la decisión D-1, ya parametrizada en '
-    'core.config_decision. El join original contra M_Mod usaba FundoPPto=Fundo_pptom5, dos '
+    'core.cfg_decision. El join original contra M_Mod usaba FundoPPto=Fundo_pptom5, dos '
     'vocabularios distintos que solo coincidían parcialmente ("join sospechoso" en la '
     'auditoría); aquí se une por FundoPPto=empresa, consistente en ambos lados. Es LEFT JOIN: '
     'el módulo centinela SIN_IDENTIFICAR (ADR-0005) no tiene fila en M_Mod y no debe hacer '

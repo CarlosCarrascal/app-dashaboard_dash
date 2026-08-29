@@ -144,44 +144,44 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 
 -- ── 2 · Cifras que DEBEN cambiar ────────────────────────────────────────────
 ('ramas.medidas', 'cambiar', 'Ramas medidas tras deduplicar',
- 'SELECT count(*) FROM core.rama_medicion', 71095, 0, 94236, 'H-03',
+ 'SELECT count(*) FROM core.ev_rama_medicion', 71095, 0, 94236, 'H-03',
  '23.141 filas eran duplicados exactos por una recarga.', 20),
 
 ('ramas.plantas', 'cambiar', 'Plantas evaluadas: el grano real de la cabecera',
- 'SELECT count(*) FROM core.evaluacion_ramas', 5384, 0, 94236, 'N-1',
+ 'SELECT count(*) FROM core.ev_evaluacion_ramas', 5384, 0, 94236, 'N-1',
  'El grano del origen era la rama, no la planta.', 21),
 
 ('ramas.media_diametro', 'cambiar', 'Diámetro medio de rama sin duplicados',
- 'SELECT avg(diametro) FROM core.rama_medicion', 10.8869165, 0.0001, 10.9776538610781, 'H-03',
+ 'SELECT avg(diametro) FROM core.ev_rama_medicion', 10.8869165, 0.0001, 10.9776538610781, 'H-03',
  'La auditoría publica 10,8870646; la diferencia está en el sexto decimal.', 22),
 
 ('clima.mediciones', 'cambiar', 'Mediciones de clima tras deduplicar',
- 'SELECT count(*) FROM core.clima', 153413, 0, 155588, 'H-08',
+ 'SELECT count(*) FROM core.op_clima', 153413, 0, 155588, 'H-08',
  '2.079 instantes estaban repetidos por una recarga.', 23),
 
 ('forecast.kg_exp', 'cambiar', 'Kilos exportables sin la fila de subtotal',
- 'SELECT sum(kg_exp) FROM core.forecast_campania', 622610715.139, 1, 648044713.139312, 'N-13',
+ 'SELECT sum(kg_exp) FROM core.op_forecast_campania', 622610715.139, 1, 648044713.139312, 'N-13',
  'Se aparta la fila de subtotal de 25.433.998 kg, el 3,9% del total publicado.', 24),
 
 -- ── 3 · Defectos que deben quedar en cero ───────────────────────────────────
 ('cero.ramas_sin_cabecera', 'cero', 'Ramas medidas sin su planta',
- 'SELECT count(*) FROM core.rama_medicion r
-  WHERE NOT EXISTS (SELECT 1 FROM core.evaluacion_ramas c WHERE c.evaluacion_ramas_id = r.evaluacion_ramas_id)',
+ 'SELECT count(*) FROM core.ev_rama_medicion r
+  WHERE NOT EXISTS (SELECT 1 FROM core.ev_evaluacion_ramas c WHERE c.evaluacion_ramas_id = r.evaluacion_ramas_id)',
  0, 0, NULL, 'H-02', NULL, 30),
 
 ('cero.cosecha_sin_lote', 'cero', 'Cosecha sin lote identificado',
- 'SELECT count(*) FROM core.cosecha WHERE lote_id IS NULL', 0, 0, 366, 'H-01', NULL, 31),
+ 'SELECT count(*) FROM core.op_cosecha WHERE lote_id IS NULL', 0, 0, 366, 'H-01', NULL, 31),
 
 ('cero.clima_duplicado', 'cero', 'Instantes de clima repetidos',
- 'SELECT count(*) FROM (SELECT fecha_hora FROM core.clima GROUP BY 1 HAVING count(*) > 1) d',
+ 'SELECT count(*) FROM (SELECT fecha_hora FROM core.op_clima GROUP BY 1 HAVING count(*) > 1) d',
  0, 0, 2079, 'H-08', NULL, 32),
 
 ('cero.lote_duplicado', 'cero', 'Lotes con la misma clave de negocio',
- 'SELECT count(*) FROM (SELECT modulo_id, codigo FROM core.lote GROUP BY 1,2 HAVING count(*) > 1) d',
+ 'SELECT count(*) FROM (SELECT modulo_id, codigo FROM core.m_lote GROUP BY 1,2 HAVING count(*) > 1) d',
  0, 0, 5, 'N-4', NULL, 33),
 
 ('cero.estados_duplicado', 'cero', 'Estados con la clave natural repetida',
- 'SELECT count(*) FROM (SELECT item, lote_id, fecha, cortina, hilera, planta FROM core.estados
+ 'SELECT count(*) FROM (SELECT item, lote_id, fecha, cortina, hilera, planta FROM core.ev_estados
   GROUP BY 1,2,3,4,5,6 HAVING count(*) > 1) d', 0, 0, 212, 'N-8', NULL, 34),
 
 ('cero.fk_sin_declarar', 'cero', 'Tablas de core sin ninguna clave foránea',
@@ -196,31 +196,31 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
  'El origen tenía 0 claves foráneas en sus 18 tablas.', 35),
 
 ('cero.total_incoherente', 'cero', 'Filas donde Total no es la suma de E1..E5',
- 'SELECT count(*) FROM core.estados WHERE total <> e1+e2+e3+e4+e5', 0, 0, NULL, NULL,
+ 'SELECT count(*) FROM core.ev_estados WHERE total <> e1+e2+e3+e4+e5', 0, 0, NULL, NULL,
  'La columna generada lo hace imposible por construcción.', 36),
 
 ('cero.calendario_hueco', 'cero', 'Huecos en el calendario',
- 'SELECT (max(fecha) - min(fecha) + 1) - count(*) FROM core.calendario', 0, 0, NULL, NULL, NULL, 37),
+ 'SELECT (max(fecha) - min(fecha) + 1) - count(*) FROM core.t_calendario', 0, 0, NULL, NULL, NULL, 37),
 
 ('cero.alias_sin_empresa', 'cero', 'Vocabularios de fundo que no resuelven empresa',
- 'SELECT count(*) FROM core.fundo_alias WHERE empresa_id IS NULL', 0, 0, NULL, 'H-01', NULL, 38),
+ 'SELECT count(*) FROM core.m_fundo_alias WHERE empresa_id IS NULL', 0, 0, NULL, 'H-01', NULL, 38),
 
 ('cero.fk_nula_en_hechos', 'cero', 'FK nula en las tablas de hechos (ADR-0005)',
  'SELECT
-    (SELECT count(*) FROM core.forecast_campania WHERE modulo_id IS NULL) +
-    (SELECT count(*) FROM core.forecast_semanal  WHERE lote_id   IS NULL) +
-    (SELECT count(*) FROM core.cosecha           WHERE variedad_id IS NULL)',
+    (SELECT count(*) FROM core.op_forecast_campania WHERE modulo_id IS NULL) +
+    (SELECT count(*) FROM core.op_forecast_semanal  WHERE lote_id   IS NULL) +
+    (SELECT count(*) FROM core.op_cosecha           WHERE variedad_id IS NULL)',
  0, 0, NULL, 'N-15',
  'El motor lo garantiza (NOT NULL); esto es una segunda verificación explícita.', 39),
 
 ('cero.sentinel_duplicado', 'cero', 'Más de una fila centinela en la misma dimensión',
  'SELECT
-    (SELECT count(*) FROM core.empresa WHERE es_sentinel) +
-    (SELECT count(*) FROM core.fundo   WHERE es_sentinel) +
-    (SELECT count(*) FROM core.modulo  WHERE es_sentinel) +
-    (SELECT count(*) FROM core.turno   WHERE es_sentinel) +
-    (SELECT count(*) FROM core.variedad WHERE es_sentinel) +
-    (SELECT count(*) FROM core.lote    WHERE es_sentinel) - 6',
+    (SELECT count(*) FROM core.m_empresa WHERE es_sentinel) +
+    (SELECT count(*) FROM core.m_fundo   WHERE es_sentinel) +
+    (SELECT count(*) FROM core.m_modulo  WHERE es_sentinel) +
+    (SELECT count(*) FROM core.m_turno   WHERE es_sentinel) +
+    (SELECT count(*) FROM core.m_variedad WHERE es_sentinel) +
+    (SELECT count(*) FROM core.m_lote    WHERE es_sentinel) - 6',
  0, 0, NULL, NULL,
  'Debe haber exactamente una por dimensión; el índice único parcial ya lo garantiza.', 39),
 
@@ -229,11 +229,11 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 -- entrada en cuarentena que lo justifique. Es la garantía de que nada desaparece en silencio.
 ('cero.tabla_pierde_sin_rastro', 'cero', 'Tablas con filas perdidas y sin rastro en cuarentena',
  $q$SELECT count(*) FROM (VALUES
-      ('E02_ConteoFlores', (SELECT count(*) FROM core.flores),            43490),
-      ('E03_ConteoEstados',(SELECT count(*) FROM core.estados),           18714),
-      ('E05_DiametrosBayas',(SELECT count(*) FROM core.baya_medicion),     4193),
-      ('M_nMuestra',       (SELECT count(*) FROM core.muestra_requerida),   681),
-      ('M_Poda',           (SELECT count(*) FROM core.poda),               2159)
+      ('E02_ConteoFlores', (SELECT count(*) FROM core.ev_flores),            43490),
+      ('E03_ConteoEstados',(SELECT count(*) FROM core.ev_estados),           18714),
+      ('E05_DiametrosBayas',(SELECT count(*) FROM core.ev_baya_medicion),     4193),
+      ('M_nMuestra',       (SELECT count(*) FROM core.cfg_muestra_requerida),   681),
+      ('M_Poda',           (SELECT count(*) FROM core.evt_poda),               2159)
     ) AS t(tabla, en_core, en_access)
     WHERE en_core < en_access
       AND NOT EXISTS (SELECT 1 FROM qua.rechazos r WHERE r.tabla_origen = t.tabla)$q$,
@@ -244,95 +244,95 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 -- apuntar a la columna equivocada, esta comprobación lo detecta al instante: 18,58 M kg es
 -- coherente con los 32,39 M de cosecha; 789,60 M no lo es por un factor de 24.
 ('cero.peso_packing_inflado', 'cero', 'peso_kg de packing por encima de la cosecha real (N-16)',
- 'SELECT CASE WHEN (SELECT sum(peso_kg) FROM core.packing)
-                 > (SELECT sum(kg) FROM core.cosecha) THEN 1 ELSE 0 END',
+ 'SELECT CASE WHEN (SELECT sum(peso_kg) FROM core.op_packing)
+                 > (SELECT sum(kg) FROM core.op_cosecha) THEN 1 ELSE 0 END',
  0, 0, NULL, 'N-16',
  'Lo empacado no puede superar lo cosechado. peso_kg_lote es un total repetido y NO se suma.', 39),
 
 -- ── 4 · Estado de core (difiere del origen, y se explica) ───────────────────
--- `esperado` es el 879/6/29 del maestro vigente MÁS la fila centinela de ADR-0005 (+1 en
+-- `esperado` es el 882/6/29 del maestro primario MÁS la fila centinela de ADR-0005 (+1 en
 -- cada uno): sin sumarla, estos tres quedaban en FALLA por un desajuste del propio contrato,
 -- no por la diferencia real con Access, que sigue intacta en `valor_access` y en la nota.
-('core.lotes', 'core', 'Lotes del maestro vigente',
- 'SELECT count(*) FROM core.lote', 880, 0, 860, 'N-4',
- 'El maestro vigente tiene 19 lotes más y módulos nuevos M14-M24, más 1 fila centinela.', 40),
+('core.m_lotes', 'core', 'Lotes del maestro vigente',
+ 'SELECT count(*) FROM core.m_lote', 883, 0, 882, 'N-4',
+ 'El maestro Access actual tiene 882 lotes, más 1 fila centinela; Excel queda como contraste.', 40),
 
-('core.fundos', 'core', 'Fundos físicos',
- 'SELECT count(*) FROM core.fundo', 7, 0, 4, 'N-5',
+('core.m_fundos', 'core', 'Fundos físicos',
+ 'SELECT count(*) FROM core.m_fundo', 7, 0, 4, 'N-5',
  'Aqu Anqa 1 a 6 frente a los 4 nombres comerciales del origen, más 1 fila centinela.', 41),
 
-('core.modulos', 'core', 'Combinaciones fundo x módulo',
- 'SELECT count(*) FROM core.modulo', 30, 0, 23, 'N-4',
+('core.m_modulos', 'core', 'Combinaciones fundo x módulo',
+ 'SELECT count(*) FROM core.m_modulo', 30, 0, 23, 'N-4',
  'M01 a M04 pertenecen a dos fundos a la vez, más 1 fila centinela.', 42),
 
 ('core.ramas_declaradas', 'core', 'Ramas declaradas por los evaluadores',
- 'SELECT sum(coalesce(ramas_menor5,0) + coalesce(ramas_mayor5,0)) FROM core.evaluacion_ramas',
+ 'SELECT sum(coalesce(ramas_menor5,0) + coalesce(ramas_mayor5,0)) FROM core.ev_evaluacion_ramas',
  110118, 0, 730318, 'N-1',
  'Sustituye a SUM([# Ramas]) = 730.318, que era una suma de índices de rama.', 43),
 
-('core.flores', 'core', 'Conteos de flores cargados',
- 'SELECT count(*) FROM core.flores', 43469, 0, 43490, 'N-3',
+('core.ev_flores', 'core', 'Conteos de flores cargados',
+ 'SELECT count(*) FROM core.ev_flores', 43469, 0, 43490, 'N-3',
  '21 filas con lote que no está en el maestro vigente, en cuarentena.', 44),
 
-('core.estados', 'core', 'Conteos de estados cargados',
- 'SELECT count(*) FROM core.estados', 18708, 0, 18714, 'N-3',
+('core.ev_estados', 'core', 'Conteos de estados cargados',
+ 'SELECT count(*) FROM core.ev_estados', 18708, 0, 18714, 'N-3',
  '6 filas con lote que no está en el maestro vigente.', 45),
 
-('core.brotes', 'core', 'Conteos de brotes cargados',
- 'SELECT count(*) FROM core.brotes', 3385, 0, 3385, NULL,
+('core.ev_brotes', 'core', 'Conteos de brotes cargados',
+ 'SELECT count(*) FROM core.ev_brotes', 3385, 0, 3385, NULL,
  'Sin pérdida: E01 y E04 resuelven el 100% de sus lotes.', 46),
 
 ('core.bayas', 'core', 'Mediciones de baya cargadas',
- 'SELECT count(*) FROM core.baya_medicion', 3889, 0, 4193, 'N-3',
+ 'SELECT count(*) FROM core.ev_baya_medicion', 3889, 0, 4193, 'N-3',
  '304 filas de los módulos M10 y M10B, que E05 escribe sin el sufijo A/B.', 47),
 
-('core.cosecha', 'core', 'Registros de cosecha unificados',
- 'SELECT count(*) FROM core.cosecha', 30540, 0, 30812, 'H-06',
+('core.op_cosecha', 'core', 'Registros de cosecha unificados',
+ 'SELECT count(*) FROM core.op_cosecha', 30540, 0, 30812, 'H-06',
  'Se apartan las filas de subtotal y las de lotes fuera del maestro.', 48),
 
-('core.packing', 'core', 'Registros de packing',
- 'SELECT count(*) FROM core.packing', 117536, 0, 117536, NULL, NULL, 49),
+('core.op_packing', 'core', 'Registros de packing',
+ 'SELECT count(*) FROM core.op_packing', 117536, 0, 117536, NULL, NULL, 49),
 
-('core.forecast_semanal', 'core', 'Proyecciones semanales',
- 'SELECT count(*) FROM core.forecast_semanal', 48368, 0, 48368, NULL, NULL, 50),
+('core.op_forecast_semanal', 'core', 'Proyecciones semanales',
+ 'SELECT count(*) FROM core.op_forecast_semanal', 48368, 0, 48368, NULL, NULL, 50),
 
-('core.evaluadores', 'core', 'Evaluadores, incluidos los que no están en el maestro',
- 'SELECT count(*) FROM core.evaluador', 37, 0, 31, 'H-09',
+('core.m_evaluadores', 'core', 'Evaluadores, incluidos los que no están en el maestro',
+ 'SELECT count(*) FROM core.m_evaluador', 37, 0, 31, 'H-09',
  '6 DNI capturan datos sin ficha en M_Evaluadores.', 51),
 
 ('core.cuarentena', 'core', 'Filas en cuarentena, todas con motivo',
  'SELECT count(*) FROM qua.rechazos WHERE motivo IS NULL', 0, 0, NULL, NULL,
  'Ninguna fila apartada sin explicación.', 52),
 
-('core.forecast_campania_sentinel', 'core', 'Filas de forecast_campania en el módulo centinela',
- 'SELECT count(*) FROM core.forecast_campania fc JOIN core.modulo mo USING (modulo_id) WHERE mo.es_sentinel',
+('core.op_forecast_campania_sentinel', 'core', 'Filas de forecast_campania en el módulo centinela',
+ 'SELECT count(*) FROM core.op_forecast_campania fc JOIN core.m_modulo mo USING (modulo_id) WHERE mo.es_sentinel',
  624, 0, NULL, 'N-15',
  'Antes NULL y sin registrar en cuarentena; ahora apuntan al centinela y sí quedan registradas.', 53),
 
-('core.forecast_semanal_sentinel', 'core', 'Filas de forecast_semanal en el lote centinela',
- 'SELECT count(*) FROM core.forecast_semanal fs JOIN core.lote l USING (lote_id) WHERE l.es_sentinel',
+('core.op_forecast_semanal_sentinel', 'core', 'Filas de forecast_semanal en el lote centinela',
+ 'SELECT count(*) FROM core.op_forecast_semanal fs JOIN core.m_lote l USING (lote_id) WHERE l.es_sentinel',
  23, 0, NULL, 'N-15',
  'Antes NULL y duplicadas en cuarentena a la vez; ahora apuntan al centinela sin duplicar.', 54),
 
-('core.cosecha_sentinel', 'core', 'Filas de cosecha en la variedad centinela',
- 'SELECT count(*) FROM core.cosecha co JOIN core.variedad v USING (variedad_id) WHERE v.es_sentinel',
+('core.op_cosecha_sentinel', 'core', 'Filas de cosecha en la variedad centinela',
+ 'SELECT count(*) FROM core.op_cosecha co JOIN core.m_variedad v USING (variedad_id) WHERE v.es_sentinel',
  4, 0, NULL, 'N-15',
  'Las 4 filas que solo existen en H01, que nunca tuvo columna de variedad.', 55),
 
 -- Las dos recuperaciones de la auditoría de mapeo: datos que antes se perdían en silencio.
-('core.estados_con_hora', 'core', 'Estados con la hora de captura recuperada',
- 'SELECT count(*) FROM core.estados WHERE hora IS NOT NULL',
+('core.ev_estados_con_hora', 'core', 'Estados con la hora de captura recuperada',
+ 'SELECT count(*) FROM core.ev_estados WHERE hora IS NOT NULL',
  13224, 0, 13230, 'N-17',
  'La columna [F16] del origen perdió su encabezado y se descartaba como residuo; es la hora. '
  'En el origen son 13.230: las 6 que faltan están en las filas que van a cuarentena.', 56),
 
-('core.packing_programa_rescatado', 'core', 'Packing con el programa rescatado de otra columna',
+('core.op_packing_programa_rescatado', 'core', 'Packing con el programa rescatado de otra columna',
  'SELECT count(*) FROM stg.h02_packing WHERE programa_rescatado',
  390, 0, 0, 'N-19',
  'Traían el nombre del programa dentro de [Contenedores volcados]; antes se perdía al castear.', 57),
 
-('core.packing_kg', 'core', 'Kilos empacados (la columna sumable, N-16)',
- 'SELECT round(sum(peso_kg)) FROM core.packing',
+('core.op_packing_kg', 'core', 'Kilos empacados (la columna sumable, N-16)',
+ 'SELECT round(sum(peso_kg)) FROM core.op_packing',
  18582402, 100, NULL, 'N-16',
  'Antes sumaba 789,60 M kg porque usaba el total del grupo repetido en cada fila.', 58),
 
@@ -405,7 +405,7 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 ('reporting.m_edadcultivo', 'reporting', 'M_EdadCultivo',
  'SELECT count(*) FROM reporting."M_EdadCultivo"', 866, 0, NULL, NULL, NULL, 88),
 ('reporting.m_lote_turno', 'reporting', 'M_Lote_turno',
- 'SELECT count(*) FROM reporting."M_Lote_turno"', 879, 0, NULL, NULL, NULL, 89),
+ 'SELECT count(*) FROM reporting."M_Lote_turno"', 882, 0, NULL, NULL, NULL, 89),
 ('reporting.m_mod', 'reporting', 'M_Mod',
  'SELECT count(*) FROM reporting."M_Mod"', 29, 0, NULL, NULL, NULL, 90),
 ('reporting.tplantas', 'reporting', 'TPlantas',
@@ -445,11 +445,11 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
  'SELECT count(*) FROM reporting.v_poda_modulo', 62, 0, NULL, 'N-20',
  'Media ponderada por área; excluye las 54 filas sin fecha de poda.', 101),
 
--- El panel no puede inventar ni perder kilos: tiene que cuadrar con core.cosecha una vez
+-- El panel no puede inventar ni perder kilos: tiene que cuadrar con core.op_cosecha una vez
 -- excluidos los lotes ficticios. La tolerancia es por el redondeo a 3 decimales por celda.
-('cero.panel_kg_descuadra', 'cero', 'Diferencia de kg entre el panel y core.cosecha',
+('cero.panel_kg_descuadra', 'cero', 'Diferencia de kg entre el panel y core.op_cosecha',
  'SELECT abs((SELECT sum(kg) FROM reporting.v_analitica_modulo_semana)
-           - (SELECT sum(co.kg) FROM core.cosecha co JOIN core.lote l USING (lote_id)
+           - (SELECT sum(co.kg) FROM core.op_cosecha co JOIN core.m_lote l USING (lote_id)
               WHERE NOT l.es_ficticio AND NOT l.es_sentinel))',
  0, 0.5, NULL, NULL,
  'Si se descuadra, el panel dejó de excluir los L000 o duplicó una celda.', 40),
@@ -476,11 +476,11 @@ INSERT INTO qua.control (codigo, grupo, descripcion, consulta, esperado, toleran
 -- Riego (fuente externa, cargada 2026-08-06): reconciliar core contra stg asegura que
 -- ningún módulo se sumó dos veces ni se perdió al agregar por semana.
 ('reporting.riego_semanal', 'reporting', 'Riego semanal por módulo (fuente externa a Access)',
- 'SELECT count(*) FROM core.riego_semanal', 1060, 0, NULL, NULL,
+ 'SELECT count(*) FROM core.op_riego_semanal', 1060, 0, NULL, NULL,
  '20 módulos x 53 semanas ISO de 2025 (incluida la semana de solape con 2026).', 102),
 
-('cero.riego_agua_descuadra', 'cero', 'Diferencia de agua_m3 entre core.riego_semanal y stg',
- 'SELECT abs((SELECT sum(agua_m3) FROM core.riego_semanal)
+('cero.riego_agua_descuadra', 'cero', 'Diferencia de agua_m3 entre core.op_riego_semanal y stg',
+ 'SELECT abs((SELECT sum(agua_m3) FROM core.op_riego_semanal)
            - (SELECT sum(agua_m3) FROM stg.v_riego_diario))',
  0, 1, NULL, NULL,
  'Si se descuadra, la agregación semanal perdió o duplicó un día/turno.', 43),

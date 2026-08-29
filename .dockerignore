@@ -4,6 +4,10 @@
 **/__pycache__/
 **/*.py[cod]
 **/.cache/
+**/build/
+**/dist*/
+**/*.egg-info/
+**/.tmp*/
 **/bin/
 **/.ruff_cache/
 **/.pytest_cache/

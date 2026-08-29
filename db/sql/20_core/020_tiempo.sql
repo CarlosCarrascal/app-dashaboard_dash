@@ -10,7 +10,7 @@
 --                 dimensión de grano semanal a la que unirse.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS core.campania (
+CREATE TABLE IF NOT EXISTS core.t_campania (
     campania_id     smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     codigo          text NOT NULL UNIQUE,
     fecha_inicio    date,
@@ -20,16 +20,16 @@ CREATE TABLE IF NOT EXISTS core.campania (
     CHECK (fecha_fin IS NULL OR fecha_inicio IS NULL OR fecha_fin >= fecha_inicio)
 );
 
-COMMENT ON TABLE core.campania IS
+COMMENT ON TABLE core.t_campania IS
     'Ciclo productivo anual: C2022 a C2026. Una campaña NO coincide con el año calendario '
     '(C2025 abarca meses de 2025 y 2026), y esa es la causa de que H0103_ResModulo parta los '
     'totales al agrupar por año y campaña a la vez.';
-COMMENT ON COLUMN core.campania.origen_fechas IS
+COMMENT ON COLUMN core.t_campania.origen_fechas IS
     'derivado = las fechas salen del rango real observado en los hechos, que es el supuesto '
     'en uso mientras Planeamiento no entregue el calendario oficial (decisión D-2, ver '
-    'core.config_decision). declarado = fechas oficiales.';
+    'core.cfg_decision). declarado = fechas oficiales.';
 
-CREATE TABLE IF NOT EXISTS core.calendario (
+CREATE TABLE IF NOT EXISTS core.t_calendario (
     fecha               date PRIMARY KEY,
     anio                smallint NOT NULL,
     mes                 smallint NOT NULL CHECK (mes BETWEEN 1 AND 12),
@@ -45,16 +45,16 @@ CREATE TABLE IF NOT EXISTS core.calendario (
     campanias_activas   smallint NOT NULL DEFAULT 0
 );
 
-COMMENT ON TABLE core.calendario IS
+COMMENT ON TABLE core.t_calendario IS
     'Dimensión de tiempo con grano de día, del 2022-03-01 al 2027-12-31. Reemplaza a M_Time y '
     'además a la tabla BD_Calendario que ambos informes de Power BI construyen por su cuenta '
     'en DAX: trae ya el trimestre, anio_semana y anio_mes que esa tabla aportaba, para que el '
     'reapuntado no pierda nada.';
-COMMENT ON COLUMN core.calendario.sem_ev_conteo IS
+COMMENT ON COLUMN core.t_calendario.sem_ev_conteo IS
     'Semana de evaluación de conteo, desplazada respecto a la semana calendario porque el '
     'corte agronómico no cae en domingo: difieren en 527 de los 1.224 días poblados. Nunca '
-    'unir una tabla semanal contra esta columna — para eso está core.semana_evaluacion.';
-COMMENT ON COLUMN core.calendario.campanias_activas IS
+    'unir una tabla semanal contra esta columna — para eso está core.t_semana_evaluacion.';
+COMMENT ON COLUMN core.t_calendario.campanias_activas IS
     'Cuántas campañas tienen actividad ese día. Es informativo, y hay una razón de peso para '
     'que NO exista una columna campania_id: las campañas SE SOLAPAN. Solo en cosecha, C2023 '
     'llega al 2024-02-16 y C2024 arranca el 2023-12-18 — 61 días compartidos; contando poda y '
@@ -62,7 +62,7 @@ COMMENT ON COLUMN core.calendario.campanias_activas IS
     'porque dos lotes podados en momentos distintos están en campañas distintas el mismo día. '
     'La campaña se resuelve por lote con core.fn_campania_de_lote().';
 
-CREATE TABLE IF NOT EXISTS core.semana_evaluacion (
+CREATE TABLE IF NOT EXISTS core.t_semana_evaluacion (
     anio            smallint NOT NULL,
     sem_ev_conteo   smallint NOT NULL,
     fecha_inicio    date NOT NULL,
@@ -72,33 +72,33 @@ CREATE TABLE IF NOT EXISTS core.semana_evaluacion (
     CHECK (fecha_fin >= fecha_inicio)
 );
 
-COMMENT ON TABLE core.semana_evaluacion IS
+COMMENT ON TABLE core.t_semana_evaluacion IS
     'Dimensión de grano SEMANAL, una fila por (año, semana de evaluación). Existe para que '
     'ninguna consulta futura vuelva a unir una tabla semanal contra una tabla de días: eso es '
     'lo que multiplicó por 54 las filas de 01_Flores_C2025 (H-05). Unir contra esto, nunca '
-    'contra core.calendario.sem_ev_conteo.';
+    'contra core.t_calendario.sem_ev_conteo.';
 
-CREATE TABLE IF NOT EXISTS core.poda (
+CREATE TABLE IF NOT EXISTS core.evt_poda (
     poda_id         integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
-    campania_id     smallint NOT NULL REFERENCES core.campania(campania_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
+    campania_id     smallint NOT NULL REFERENCES core.t_campania(campania_id),
     fecha_inicio    date,
     fecha_siembra   date,
     area_ha         numeric(10,4),
     UNIQUE (lote_id, campania_id)
 );
 
-COMMENT ON TABLE core.poda IS
+COMMENT ON TABLE core.evt_poda IS
     'Poda por lote y campaña. fecha_inicio es el origen del tiempo agronómico: en arándano el '
     'desarrollo se mide en días desde la poda, no en fechas absolutas, porque dos lotes '
     'podados con un mes de diferencia están en estados fenológicos distintos el mismo día del '
     'calendario. 7 de las 40 consultas dependen de esto.';
-COMMENT ON COLUMN core.poda.fecha_siembra IS
-    'Duplica core.lote.fecha_siembra en el origen (M_Poda.FSiembra), con riesgo de '
+COMMENT ON COLUMN core.evt_poda.fecha_siembra IS
+    'Duplica core.m_lote.fecha_siembra en el origen (M_Poda.FSiembra), con riesgo de '
     'divergencia. Se conserva para poder auditar la diferencia.';
 
-CREATE INDEX IF NOT EXISTS poda_lote_idx ON core.poda (lote_id);
-CREATE INDEX IF NOT EXISTS calendario_sem_ev_idx ON core.calendario (anio, sem_ev_conteo);
+CREATE INDEX IF NOT EXISTS poda_lote_idx ON core.evt_poda (lote_id);
+CREATE INDEX IF NOT EXISTS calendario_sem_ev_idx ON core.t_calendario (anio, sem_ev_conteo);
 
 -- ── Campaña de un hecho ─────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ AS $$
     -- calendario pero NO dentro de un mismo lote: un lote solo está en una campaña a la vez
     -- (N-11).
     SELECT p.campania_id
-    FROM core.poda p
+    FROM core.evt_poda p
     WHERE p.lote_id = p_lote_id
       AND p.fecha_inicio IS NOT NULL
       AND p.fecha_inicio <= p_fecha

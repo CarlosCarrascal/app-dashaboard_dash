@@ -17,21 +17,27 @@ from dash import html
 from components import ui
 
 dash.register_page(
-    __name__, path="/impacto/descubrimientos", name="Descubrimientos",
-    order=4, grupo="Impacto agronómico",
+    __name__,
+    path="/impacto/descubrimientos",
+    name="Exploración pendiente",
+    order=4,
+    grupo="Histórico · Excel/Access",
 )
 
 
 def layout():
     return html.Div(
-        ui.semaforo(
-            "info",
-            "**Contenido pendiente de definir**, no solo de portar. Antes de escribir "
-            "esta página hay que decidir, pregunta por pregunta del Sekoya Pop "
-            "(paradoja del agua, estrés combinado, fotosíntesis, concentración de "
-            "nutrientes, reloj térmico), qué responde hoy el pipeline honesto de este "
-            "tablero y con qué número — no reusar los R² del multi-agente sin pasar por "
-            "la partición `por_bloque`.",
-        ),
+        [
+            ui.fuente_historica(),
+            ui.semaforo(
+                "info",
+                "**Contenido pendiente de definir**, no solo de portar. Antes de escribir "
+                "esta página hay que decidir, pregunta por pregunta del Sekoya Pop "
+                "(paradoja del agua, estrés combinado, fotosíntesis, concentración de "
+                "nutrientes, reloj térmico), qué responde hoy el pipeline honesto de este "
+                "tablero y con qué número — no reusar los R² del multi-agente sin pasar por "
+                "la partición `por_bloque`.",
+            ),
+        ],
         className="space-y-4",
     )

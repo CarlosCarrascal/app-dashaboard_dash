@@ -26,8 +26,8 @@ FROM fact.flores f
 JOIN dim.lote l USING (lote_id)
 LEFT JOIN dim.tiempo t ON t.fecha = f.fecha
 LEFT JOIN dim.evaluador ev ON ev.evaluador_id = f.evaluador_id
-LEFT JOIN core.poda p ON p.poda_id = (
-    SELECT p2.poda_id FROM core.poda p2
+LEFT JOIN core.evt_poda p ON p.poda_id = (
+    SELECT p2.poda_id FROM core.evt_poda p2
      WHERE p2.lote_id = f.lote_id AND p2.fecha_inicio <= f.fecha
      ORDER BY p2.fecha_inicio DESC LIMIT 1)
 LEFT JOIN dim.campania cp ON cp.campania_id = p.campania_id;
@@ -55,8 +55,8 @@ FROM fact.estados e
 JOIN dim.lote l USING (lote_id)
 LEFT JOIN dim.tiempo t ON t.fecha = e.fecha
 LEFT JOIN dim.evaluador ev ON ev.evaluador_id = e.evaluador_id
-LEFT JOIN core.poda p ON p.poda_id = (
-    SELECT p2.poda_id FROM core.poda p2
+LEFT JOIN core.evt_poda p ON p.poda_id = (
+    SELECT p2.poda_id FROM core.evt_poda p2
      WHERE p2.lote_id = e.lote_id AND p2.fecha_inicio <= e.fecha
      ORDER BY p2.fecha_inicio DESC LIMIT 1)
 LEFT JOIN dim.campania cp ON cp.campania_id = p.campania_id;
@@ -103,7 +103,7 @@ JOIN dim.lote l USING (lote_id)
 LEFT JOIN dim.campania cp USING (campania_id)
 LEFT JOIN dim.tiempo t ON t.fecha = c.fecha
 LEFT JOIN dim.variedad v ON v.variedad_id = c.variedad_id
-LEFT JOIN core.poda p ON p.lote_id = c.lote_id AND p.campania_id = c.campania_id;
+LEFT JOIN core.evt_poda p ON p.lote_id = c.lote_id AND p.campania_id = c.campania_id;
 
 COMMENT ON VIEW reporting.v_cosecha IS
     'Cosecha con toda su jerarquía. IMPORTANTE: `area_ha` viene de la dimensión de lote y está '

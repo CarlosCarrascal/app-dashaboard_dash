@@ -24,14 +24,16 @@ CREATE INDEX IF NOT EXISTS rechazos_motivo_idx ON qua.rechazos (tabla_origen, mo
 CREATE INDEX IF NOT EXISTS rechazos_hallazgo_idx ON qua.rechazos (hallazgo);
 
 COMMENT ON TABLE qua.rechazos IS
-    'Filas que no entraron en core, con su contenido completo. `fila` conserva el registro '
-    'íntegro para poder reprocesarlo; `hallazgo` lo enlaza con el defecto de la auditoría que '
-    'lo explica.';
+    'Incidencias de la carga. Cuando una fila no entra en core, `fila` conserva su registro '
+    'y source_row_number para reprocesarla; las incidencias agregadas conservan la clave o '
+    'grupo observado. El check-to-check asegura que cada fila física quede en core, linaje o '
+    'cuarentena; `hallazgo` enlaza el defecto que lo explica.';
 COMMENT ON COLUMN qua.rechazos.motivo IS
     'Motivo tipificado. Los previstos: SIN_IDENTIFICADORES, LOTE_INEXISTENTE, MODULO_INEXISTENTE, '
     'LOTE_AMBIGUO, DUPLICADO_EXACTO, CLAVE_NATURAL_REPETIDA, CONFLICTO_DIAMETRO_RAMA, '
     'EVALUADOR_SIN_MAESTRO, MERCADO_INVALIDO, TIMESTAMP_DUPLICADO, DIAMETRO_FUERA_DE_RANGO, '
-    'CONTEO_NEGATIVO, VALOR_EN_COLUMNA_EQUIVOCADA.';
+    'CONTEO_NEGATIVO, VALOR_EN_COLUMNA_EQUIVOCADA, EVALUADOR_DUPLICADO, '
+    'DIAMETRO_BAYA_NO_POSITIVO.';
 
 -- ── Umbrales esperados ──────────────────────────────────────────────────────
 
@@ -73,6 +75,12 @@ INSERT INTO qua.umbral (motivo, tope, hallazgo, explicacion) VALUES
      'lote (N-3): H00 ya no aporta ninguna (N-22).'),
     ('EVALUADOR_SIN_MAESTRO', 10, 'H-09',
      'DNI que captura datos y no está en M_Evaluadores: 2 en E01_Ramas.'),
+    ('EVALUADOR_DUPLICADO', 0, 'MIGRACION-DEDUP',
+     'Un mismo DNI aparece varias veces en M_Evaluadores. Se conserva la ficha activa y más '
+     'completa, y las demás quedan en cuarentena para revisión.'),
+    ('DIAMETRO_BAYA_NO_POSITIVO', 0, 'MIGRACION-VALIDACION',
+     'E05_Seguimiento contiene un diámetro de baya cero o negativo. Raw conserva el valor '
+     'original; core no lo inserta como medición porque el diámetro debe ser positivo.'),
     ('MERCADO_INVALIDO', 45000, 'N-2',
      'H02_BDElifab tiene 41.428 filas con mercado ''0'' y 675 con ''-''. Se cargan marcadas, no '
      'se descartan: son un tercio de la tabla.'),
@@ -112,7 +120,7 @@ CREATE TABLE IF NOT EXISTS qua.reconciliacion_cosecha (
 
 COMMENT ON TABLE qua.reconciliacion_cosecha IS
     'Diferencia entre H00_VolumenCampo y H01_ProdHistorica, campaña por campaña. Existe porque '
-    'la migración unifica ambas en core.cosecha y esa diferencia no debe desaparecer sin dejar '
+    'la migración unifica ambas en core.op_cosecha y esa diferencia no debe desaparecer sin dejar '
     'rastro (H-07): son 187 filas y 4.486,59 kg, concentradas en C2023 y C2024, excluidas por '
     'una regla que no está documentada en ninguna parte de la base.';
 

@@ -144,14 +144,43 @@ def semaforo(estado: str, mensaje: str) -> html.Div:
     )
 
 
+def fuente_historica() -> html.Div:
+    """Marca el camino histórico que todavía lee el panel Excel/Access.
+
+    Estas páginas siguen siendo útiles para auditoría y continuidad, pero no deben parecer
+    otra vista de la misma publicación gobernada que vive en PostgreSQL.
+    """
+    return semaforo(
+        "aviso",
+        "**Fuente histórica · Excel/Access.** Este contenido se calcula desde el panel "
+        "cargado desde archivos y no desde la fuente oficial PostgreSQL. No mezclar sus "
+        "cifras con las de la Plataforma analítica.",
+    )
+
+
+def fuente_oficial() -> html.Div:
+    """Identifica una vista oficial como lectora exclusiva de PostgreSQL."""
+    return semaforo(
+        "info",
+        "**Fuente oficial · PostgreSQL.** Esta vista solo muestra resultados publicados "
+        "desde la base; Excel/Access queda fuera del camino oficial.",
+    )
+
+
 def _summary_plegable(titulo: str) -> html.Summary:
     """Cabecera de un `<details>`: ícono de info + título + chevron que gira al abrir."""
     return html.Summary(
-        className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-slate-600",
+        className=(
+            "flex cursor-pointer select-none items-center gap-2 "
+            "text-sm font-medium text-slate-600"
+        ),
         children=[
             icono("info", "h-4 w-4 text-slate-400"),
             html.Span(titulo),
-            icono("chevron-down", "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
+            icono(
+                "chevron-down",
+                "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180",
+            ),
         ],
     )
 
@@ -159,7 +188,10 @@ def _summary_plegable(titulo: str) -> html.Summary:
 def como_leer(texto: str, titulo: str = "Cómo se lee este gráfico") -> html.Details:
     """Instrucción de lectura, plegada por omisión para no competir con el dato."""
     return html.Details(
-        className="group rounded-2xl border border-slate-200 bg-slate-50 p-3 open:bg-white open:shadow-sm",
+        className=(
+            "group rounded-2xl border border-slate-200 bg-slate-50 p-3 "
+            "open:bg-white open:shadow-sm"
+        ),
         children=[
             _summary_plegable(titulo),
             html.Div(
@@ -182,8 +214,9 @@ def veredicto_de_prueba(pregunta: str, respuesta: str, estado: str, evidencia: s
     )
 
 
-def glosario(claves: Iterable[str] | None = None, titulo: str = "Glosario",
-             plano: bool = False) -> html.Details | html.Dl:
+def glosario(
+    claves: Iterable[str] | None = None, titulo: str = "Glosario", plano: bool = False
+) -> html.Details | html.Dl:
     """Qué significa cada variable, en lenguaje llano.
 
     Como lista de definiciones (`<dl>`) en dos columnas: el término en su propia línea y la
@@ -198,17 +231,30 @@ def glosario(claves: Iterable[str] | None = None, titulo: str = "Glosario",
     for c in claves:
         texto = glosa(c)
         if texto:
-            filas.append(html.Div([
-                html.Dt(etiqueta(c), className="text-sm font-medium text-slate-900"),
-                html.Dd(texto, className="mt-0.5 text-sm leading-snug text-slate-500"),
-            ]))
+            filas.append(
+                html.Div(
+                    [
+                        html.Dt(etiqueta(c), className="text-sm font-medium text-slate-900"),
+                        html.Dd(texto, className="mt-0.5 text-sm leading-snug text-slate-500"),
+                    ]
+                )
+            )
     # Una sola columna: en dos, la vista se lee en zigzag y los términos de la columna
     # derecha quedan sueltos de la definición que les corresponde a la izquierda.
-    cuerpo = html.Dl(filas, className="divide-y divide-stone-200/80 [&>div]:py-2.5 [&>div:first-child]:pt-0 [&>div:last-child]:pb-0")
+    cuerpo = html.Dl(
+        filas,
+        className=(
+            "divide-y divide-stone-200/80 [&>div]:py-2.5 "
+            "[&>div:first-child]:pt-0 [&>div:last-child]:pb-0"
+        ),
+    )
     if plano:
         return cuerpo
     return html.Details(
-        className="group rounded-2xl border border-slate-200 bg-slate-50 p-3 open:bg-white open:shadow-sm",
+        className=(
+            "group rounded-2xl border border-slate-200 bg-slate-50 p-3 "
+            "open:bg-white open:shadow-sm"
+        ),
         children=[_summary_plegable(titulo), html.Div(cuerpo, className="mt-2")],
     )
 
@@ -270,8 +316,14 @@ def _barras(serie: Iterable[float], className: str = "h-8 w-24") -> html.Div:
     )
 
 
-def kpi(rotulo: str, valor: str, nota: str | None = None, serie: Iterable[float] | None = None,
-        ayuda: str | None = None, plano: bool = False) -> html.Div:
+def kpi(
+    rotulo: str,
+    valor: str,
+    nota: str | None = None,
+    serie: Iterable[float] | None = None,
+    ayuda: str | None = None,
+    plano: bool = False,
+) -> html.Div:
     """Tarjeta de un solo número: rótulo arriba, cifra grande, forma de la serie al lado.
 
     `nota` va bajo una línea divisoria fina, como el pie de las tarjetas de referencia.
@@ -296,9 +348,18 @@ def kpi(rotulo: str, valor: str, nota: str | None = None, serie: Iterable[float]
     ]
     if nota:
         hijos.append(
-            html.Div(nota, className=f"mt-3 border-t {BORDE} pt-2.5 text-xs leading-snug text-slate-400")
+            html.Div(
+                nota, className=f"mt-3 border-t {BORDE} pt-2.5 text-xs leading-snug text-slate-400"
+            )
         )
-    marco = "" if plano else f"min-h-[10.2rem] rounded-xl border {BORDE} bg-white p-4 shadow-[0_0_6px_rgba(0,0,0,0.1)]"
+    marco = (
+        ""
+        if plano
+        else (
+            f"min-h-[10.2rem] rounded-xl border {BORDE} bg-white p-4 "
+            "shadow-[0_0_6px_rgba(0,0,0,0.1)]"
+        )
+    )
     return html.Div(hijos, className=marco, title=ayuda or "")
 
 
@@ -307,9 +368,16 @@ def fila_kpi(items: list[html.Div]) -> html.Div:
     return html.Div(items, className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4")
 
 
-def panel(titulo: str, *children, ayuda: str | None = None, aside=None,
-          plegable: bool = False, abierto: bool = True, id: str | None = None,
-          resumen_id: str | None = None) -> html.Div | html.Details:
+def panel(
+    titulo: str,
+    *children,
+    ayuda: str | None = None,
+    aside=None,
+    plegable: bool = False,
+    abierto: bool = True,
+    id: str | None = None,
+    resumen_id: str | None = None,
+) -> html.Div | html.Details:
     """Bloque de contenido con cabecera, como el panel «SALES TREND» de la referencia.
 
     Es **la única card de su sección**: nada de lo que va dentro debe traer su propio borde
@@ -361,8 +429,10 @@ def panel(titulo: str, *children, ayuda: str | None = None, aside=None,
                 title=ayuda or "",
                 children=[
                     html.Span(titulo, className=SUBTITULO),
-                    icono("chevron-down",
-                          "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
+                    icono(
+                        "chevron-down",
+                        "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180",
+                    ),
                 ],
             ),
             cuerpo,
@@ -377,11 +447,23 @@ def tarjetas(items: list[tuple[str, str, str | None]]) -> html.Div:
         style={"gridTemplateColumns": f"repeat({len(items)}, minmax(0, 1fr))"},
         children=[
             html.Div(
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_0_6px_rgba(0,0,0,0.1)]",
+                className=(
+                    "rounded-2xl border border-slate-200 bg-white p-4 "
+                    "shadow-[0_0_6px_rgba(0,0,0,0.1)]"
+                ),
                 title=ayuda or "",
                 children=[
-                    html.Div(rotulo, className="text-xs font-medium uppercase tracking-wide text-slate-400"),
-                    html.Div(valor, className="mt-2 font-mono text-2xl font-semibold tabular-nums text-slate-900"),
+                    html.Div(
+                        rotulo,
+                        className="text-xs font-medium uppercase tracking-wide text-slate-400",
+                    ),
+                    html.Div(
+                        valor,
+                        className=(
+                            "mt-2 font-mono text-2xl font-semibold "
+                            "tabular-nums text-slate-900"
+                        ),
+                    ),
                 ],
             )
             for rotulo, valor, ayuda in items
@@ -403,7 +485,14 @@ def parrafo(texto: str) -> dcc.Markdown:
 
 def caja(*children, className: str = "") -> html.Div:
     """Contenedor con borde, equivalente a `st.container(border=True)`."""
-    return html.Div(children=list(children), className=f"rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_0_6px_rgba(0,0,0,0.1)] {className}")
+    return html.Div(
+        children=list(children),
+        className=(
+            "rounded-2xl border border-slate-200 bg-white p-4 "
+            "shadow-[0_0_6px_rgba(0,0,0,0.1)] "
+            f"{className}"
+        ),
+    )
 
 
 def subseccion(titulo: str, *children) -> html.Div:
@@ -435,8 +524,10 @@ def plegable(titulo: str, *children, abierto: bool = False) -> html.Details:
                 className="flex cursor-pointer select-none items-center gap-2",
                 children=[
                     html.Span(titulo, className=SUBTITULO),
-                    icono("chevron-down",
-                          "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"),
+                    icono(
+                        "chevron-down",
+                        "ml-auto h-4 w-4 text-slate-400 transition-transform group-open:rotate-180",
+                    ),
                 ],
             ),
             html.Div(list(children), className="mt-2 space-y-3"),
@@ -445,7 +536,9 @@ def plegable(titulo: str, *children, abierto: bool = False) -> html.Details:
 
 
 def tabla_desde_df(
-    df: pd.DataFrame, formato: dict[str, str] | None = None, ocultar: Iterable[str] = (),
+    df: pd.DataFrame,
+    formato: dict[str, str] | None = None,
+    ocultar: Iterable[str] = (),
     plano: bool = False,
 ) -> html.Div:
     """Tabla HTML simple a partir de un DataFrame.
@@ -467,27 +560,48 @@ def tabla_desde_df(
         except (ValueError, TypeError):
             return str(v)
 
-    marco = "overflow-x-auto" if plano else "overflow-x-auto rounded-2xl border border-slate-200 shadow-sm"
+    marco = (
+        "overflow-x-auto"
+        if plano
+        else "overflow-x-auto rounded-2xl border border-slate-200 shadow-sm"
+    )
     return html.Div(
         className=marco,
         children=html.Table(
             className="w-full min-w-max text-left text-sm",
             children=[
-                html.Thead(html.Tr([
-                    html.Th(
-                        c,
-                        className="whitespace-nowrap border-b border-slate-200 bg-slate-50 py-2.5 px-3 "
-                        "text-xs font-semibold uppercase tracking-wide text-slate-400",
+                html.Thead(
+                    html.Tr(
+                        [
+                            html.Th(
+                                c,
+                                className=(
+                                    "whitespace-nowrap border-b border-slate-200 "
+                                    "bg-slate-50 py-2.5 px-3 text-xs font-semibold "
+                                    "uppercase tracking-wide text-slate-400"
+                                ),
+                            )
+                            for c in columnas
+                        ]
                     )
-                    for c in columnas
-                ])),
-                html.Tbody([
-                    html.Tr([
-                        html.Td(_fmt(c, fila[c]), className="whitespace-nowrap border-b border-slate-100 py-1.5 px-3")
-                        for c in columnas
-                    ])
-                    for _, fila in df.iterrows()
-                ]),
+                ),
+                html.Tbody(
+                    [
+                        html.Tr(
+                            [
+                                html.Td(
+                                    _fmt(c, fila[c]),
+                                    className=(
+                                        "whitespace-nowrap border-b border-slate-100 "
+                                        "py-1.5 px-3"
+                                    ),
+                                )
+                                for c in columnas
+                            ]
+                        )
+                        for _, fila in df.iterrows()
+                    ]
+                ),
             ],
         ),
     )

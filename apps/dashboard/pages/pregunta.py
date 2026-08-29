@@ -18,7 +18,12 @@ dash.register_page(__name__, path="/", name="Pregunta, datos y límites", order=
 
 
 def layout():
-    return html.Div(id="pregunta-contenido", children=ui.esqueleto_pagina())
+    return html.Div(
+        children=[
+            ui.fuente_historica(),
+            html.Div(id="pregunta-contenido", children=ui.esqueleto_pagina()),
+        ]
+    )
 
 
 def _kpis(tabla) -> html.Div:
@@ -32,33 +37,35 @@ def _kpis(tabla) -> html.Div:
     por_semana = tabla.groupby("nsem")
     kgha_semanal = por_semana.KgHa.mean()
     semanas = sorted(tabla.nsem.unique())
-    return ui.fila_kpi([
-        ui.kpi(
-            "Celdas módulo × semana",
-            ui.entero(len(tabla)),
-            nota="Cada fila es un módulo observado en una semana concreta.",
-            serie=por_semana.size(),
-        ),
-        ui.kpi(
-            "Módulos",
-            str(tabla.celda.nunique()),
-            nota="Con cosecha registrada en 2025. La serie muestra cuántos estaban "
-                 "activos cada semana.",
-            serie=por_semana.celda.nunique(),
-        ),
-        ui.kpi(
-            "Semanas",
-            str(tabla.nsem.nunique()),
-            nota=f"Con al menos una cosecha, de la {semanas[0]} a la {semanas[-1]}.",
-        ),
-        ui.kpi(
-            "kg/ha promedio",
-            ui.entero(tabla.KgHa.mean()),
-            nota=f"Promedio simple sobre las celdas. Por semana va de "
-                 f"{ui.entero(kgha_semanal.min())} a {ui.entero(kgha_semanal.max())}.",
-            serie=kgha_semanal,
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Celdas módulo × semana",
+                ui.entero(len(tabla)),
+                nota="Cada fila es un módulo observado en una semana concreta.",
+                serie=por_semana.size(),
+            ),
+            ui.kpi(
+                "Módulos",
+                str(tabla.celda.nunique()),
+                nota="Con cosecha registrada en 2025. La serie muestra cuántos estaban "
+                "activos cada semana.",
+                serie=por_semana.celda.nunique(),
+            ),
+            ui.kpi(
+                "Semanas",
+                str(tabla.nsem.nunique()),
+                nota=f"Con al menos una cosecha, de la {semanas[0]} a la {semanas[-1]}.",
+            ),
+            ui.kpi(
+                "kg/ha promedio",
+                ui.entero(tabla.KgHa.mean()),
+                nota=f"Promedio simple sobre las celdas. Por semana va de "
+                f"{ui.entero(kgha_semanal.min())} a {ui.entero(kgha_semanal.max())}.",
+                serie=kgha_semanal,
+            ),
+        ]
+    )
 
 
 def _que_hace() -> html.Div:
@@ -104,16 +111,28 @@ def _tabla(columnas: list[str], filas: list[tuple]) -> html.Table:
     return html.Table(
         className="w-full text-left text-sm",
         children=[
-            html.Thead(html.Tr([
-                html.Th(c, className=f"border-b {ui.BORDE} pb-2 pr-4 {ui.ROTULO}") for c in columnas
-            ])),
-            html.Tbody([
-                html.Tr([
-                    html.Td(str(v), className="border-b border-stone-100 py-2 pr-4 text-slate-600")
-                    for v in fila
-                ])
-                for fila in filas
-            ]),
+            html.Thead(
+                html.Tr(
+                    [
+                        html.Th(c, className=f"border-b {ui.BORDE} pb-2 pr-4 {ui.ROTULO}")
+                        for c in columnas
+                    ]
+                )
+            ),
+            html.Tbody(
+                [
+                    html.Tr(
+                        [
+                            html.Td(
+                                str(v),
+                                className="border-b border-stone-100 py-2 pr-4 text-slate-600",
+                            )
+                            for v in fila
+                        ]
+                    )
+                    for fila in filas
+                ]
+            ),
         ],
     )
 
@@ -122,8 +141,12 @@ def _estado_analitico() -> html.Div:
     filas = [
         ("Asociación", "¿Qué se mueve junto con el resultado?", "Sí", "Impacto agronómico"),
         ("Aporte predictivo", "¿Qué mejora un modelo fuera de muestra?", "Sí", "Qué explica el R²"),
-        ("Efecto agronómico", "¿Cuánto cambiaría el resultado al intervenir la exposición?",
-         "Todavía no", "Marco metodológico y referencias"),
+        (
+            "Efecto agronómico",
+            "¿Cuánto cambiaría el resultado al intervenir la exposición?",
+            "Todavía no",
+            "Marco metodológico y referencias",
+        ),
     ]
     return html.Div(
         className="space-y-3",
@@ -157,16 +180,18 @@ def _granularidad(panel) -> html.Div:
             html.Div(
                 className="space-y-3",
                 children=[
-                    _tabla(["Variable", "Se mide por", "¿Distingue módulos?", "Valores distintos"], filas),
+                    _tabla(
+                        ["Variable", "Se mide por", "¿Distingue módulos?", "Valores distintos"],
+                        filas,
+                    ),
                     ui.parrafo(
                         f"Las hojas de clima **Temp Max-Min**, **Rad y ET** y **DPV**, traen "
                         f"**un valor por semana**, no por módulo: el de la semana 1 se aplica a "
                         f"los {panel.n_modulos} módulos de la semana 1, el de la 2 a los de la 2, "
                         "y así."
                     ),
-                ]
+                ],
             ),
-
             # Insights numéricos anclados visualmente
             html.Div(
                 className="flex flex-col sm:flex-row gap-8",
@@ -175,29 +200,47 @@ def _granularidad(panel) -> html.Div:
                         className="flex-1 border-l-2 border-stone-200 pl-4",
                         children=[
                             html.Div("N APARENTE", className=ui.ROTULO),
-                            html.Div(ui.entero(ef.n_celdas), className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}"),
-                            html.Div("Filas del panel.", className="mt-2 text-sm text-slate-500 leading-snug"),
-                        ]
+                            html.Div(
+                                ui.entero(ef.n_celdas),
+                                className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}",
+                            ),
+                            html.Div(
+                                "Filas del panel.",
+                                className="mt-2 text-sm text-slate-500 leading-snug",
+                            ),
+                        ],
                     ),
                     html.Div(
                         className="flex-1 border-l-2 border-stone-200 pl-4",
                         children=[
                             html.Div("N EFECTIVO", className=ui.ROTULO),
-                            html.Div(ui.entero(ef.n_semanas), className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}"),
-                            html.Div("Mediciones climáticas distintas.", className="mt-2 text-sm text-slate-500 leading-snug"),
-                        ]
+                            html.Div(
+                                ui.entero(ef.n_semanas),
+                                className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}",
+                            ),
+                            html.Div(
+                                "Mediciones climáticas distintas.",
+                                className="mt-2 text-sm text-slate-500 leading-snug",
+                            ),
+                        ],
                     ),
                     html.Div(
                         className="flex-1 border-l-2 border-stone-200 pl-4",
                         children=[
                             html.Div("INFLACIÓN SI SE USA N EQUIVOCADO", className=ui.ROTULO),
-                            html.Div(f"{ef.factor_inflacion:.1f}×", className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}"),
-                            html.Div("Cuánto más estrecho saldría un intervalo de confianza sobre celdas en vez de semanas.", className="mt-2 text-sm text-slate-500 leading-snug"),
-                        ]
+                            html.Div(
+                                f"{ef.factor_inflacion:.1f}×",
+                                className=f"mt-1 text-[1.75rem] leading-none {ui.CIFRA}",
+                            ),
+                            html.Div(
+                                "Cuánto más estrecho saldría un intervalo de confianza "
+                                "sobre celdas en vez de semanas.",
+                                className="mt-2 text-sm text-slate-500 leading-snug",
+                            ),
+                        ],
                     ),
-                ]
+                ],
             ),
-
             # El razonamiento completo se pliega
             ui.plegable(
                 "Por qué importa",
@@ -260,7 +303,7 @@ def _render(panel):
                         "A qué grano se mide cada variable",
                         _granularidad(panel),
                         ayuda="El clima viene por semana, el rendimiento por módulo y semana. "
-                              "Eso tiene consecuencias sobre el tamaño de muestra.",
+                        "Eso tiene consecuencias sobre el tamaño de muestra.",
                     ),
                     # Plegado por omisión: es material de consulta, no parte del hilo que
                     # la página cuenta de arriba a abajo.

@@ -25,14 +25,39 @@ from analitica.config import etiqueta
 from components import ui
 from servicios.carga import PANEL_STORE
 
-dash.register_page(__name__, path="/datos-calidad", name="Datos y calidad", order=0, grupo="Referencia")
+dash.register_page(
+    __name__,
+    path="/datos-calidad",
+    name="Datos y calidad",
+    order=0,
+    grupo="Histórico · Excel/Access",
+)
 
 COLUMNAS_VISIBLES = [
-    "Fundo", "Modulo", "Semana", "Area", "Kg", "KgHa", "Frutos", "Peso",
-    "riego_lt_planta", "riego_m3_ha", "TempMax", "TempMin", "VarDia", "Rad", "ETo", "DPV",
-    "poda_fecha", "poda_dispersion_dias", "dias_desde_poda", "Variedad",
-    "edad_planta_anos", "gdd_acum_poda_obs",
-    "flores_promedio", "flores_dispersion_relativa",
+    "Fundo",
+    "Modulo",
+    "Semana",
+    "Area",
+    "Kg",
+    "KgHa",
+    "Frutos",
+    "Peso",
+    "riego_lt_planta",
+    "riego_m3_ha",
+    "TempMax",
+    "TempMin",
+    "VarDia",
+    "Rad",
+    "ETo",
+    "DPV",
+    "poda_fecha",
+    "poda_dispersion_dias",
+    "dias_desde_poda",
+    "Variedad",
+    "edad_planta_anos",
+    "gdd_acum_poda_obs",
+    "flores_promedio",
+    "flores_dispersion_relativa",
 ]
 
 _NOMBRE_GRAVEDAD = {"alta": "Grave", "media": "A tener en cuenta", "baja": "Menor"}
@@ -43,6 +68,7 @@ def layout():
     return html.Div(
         className="space-y-4",
         children=[
+            ui.fuente_historica(),
             ui.encabezado_pagina(
                 "¿Qué tan confiables son los datos que alimentan el análisis?",
                 "Revisa el alcance del panel, los problemas detectados al consolidarlo y las "
@@ -54,40 +80,57 @@ def layout():
                 html.Div(
                     className="aq-data-filters grid gap-4 md:grid-cols-2",
                     children=[
-                        html.Div([
-                            html.Label("Fundo", className=ui.SUBTITULO),
-                            dcc.Dropdown(id="f-fundo", multi=True, placeholder="Todos"),
-                        ]),
-                        html.Div([
-                            html.Label("Módulo", className=ui.SUBTITULO),
-                            dcc.Dropdown(id="f-modulo", multi=True, placeholder="Todos"),
-                        ]),
-                        html.Div([
-                            html.Label("Semanas", className=ui.SUBTITULO),
-                            dcc.RangeSlider(
-                                id="f-semanas", step=1, allowCross=False,
-                                tooltip={"placement": "bottom"},
-                            ),
-                        ]),
-                        html.Div([
-                            html.Label("Rendimiento (kg/ha)", className=ui.SUBTITULO),
-                            dcc.RangeSlider(
-                                id="f-kgha", step=1, allowCross=False,
-                                tooltip={"placement": "bottom"},
-                            ),
-                        ]),
+                        html.Div(
+                            [
+                                html.Label("Fundo", className=ui.SUBTITULO),
+                                dcc.Dropdown(id="f-fundo", multi=True, placeholder="Todos"),
+                            ]
+                        ),
+                        html.Div(
+                            [
+                                html.Label("Módulo", className=ui.SUBTITULO),
+                                dcc.Dropdown(id="f-modulo", multi=True, placeholder="Todos"),
+                            ]
+                        ),
+                        html.Div(
+                            [
+                                html.Label("Semanas", className=ui.SUBTITULO),
+                                dcc.RangeSlider(
+                                    id="f-semanas",
+                                    step=1,
+                                    allowCross=False,
+                                    tooltip={"placement": "bottom"},
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            [
+                                html.Label("Rendimiento (kg/ha)", className=ui.SUBTITULO),
+                                dcc.RangeSlider(
+                                    id="f-kgha",
+                                    step=1,
+                                    allowCross=False,
+                                    tooltip={"placement": "bottom"},
+                                ),
+                            ]
+                        ),
                         html.Div(
                             className="md:col-span-2",
                             children=dcc.Checklist(
                                 id="f-sin-riego",
-                                options=[{"label": " Excluir semanas con riego cero", "value": "on"}],
+                                options=[
+                                    {"label": " Excluir semanas con riego cero", "value": "on"}
+                                ],
                                 value=[],
                                 className="text-sm text-slate-600",
                             ),
                         ),
                     ],
                 ),
-                ayuda="Filtra la tabla para comprobar qué filas sustentan cada resultado y qué se exportará.",
+                ayuda=(
+                    "Filtra la tabla para comprobar qué filas sustentan cada resultado "
+                    "y qué se exportará."
+                ),
             ),
             html.Div(
                 className="space-y-3",
@@ -135,12 +178,20 @@ def layout():
                     className="flex flex-wrap gap-3",
                     children=[
                         html.Button(
-                            "Descargar Excel", id="btn-excel",
-                            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700",
+                            "Descargar Excel",
+                            id="btn-excel",
+                            className=(
+                                "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium "
+                                "text-white hover:bg-slate-700"
+                            ),
                         ),
                         html.Button(
-                            "Descargar solo la tabla en CSV", id="btn-csv",
-                            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50",
+                            "Descargar solo la tabla en CSV",
+                            id="btn-csv",
+                            className=(
+                                "rounded-md border border-slate-300 px-4 py-2 text-sm "
+                                "font-medium text-slate-700 hover:bg-slate-50"
+                            ),
                         ),
                     ],
                 ),
@@ -168,29 +219,31 @@ def _filtrar(tabla: pd.DataFrame, fundos, modulos, semanas, kgha, excluir_riego)
 
 def _resumen_calidad(panel) -> html.Div:
     tabla = panel.tabla
-    return ui.fila_kpi([
-        ui.kpi(
-            "Celdas observadas",
-            str(len(tabla)),
-            nota="Filas módulo × semana consolidadas desde las fuentes.",
-            serie=tabla.groupby("nsem").size().tolist(),
-        ),
-        ui.kpi(
-            "Módulos",
-            str(tabla.celda.nunique()),
-            nota="Unidades que aparecen en el panel consolidado.",
-        ),
-        ui.kpi(
-            "Semanas",
-            str(tabla.nsem.nunique()),
-            nota="Semanas con al menos una fila observada.",
-        ),
-        ui.kpi(
-            "Hallazgos de calidad",
-            str(len(panel.hallazgos)),
-            nota=f"{len(panel.graves())} de gravedad alta; revisar antes de interpretar.",
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Celdas observadas",
+                str(len(tabla)),
+                nota="Filas módulo × semana consolidadas desde las fuentes.",
+                serie=tabla.groupby("nsem").size().tolist(),
+            ),
+            ui.kpi(
+                "Módulos",
+                str(tabla.celda.nunique()),
+                nota="Unidades que aparecen en el panel consolidado.",
+            ),
+            ui.kpi(
+                "Semanas",
+                str(tabla.nsem.nunique()),
+                nota="Semanas con al menos una fila observada.",
+            ),
+            ui.kpi(
+                "Hallazgos de calidad",
+                str(len(panel.hallazgos)),
+                nota=f"{len(panel.graves())} de gravedad alta; revisar antes de interpretar.",
+            ),
+        ]
+    )
 
 
 def _respuesta_calidad(panel) -> html.Div:
@@ -222,22 +275,31 @@ def _respuesta_calidad(panel) -> html.Div:
         html.Div(
             className="grid gap-4",
             children=[
-                html.Div([
-                    html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
-                    html.P(
-                        "Qué observaciones entraron al panel y qué problemas de origen, "
-                        "agregación o cobertura pueden afectar su lectura.",
-                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                    ),
-                ]),
-                html.Div([
-                    html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
-                    html.P(
-                        "Fija el alcance de los datos antes de comparar variables o entrenar "
-                        "un predictor. Un hallazgo de calidad no es una señal agronómica.",
-                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                    ),
-                ]),
+                html.Div(
+                    [
+                        html.Div(
+                            "Este análisis responde",
+                            className="text-sm font-semibold text-slate-700",
+                        ),
+                        html.P(
+                            "Qué observaciones entraron al panel y qué problemas de origen, "
+                            "agregación o cobertura pueden afectar su lectura.",
+                            className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                        ),
+                    ]
+                ),
+                html.Div(
+                    [
+                        html.Div(
+                            "Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"
+                        ),
+                        html.P(
+                            "Fija el alcance de los datos antes de comparar variables o entrenar "
+                            "un predictor. Un hallazgo de calidad no es una señal agronómica.",
+                            className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                        ),
+                    ]
+                ),
             ],
         ),
         ayuda="Conclusión de calidad y relación con el resto del dashboard.",
@@ -290,21 +352,32 @@ def _panel_hallazgos(panel) -> html.Div:
     Output("calidad-hallazgos", "children"),
     Output("f-fundo", "options"),
     Output("f-modulo", "options"),
-    Output("f-semanas", "min"), Output("f-semanas", "max"), Output("f-semanas", "value"),
+    Output("f-semanas", "min"),
+    Output("f-semanas", "max"),
+    Output("f-semanas", "value"),
     Output("f-semanas", "marks"),
-    Output("f-kgha", "min"), Output("f-kgha", "max"), Output("f-kgha", "value"),
+    Output("f-kgha", "min"),
+    Output("f-kgha", "max"),
+    Output("f-kgha", "value"),
     Output("f-kgha", "marks"),
     Input(PANEL_STORE, "data"),
 )
 def _inicializar(panel):
     if panel is None:
         return (
-            ui.esqueleto_seccion("h-40"), [], [],
-            0, 1, [0, 1], {},
-            0.0, 1.0, [0.0, 1.0], {},
+            ui.esqueleto_seccion("h-40"),
+            [],
+            [],
+            0,
+            1,
+            [0, 1],
+            {},
+            0.0,
+            1.0,
+            [0.0, 1.0],
+            {},
         )
 
-    graves = panel.graves()
     bloques = [_resumen_calidad(panel), _respuesta_calidad(panel), _panel_hallazgos(panel)]
 
     tabla = panel.tabla
@@ -321,9 +394,16 @@ def _inicializar(panel):
     marcas_k[hi_k] = ui.miles(hi_k)
     return (
         html.Div(bloques, className="space-y-3"),
-        fundos, modulos,
-        lo_s, hi_s, [lo_s, hi_s], marcas_s,
-        lo_k, hi_k, [lo_k, hi_k], marcas_k,
+        fundos,
+        modulos,
+        lo_s,
+        hi_s,
+        [lo_s, hi_s],
+        marcas_s,
+        lo_k,
+        hi_k,
+        [lo_k, hi_k],
+        marcas_k,
     )
 
 
@@ -332,8 +412,11 @@ def _inicializar(panel):
     Output("panel-grid", "rowData"),
     Output("panel-resumen-texto", "children"),
     Input(PANEL_STORE, "data"),
-    Input("f-fundo", "value"), Input("f-modulo", "value"),
-    Input("f-semanas", "value"), Input("f-kgha", "value"), Input("f-sin-riego", "value"),
+    Input("f-fundo", "value"),
+    Input("f-modulo", "value"),
+    Input("f-semanas", "value"),
+    Input("f-kgha", "value"),
+    Input("f-sin-riego", "value"),
 )
 def _actualizar_grid(panel, fundos, modulos, semanas, kgha, sin_riego):
     if panel is None:
@@ -343,7 +426,8 @@ def _actualizar_grid(panel, fundos, modulos, semanas, kgha, sin_riego):
     column_defs = [{"field": c, "headerName": etiqueta(c)} for c in columnas]
     row_data = filtrada[columnas].to_dict("records")
     resumen = (
-        f"Mostrando {len(filtrada):,}".replace(",", ".") + f" de {len(panel.tabla):,}".replace(",", ".")
+        f"Mostrando {len(filtrada):,}".replace(",", ".")
+        + f" de {len(panel.tabla):,}".replace(",", ".")
         + f" celdas · {filtrada.celda.nunique()} módulos · {filtrada.nsem.nunique()} semanas"
     )
     return column_defs, row_data, resumen
@@ -353,8 +437,11 @@ def _actualizar_grid(panel, fundos, modulos, semanas, kgha, sin_riego):
     Output("descarga-excel", "data"),
     Input("btn-excel", "n_clicks"),
     State(PANEL_STORE, "data"),
-    State("f-fundo", "value"), State("f-modulo", "value"),
-    State("f-semanas", "value"), State("f-kgha", "value"), State("f-sin-riego", "value"),
+    State("f-fundo", "value"),
+    State("f-modulo", "value"),
+    State("f-semanas", "value"),
+    State("f-kgha", "value"),
+    State("f-sin-riego", "value"),
     State("f-bloques", "value"),
     prevent_initial_call=True,
 )
@@ -365,7 +452,9 @@ def _descargar_excel(n, panel, fundos, modulos, semanas, kgha, sin_riego, bloque
     if filtrada.empty:
         raise PreventUpdate
     fecha = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-    libro = nucleo.construir_informe(panel, filtrada, frozenset(bloques or []), "IA.final.xlsx", fecha)
+    libro = nucleo.construir_informe(
+        panel, filtrada, frozenset(bloques or []), "IA.final.xlsx", fecha
+    )
     nombre = f"aquanqa_relacion_clima_rendimiento_{dt.date.today():%Y%m%d}.xlsx"
     return dcc.send_bytes(libro, nombre)
 
@@ -374,8 +463,11 @@ def _descargar_excel(n, panel, fundos, modulos, semanas, kgha, sin_riego, bloque
     Output("descarga-csv", "data"),
     Input("btn-csv", "n_clicks"),
     State(PANEL_STORE, "data"),
-    State("f-fundo", "value"), State("f-modulo", "value"),
-    State("f-semanas", "value"), State("f-kgha", "value"), State("f-sin-riego", "value"),
+    State("f-fundo", "value"),
+    State("f-modulo", "value"),
+    State("f-semanas", "value"),
+    State("f-kgha", "value"),
+    State("f-sin-riego", "value"),
     prevent_initial_call=True,
 )
 def _descargar_csv(n, panel, fundos, modulos, semanas, kgha, sin_riego):

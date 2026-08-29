@@ -1,14 +1,13 @@
 -- ============================================================================
--- 070 · raw · Orígenes que no están en Access
+-- 070 · raw · Orígenes externos de contraste (no están en Access)
 --
--- El maestro de lotes vigente y el tareo de personal viven en Excel, fuera de la base. Son
--- los dos orígenes que la auditoría no cubrió y de los que dependen, respectivamente, la
--- identidad de los lotes y el informe SEGUIMIENTO DE PERSONAL.
+-- M_Lotes.xlsx y el tareo viven en Excel, fuera de Access. El primero se conserva como
+-- contraste del maestro primario de Access; el segundo es un insumo externo de personal.
 -- ============================================================================
 
--- ── Maestro de lotes vigente (M_Lotes.xlsx) ─────────────────────────────────
+-- ── Contraste externo de lotes (M_Lotes.xlsx) ───────────────────────────────
 -- 879 lotes · 6 fundos físicos · 25 módulos (M01–M24) · 13 turnos (T00–T12).
--- Sustituye a raw.m_lotes como fuente de identidad (ADR-0003).
+-- No sustituye a raw.m_lotes; se compara contra él según ADR-0012.
 CREATE TABLE IF NOT EXISTS raw.m_lotes_maestro (
     fundo          text,
     fundo_ppto     text,
@@ -26,10 +25,9 @@ CREATE TABLE IF NOT EXISTS raw.m_lotes_maestro (
 );
 
 COMMENT ON TABLE raw.m_lotes_maestro IS
-    'Maestro de lotes vigente, de M_Lotes.xlsx: 879 filas frente a las 860 de Access, con '
-    'módulos nuevos M14-M24. Es la fuente de identidad de lote. Tras normalizar los códigos '
-    'cubre el 100% de los (módulo, lote) del M_Lotes histórico y deja ~732 filas de hechos '
-    'huérfanas de ~280.000 (N-3).';
+    'Fuente externa de contraste, de M_Lotes.xlsx: 879 filas frente a las 882 del Access '
+    'actual. Sus claves están contenidas en el Access actual; no sustituye al maestro primario '
+    'raw.m_lotes (ADR-0012).';
 COMMENT ON COLUMN raw.m_lotes_maestro.fundo IS
     'Fundo FÍSICO: Aqu Anqa 1 a Aqu Anqa 6. Es la nomenclatura que sustituye al vocabulario '
     'comercial antiguo (Ampliacion, Vivadis, Sta.Teresa).';

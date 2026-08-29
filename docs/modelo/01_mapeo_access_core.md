@@ -1,5 +1,10 @@
 # Mapeo Access → `core` · auditoría columna por columna
 
+> **Actualización 2026-08-28:** la precedencia entre fuentes de lotes fue revisada después de
+> esta auditoría. Según [ADR-0012](../adr/0012-maestro-lotes-access-principal.md), `M_Lotes`
+> de Access es ahora el maestro primario; `M_Lotes.xlsx` queda como contraste. Las cifras
+> históricas de este documento se conservan como evidencia de la auditoría original.
+
 Dónde vive hoy, en PostgreSQL, cada columna de `BD_AQUANQA_26.accdb`. El objetivo es poder
 afirmar —con evidencia y no de memoria— que **nada del origen quedó sin localizar**, y que cada
 nulo que hay en `core` está ahí por una razón conocida.
@@ -66,7 +71,7 @@ sin documentar (N-21). Es un total independiente y repetido dentro del grupo, no
 pueda reconstruir desde las otras filas — y esa propiedad, sola, ya basta para explicar por qué
 sumarlo multiplica los kilos.
 
-Hoy `core.packing.peso_kg` contiene `peso2`: **789.597.707 kg**, frente a **32.386.650 kg** de
+Hoy `core.op_packing.peso_kg` contiene `peso2`: **789.597.707 kg**, frente a **32.386.650 kg** de
 cosecha real de campo. Cualquier medida que sume `peso_kg` está inflada unas **24 veces** —esto
 no depende de si las partes suman el total o no: `peso2` se repite idéntico en cada fila del
 grupo, y sumarlo por fila lo cuenta una vez por cada clase en vez de una vez por lote.
@@ -88,11 +93,11 @@ de hora**, en rango `04:25:03`–`22:42:03`. Es la hora de captura — el mismo 
 
 Se pierde información real, y además de forma incoherente entre tablas hermanas.
 
-**Propuesta.** Cargar en `core.estados.hora` (`time`), igual que sus dos tablas gemelas.
+**Propuesta.** Cargar en `core.ev_estados.hora` (`time`), igual que sus dos tablas gemelas.
 
 ### N-18 · El turno se descarta en cinco tablas · **Medio**
 
-`core.turno` existe como dimensión (T00–T12) y `R08_Forecast_Campaña` sí persiste su turno.
+`core.m_turno` existe como dimensión (T00–T12) y `R08_Forecast_Campaña` sí persiste su turno.
 Pero en otras cinco tablas la columna `Turno` del origen se normaliza en `stg` y **se tira al
 insertar en `core`**:
 
@@ -122,7 +127,7 @@ No es un desplazamiento general de columnas: en esas filas `Clases`, `Lote`, `Ca
 columna `Programa de clasificación` está vacía, así que el dato es recuperable sin ambigüedad.
 
 Hoy se pierde en silencio: el casteo a entero devuelve NULL y no queda registro en cuarentena.
-Por eso `core.packing.contenedores_volcados` tiene **más** nulos que el origen (13.475 vs
+Por eso `core.op_packing.contenedores_volcados` tiene **más** nulos que el origen (13.475 vs
 13.085): la diferencia son exactamente esos 390.
 
 **Propuesta.** Al cargar, si `contenedores_volcados` no es numérico y `programa` está vacío,
@@ -160,7 +165,7 @@ submódulos A/B).
 
 **Propuesta.** Son campos del sistema de packing (Elifab) cuyo significado no está documentado
 en ninguna parte. Antes de cargarlos hay que preguntar a quien opera el packing qué son. Si
-resultan operativamente útiles, entran como columnas de texto en `core.packing`; si no, se
+resultan operativamente útiles, entran como columnas de texto en `core.op_packing`; si no, se
 documenta el descarte con su motivo. **Hoy no están ni cargados ni justificados.**
 
 ### N-22 · La cifra de N-9 quedó obsoleta para `H00` · **Bajo**
@@ -218,7 +223,7 @@ colapsan en un único `lote_id` (ADR-0003), y el fundo se recupera navegando
 
 | Access | Destino en `core` | Transformación |
 |---|---|---|
-| **H00_VolumenCampo** (30.812) + **H01_ProdHistorica** (30.626) → `core.cosecha` (30.540) | | **ver §3** |
+| **H00_VolumenCampo** (30.812) + **H01_ProdHistorica** (30.626) → `core.op_cosecha` (30.540) | | **ver §3** |
 | H00: Campaña, Fecha, ubicación, Variedad, KG | `cosecha.campania_id/fecha/lote_id/variedad_id/kg` | H00 es la referencia de kilos |
 | H01: nPlantas, Semana, Paña, Peso | `cosecha.n_plantas/semana/pana/peso_baya` | **solo H01 los trae** |
 | H01: KG | `cosecha.kg_h01` | se guarda aparte, no sobrescribe |
@@ -241,9 +246,9 @@ colapsan en un único `lote_id` (ADR-0003), y el fundo se recupera navegando
 
 | Access | Destino en `core` | Transformación |
 |---|---|---|
-| **M_Lotes** (860) | | **sustituida por el maestro vigente** `M_Lotes.xlsx` (879 lotes, ADR-0003) |
+| **M_Lotes** (Access, 882 en el snapshot actual) | | **maestro primario**; `M_Lotes.xlsx` se conserva como contraste (ADR-0012) |
 | Fundo | `fundo_alias` | única columna con uso real: aporta 3 grafías comerciales |
-| Las otras 14 | *(sin destino, justificado)* | el maestro vigente las reemplaza |
+| Las otras 14 | *(sin destino, justificado)* | se conservan en `raw`; no se reemplazan automáticamente |
 | **M_Poda** (2.159 → 2.147) | | 12 filas a cuarentena |
 | Campaña, ubicación, Area, FSiembra, FInicio | `poda.*` | `FInicio`: ver N-20 |
 | Variedad | `variedad` / `variedad_alias` | al catálogo, no por fila |
@@ -315,7 +320,7 @@ de la clave, porque solo H01 la conoce y usarla partiría filas que son la misma
 
 | | |
 |---|---|
-| Filas en `core.cosecha` | **30.540** |
+| Filas en `core.op_cosecha` | **30.540** |
 | Presentes en **ambas** fuentes | 30.532 |
 | Solo en H00 | 4 |
 | Solo en H01 | 4 — son las que no tienen variedad, porque **H01 nunca tuvo esa columna** (ADR-0005) |
@@ -379,8 +384,9 @@ registró la hora, el forecast no desglosó calibres. Forzarles un valor inventa
 
 ### D · Nulos de dominio distinto — *no comparables con Access*
 
-`lote.*` (fecha_siembra 16, maceta 170, tipo_fibra 256): vienen del **maestro vigente**
-`M_Lotes.xlsx` (879 lotes), no del `M_Lotes` de Access (860). `evaluador.*`: 37 filas frente a
+`lote.*` (fecha_siembra 16, maceta 170, tipo_fibra 256): vienen del **maestro primario**
+`M_Lotes` de Access (882 lotes en el snapshot actual); `M_Lotes.xlsx` se usa como contraste.
+`evaluador.*`: 37 filas frente a
 31, porque se añadieron 6 DNI que capturan datos sin ficha (H-09).
 
 ### E · Nulos estructurales del modelo nuevo — *por diseño*
@@ -417,5 +423,5 @@ Los puntos 1 a 4 no dependen de nadie externo y son los que bloquean el cierre t
 puntos 5 a 7 se suman a las cuatro decisiones ya listadas en
 [`../runbooks/02-cierre-de-migracion.md`](../runbooks/02-cierre-de-migracion.md) §3.
 
-Hasta que el punto 1 esté resuelto, **`core.packing.peso_kg` no debe usarse en ninguna medida de
+Hasta que el punto 1 esté resuelto, **`core.op_packing.peso_kg` no debe usarse en ninguna medida de
 Power BI**.

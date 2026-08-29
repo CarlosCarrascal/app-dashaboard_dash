@@ -52,7 +52,7 @@ Agronomía, no a ingeniería.
   `qua.v_resumen` (11 motivos, 0 alertas), como evidencia de cierre técnico.
 - Las cuatro decisiones de negocio pendientes, cada una con su dueño sugerido:
   - **D-1** — qué columna de kilos usa `R0902_Forecast_Sem_vs_Camp` (`03_GUIA_REPORTES.md:361-369`).
-    Ya implementado como parametrizable en `core.config_decision`; falta confirmación formal de
+    Ya implementado como parametrizable en `core.cfg_decision`; falta confirmación formal de
     Planeamiento.
   - **D-2** — la regla de asignación de campaña por poda (`05_ADDENDA_TECNICA.md:350-352`, N-11).
     Hoy registrado provisionalmente como `campania.origen_fechas = 'derivado'`; falta

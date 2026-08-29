@@ -111,12 +111,12 @@ La migración está cerrada desde ingeniería cuando las **cinco** condiciones s
 > La auditoría de mapeo columna por columna
 > ([`../modelo/01_mapeo_access_core.md`](../modelo/01_mapeo_access_core.md), 2026-08-05) cubrió
 > las 235 columnas del origen y encontró siete hallazgos nuevos (N-16 … N-22). Los cuatro que
-> dependían solo de ingeniería **ya están corregidos**: N-16 (`core.packing.peso_kg` sumaba el
+> dependían solo de ingeniería **ya están corregidos**: N-16 (`core.op_packing.peso_kg` sumaba el
 > total del grupo repetido por fila e inflaba los kilos ~24 veces; ahora es sumable y
 > `peso_kg_lote` documenta el total aparte), N-17 (la hora de captura de estados, antes
-> descartada por perder su encabezado, carga en `core.estados.hora`), N-19 (390 programas de
+> descartada por perder su encabezado, carga en `core.ev_estados.hora`), N-19 (390 programas de
 > packing rescatados de la columna equivocada) y N-22 (el comentario obsoleto de N-9).
-> `core.packing.peso_kg` ya puede usarse en medidas de Power BI.
+> `core.op_packing.peso_kg` ya puede usarse en medidas de Power BI.
 >
 > El punto 5 sigue en ⚠️ solo por dos hallazgos de documentación/decisión, ya trasladados a la
 > tabla de §3: **N-18** (el turno se descarta en cinco tablas sin que nadie haya comprobado si
@@ -139,7 +139,7 @@ negocio para fijarlos.
 ### D-1 · Qué kilos compara `R0902_Forecast_Sem_vs_Camp` · **Planeamiento**
 
 - **Estado**: implementado con `[KG Exp]`, por el precedente de `R0801_ResCampaña`.
-- **Reversible con**: un `UPDATE` en `core.config_decision`. No requiere recarga.
+- **Reversible con**: un `UPDATE` en `core.cfg_decision`. No requiere recarga.
 - **Fuente**: `docs/historico-access/05_ADDENDA_TECNICA.md` §4 (tabla de decisiones), y
   `docs/historico-access/03_GUIA_REPORTES.md`.
 
@@ -176,7 +176,7 @@ negocio para fijarlos.
   siquiera llega a `stg` — se descarta un paso antes de lo que se pensaba, al construir la
   vista, así que hoy no hay ningún valor con el que comparar.
 - **Por qué el fix no es automático**: para las dos tablas donde el turno sí sobrevive hasta
-  `stg` (`H01`, `E05`), comparar contra `core.lote.turno_id` (el turno resuelto por lote, del
+  `stg` (`H01`, `E05`), comparar contra `core.m_lote.turno_id` (el turno resuelto por lote, del
   maestro vigente) da resultados distintos:
   - `H01`: 30.536/30.536 filas coinciden (100%). Ahí sí sería seguro derivar de lote.
   - `E05`: 3.788/3.889 coinciden (97,4%); las 101 que no coinciden son **siempre el mismo par**,
@@ -207,7 +207,7 @@ negocio para fijarlos.
 
 ### Las 105 filas de cosecha con kilos discrepantes entre H00 y H01 · **Agronomía**
 
-- **Estado**: conservadas en `core.cosecha`, con `kg` (de H00, por convención) y `kg_h01` en
+- **Estado**: conservadas en `core.op_cosecha`, con `kg` (de H00, por convención) y `kg_h01` en
   paralelo. Son 105 de 30.532 filas presentes en ambas fuentes (0,34 %).
 - **Qué decidir**: cuál de las dos cifras vale cuando difieren. Ninguna se ha perdido.
 
@@ -219,14 +219,16 @@ N-5), D-5 (confirmado obsoleto).
 
 ## 4 · Política de retención de `qua.rechazos`
 
-- **Permanencia**: `qua.rechazos` es **archivo histórico permanente**. No se purga ni vence.
-  Es el registro de que nada se descartó en silencio, y ese registro no caduca.
+- **Permanencia**: `qua.rechazos` conserva la cuarentena de la **última carga**. No se purga
+  durante esa carga, pero `npm run build` la reemplaza al iniciar una nueva ejecución. Si se
+  requiere un histórico entre cargas, debe exportarse y versionarse como artefacto antes de
+  volver a cargar; la tabla por sí sola no ofrece esa retención.
 - **Reproceso**: a demanda, solo cuando llega una decisión de negocio de §3. No hay reproceso
   automático ni periódico. El procedimiento es el del runbook de cambio de esquema
   (`03-cambiar-el-esquema.md`): ajustar la regla, recargar, correr el contrato.
-- **Idempotencia**: cada `sp_cargar_*` vacía su propio destino antes de recargar, así que
-  `qua.rechazos` se reconstruye completo en cada corrida de `npm run build`. Las filas no se
-  acumulan entre corridas.
+- **Idempotencia**: cada `sp_cargar_*` vacía su propio destino antes de recargar, y el comienzo
+  de `npm run build` reinicia `qua.rechazos`; por eso la cuarentena queda completa para esa
+  corrida, pero las filas no se acumulan entre corridas.
 - **Si un umbral se excede** en una carga futura: `qua.v_alertas` devuelve filas y el informe lo
   marca `REVISAR`. Eso **no** es un error de la migración — es señal de que apareció un caso
   que la auditoría no cubría, y hay que mirarlo antes de dar la carga por buena. Un umbral se

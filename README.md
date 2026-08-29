@@ -14,17 +14,29 @@ mal elegidas, ningún índice único. Este repositorio declara las restricciones
 ```bash
 cp .env.example .env        # y poner la contraseña de PostgreSQL
 
-npm run setup               # entorno conda, paquetes Python, base de datos y roles
+npm run setup               # entorno conda, paquetes Python, base, roles y tablas raw
 npm run extract             # .accdb + xlsx  →  CSV en data/salida/  (origen en solo lectura)
 npm run load                # CSV            →  esquema raw
 npm run build               # raw → stg → core → dim/fact → reporting
-npm run validate            # contrato de aceptación: cada cifra contra la auditoría
+npm run validate            # contrato de aceptación, sobre un clon temporal no mutante
 npm run dashboard            # dashboard Dash oficial
 ```
 
 Solo hacen falta **Python y PostgreSQL**. `scripts/run.mjs` localiza `psql.exe` y el Python del
 entorno conda por su cuenta: no hay que activar nada ni tocar el `PATH`. Node actúa únicamente de
 lanzador de tareas — no hay dependencias npm ni código TypeScript (ADR-0006).
+
+Para usar el Python instalado aunque `python` no esté en el `PATH` global, se ejecuta siempre con
+`python -m`. La instalación reproducible de analítica y dashboard usa las constraints verificadas:
+
+```powershell
+python -m pytest --version
+python -m pip install -c constraints-analitica.txt -e "packages/analitica[dev,operativo]"
+python -m pip install -c constraints-analitica.txt -e "apps/dashboard[dev]"
+```
+
+`constraints-analitica.txt` fija las versiones directas del entorno validado; no incluye `pyodbc`
+porque el driver Access es opcional y depende de cada equipo Windows.
 
 ## Los módulos
 
@@ -105,14 +117,16 @@ los maestros de `core`; el dato sigue fluyendo `raw → stg → core`.
 | E7 | Contrato de aceptación ejecutable | ✅ |
 | — | Cierre de nulos de FK con filas centinela (ADR-0005) | ✅ |
 | E4 | `core` como código en `domain/` | pendiente |
-| E6 | Las 40 vistas de compatibilidad en `reporting` | 12 de 40 |
+| E6 | Las 40 vistas de compatibilidad en `reporting` | 40 de 40 |
 | E8 | Modelo estrella de BI y reapuntado de los dos informes | pendiente |
 | E9 | `backend/campo-api` para la app Flutter | pendiente |
 
-Hoy la base pasa 39 de 42 comprobaciones de su contrato. Las 3 restantes son diferencias
-**esperadas y documentadas** entre el maestro de lotes vigente y el histórico de Access —más lotes
-y más fundos que el origen—, no errores. El detalle está en el
-[runbook de cierre](docs/runbooks/02-cierre-de-migracion.md).
+El contrato actual contiene 92 comprobaciones, incluidas las 40 vistas de compatibilidad de
+`reporting`. El resultado vigente no se fija en este README: se obtiene ejecutando
+`npm run validate` contra una instancia cargada. El comando muestra explícitamente la base
+temporal que clona para ejecutar los checks; los `DROP`/`TRUNCATE`/`INSERT` de `90_checks` no
+se ejecutan sobre `PGDATABASE`. Si hay una falla, un error o una alerta de cuarentena, el
+comando termina con código distinto de cero.
 
 La app Flutter vive en **su propio repositorio** y consume `backend/campo-api` solo por contrato
 (el OpenAPI que publica). El ciclo de release de una app móvil no comparte ritmo con el de un

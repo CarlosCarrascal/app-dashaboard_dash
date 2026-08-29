@@ -7,7 +7,6 @@ description = "Extracción y carga de BD_AQUANQA_26.accdb y del maestro de lotes
 # precisamente por tener los identificadores nulos.
 requires-python = ">=3.12"
 dependencies = [
-    "pyodbc>=5.1",        # lectura del .accdb vía el driver ODBC de Access de 64 bits
     "psycopg[binary]>=3.2",
     "openpyxl>=3.1",      # maestro de lotes y tareo
     "python-dotenv>=1.0",
@@ -16,6 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]
+access = ["pyodbc>=5.1"]
 
 [project.scripts]
 aquanqa-etl = "aquanqa_etl.cli:main"
@@ -36,5 +36,6 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 # Las pruebas que necesitan una base viva se marcan y se pueden excluir con -m "not db".
 markers = ["db: requiere una base PostgreSQL accesible"]

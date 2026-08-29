@@ -1,0 +1,848 @@
+{
+  "schema": "nowcast-cierre-adaptativo-fixture-v1",
+  "fuente": "screening_adaptive_nowcast_fund_guard.json",
+  "detalle": {
+    "C2026": [
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-23T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 5.098544162544,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 13,
+        "candidate_kg": 3.059126497526
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-23T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 7643.14986718311,
+        "montue_kg": 12701.1401720047,
+        "real_kg": 16143.750218391418,
+        "semana_objetivo": 13,
+        "candidate_kg": 7705.329477217078
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-23T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 131.259912734938,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 13,
+        "candidate_kg": 78.755947640963
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-23T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 19.090568187436,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 13,
+        "candidate_kg": 11.454340912462
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-30T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 10.479921619635,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 14,
+        "candidate_kg": 10.479921619635
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-30T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 9924.04697568392,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 14,
+        "candidate_kg": 9924.04697568392
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-30T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 234.728204703548,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 14,
+        "candidate_kg": 234.728204703548
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-03-30T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 38.49611611969,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 14,
+        "candidate_kg": 38.49611611969
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-06T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 21.107071114414,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 15,
+        "candidate_kg": 12.664242668648
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-06T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 9835.410737415372,
+        "montue_kg": 13929.640098571777,
+        "real_kg": 27637.690299987793,
+        "semana_objetivo": 15,
+        "candidate_kg": 10039.635441817598
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-06T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 413.594488123367,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 15,
+        "candidate_kg": 248.15669287402
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-06T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 75.860201767784,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 15,
+        "candidate_kg": 45.51612106067
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-13T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 41.537951131275,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 16,
+        "candidate_kg": 41.537951131275
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-13T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 11007.644309758622,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 16,
+        "candidate_kg": 11007.644309758622
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-13T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 716.020185476066,
+        "montue_kg": 0.0,
+        "real_kg": 15998.740112304688,
+        "semana_objetivo": 16,
+        "candidate_kg": 716.020185476066
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-13T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 145.693354046431,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 16,
+        "candidate_kg": 145.693354046431
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-20T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 79.671426736746,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 17,
+        "candidate_kg": 69.162170716418
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-20T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 17279.66805674249,
+        "montue_kg": 11217.439987182617,
+        "real_kg": 32833.02046203613,
+        "semana_objetivo": 17,
+        "candidate_kg": 21870.04125758002
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-20T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 1214.66254621887,
+        "montue_kg": 6592.31005859375,
+        "real_kg": 6592.31005859375,
+        "semana_objetivo": 17,
+        "candidate_kg": 5091.646672692058
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-20T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 272.314211967651,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 17,
+        "candidate_kg": 236.393934287695
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-27T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 148.786585788738,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 18,
+        "candidate_kg": 187.272114656161
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-27T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 17518.79700315561,
+        "montue_kg": 0.0,
+        "real_kg": 3224.869964599609,
+        "semana_objetivo": 18,
+        "candidate_kg": 22050.25502548563
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-27T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 3391.108489716302,
+        "montue_kg": 21443.320152282715,
+        "real_kg": 37487.14058685303,
+        "semana_objetivo": 18,
+        "candidate_kg": 22354.399195754442
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-04-27T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 495.301804021102,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 18,
+        "candidate_kg": 623.417868891405
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-04T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 271.002518081492,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 19,
+        "candidate_kg": 276.437842034513
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-04T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 16205.164635904575,
+        "montue_kg": 6799.070083618164,
+        "real_kg": 28149.64984893799,
+        "semana_objetivo": 19,
+        "candidate_kg": 20410.277298841986
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-04T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 5790.61555667529,
+        "montue_kg": 20780.640060424805,
+        "real_kg": 20780.640060424805,
+        "semana_objetivo": 19,
+        "candidate_kg": 17765.85826394672
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-04T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 877.820935723597,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 19,
+        "candidate_kg": 895.42682806799
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-11T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 483.611144421416,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 20,
+        "candidate_kg": 669.935053051015
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-11T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 14848.956412223306,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 20,
+        "candidate_kg": 20569.907283001998
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-11T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 11364.968891478264,
+        "montue_kg": 33044.460273742676,
+        "real_kg": 85309.01007843018,
+        "semana_objetivo": 20,
+        "candidate_kg": 41802.939764194925
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-11T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 1519.922344886062,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 20,
+        "candidate_kg": 2105.512390482394
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-18T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 849.876877760316,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 21,
+        "candidate_kg": 955.93706076581
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-18T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 13429.445340943897,
+        "montue_kg": 7397.690292358398,
+        "real_kg": 25887.140419006348,
+        "semana_objetivo": 21,
+        "candidate_kg": 20510.28606007836
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-18T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 16889.043431874234,
+        "montue_kg": 27240.110473632812,
+        "real_kg": 34989.360595703125,
+        "semana_objetivo": 21,
+        "candidate_kg": 38898.93527860834
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-18T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 2580.649917322107,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 21,
+        "candidate_kg": 2902.701510519446
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-25T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 1472.760025458522,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 22,
+        "candidate_kg": 579.710733557579
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-25T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 12626.814281719757,
+        "montue_kg": 0.0,
+        "real_kg": 22988.41032600403,
+        "semana_objetivo": 22,
+        "candidate_kg": 4970.191778169788
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-25T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 40877.66428751526,
+        "montue_kg": 34.159999847412,
+        "real_kg": 60902.06031990051,
+        "semana_objetivo": 22,
+        "candidate_kg": 31649.520863274538
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-05-25T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 4315.078441129426,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 22,
+        "candidate_kg": 1698.509767527693
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-01T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 2505.230976779111,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 23,
+        "candidate_kg": 3111.585183269367
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-01T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 12182.335945705105,
+        "montue_kg": 0.0,
+        "real_kg": 14412.720059394836,
+        "semana_objetivo": 23,
+        "candidate_kg": 15130.890675398217
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-01T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 56194.41189385795,
+        "montue_kg": 68305.1897277832,
+        "real_kg": 143551.35925674438,
+        "semana_objetivo": 23,
+        "candidate_kg": 134394.81804155966
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-01T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 7134.378914285848,
+        "montue_kg": 0.0,
+        "real_kg": 3567.400047302246,
+        "semana_objetivo": 23,
+        "candidate_kg": 8861.150100443869
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-08T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 4184.295617100625,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 24,
+        "candidate_kg": 2516.532895542567
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-08T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 16244.327051012124,
+        "montue_kg": 7504.199981689453,
+        "real_kg": 12464.119941711426,
+        "semana_objetivo": 24,
+        "candidate_kg": 18702.38486861335
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-08T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 73607.79549195242,
+        "montue_kg": 28109.799926757812,
+        "real_kg": 95919.1400756836,
+        "semana_objetivo": 24,
+        "candidate_kg": 77730.10713283473
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-08T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 11696.09491074868,
+        "montue_kg": 0.0,
+        "real_kg": 21343.29037475586,
+        "semana_objetivo": 24,
+        "candidate_kg": 7034.304046778146
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-15T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 7090.703438643089,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 25,
+        "candidate_kg": 5432.962751962553
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-15T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 17991.521368891048,
+        "montue_kg": 4490.400040626526,
+        "real_kg": 20254.91024494171,
+        "semana_objetivo": 25,
+        "candidate_kg": 18236.408714922432
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-15T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 83979.8138470206,
+        "montue_kg": 62705.631286621094,
+        "real_kg": 97675.13185119629,
+        "semana_objetivo": 25,
+        "candidate_kg": 126503.47582423707
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-15T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 21336.738010371882,
+        "montue_kg": 0.0,
+        "real_kg": 17973.03018760681,
+        "semana_objetivo": 25,
+        "candidate_kg": 16348.406594891681
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-22T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 12881.418805458992,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 26,
+        "candidate_kg": 7747.975019192627
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-22T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 18936.15628477462,
+        "montue_kg": 0.0,
+        "real_kg": 8648.230040550232,
+        "semana_objetivo": 26,
+        "candidate_kg": 11389.806361375686
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-22T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 102669.08977702975,
+        "montue_kg": 35890.91015625,
+        "real_kg": 105240.27001953125,
+        "semana_objetivo": 26,
+        "candidate_kg": 98338.16366161681
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-22T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 44069.30081133001,
+        "montue_kg": 34351.19010925293,
+        "real_kg": 51746.84014892578,
+        "semana_objetivo": 26,
+        "candidate_kg": 61521.827188110525
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-29T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 24412.604327128713,
+        "montue_kg": 0.0,
+        "real_kg": 0.0,
+        "semana_objetivo": 27,
+        "candidate_kg": 11768.293301049802
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-29T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 15531.212064857842,
+        "montue_kg": 11261.720341682434,
+        "real_kg": 18641.540349960327,
+        "semana_objetivo": 27,
+        "candidate_kg": 25745.559269725138
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-29T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 96443.09564842918,
+        "montue_kg": 10438.709899902344,
+        "real_kg": 75010.57012939453,
+        "semana_objetivo": 27,
+        "candidate_kg": 63415.441168160214
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-06-29T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 63833.39834656437,
+        "montue_kg": 17987.020126342773,
+        "real_kg": 58512.16030883789,
+        "semana_objetivo": 27,
+        "candidate_kg": 59933.738726279684
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-06T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 42710.06808332514,
+        "montue_kg": 4877.960052490234,
+        "real_kg": 9929.260093688965,
+        "semana_objetivo": 28,
+        "candidate_kg": 33178.65999163215
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-06T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 14989.225808127077,
+        "montue_kg": 5447.77018737793,
+        "real_kg": 18456.520317077637,
+        "semana_objetivo": 28,
+        "candidate_kg": 15480.071845204608
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-06T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 92681.832694829,
+        "montue_kg": 31703.410736083984,
+        "real_kg": 97212.9504699707,
+        "semana_objetivo": 28,
+        "candidate_kg": 93682.35690336298
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-06T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 87197.43272022298,
+        "montue_kg": 59710.6318359375,
+        "real_kg": 135309.19235229492,
+        "semana_objetivo": 28,
+        "candidate_kg": 118822.60640386093
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-13T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 62041.69298217672,
+        "montue_kg": 5782.920043945312,
+        "real_kg": 28005.190002441406,
+        "semana_objetivo": 29,
+        "candidate_kg": 50656.54733143471
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-13T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 19708.31951242444,
+        "montue_kg": 24298.400325775146,
+        "real_kg": 39478.90027332306,
+        "semana_objetivo": 29,
+        "candidate_kg": 37527.10915513044
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-13T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 105105.92703821193,
+        "montue_kg": 51877.97049713135,
+        "real_kg": 119018.59105682373,
+        "semana_objetivo": 29,
+        "candidate_kg": 125977.05575339704
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-13T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 111968.59218522186,
+        "montue_kg": 69915.57092285156,
+        "real_kg": 145904.89068984985,
+        "semana_objetivo": 29,
+        "candidate_kg": 148183.61843295733
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-20T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 28708.30068728849,
+        "montue_kg": 12593.360076904297,
+        "real_kg": 25863.710174560547,
+        "semana_objetivo": 30,
+        "candidate_kg": 34077.40718245087
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-20T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 35544.63663679487,
+        "montue_kg": 0.0,
+        "real_kg": 31588.360280036926,
+        "semana_objetivo": 30,
+        "candidate_kg": 18676.651333245543
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-20T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 116235.69701872382,
+        "montue_kg": 24885.660369873047,
+        "real_kg": 102321.05222702026,
+        "semana_objetivo": 30,
+        "candidate_kg": 98606.80056368338
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-20T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 153458.59733123617,
+        "montue_kg": 40085.45983886719,
+        "real_kg": 136951.13055419922,
+        "semana_objetivo": 30,
+        "candidate_kg": 141089.07616731062
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-27T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 72552.4209767593,
+        "montue_kg": 14183.780029296875,
+        "real_kg": 73453.35049438477,
+        "semana_objetivo": 31,
+        "candidate_kg": 59814.878661184084
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-27T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 45386.6086725855,
+        "montue_kg": 10086.680114746094,
+        "real_kg": 32573.78042268753,
+        "semana_objetivo": 31,
+        "candidate_kg": 39690.78328015247
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-27T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 141006.8489926299,
+        "montue_kg": 14995.68017578125,
+        "real_kg": 72706.12001037598,
+        "semana_objetivo": 31,
+        "candidate_kg": 92715.84396034935
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-07-27T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 215594.59458509815,
+        "montue_kg": 38195.2509765625,
+        "real_kg": 125862.50123596191,
+        "semana_objetivo": 31,
+        "candidate_kg": 170343.4416481137
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-03T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 64134.34441198321,
+        "montue_kg": 52861.59051513672,
+        "real_kg": 78695.85095214844,
+        "semana_objetivo": 32,
+        "candidate_kg": 99033.30778510556
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-03T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 38476.30019532743,
+        "montue_kg": 32249.909873962402,
+        "real_kg": 90654.80110931396,
+        "semana_objetivo": 32,
+        "candidate_kg": 59981.86381168395
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-03T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 135403.18453562542,
+        "montue_kg": 30722.39044189453,
+        "real_kg": 166291.4022216797,
+        "semana_objetivo": 32,
+        "candidate_kg": 123374.31701792625
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-03T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 209058.20116024616,
+        "montue_kg": 72813.62037658691,
+        "real_kg": 218108.7724761963,
+        "semana_objetivo": 32,
+        "candidate_kg": 217380.12313705884
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-10T00:00:00",
+        "fundo_operativo": "Arena",
+        "macro_kg": 98512.37346243479,
+        "montue_kg": 34584.650390625,
+        "real_kg": 179850.23164367676,
+        "semana_objetivo": 33,
+        "candidate_kg": 110919.92108490423
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-10T00:00:00",
+        "fundo_operativo": "Ayllu",
+        "macro_kg": 51165.196980110355,
+        "montue_kg": 43283.95022583008,
+        "real_kg": 105121.8607711792,
+        "semana_objetivo": 33,
+        "candidate_kg": 84407.51451734811
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-10T00:00:00",
+        "fundo_operativo": "Kawsay",
+        "macro_kg": 140767.6473492204,
+        "montue_kg": 62956.28000640869,
+        "real_kg": 135068.77038955688,
+        "semana_objetivo": 33,
+        "candidate_kg": 172823.7648317542
+      },
+      {
+        "campania": "C2026",
+        "fecha_objetivo": "2026-08-10T00:00:00",
+        "fundo_operativo": "Quri",
+        "macro_kg": 229740.17349738127,
+        "montue_kg": 106379.72045898438,
+        "real_kg": 260970.78204345703,
+        "semana_objetivo": 33,
+        "candidate_kg": 285901.0051575482
+      }
+    ]
+  }
+}

@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-import shap
 import xgboost as xgb
 
 from ..config import FEATURES, OBJETIVO, PARAMS
@@ -48,9 +47,7 @@ class Ajuste:
         return float(self.base_value + self.shap_values[pos].sum())
 
 
-def entrenar(
-    tabla: pd.DataFrame, params: dict | None = None, objetivo: str = OBJETIVO
-) -> Ajuste:
+def entrenar(tabla: pd.DataFrame, params: dict | None = None, objetivo: str = OBJETIVO) -> Ajuste:
     """Entrena sobre el panel entero y calcula SHAP.
 
     Descarta las filas sin ventana de rezago completa (`nucleo/datos.py` las deja en NaN
@@ -63,6 +60,10 @@ def entrenar(
     `PARAMS` se barrieron para KgHa; reusarlos en otro objetivo es una aproximación, no una
     calibración propia.
     """
+    # SHAP arrastra Numba/LLVM. Importarlo solo al solicitar una explicación evita que el
+    # servidor, los contratos y los backtests inicialicen un JIT que no necesitan.
+    import shap
+
     tabla = tabla.dropna(subset=[*FEATURES, objetivo])
     X = tabla[list(FEATURES)]
     y = tabla[objetivo]
@@ -73,9 +74,9 @@ def entrenar(
         shap_values=valores.values,
         base_value=float(np.ravel(valores.base_values)[0]),
         X=X,
-        importancia=pd.Series(
-            np.abs(valores.values).mean(0), index=list(FEATURES)
-        ).sort_values(ascending=False),
+        importancia=pd.Series(np.abs(valores.values).mean(0), index=list(FEATURES)).sort_values(
+            ascending=False
+        ),
     )
 
 

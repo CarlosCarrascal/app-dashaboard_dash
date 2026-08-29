@@ -8,7 +8,6 @@ explica el R²» y la lectura interna de una predicción en «Explicación del m
 
 from __future__ import annotations
 
-import dash
 import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html
@@ -20,9 +19,14 @@ from components import ui
 from servicios.cache_analisis import obtener, precargar
 from servicios.carga import LAGS_POR_DEFECTO, PANEL_STORE
 
-dash.register_page(
-    __name__, path="/modelo/modelo", name="Modelo predictivo", order=1,
-    grupo="Modelo predictivo",
+from ._legacy import registrar_pagina_legacy
+
+registrar_pagina_legacy(
+    __name__,
+    path="/modelo/modelo",
+    name="Legacy · XGBoost 2025",
+    order=1,
+    grupo="Legacy / Exploración",
 )
 
 _VENTANAS_CACHE = "modelo:ventanas"
@@ -34,6 +38,7 @@ def layout():
     return html.Div(
         className="space-y-4",
         children=[
+            ui.fuente_historica(),
             html.Div(id="modelo-principal", children=ui.esqueleto_pagina()),
             html.Div(id="modelo-familias", children=ui.esqueleto_seccion("h-64")),
         ],
@@ -61,30 +66,32 @@ def _kpis(panel) -> html.Div:
     semanas = int(base.nsem.nunique()) if not base.empty else 0
     filas_por_semana = base.groupby("nsem").size().tolist() if not base.empty else None
     ventana_max = max(LAGS_POR_DEFECTO.values())
-    return ui.fila_kpi([
-        ui.kpi(
-            "Muestra comparable",
-            f"{len(base)}\u00a0/\u00a0{semanas}",
-            nota="Filas / semanas con las 7 variables completas y Kg/ha observado.",
-            serie=filas_por_semana,
-        ),
-        ui.kpi(
-            "Variables predictoras",
-            str(len(FEATURES)),
-            nota="Señales que recibe el modelo general; clima, riego y ventanas móviles.",
-        ),
-        ui.kpi(
-            "Árboles encadenados",
-            str(PARAMS["n_estimators"]),
-            nota=f"Profundidad {PARAMS['max_depth']} · η = {PARAMS['learning_rate']}.",
-        ),
-        ui.kpi(
-            "Ventana más larga",
-            f"{ventana_max} sem.",
-            nota="Es un desfase de calendario, no una fase fenológica medida.",
-            serie=sorted(LAGS_POR_DEFECTO.values()),
-        ),
-    ])
+    return ui.fila_kpi(
+        [
+            ui.kpi(
+                "Muestra comparable",
+                f"{len(base)}\u00a0/\u00a0{semanas}",
+                nota="Filas / semanas con las 7 variables completas y Kg/ha observado.",
+                serie=filas_por_semana,
+            ),
+            ui.kpi(
+                "Variables predictoras",
+                str(len(FEATURES)),
+                nota="Señales que recibe el modelo general; clima, riego y ventanas móviles.",
+            ),
+            ui.kpi(
+                "Árboles encadenados",
+                str(PARAMS["n_estimators"]),
+                nota=f"Profundidad {PARAMS['max_depth']} · η = {PARAMS['learning_rate']}.",
+            ),
+            ui.kpi(
+                "Ventana más larga",
+                f"{ventana_max} sem.",
+                nota="Es un desfase de calendario, no una fase fenológica medida.",
+                serie=sorted(LAGS_POR_DEFECTO.values()),
+            ),
+        ]
+    )
 
 
 def _respuesta_corta() -> html.Div:
@@ -92,23 +99,31 @@ def _respuesta_corta() -> html.Div:
     conexion = html.Div(
         className="grid gap-4 sm:grid-cols-2",
         children=[
-            html.Div([
-                html.Div("Este análisis responde", className="text-sm font-semibold text-slate-700"),
-                html.P(
-                    "Qué recibe el predictor, qué límites tiene esa señal y si la familia "
-                    "elegida merece compararse con alternativas bajo la misma partición.",
-                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                ),
-            ]),
-            html.Div([
-                html.Div("Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"),
-                html.P(
-                    "Separa el instrumento predictivo del análisis agronómico: aquí se "
-                    "audita la entrada y la elección del algoritmo; el R² mide si generaliza "
-                    "y SHAP describe cómo reparte una predicción.",
-                    className="mt-1.5 text-sm leading-relaxed text-slate-600",
-                ),
-            ]),
+            html.Div(
+                [
+                    html.Div(
+                        "Este análisis responde", className="text-sm font-semibold text-slate-700"
+                    ),
+                    html.P(
+                        "Qué recibe el predictor, qué límites tiene esa señal y si la familia "
+                        "elegida merece compararse con alternativas bajo la misma partición.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        "Cómo ayuda al modelo", className="text-sm font-semibold text-slate-700"
+                    ),
+                    html.P(
+                        "Separa el instrumento predictivo del análisis agronómico: aquí se "
+                        "audita la entrada y la elección del algoritmo; el R² mide si generaliza "
+                        "y SHAP describe cómo reparte una predicción.",
+                        className="mt-1.5 text-sm leading-relaxed text-slate-600",
+                    ),
+                ]
+            ),
         ],
     )
     return ui.panel(
@@ -163,16 +178,24 @@ def _que_hace() -> html.Div:
 
 def _ventanas(panel) -> html.Div:
     diagnostico = _diagnostico(panel)
-    resumen = diagnostico[[
-        "Columna modelo", "Ventana (sem)", "Cobertura temporal", "Ámbito", "Filas con valor",
-    ]].copy()
+    resumen = diagnostico[
+        [
+            "Columna modelo",
+            "Ventana (sem)",
+            "Cobertura temporal",
+            "Ámbito",
+            "Filas con valor",
+        ]
+    ].copy()
     resumen["Columna modelo"] = resumen["Columna modelo"].map(etiqueta)
-    resumen = resumen.rename(columns={
-        "Columna modelo": "Variable",
-        "Ventana (sem)": "Ventana",
-        "Cobertura temporal": "Semanas incluidas",
-        "Filas con valor": "Filas válidas",
-    })
+    resumen = resumen.rename(
+        columns={
+            "Columna modelo": "Variable",
+            "Ventana (sem)": "Ventana",
+            "Cobertura temporal": "Semanas incluidas",
+            "Filas con valor": "Filas válidas",
+        }
+    )
 
     clima = panel.tabla[["nsem", "gdd_semana", "TempMax", "TempMin"]].drop_duplicates("nsem").copy()
     clima["Temperatura media"] = (clima.TempMax + clima.TempMin) / 2
@@ -204,7 +227,9 @@ def _ventanas(panel) -> html.Div:
             f"{corr_gdd:+.3f}. GDD puede conservarse como indicador de desarrollo, pero no "
             "debe presentarse como una señal independiente mientras no exista un reloj "
             "térmico definido desde poda.",
-        ) if corr_gdd > 0.98 and clima.gdd_semana.min() > 0 else ui.semaforo(
+        )
+        if corr_gdd > 0.98 and clima.gdd_semana.min() > 0
+        else ui.semaforo(
             "info",
             "**No aparece una redundancia extrema entre GDD y temperatura** bajo este "
             "control; aun así, ambas variables pueden compartir parte del calendario.",
@@ -219,41 +244,57 @@ def _ventanas(panel) -> html.Div:
                 "represente el tiempo biológico de cada variable."
             ),
         ),
-        ayuda="Cómo se construyeron las siete entradas y qué límites tienen antes de interpretar el modelo.",
+        ayuda=(
+            "Cómo se construyeron las siete entradas y qué límites tienen antes de "
+            "interpretar el modelo."
+        ),
     )
 
 
 def _como_esta_ajustado() -> html.Div:
-    historico = pd.DataFrame({
-        "Configuración histórica": [
-            "Anterior (prof. 3, η 0,03)",
-            "Prof. 6, η 0,01, hoja ≥ 10, λ 5",
-            "Piso: predecir la media",
-        ],
-        "R² selección": [0.344, 0.402, None],
-        "R² honesto": [-0.116, 0.053, -0.147],
-        "MAE honesto (kg/ha)": [757, 686, 756],
-    })
-    hiperparams = pd.DataFrame({
-        "Parámetro": [
-            "n_estimators", "max_depth", "learning_rate", "min_child_weight",
-            "reg_lambda", "subsample", "colsample_bytree",
-        ],
-        "Valor": [
-            PARAMS["n_estimators"], PARAMS["max_depth"], PARAMS["learning_rate"],
-            PARAMS["min_child_weight"], PARAMS["reg_lambda"], PARAMS["subsample"],
-            PARAMS["colsample_bytree"],
-        ],
-        "Qué controla": [
-            "Cuántos árboles se encadenan.",
-            "Profundidad de cada árbol.",
-            "Cuánto aporta cada árbol.",
-            "Mínimo de observaciones por hoja.",
-            "Penalización L2 sobre el valor de las hojas.",
-            "Fracción de filas que ve cada árbol.",
-            "Fracción de variables que ve cada árbol.",
-        ],
-    })
+    historico = pd.DataFrame(
+        {
+            "Configuración histórica": [
+                "Anterior (prof. 3, η 0,03)",
+                "Prof. 6, η 0,01, hoja ≥ 10, λ 5",
+                "Piso: predecir la media",
+            ],
+            "R² selección": [0.344, 0.402, None],
+            "R² honesto": [-0.116, 0.053, -0.147],
+            "MAE honesto (kg/ha)": [757, 686, 756],
+        }
+    )
+    hiperparams = pd.DataFrame(
+        {
+            "Parámetro": [
+                "n_estimators",
+                "max_depth",
+                "learning_rate",
+                "min_child_weight",
+                "reg_lambda",
+                "subsample",
+                "colsample_bytree",
+            ],
+            "Valor": [
+                PARAMS["n_estimators"],
+                PARAMS["max_depth"],
+                PARAMS["learning_rate"],
+                PARAMS["min_child_weight"],
+                PARAMS["reg_lambda"],
+                PARAMS["subsample"],
+                PARAMS["colsample_bytree"],
+            ],
+            "Qué controla": [
+                "Cuántos árboles se encadenan.",
+                "Profundidad de cada árbol.",
+                "Cuánto aporta cada árbol.",
+                "Mínimo de observaciones por hoja.",
+                "Penalización L2 sobre el valor de las hojas.",
+                "Fracción de filas que ve cada árbol.",
+                "Fracción de variables que ve cada árbol.",
+            ],
+        }
+    )
     return ui.panel(
         "4 · Cómo está ajustado",
         ui.parrafo(
@@ -269,11 +310,14 @@ def _como_esta_ajustado() -> html.Div:
                 "Estas cifras pertenecen a la etapa anterior a la formulación vigente de "
                 "ventanas. Se conservan como trazabilidad, no como resultado actual."
             ),
-            ui.tabla_desde_df(historico, formato={
-                "R² selección": "{:+.3f}",
-                "R² honesto": "{:+.3f}",
-                "MAE honesto (kg/ha)": "{:.0f}",
-            }),
+            ui.tabla_desde_df(
+                historico,
+                formato={
+                    "R² selección": "{:+.3f}",
+                    "R² honesto": "{:+.3f}",
+                    "MAE honesto (kg/ha)": "{:.0f}",
+                },
+            ),
         ),
         ui.plegable(
             "Los hiperparámetros, uno por uno",
@@ -293,21 +337,25 @@ def _como_esta_ajustado() -> html.Div:
 def _figura_comparacion(comparacion: pd.DataFrame) -> go.Figure:
     orden = comparacion.sort_values("R² deja-un-bloque")
     colores = [
-        "#3B7DD8" if modelo == "XGBoost (el del tablero)"
-        else "#D9822B" if modelo == "Random Forest"
+        "#3B7DD8"
+        if modelo == "XGBoost (el del tablero)"
+        else "#D9822B"
+        if modelo == "Random Forest"
         else "#94a3b8"
         for modelo in orden.Modelo
     ]
-    fig = go.Figure(go.Bar(
-        x=orden["R² deja-un-bloque"],
-        y=orden.Modelo,
-        orientation="h",
-        marker_color=colores,
-        text=[f"{valor:+.3f}" for valor in orden["R² deja-un-bloque"]],
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate="%{y}<br>R² deja-un-bloque = %{x:+.3f}<extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Bar(
+            x=orden["R² deja-un-bloque"],
+            y=orden.Modelo,
+            orientation="h",
+            marker_color=colores,
+            text=[f"{valor:+.3f}" for valor in orden["R² deja-un-bloque"]],
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate="%{y}<br>R² deja-un-bloque = %{x:+.3f}<extra></extra>",
+        )
+    )
     fig.add_vline(x=0, line_color="#94a3b8")
     fig.update_layout(
         height=360,
@@ -320,9 +368,14 @@ def _figura_comparacion(comparacion: pd.DataFrame) -> go.Figure:
         hoverlabel={"bgcolor": "#ffffff", "bordercolor": "#d6d3d1"},
     )
     fig.add_annotation(
-        x=1, y=1.08, xref="paper", yref="paper", xanchor="right",
+        x=1,
+        y=1.08,
+        xref="paper",
+        yref="paper",
+        xanchor="right",
         text="Azul: referencia actual · naranja: alternativa sin calibrar",
-        showarrow=False, font={"size": 11, "color": "#64748b"},
+        showarrow=False,
+        font={"size": 11, "color": "#64748b"},
     )
     return fig
 
@@ -333,10 +386,18 @@ def _render_comparacion(panel) -> html.Div:
     except Exception as exc:  # pragma: no cover - protección de la UI ante datos inválidos
         return ui.semaforo("error", f"No se pudo comparar las familias: {exc}")
 
-    piso = float(comparacion.loc[comparacion.Modelo == "Predecir la media", "R² deja-un-bloque"].iloc[0])
-    xgb = float(comparacion.loc[comparacion.Modelo == "XGBoost (el del tablero)", "R² deja-un-bloque"].iloc[0])
+    piso = float(
+        comparacion.loc[comparacion.Modelo == "Predecir la media", "R² deja-un-bloque"].iloc[0]
+    )
+    xgb = float(
+        comparacion.loc[comparacion.Modelo == "XGBoost (el del tablero)", "R² deja-un-bloque"].iloc[
+            0
+        ]
+    )
     mejor = comparacion.loc[comparacion["R² deja-un-bloque"].idxmax()]
-    lineal = float(comparacion.loc[comparacion.Modelo == "Regresión lineal", "R² deja-un-bloque"].iloc[0])
+    lineal = float(
+        comparacion.loc[comparacion.Modelo == "Regresión lineal", "R² deja-un-bloque"].iloc[0]
+    )
     ganador = str(mejor.Modelo)
     if ganador == "XGBoost (el del tablero)":
         veredicto = (
@@ -393,11 +454,14 @@ def _render_comparacion(panel) -> html.Div:
         ),
         ui.plegable(
             "Ver las dos particiones y el MAE",
-            ui.tabla_desde_df(comparacion, formato={
-                "R² deja-una-semana": "{:+.3f}",
-                "R² deja-un-bloque": "{:+.3f}",
-                "MAE bloque (kg/ha)": "{:.0f}",
-            }),
+            ui.tabla_desde_df(
+                comparacion,
+                formato={
+                    "R² deja-una-semana": "{:+.3f}",
+                    "R² deja-un-bloque": "{:+.3f}",
+                    "MAE bloque (kg/ha)": "{:.0f}",
+                },
+            ),
             ui.como_leer(
                 "La barra muestra solo R² deja-un-bloque: cuanto más a la derecha, mejor "
                 "generaliza en ese tramo retenido. El valor puede ser negativo cuando el "
@@ -407,7 +471,10 @@ def _render_comparacion(panel) -> html.Div:
                 "no tiene una calibración equivalente.",
             ),
         ),
-        ayuda="Comparación honesta de familias predictivas antes de justificar la elección del algoritmo.",
+        ayuda=(
+            "Comparación honesta de familias predictivas antes de justificar la "
+            "elección del algoritmo."
+        ),
     )
 
 

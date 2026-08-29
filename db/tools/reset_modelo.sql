@@ -2,7 +2,9 @@
 -- Herramienta de desarrollo · reconstruir el modelo desde cero
 --
 -- Borra core, stg, qua, dim, fact y reporting, y los deja listos para que `npm run build`
--- los vuelva a crear. **No toca `raw`**, así que no hay que repetir la extracción del .accdb.
+-- los vuelva a crear. **No toca `raw`, `analytics` ni `mlflow`**: estos últimos contienen
+-- historial de corridas y releases, por lo que este reset no es un borrado total de la base.
+-- Para una integración verdaderamente limpia se debe usar una base PostgreSQL nueva.
 --
 -- No forma parte del pipeline: vive fuera de db/sql para que no se ejecute por accidente.
 -- Se lanza a mano:

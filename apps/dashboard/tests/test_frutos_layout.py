@@ -12,9 +12,9 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / "apps" / "dashboard"), str(ROOT / "packages")]
 
 import app as dashboard_app  # noqa: E402,F401
-from pages.impacto import frutos_peso  # noqa: E402
 from analitica.nucleo import clima  # noqa: E402
 from components import ui  # noqa: E402
+from pages.impacto import frutos_peso  # noqa: E402
 
 
 def _ids(componente) -> set[str]:
@@ -61,10 +61,18 @@ def test_frutos_tiene_un_solo_estado_de_carga_inicial():
     ids = _ids(frutos_peso.layout())
     assert "fp-carga-inicial" in ids
     assert "fp-pagina-lista" in ids
-    assert {f"fp-listo-{parte}" for parte in (
-        "resumen", "descomposicion", "trayectoria", "picos",
-        "picos-grafico", "peso", "peso-grafico",
-    )} <= ids
+    assert {
+        f"fp-listo-{parte}"
+        for parte in (
+            "resumen",
+            "descomposicion",
+            "trayectoria",
+            "picos",
+            "picos-grafico",
+            "peso",
+            "peso-grafico",
+        )
+    } <= ids
 
 
 def test_floracion_opcional_no_deja_fallar_el_calculo_si_no_hay_columna():
@@ -73,11 +81,13 @@ def test_floracion_opcional_no_deja_fallar_el_calculo_si_no_hay_columna():
 
     assert clima.rezago_floracion(tabla).empty
     assert clima.rezagos_floracion_clima(tabla).empty
-    sem = pd.DataFrame({
-        "nsem": range(13),
-        "kg_ha": [float(i) for i in range(13)],
-        **{c: [float(i + 1) for i in range(13)] for c in clima.REZAGOS_PREDICTORES},
-    })
+    sem = pd.DataFrame(
+        {
+            "nsem": range(13),
+            "kg_ha": [float(i) for i in range(13)],
+            **{c: [float(i + 1) for i in range(13)] for c in clima.REZAGOS_PREDICTORES},
+        }
+    )
     resultado = clima.rezagos_todos(sem, tabla)
     assert "Floración" not in set(resultado.get("Objetivo", []))
 

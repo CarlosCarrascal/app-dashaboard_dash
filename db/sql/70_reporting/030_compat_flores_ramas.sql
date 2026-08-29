@@ -251,8 +251,8 @@ SELECT cp.campania    AS "Campaña",
        p.fecha_inicio AS "FInicio",
        v.min_fecha    AS "MínDeFecha"
 FROM reporting.v_flores_semana v
-LEFT JOIN core.poda p ON p.poda_id = (
-    SELECT p2.poda_id FROM core.poda p2
+LEFT JOIN core.evt_poda p ON p.poda_id = (
+    SELECT p2.poda_id FROM core.evt_poda p2
      WHERE p2.lote_id = v.lote_id AND p2.fecha_inicio <= v.min_fecha
      ORDER BY p2.fecha_inicio DESC LIMIT 1)
 LEFT JOIN dim.campania cp ON cp.campania_id = p.campania_id;
@@ -264,7 +264,7 @@ COMMENT ON VIEW reporting."01_Flores_C2025" IS
     'número de semana, así que la multiplicación no puede ocurrir. Da 9.033 y no 9.040: la '
     'diferencia son 7 combinaciones de lote+semana que desaparecen porque TODAS sus filas de '
     'origen (de las 140 de E02_ConteoFlores en cuarentena, entre lote inexistente y clave '
-    'repetida) quedaron fuera de core.flores — verificado, no es una pérdida nueva.';
+    'repetida) quedaron fuera de core.ev_flores — verificado, no es una pérdida nueva.';
 
 -- ── 0202_FloresTurno ─────────────────────────────────────────────────────────
 -- CORRECCIÓN DE FIDELIDAD (encontrada al construir el bloque 2): la primera versión de esta

@@ -16,14 +16,14 @@
 -- ============================================================================
 
 -- ── Cosecha ─────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.cosecha (
+CREATE TABLE IF NOT EXISTS core.op_cosecha (
     cosecha_id      integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
-    campania_id     smallint NOT NULL REFERENCES core.campania(campania_id),
+    campania_id     smallint NOT NULL REFERENCES core.t_campania(campania_id),
     -- NOT NULL desde ADR-0005: las 4 filas que solo existen en H01 (que nunca tuvo columna
     -- de variedad) apuntan al centinela "Sin identificar" en vez de quedar en NULL (N-15).
-    variedad_id     smallint NOT NULL REFERENCES core.variedad(variedad_id),
+    variedad_id     smallint NOT NULL REFERENCES core.m_variedad(variedad_id),
     kg              numeric(12,4) NOT NULL CHECK (kg >= 0),
     pana            smallint CHECK (pana > 0),
     peso_baya       numeric(8,4) CHECK (peso_baya > 0),
@@ -38,36 +38,36 @@ CREATE TABLE IF NOT EXISTS core.cosecha (
     UNIQUE (lote_id, fecha, campania_id)
 );
 
-COMMENT ON TABLE core.cosecha IS
+COMMENT ON TABLE core.op_cosecha IS
     'Kilos cosechados por lote y fecha: el hecho primario de producción. Unifica H00 y H01, que '
     'registran la misma cosecha con reglas distintas (H-07). La referencia de KG es H00, que '
     'conserva los registros completos en C2023 y C2024 — H01 tiene 187 filas menos, y las que '
     'le faltan promedian 24 kg frente a los ~1.060 kg del promedio general, así que son '
     'registros de volumen muy pequeño excluidos por una regla que no está documentada en '
     'ninguna parte porque se aplicaba en la carga, externa a Access.';
-COMMENT ON COLUMN core.cosecha.fecha IS
+COMMENT ON COLUMN core.op_cosecha.fecha IS
     'NOT NULL. Es lo que bloquea las 3 filas de subtotal de Excel de H-06: tenían todos los '
     'identificadores vacíos y 1.925.995 kg entre las tres.';
-COMMENT ON COLUMN core.cosecha.pana IS
+COMMENT ON COLUMN core.op_cosecha.pana IS
     'Número de pasada de cosecha. En arándano no se cosecha de una vez: se pasa varias veces '
     'recogiendo lo maduro, y el rendimiento por pasada decide cuántas vale la pena hacer.';
-COMMENT ON COLUMN core.cosecha.en_h00 IS
+COMMENT ON COLUMN core.op_cosecha.en_h00 IS
     'La fila existe en H00_VolumenCampo. Junto con en_h01 hace la reconciliación auditable en '
     'lugar de oculta.';
-COMMENT ON COLUMN core.cosecha.kg_h01 IS
+COMMENT ON COLUMN core.op_cosecha.kg_h01 IS
     'Los kilos según H01, cuando difieren de los de H00. Permite cuantificar el desfase por '
     'campaña sin mantener dos tablas de hechos.';
-COMMENT ON COLUMN core.cosecha.registros_h00 IS
+COMMENT ON COLUMN core.op_cosecha.registros_h00 IS
     'Cuántas filas de H00 se agregaron en esta. Hoy vale 1 en todas: la agregación sigue '
     'existiendo por si el origen repite la clave, pero ya no se dispara. La auditoría contaba '
     '34 grupos repetidos con 151 filas de exceso (N-9), algo que dejó de ocurrir al normalizar '
     'los códigos de lote (N-3) — verificado en 0 grupos (N-22).';
 
-CREATE INDEX IF NOT EXISTS cosecha_lote_fecha_idx ON core.cosecha (lote_id, fecha);
-CREATE INDEX IF NOT EXISTS cosecha_campania_idx ON core.cosecha (campania_id);
+CREATE INDEX IF NOT EXISTS cosecha_lote_fecha_idx ON core.op_cosecha (lote_id, fecha);
+CREATE INDEX IF NOT EXISTS cosecha_campania_idx ON core.op_cosecha (campania_id);
 
 -- ── Clima ───────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.clima (
+CREATE TABLE IF NOT EXISTS core.op_clima (
     fecha_hora          timestamp PRIMARY KEY,
     barometro           numeric(8,2),
     temp                numeric(6,2),
@@ -95,23 +95,23 @@ CREATE TABLE IF NOT EXISTS core.clima (
     dg_enfriamiento     numeric(8,3)
 );
 
-COMMENT ON TABLE core.clima IS
+COMMENT ON TABLE core.op_clima IS
     'Registro de la estación meteorológica: 153.413 mediciones tras deduplicar las 155.588 del '
     'origen. La PK es el timestamp, y eso ES la corrección de H-08: un instante identifica una '
     'medición, no puede haber dos temperaturas para el mismo momento. Antes había 2.079 grupos '
     'duplicados por una recarga.';
-COMMENT ON COLUMN core.clima.temp_alta IS
+COMMENT ON COLUMN core.op_clima.temp_alta IS
     'En el origen se llamaba TembAlta, con un typo. Corregido aquí.';
-COMMENT ON COLUMN core.clima.lluvia IS
+COMMENT ON COLUMN core.op_clima.lluvia IS
     'Precipitación. Era el caso más grave de H-08: la lluvia de los momentos duplicados se '
     'contaba dos veces y sobrestimaba el acumulado, que es lo que alimenta las decisiones de '
     'riego y el manejo de enfermedad fúngica. Un acumulado sobrestimado induce a regar de menos.';
-COMMENT ON COLUMN core.clima.dg_calentamiento IS
+COMMENT ON COLUMN core.op_clima.dg_calentamiento IS
     'Grados-día. Con et_mm son las variables de mayor valor agronómico de la tabla: predicen la '
     'velocidad de desarrollo del fruto y la necesidad de riego.';
 
 -- ── Packing ─────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.calibre (
+CREATE TABLE IF NOT EXISTS core.m_calibre (
     calibre_id      smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     etiqueta        text NOT NULL UNIQUE,
     mm              numeric(5,2),
@@ -119,35 +119,35 @@ CREATE TABLE IF NOT EXISTS core.calibre (
     es_descarte     boolean NOT NULL DEFAULT false
 );
 
-COMMENT ON TABLE core.calibre IS
+COMMENT ON TABLE core.m_calibre IS
     'Calibre comercial como dimensión ORDENADA. En el origen era texto, así que se ordenaba '
     'alfabéticamente y "10" iba antes que "2" (H-10). El calibre determina el mercado de '
     'destino y por tanto el precio.';
-COMMENT ON COLUMN core.calibre.orden IS
+COMMENT ON COLUMN core.m_calibre.orden IS
     'Posición en la escala. Es lo que permite que 12mm < 14mm < ... < 26mm+ ordene bien.';
-COMMENT ON COLUMN core.calibre.es_descarte IS
+COMMENT ON COLUMN core.m_calibre.es_descarte IS
     'true para valores que no son un calibre (DESCARTE), que en el origen convivían con los '
     'milímetros en la misma columna.';
 
-CREATE TABLE IF NOT EXISTS core.productor_equivalencia (
+CREATE TABLE IF NOT EXISTS core.m_productor_equivalencia (
     productor_norm  text PRIMARY KEY,
     productor       text NOT NULL,
-    empresa_id      smallint REFERENCES core.empresa(empresa_id),
+    empresa_id      smallint REFERENCES core.m_empresa(empresa_id),
     origen          text NOT NULL
 );
 
-COMMENT ON TABLE core.productor_equivalencia IS
+COMMENT ON TABLE core.m_productor_equivalencia IS
     'Traduce el nombre de productor que usa la empacadora al de la empresa. En el origen era '
     'M_EquivalenciaElifab, la única tabla que resolvía explícitamente un problema de '
-    'vocabulario — el precedente de core.fundo_alias. Hace falta porque H02 escribe el mismo '
+    'vocabulario — el precedente de core.m_fundo_alias. Hace falta porque H02 escribe el mismo '
     'productor de seis formas (AQUANQA II, AQU II, AQUA II...).';
 
-CREATE TABLE IF NOT EXISTS core.packing (
+CREATE TABLE IF NOT EXISTS core.op_packing (
     packing_id      integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    modulo_id       smallint REFERENCES core.modulo(modulo_id),
-    empresa_id      smallint REFERENCES core.empresa(empresa_id),
-    variedad_id     smallint REFERENCES core.variedad(variedad_id),
-    calibre_id      smallint REFERENCES core.calibre(calibre_id),
+    modulo_id       smallint REFERENCES core.m_modulo(modulo_id),
+    empresa_id      smallint REFERENCES core.m_empresa(empresa_id),
+    variedad_id     smallint REFERENCES core.m_variedad(variedad_id),
+    calibre_id      smallint REFERENCES core.m_calibre(calibre_id),
     fecha_cosecha   date NOT NULL,
     fecha_proceso   date NOT NULL,
     semana          smallint,
@@ -174,29 +174,29 @@ CREATE TABLE IF NOT EXISTS core.packing (
     hora_fin        time
 );
 
-COMMENT ON TABLE core.packing IS
+COMMENT ON TABLE core.op_packing IS
     'Resultado de la empacadora externa: 117.536 filas. Cierra el ciclo comercial clasificando '
     'la fruta por calibre y mercado. Referencia MÓDULO y no lote, porque su columna [Lote] no '
     'contiene lotes de campo sino notas de packing (NP, "NP  910"): resolverlas contra el '
     'maestro deja el 100% huérfano (hallazgo N-2).';
-COMMENT ON COLUMN core.packing.turno_packing IS
+COMMENT ON COLUMN core.op_packing.turno_packing IS
     'Turno de proceso de la empacadora: DIA o NOCHE. Es un dominio DISTINTO del turno de riego '
     'T00-T12, aunque en el origen ambas columnas se llamen Turno (N-2). El origen escribe '
     'además Noche y NOCHE como dos grafías.';
-COMMENT ON COLUMN core.packing.mercado IS
+COMMENT ON COLUMN core.op_packing.mercado IS
     'Destino comercial: la distribución entre CHINA, USA, ÁCIDO y DESCARTE es el indicador de '
     'rentabilidad de la campaña.';
-COMMENT ON COLUMN core.packing.mercado_valido IS
+COMMENT ON COLUMN core.op_packing.mercado_valido IS
     'false para los valores que no son un mercado. El origen tiene 41.428 filas con ''0'' y 675 '
     'con ''-'': un tercio de la tabla no tiene mercado asignable, algo que la auditoría no '
     'recogía (N-2).';
-COMMENT ON COLUMN core.packing.nota_packing IS
+COMMENT ON COLUMN core.op_packing.nota_packing IS
     'La columna [Lote] del origen, conservada con su nombre real.';
-COMMENT ON COLUMN core.packing.peso_kg IS
+COMMENT ON COLUMN core.op_packing.peso_kg IS
     'Kilos de ESTA fila: el peso de esa clase/calibre concreto. Es la única columna de peso '
     'que se puede sumar. Viene de [Peso total (kg)] y suma 18,58 M kg, coherente con los '
     '32,39 M kg de cosecha de campo.';
-COMMENT ON COLUMN core.packing.peso_kg_lote IS
+COMMENT ON COLUMN core.op_packing.peso_kg_lote IS
     'NO SUMAR. Es un total que se repite idéntico en cada fila del grupo (fecha proceso, '
     'módulo, turno, lote) y actúa de denominador del porcentaje. Sumarlo por fila lo cuenta '
     'una vez por cada clase en vez de una vez por lote, y multiplica los kilos unas 24 veces: '
@@ -205,17 +205,17 @@ COMMENT ON COLUMN core.packing.peso_kg_lote IS
     'Qué mide exactamente sigue sin confirmar: no es un acumulado (verificado) ni la suma de '
     'sus partes salvo en el 46% de los grupos; es compatible con un peso de recepción, '
     'pendiente de Operaciones de packing (N-21).';
-COMMENT ON COLUMN core.packing.hora_inicio IS
+COMMENT ON COLUMN core.op_packing.hora_inicio IS
     '47,8% nula en el origen: cualquier análisis de duración de packing cubre la mitad de los '
     'datos y el tablero debe indicarlo.';
 
-CREATE INDEX IF NOT EXISTS packing_fecha_proceso_idx ON core.packing (fecha_proceso);
-CREATE INDEX IF NOT EXISTS packing_fecha_cosecha_idx ON core.packing (fecha_cosecha);
-CREATE INDEX IF NOT EXISTS packing_modulo_idx ON core.packing (modulo_id);
-CREATE INDEX IF NOT EXISTS packing_calibre_idx ON core.packing (calibre_id);
+CREATE INDEX IF NOT EXISTS packing_fecha_proceso_idx ON core.op_packing (fecha_proceso);
+CREATE INDEX IF NOT EXISTS packing_fecha_cosecha_idx ON core.op_packing (fecha_cosecha);
+CREATE INDEX IF NOT EXISTS packing_modulo_idx ON core.op_packing (modulo_id);
+CREATE INDEX IF NOT EXISTS packing_calibre_idx ON core.op_packing (calibre_id);
 
 -- ── Forecast ────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.version_forecast (
+CREATE TABLE IF NOT EXISTS core.m_version_forecast (
     version_id      smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     sistema         text NOT NULL CHECK (sistema IN ('campania', 'semanal')),
     codigo          text NOT NULL,
@@ -225,29 +225,29 @@ CREATE TABLE IF NOT EXISTS core.version_forecast (
     UNIQUE (sistema, codigo)
 );
 
-COMMENT ON TABLE core.version_forecast IS
+COMMENT ON TABLE core.m_version_forecast IS
     'Escenario de proyección. 15 versiones en el sistema de campaña (Presupuesto 2026 es la '
     'línea base y cada Proy_<mes> una revisión) y 46 en el semanal (S01..S32 con sufijos). '
     'Toda medida sobre forecast DEBE filtrar una versión: sin filtro se suman escenarios '
     'distintos del mismo periodo, y de ahí salen los 648 M de kg de R08 frente a los ~32,45 M '
     'de cosecha real de las cinco campañas.';
-COMMENT ON COLUMN core.version_forecast.semana_emision IS
+COMMENT ON COLUMN core.m_version_forecast.semana_emision IS
     'Semana en que se emitió la proyección, extraída del código. En el origen se obtenía con '
     'Int(Right(Left(Version,3),2)), un parseo que falla en silencio si alguien escribe S5 en '
     'vez de S05 y que no distingue S27 de S27_v2.';
-COMMENT ON COLUMN core.version_forecast.iteracion IS
+COMMENT ON COLUMN core.m_version_forecast.iteracion IS
     'Número de iteración dentro de la misma semana o mes: 1 para S27, 2 para S27_v2. Es lo que '
     'permite quedarse con la proyección vigente sin contar la semana tres veces.';
 
-CREATE TABLE IF NOT EXISTS core.forecast_campania (
+CREATE TABLE IF NOT EXISTS core.op_forecast_campania (
     forecast_campania_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    version_id      smallint NOT NULL REFERENCES core.version_forecast(version_id),
+    version_id      smallint NOT NULL REFERENCES core.m_version_forecast(version_id),
     -- NOT NULL desde ADR-0005: 624 filas apuntan al módulo centinela "Sin identificar" en
     -- vez de quedar en NULL sin registro (hallazgo N-15 — antes ni siquiera iban a cuarentena).
-    modulo_id       smallint NOT NULL REFERENCES core.modulo(modulo_id),
-    empresa_id      smallint REFERENCES core.empresa(empresa_id),
-    turno_id        smallint REFERENCES core.turno(turno_id),
-    campania_id     smallint REFERENCES core.campania(campania_id),
+    modulo_id       smallint NOT NULL REFERENCES core.m_modulo(modulo_id),
+    empresa_id      smallint REFERENCES core.m_empresa(empresa_id),
+    turno_id        smallint REFERENCES core.m_turno(turno_id),
+    campania_id     smallint REFERENCES core.t_campania(campania_id),
     anio            smallint,
     semana          smallint,
     kg_exp          numeric(14,4),
@@ -259,26 +259,26 @@ CREATE TABLE IF NOT EXISTS core.forecast_campania (
     c26 numeric(12,3)
 );
 
-COMMENT ON TABLE core.forecast_campania IS
+COMMENT ON TABLE core.op_forecast_campania IS
     'Proyección a nivel de campaña por módulo, con desglose por destino y calibre: 101.715 '
     'filas. En el origen la semántica de sus dos columnas de fundo estaba invertida respecto a '
     'M_Lotes — Fundo traía la empresa y FundoPPto el fundo físico — y aquí se desinvierte (N-5).';
-COMMENT ON COLUMN core.forecast_campania.kg_exp IS
+COMMENT ON COLUMN core.op_forecast_campania.kg_exp IS
     'Kilos exportables. Es la columna que R0801_ResCampaña usa como "los kilos del forecast", y '
     'ese precedente resuelve la decisión D-1: no existe ningún KG genérico, y R0902 lo pedía.';
-COMMENT ON COLUMN core.forecast_campania.c12 IS
+COMMENT ON COLUMN core.op_forecast_campania.c12 IS
     'Proyección para el calibre de 12 mm. Las nueve columnas de calibre tienen los mismos '
     '13.121 nulos: son las versiones previas a que se proyectara por calibre.';
 
-CREATE TABLE IF NOT EXISTS core.forecast_semanal (
+CREATE TABLE IF NOT EXISTS core.op_forecast_semanal (
     forecast_semanal_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    version_id      smallint NOT NULL REFERENCES core.version_forecast(version_id),
+    version_id      smallint NOT NULL REFERENCES core.m_version_forecast(version_id),
     -- NOT NULL desde ADR-0005: 23 filas apuntan al lote centinela "Sin identificar" en vez
     -- de quedar en NULL. Antes esas 23 se registraban en cuarentena Y quedaban en core con
     -- lote_id NULL a la vez — doble registro sin excluirlas, inconsistente con el resto de
     -- los hechos (hallazgo N-15).
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
-    campania_id     smallint REFERENCES core.campania(campania_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
+    campania_id     smallint REFERENCES core.t_campania(campania_id),
     pasada          smallint,
     area_ha         numeric(10,4),
     fecha_cos_ant   date,
@@ -292,14 +292,14 @@ CREATE TABLE IF NOT EXISTS core.forecast_semanal (
     dr              smallint
 );
 
-COMMENT ON TABLE core.forecast_semanal IS
+COMMENT ON TABLE core.op_forecast_semanal IS
     'Proyección semanal a nivel de lote: 48.368 filas, más granular y de horizonte más corto '
     'que la de campaña. En el origen su columna Fundo mezclaba dos vocabularios distintos en '
     'la misma columna (N-5).';
-COMMENT ON COLUMN core.forecast_semanal.frutos_por_planta IS
+COMMENT ON COLUMN core.op_forecast_semanal.frutos_por_planta IS
     'Frutos a cosechar POR PLANTA (FrtCos en el origen). Multiplicado por las plantas del lote '
     'da el total absoluto: es el paso que convierte un muestreo en una proyección de volumen.';
 
-CREATE INDEX IF NOT EXISTS forecast_campania_version_idx ON core.forecast_campania (version_id);
-CREATE INDEX IF NOT EXISTS forecast_semanal_version_idx ON core.forecast_semanal (version_id);
-CREATE INDEX IF NOT EXISTS forecast_semanal_lote_idx ON core.forecast_semanal (lote_id);
+CREATE INDEX IF NOT EXISTS forecast_campania_version_idx ON core.op_forecast_campania (version_id);
+CREATE INDEX IF NOT EXISTS forecast_semanal_version_idx ON core.op_forecast_semanal (version_id);
+CREATE INDEX IF NOT EXISTS forecast_semanal_lote_idx ON core.op_forecast_semanal (lote_id);

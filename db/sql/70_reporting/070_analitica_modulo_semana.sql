@@ -11,7 +11,7 @@
 --
 -- ── Cinco decisiones que hay que conocer antes de usarla ────────────────────
 --
--- 1 · SEMANA = `core.calendario.anio_semana`, que usa el AÑO ISO. No se agrupa por
+-- 1 · SEMANA = `core.t_calendario.anio_semana`, que usa el AÑO ISO. No se agrupa por
 --     (anio, semana): ese par mezcla el año calendario con la semana ISO y produce
 --     celdas contaminadas — verificado, (2025, semana 1) reúne 428 filas de cosecha y
 --     309.190 kg fechados entre 2025-01-02 y 2025-12-31, o sea enero y diciembre en la
@@ -33,7 +33,7 @@
 -- Sin campaña fija (regla D-6): se expone `campania` como columna y el consumidor
 -- filtra.
 --
--- 4 · Riego (`riego_mm`, `riego_m3`) viene de core.riego_semanal — 4 Excel de Riego/
+-- 4 · Riego (`riego_mm`, `riego_m3`) viene de core.op_riego_semanal — 4 Excel de Riego/
 --     Operaciones, 2025, ajenos a Access. Solo cubre Aqu Anqa 1-4 y M11 (de Aqu Anqa
 --     5): no hay riego para M16-M18 ni Aqu Anqa 6, y `riego_mm` queda NULL ahí, no en
 --     0 — 0 significaría "se midió y no se regó", que no es lo que pasó. `riego_estimado`
@@ -41,7 +41,7 @@
 --
 -- 5 · `modulo` (M01, M02...) NO ES ÚNICO GLOBALMENTE. Verificado: hay un M01 en Aqu
 --     Anqa 1 y OTRO M01 distinto en Aqu Anqa 2 (modulo_id 8 y 2 — 9 pares de módulo se
---     repiten entre fundos, ver el comentario de core.lote). Agrupar, filtrar o
+--     repiten entre fundos, ver el comentario de core.m_lote). Agrupar, filtrar o
 --     entrenar un modelo por la columna `modulo` a solas MEZCLA módulos físicos
 --     distintos con historias de poda, área y cosecha distintas. La clave real es
 --     `modulo_id`, expuesta como primera columna — úsala para agrupar; `modulo` y
@@ -62,7 +62,7 @@ SELECT ca.fecha,
        round(avg(cl.temp), 3)                     AS temp_media,
        round(max(cl.temp_alta), 3)                AS temp_max,
        round(min(cl.temp_baja), 3)                AS temp_min,
-       -- GDD = max((Tmax + Tmin)/2 - base, 0), con la base en core.config_decision.
+       -- GDD = max((Tmax + Tmin)/2 - base, 0), con la base en core.cfg_decision.
        -- NO se usa cl.dg_calentamiento: es grado-día de CLIMATIZACIÓN, correlaciona
        -- -0,79 con la temperatura, y como "temperatura acumulada" invertiría el signo.
        round(greatest(
@@ -74,14 +74,14 @@ SELECT ca.fecha,
        round(avg(cl.humedad), 3)                  AS humedad_media,
        round(avg(cl.vel_viento), 3)               AS viento_medio,
        round(sum(cl.rad_sol), 3)                  AS rad_solar
-FROM core.clima cl
-JOIN core.calendario ca ON ca.fecha = cl.fecha_hora::date
+FROM core.op_clima cl
+JOIN core.t_calendario ca ON ca.fecha = cl.fecha_hora::date
 GROUP BY ca.fecha, ca.anio_semana;
 
 COMMENT ON VIEW reporting.v_clima_diario IS
     'Clima por día, de la única estación del fundo. `gdd` es el grado-día de CRECIMIENTO '
     'calculado aquí desde la máxima y la mínima del día, con la base de '
-    'core.config_decision(clima.gdd_temp_base) — no es la columna dg_calentamiento del '
+    'core.cfg_decision(clima.gdd_temp_base) — no es la columna dg_calentamiento del '
     'origen, que mide climatización y va en sentido contrario a la temperatura. '
     '`dia_completo` marca los días con al menos 90 de las 96 lecturas esperadas.';
 
@@ -101,8 +101,8 @@ SELECT l.modulo_id,
        max(p.fecha_inicio)::date
          - min(p.fecha_inicio)::date                     AS poda_dispersion_dias,
        count(*)                                          AS lotes_con_poda
-FROM core.poda p
-JOIN core.lote l ON l.lote_id = p.lote_id
+FROM core.evt_poda p
+JOIN core.m_lote l ON l.lote_id = p.lote_id
 WHERE NOT l.es_ficticio
   AND NOT l.es_sentinel
   AND l.area_ha > 0
@@ -129,7 +129,7 @@ WITH semana AS (
            min(fecha) AS fecha_inicio,
            max(fecha) AS fecha_fin,
            count(*)   AS dias
-    FROM core.calendario
+    FROM core.t_calendario
     GROUP BY anio_semana
 ),
 clima_semana AS (
@@ -155,9 +155,9 @@ cosecha_semana AS (
            count(DISTINCT co.lote_id)          AS lotes_cosechados,
            max(co.pana)                        AS pana_max,
            round(avg(co.peso_baya), 4)         AS peso_baya_medio
-    FROM core.cosecha co
-    JOIN core.lote l       ON l.lote_id = co.lote_id
-    JOIN core.calendario ca ON ca.fecha = co.fecha
+    FROM core.op_cosecha co
+    JOIN core.m_lote l       ON l.lote_id = co.lote_id
+    JOIN core.t_calendario ca ON ca.fecha = co.fecha
     WHERE NOT l.es_ficticio AND NOT l.es_sentinel
     GROUP BY l.modulo_id, co.campania_id, ca.anio_semana
 ),
@@ -167,7 +167,7 @@ modulo_area AS (
            round(sum(area_ha), 4) AS area_ha,
            sum(n_plantas)         AS n_plantas,
            count(*)               AS lotes
-    FROM core.lote
+    FROM core.m_lote
     WHERE NOT es_ficticio AND NOT es_sentinel AND area_ha > 0
     GROUP BY modulo_id
 )
@@ -175,7 +175,7 @@ SELECT
     -- ── Identificación ──
     -- `modulo` (M01, M02...) NO es único globalmente: cada fundo reinicia su propia
     -- numeración, y hay un M01 en Aqu Anqa 1 y OTRO M01 distinto en Aqu Anqa 2 (9 pares
-    -- de módulo se repiten entre fundos — ver el comentario de core.lote). Agrupar o
+    -- de módulo se repiten entre fundos — ver el comentario de core.m_lote). Agrupar o
     -- filtrar por `modulo` a solas mezcla módulos físicos distintos. La clave real,
     -- única, es `modulo_id` — úsala en cualquier análisis, y `modulo` solo para mostrar.
     cs.modulo_id,
@@ -234,14 +234,14 @@ SELECT
     coalesce(ri.estimado, false)             AS riego_estimado
 
 FROM cosecha_semana cs
-JOIN core.modulo mo     ON mo.modulo_id = cs.modulo_id
-JOIN core.fundo fu      ON fu.fundo_id = mo.fundo_id
-JOIN core.empresa em    ON em.empresa_id = fu.empresa_id
-JOIN core.campania cam  ON cam.campania_id = cs.campania_id
+JOIN core.m_modulo mo     ON mo.modulo_id = cs.modulo_id
+JOIN core.m_fundo fu      ON fu.fundo_id = mo.fundo_id
+JOIN core.m_empresa em    ON em.empresa_id = fu.empresa_id
+JOIN core.t_campania cam  ON cam.campania_id = cs.campania_id
 JOIN semana sem         ON sem.anio_semana = cs.anio_semana
 LEFT JOIN modulo_area ma ON ma.modulo_id = cs.modulo_id
 LEFT JOIN clima_semana cl ON cl.anio_semana = cs.anio_semana
-LEFT JOIN core.riego_semanal ri
+LEFT JOIN core.op_riego_semanal ri
        ON ri.modulo_id = cs.modulo_id AND ri.anio_semana = cs.anio_semana
 LEFT JOIN reporting.v_poda_modulo pm
        ON pm.modulo_id = cs.modulo_id AND pm.campania_id = cs.campania_id
@@ -257,11 +257,11 @@ LEFT JOIN LATERAL (
 
 COMMENT ON VIEW reporting.v_analitica_modulo_semana IS
     'Panel módulo × campaña × semana para analizar qué variables explican el kg/ha. '
-    'Semana por año ISO (core.calendario.anio_semana), sin lotes ficticios L000 y sin '
+    'Semana por año ISO (core.t_calendario.anio_semana), sin lotes ficticios L000 y sin '
     'campaña fija. Las columnas *_semana del clima son iguales para todos los módulos de '
     'la misma semana y solo explican variación temporal; las *_acum_poda acumulan desde '
     'la poda de cada módulo y son las únicas del clima que discriminan entre módulos. '
-    'riego_mm y riego_m3 vienen de core.riego_semanal (fuente externa a Access): NULL en '
+    'riego_mm y riego_m3 vienen de core.op_riego_semanal (fuente externa a Access): NULL en '
     'los módulos y semanas sin ese registro, no 0. riego_estimado avisa cuándo la '
     'semana incluye el reparto M10A/M10B (D-7). ADVERTENCIA: `modulo` (M01, M02...) no '
     'es único globalmente — hay un M01 en Aqu Anqa 1 y otro M01 distinto en Aqu Anqa 2. '

@@ -1,7 +1,7 @@
-# Los tres paquetes Python del monorepo, y la frontera entre ellos.
+# Los cuatro paquetes Python del monorepo, y la frontera entre ellos.
 #
-# Un solo workflow para los tres porque comparten `domain/`: un cambio ahí puede romper a
-# cualquiera de los otros dos, así que conviene que se verifiquen juntos.
+# Un workflow para los componentes Python porque comparten `domain/`: un cambio ahí puede
+# romper a cualquiera de ellos. La compuerta de analítica mantiene además su propia regresión.
 name: python
 
 on:
@@ -11,12 +11,16 @@ on:
       - 'domain/**'
       - 'etl/**'
       - 'backend/**'
+      - 'packages/analitica/**'
+      - 'constraints-analitica.txt'
       - '.github/workflows/python.yml'
   pull_request:
     paths:
       - 'domain/**'
       - 'etl/**'
       - 'backend/**'
+      - 'packages/analitica/**'
+      - 'constraints-analitica.txt'
       - '.github/workflows/python.yml'
 
 concurrency:
@@ -34,11 +38,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - run: pip install -e "domain[dev]"
-      - run: ruff check domain
+          # Todos los pyproject declaran >=3.12 y Ruff apunta a py312: probar el mínimo
+          # soportado evita que CI valide accidentalmente solo una versión más nueva.
+          python-version: '3.12'
+      - run: python -m pip install -e "domain[dev]"
+      - run: python -m ruff check domain
       - name: Fronteras de ADR-0006 y pruebas
-        run: pytest domain -m "not db"
+        run: python -m pytest domain -m "not db"
 
   etl:
     name: etl · ruff + pytest
@@ -47,13 +53,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
       # pyodbc necesita unixODBC para compilar; el driver de Access solo existe en Windows,
       # así que aquí solo corren las pruebas que no tocan Access (-m "not db").
       - run: sudo apt-get update && sudo apt-get install -y unixodbc-dev
-      - run: pip install -e domain && pip install -e "etl[dev]"
-      - run: ruff check etl
-      - run: pytest etl -m "not db"
+      - run: python -m pip install -e domain && python -m pip install -e "etl[dev]"
+      - run: python -m ruff check etl
+      - run: python -m pytest etl -m "not db"
 
   backend:
     name: backend · ruff
@@ -62,13 +68,50 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
       # `domain` primero: es una dependencia declarada de campo-api y se resuelve contra la copia
       # local del monorepo, no contra un índice de paquetes.
-      - run: pip install -e domain && pip install -e "backend/campo-api[dev]"
-      - run: ruff check backend
+      - run: python -m pip install -e domain && python -m pip install -e "backend/campo-api[dev]"
+      - run: python -m ruff check backend
       # Sin pytest todavía: el paquete es andamiaje y no tiene pruebas (E9). Cuando las tenga,
       # añadir aquí `pytest backend/campo-api -m "not db"`.
+
+  analitica:
+    name: analítica · regresión + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # packages/analitica declara requires-python >=3.12 y target-version = py312.
+          python-version: '3.12'
+      - name: Instalar analítica con constraints
+        run: python -m pip install -c constraints-analitica.txt -e "packages/analitica[dev,operativo]"
+      - name: Compuerta explícita de regresión
+        run: python -m pytest packages/analitica/tests -q
+      - name: Compuerta de calidad y compilación
+        run: |
+          python -m ruff check packages/analitica
+          python -m compileall -q packages/analitica
+      - name: Limpiar bytecode antes de empaquetar
+        shell: bash
+        run: |
+          find packages/analitica -type d -name '__pycache__' -prune -exec rm -rf {} +
+          find packages/analitica -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+          rm -rf packages/analitica/build packages/analitica/dist
+      - name: Construir wheel reproducible
+        shell: bash
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python -m build packages/analitica --wheel
+      - name: Comprobar wheel y entry point
+        shell: bash
+        run: |
+          wheel="$(find packages/analitica/dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python -m pip install --force-reinstall --no-deps "$wheel"
+          python -m pip check
+          python -m analitica.cli --help
 
   # Las dos reglas de dependencia que no puede comprobar ningún paquete por su cuenta, porque
   # son sobre la relación ENTRE dos de ellos (ADR-0006). La tercera regla —que `domain` no

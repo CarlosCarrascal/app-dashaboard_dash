@@ -28,13 +28,13 @@ Una planta evaluada produce tantas filas como ramas se le midan.
 Dos entidades:
 
 ```
-core.evaluacion_ramas          una fila por planta evaluada en una fecha        5.384
+core.ev_evaluacion_ramas          una fila por planta evaluada en una fecha        5.384
   ├── lote_id, fecha, cortina, hilera, planta, evaluador_id
   ├── ramas_menor5, ramas_mayor5        conteos declarados por el evaluador
   └── UNIQUE (lote_id, fecha, cortina, hilera, planta)
 
-core.rama_medicion             una fila por rama medida                       71.095
-  ├── evaluacion_ramas_id → core.evaluacion_ramas
+core.ev_rama_medicion             una fila por rama medida                       71.095
+  ├── evaluacion_ramas_id → core.ev_evaluacion_ramas
   ├── nro_rama, diametro
   └── clave sustituta, sin UNIQUE natural
 ```

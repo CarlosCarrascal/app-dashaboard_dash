@@ -37,12 +37,12 @@ RETURNS smallint
 LANGUAGE sql STABLE PARALLEL SAFE
 AS $$
     SELECT a.empresa_id
-    FROM core.fundo_alias a
+    FROM core.m_fundo_alias a
     WHERE a.alias_norm = stg.fn_norm_texto(p_fundo);
 $$;
 
 COMMENT ON FUNCTION stg.fn_resolver_empresa(text) IS
-    'Empresa a partir de CUALQUIERA de los seis vocabularios de fundo, vía core.fundo_alias. '
+    'Empresa a partir de CUALQUIERA de los seis vocabularios de fundo, vía core.m_fundo_alias. '
     'Reconoce el nombre de empresa (Aqu Anqa II), el fundo físico (Aqu Anqa 3), el alias '
     'operativo con prefijo y sin él (Kawsay Allpa) y el comercial antiguo (Vivadis).';
 
@@ -65,12 +65,12 @@ BEGIN
 
     -- Si el alias identifica el fundo físico sin ambigüedad, es la vía más precisa.
     SELECT a.fundo_id INTO v_fundo
-    FROM core.fundo_alias a
+    FROM core.m_fundo_alias a
     WHERE a.alias_norm = stg.fn_norm_texto(p_fundo) AND NOT a.ambiguo;
 
     IF v_fundo IS NOT NULL THEN
         SELECT m.modulo_id INTO v_id
-        FROM core.modulo m
+        FROM core.m_modulo m
         WHERE m.fundo_id = v_fundo AND m.codigo = v_modulo;
         IF v_id IS NOT NULL THEN
             RETURN v_id;
@@ -80,8 +80,8 @@ BEGIN
     -- Si no, la empresa basta siempre que el módulo sea único dentro de ella.
     IF v_empresa IS NOT NULL THEN
         SELECT count(*), min(m.modulo_id) INTO v_cuantos, v_id
-        FROM core.modulo m
-        JOIN core.fundo f ON f.fundo_id = m.fundo_id
+        FROM core.m_modulo m
+        JOIN core.m_fundo f ON f.fundo_id = m.fundo_id
         WHERE f.empresa_id = v_empresa AND m.codigo = v_modulo;
         IF v_cuantos = 1 THEN
             RETURN v_id;
@@ -91,7 +91,7 @@ BEGIN
     -- Último recurso: el código de módulo por sí solo, y solo si es único en toda la
     -- operación. M01 a M04 existen en dos fundos, así que ahí devuelve NULL.
     SELECT count(*), min(m.modulo_id) INTO v_cuantos, v_id
-    FROM core.modulo m
+    FROM core.m_modulo m
     WHERE m.codigo = v_modulo;
 
     RETURN CASE WHEN v_cuantos = 1 THEN v_id ELSE NULL END;
@@ -130,7 +130,7 @@ BEGIN
 
     IF v_modulo_id IS NOT NULL THEN
         SELECT l.lote_id INTO v_id
-        FROM core.lote l
+        FROM core.m_lote l
         WHERE l.modulo_id = v_modulo_id AND l.codigo = v_lote_txt;
 
         IF v_id IS NOT NULL THEN
@@ -145,8 +145,8 @@ BEGIN
     -- pares; los 9 restantes están en las dos empresas a la vez y no se pueden desambiguar
     -- sin el fundo (hallazgo N-4).
     SELECT count(*), min(l.lote_id) INTO v_cuantos, v_id
-    FROM core.lote l
-    JOIN core.modulo m ON m.modulo_id = l.modulo_id
+    FROM core.m_lote l
+    JOIN core.m_modulo m ON m.modulo_id = l.modulo_id
     WHERE m.codigo = v_modulo_txt AND l.codigo = v_lote_txt;
 
     IF v_cuantos = 1 THEN
@@ -183,7 +183,7 @@ CREATE OR REPLACE FUNCTION stg.fn_resolver_campania(p_codigo text)
 RETURNS smallint
 LANGUAGE sql STABLE PARALLEL SAFE
 AS $$
-    SELECT c.campania_id FROM core.campania c
+    SELECT c.campania_id FROM core.t_campania c
     WHERE c.codigo = upper(btrim(coalesce(p_codigo, '')));
 $$;
 
@@ -191,7 +191,7 @@ CREATE OR REPLACE FUNCTION stg.fn_resolver_variedad(p_nombre text)
 RETURNS smallint
 LANGUAGE sql STABLE PARALLEL SAFE
 AS $$
-    SELECT a.variedad_id FROM core.variedad_alias a
+    SELECT a.variedad_id FROM core.m_variedad_alias a
     WHERE a.alias_norm = stg.fn_norm_texto(p_nombre);
 $$;
 
@@ -199,7 +199,7 @@ CREATE OR REPLACE FUNCTION stg.fn_resolver_evaluador(p_dni text)
 RETURNS smallint
 LANGUAGE sql STABLE PARALLEL SAFE
 AS $$
-    SELECT e.evaluador_id FROM core.evaluador e
+    SELECT e.evaluador_id FROM core.m_evaluador e
     WHERE e.dni = btrim(coalesce(p_dni, ''));
 $$;
 
@@ -207,5 +207,5 @@ CREATE OR REPLACE FUNCTION stg.fn_resolver_turno(p_turno text)
 RETURNS smallint
 LANGUAGE sql STABLE PARALLEL SAFE
 AS $$
-    SELECT t.turno_id FROM core.turno t WHERE t.codigo = stg.fn_norm_turno(p_turno);
+    SELECT t.turno_id FROM core.m_turno t WHERE t.codigo = stg.fn_norm_turno(p_turno);
 $$;

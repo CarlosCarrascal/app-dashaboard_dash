@@ -37,7 +37,7 @@ Reglas operativas que se derivan:
 1. **Ninguna dimensión se construye con `SUMMARIZECOLUMNS`.** Toda dimensión viene de
    `reporting` con su clave real. Si a Power BI le falta una dimensión, se añade en SQL.
 2. **Ningún mapeo de negocio en DAX ni en M.** El mapa módulo → fundo → empresa vive en
-   `core.modulo` y `core.fundo`; el de alias en `core.fundo_alias`.
+   `core.m_modulo` y `core.m_fundo`; el de alias en `core.m_fundo_alias`.
 3. **Los atributos no se suman desde el hecho.** `KG/HA` toma el área de la dimensión de lote.
    Es el defecto B-4.
 4. **Toda agregación reutilizable es una vista.** `RESUM_FLORES`, `RESUM_FRUTOS` y

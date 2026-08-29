@@ -23,11 +23,15 @@ SELECT stg.fn_norm_texto(fundo_ppto)   AS empresa_norm,
        stg.fn_a_fecha(fecha_siembra)   AS fecha_siembra,
        nullif(btrim(maceta), '')       AS maceta,
        nullif(btrim(tipo_fibra), '')   AS tipo_fibra,
-       nullif(btrim(key_map), '')      AS key_map
-FROM raw.m_lotes_maestro;
+       nullif(btrim(key_map), '')      AS key_map,
+       source_snapshot_id,
+       source_row_number,
+       source_row_hash
+FROM raw.v_m_lotes_principal_vigente;
 
 COMMENT ON VIEW stg.v_maestro_lote IS
-    'Maestro vigente ya normalizado: 879 lotes. Es la fuente de identidad (ADR-0003).';
+    'Maestro primario de lotes ya normalizado: M_Lotes de Access. M_Lotes.xlsx se conserva '
+    'como fuente externa de contraste (ADR-0012).';
 
 -- ── Evaluaciones ────────────────────────────────────────────────────────────
 
@@ -44,8 +48,11 @@ SELECT r.lote_id,
        stg.fn_a_entero(e.num_ramas) AS nro_rama,
        stg.fn_a_real(e.diametro)    AS diametro,
        btrim(e.id_origen)           AS id_origen,
-       btrim(e.actividad)           AS actividad
-FROM raw.e01_ramas e
+       btrim(e.actividad)           AS actividad,
+       e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_e01_ramas_vigente e
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(e.fundo, e.modulo, e.lote);
 
@@ -67,8 +74,11 @@ SELECT r.lote_id,
        stg.fn_conteo(e.ya)       AS yemas_abiertas,
        stg.fn_conteo(e.yp)       AS yemas_por_abrir,
        stg.fn_a_hora(e.hora)       AS hora,
-       nullif(btrim(e.item), '')   AS item
-FROM raw.e02_conteo_flores e
+       nullif(btrim(e.item), '')   AS item,
+       e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_e02_conteo_flores_vigente e
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(e.fundo, e.modulo, e.lote);
 
@@ -89,8 +99,11 @@ SELECT r.lote_id,
        -- [F16] perdió su encabezado al importar, pero es la hora de captura (N-17): mismo
        -- dato que E02 y E04 sí conservaban.
        stg.fn_a_hora(e.f16)       AS hora,
-       coalesce(nullif(btrim(e.item), ''), '(sin item)') AS item
-FROM raw.e03_conteo_estados e
+       coalesce(nullif(btrim(e.item), ''), '(sin item)') AS item,
+       e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_e03_conteo_estados_vigente e
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(e.fundo, e.modulo, e.lote);
 
@@ -111,8 +124,11 @@ SELECT r.lote_id,
        nullif(btrim(e.des1), '')  AS des1,
        nullif(btrim(e.des2), '')  AS des2,
        nullif(btrim(e.des3), '')  AS des3,
-       stg.fn_a_hora(e.hora)      AS hora
-FROM raw.e04_brotes e
+       stg.fn_a_hora(e.hora)      AS hora,
+       e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_e04_brotes_vigente e
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(e.fundo, e.modulo, e.lote);
 
@@ -128,9 +144,12 @@ SELECT r.lote_id,
        row_number() OVER (
            PARTITION BY r.lote_id, stg.fn_a_fecha(e.fecha),
                         stg.fn_a_entero(e.cortina), stg.fn_a_entero(e.hilera)
-           ORDER BY stg.fn_a_real(e.diametro), e.ctid
+            ORDER BY stg.fn_a_real(e.diametro), e.source_row_number
        ) AS nro_muestra
-FROM raw.e05_diametros_bayas e
+       ,e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_e05_diametros_bayas_vigente e
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(NULL, e.modulo, e.lote);
 
@@ -138,6 +157,52 @@ COMMENT ON VIEW stg.v_e05_bayas IS
     'Diámetro de baya. Una fila es una baya medida, ~97 por hilera y fecha (N-7): como el '
     'origen no la identifica, nro_muestra se asigna por orden de diámetro, que es estable '
     'entre ejecuciones.';
+
+-- E05_Seguimiento conserva 25 pares diámetro/estado en formato ancho. La app necesita una
+-- fila por baya; el unpivot ocurre aquí, no en raw, para que raw siga siendo una copia fiel.
+CREATE OR REPLACE VIEW stg.v_e05_seguimiento AS
+WITH pares AS (
+    SELECT e.*,
+           p.numero_muestra,
+           p.diametro,
+           p.estado_codigo
+    FROM raw.v_e05_seguimiento_vigente e
+    CROSS JOIN LATERAL (VALUES
+        (1, e.d01, e.e01), (2, e.d02, e.e02), (3, e.d03, e.e03),
+        (4, e.d04, e.e04), (5, e.d05, e.e05), (6, e.d06, e.e06),
+        (7, e.d07, e.e07), (8, e.d08, e.e08), (9, e.d09, e.e09),
+        (10, e.d10, e.e10), (11, e.d11, e.e11), (12, e.d12, e.e12),
+        (13, e.d13, e.e13), (14, e.d14, e.e14), (15, e.d15, e.e15),
+        (16, e.d16, e.e16), (17, e.d17, e.e17), (18, e.d18, e.e18),
+        (19, e.d19, e.e19), (20, e.d20, e.e20), (21, e.d21, e.e21),
+        (22, e.d22, e.e22), (23, e.d23, e.e23), (24, e.d24, e.e24),
+        (25, e.d25, e.e25)
+    ) p(numero_muestra, diametro, estado_codigo)
+)
+SELECT r.lote_id,
+       r.motivo,
+       stg.fn_a_fecha(p.fecha) AS fecha,
+       stg.fn_a_entero(p.cortina) AS cortina,
+       stg.fn_a_entero(p.hilera) AS hilera,
+       stg.fn_a_entero(p.planta) AS planta,
+       btrim(p.evaluador) AS dni,
+       p.numero_muestra,
+       stg.fn_a_real(p.diametro) AS diametro_mm,
+       nullif(btrim(p.estado_codigo), '') AS estado_codigo,
+       btrim(p.id_origen) AS id_origen,
+       p.source_snapshot_id,
+       p.source_row_number,
+       p.source_row_hash
+FROM pares p
+LEFT JOIN stg.v_resolucion r
+  ON r.clave = stg.fn_clave_ubicacion(p.fundo, p.modulo, p.lote)
+WHERE nullif(btrim(p.diametro), '') IS NOT NULL
+   OR nullif(btrim(p.estado_codigo), '') IS NOT NULL;
+
+COMMENT ON VIEW stg.v_e05_seguimiento IS
+    'E05_Seguimiento ancho convertido a una fila por baya. Conserva el source_row_number del '
+    'Access para formar la idempotencia del hecho y permite cargar inicialmente madurez y '
+    'diámetro sin inventar una clave de baya que el origen no trae.';
 
 -- ── Cosecha ─────────────────────────────────────────────────────────────────
 
@@ -147,8 +212,11 @@ SELECT r.lote_id,
        upper(btrim(h.campania))   AS campania,
        stg.fn_a_fecha(h.fecha)    AS fecha,
        btrim(h.variedad)          AS variedad,
-       stg.fn_a_real(h.kg)        AS kg
-FROM raw.h00_volumen_campo h
+       stg.fn_a_real(h.kg)        AS kg,
+       h.source_snapshot_id,
+       h.source_row_number,
+       h.source_row_hash
+FROM raw.v_h00_volumen_campo_vigente h
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(h.fundo, h.modulo, h.lote);
 
@@ -162,8 +230,11 @@ SELECT r.lote_id,
        stg.fn_a_entero(h.semana)    AS semana,
        stg.fn_a_real(h.kg)          AS kg,
        stg.fn_a_entero(h.pana)      AS pana,
-       stg.fn_a_real(h.peso)        AS peso_baya
-FROM raw.h01_prod_historica h
+       stg.fn_a_real(h.peso)        AS peso_baya,
+       h.source_snapshot_id,
+       h.source_row_number,
+       h.source_row_hash
+FROM raw.v_h01_prod_historica_vigente h
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(h.fundo, h.modulo, h.lote);
 
@@ -214,8 +285,11 @@ SELECT stg.fn_norm_modulo(coalesce(nullif(btrim(p.modulo_acento), ''), p.modulo)
        stg.fn_a_entero(p.contenedores_esperados) AS contenedores_esperados,
        stg.fn_a_entero(p.contenedores_volcados)  AS contenedores_volcados,
        stg.fn_a_hora(p.hora_inicio)              AS hora_inicio,
-       stg.fn_a_hora(p.hora_finalizacion)        AS hora_fin
-FROM raw.h02_bd_elifab p;
+       stg.fn_a_hora(p.hora_finalizacion)        AS hora_fin,
+       p.source_snapshot_id,
+       p.source_row_number,
+       p.source_row_hash
+FROM raw.v_h02_bd_elifab_vigente p;
 
 COMMENT ON VIEW stg.v_h02_packing IS
     'Packing normalizado. No resuelve lote a propósito: su grano no llega ahí, y su columna '
@@ -249,8 +323,11 @@ SELECT stg.fn_a_timestamp(fecha)      AS fecha_hora,
        stg.fn_a_real(rad_sol_alta)    AS rad_sol_alta,
        stg.fn_a_real(et_mm)           AS et_mm,
        stg.fn_a_real(dg_calentamiento) AS dg_calentamiento,
-       stg.fn_a_real(dg_enfriamiento)  AS dg_enfriamiento
-FROM raw.h05_clima;
+       stg.fn_a_real(dg_enfriamiento)  AS dg_enfriamiento,
+       h.source_snapshot_id,
+       h.source_row_number,
+       h.source_row_hash
+FROM raw.v_h05_clima_vigente h;
 
 -- ── Maestros y forecast ─────────────────────────────────────────────────────
 
@@ -261,8 +338,11 @@ SELECT r.lote_id,
        stg.fn_a_fecha(p.fecha_inicio) AS fecha_inicio,
        stg.fn_a_fecha(p.fecha_siembra) AS fecha_siembra,
        stg.fn_a_numero(p.area)        AS area_ha,
-       btrim(p.variedad)              AS variedad
-FROM raw.m_poda p
+       btrim(p.variedad)              AS variedad,
+       p.source_snapshot_id,
+       p.source_row_number,
+       p.source_row_hash
+FROM raw.v_m_poda_vigente p
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(p.fundo, p.modulo, p.lote);
 
@@ -275,8 +355,11 @@ SELECT btrim(dni)                        AS dni,
        nullif(btrim(celular), '')        AS celular,
        stg.fn_a_fecha_dmy(inicio_labores) AS inicio_labores,
        stg.fn_a_fecha_dmy(nacimiento)    AS nacimiento,
-       coalesce(btrim(estado) = 'true', false) AS activo
-FROM raw.m_evaluadores;
+       coalesce(btrim(estado) = 'true', false) AS activo,
+       e.source_snapshot_id,
+       e.source_row_number,
+       e.source_row_hash
+FROM raw.v_m_evaluadores_vigente e;
 
 CREATE OR REPLACE VIEW stg.v_m_n_muestra AS
 SELECT r.lote_id,
@@ -285,8 +368,11 @@ SELECT r.lote_id,
        stg.fn_a_entero(m.cortina) AS cortina,
        stg.fn_a_entero(m.hilera)  AS hilera,
        stg.fn_a_entero(m.planta)  AS planta,
-       stg.fn_a_entero(m.muestras) AS muestras
-FROM raw.m_n_muestra m
+       stg.fn_a_entero(m.muestras) AS muestras,
+       m.source_snapshot_id,
+       m.source_row_number,
+       m.source_row_hash
+FROM raw.v_m_n_muestra_vigente m
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(m.fundo, m.modulo, m.lote);
 
@@ -297,8 +383,11 @@ SELECT stg.fn_a_fecha(fecha)      AS fecha,
        btrim(mes)                 AS mes_abrev,
        stg.fn_a_entero(anio)      AS anio,
        stg.fn_a_entero(sev_conteo) AS sem_ev_conteo,
-       nullif(btrim(mes_sem), '') AS mes_sem
-FROM raw.m_time;
+       nullif(btrim(mes_sem), '') AS mes_sem,
+       m.source_snapshot_id,
+       m.source_row_number,
+       m.source_row_hash
+FROM raw.v_m_time_vigente m;
 
 CREATE OR REPLACE VIEW stg.v_r08_forecast AS
 SELECT btrim(f.version)                  AS version,
@@ -318,8 +407,11 @@ SELECT btrim(f.version)                  AS version,
        stg.fn_a_numero(f.c16) AS c16, stg.fn_a_numero(f.c18) AS c18,
        stg.fn_a_numero(f.c19) AS c19, stg.fn_a_numero(f.c20) AS c20,
        stg.fn_a_numero(f.c22) AS c22, stg.fn_a_numero(f.c24) AS c24,
-       stg.fn_a_numero(f.c26) AS c26
-FROM raw.r08_forecast_campania f;
+       stg.fn_a_numero(f.c26) AS c26,
+       f.source_snapshot_id,
+       f.source_row_number,
+       f.source_row_hash
+FROM raw.v_r08_forecast_campania_vigente f;
 
 CREATE OR REPLACE VIEW stg.v_r09_forecast AS
 SELECT r.lote_id,
@@ -336,7 +428,10 @@ SELECT r.lote_id,
        stg.fn_a_real(f.frutos_total)   AS frutos_total,
        stg.fn_a_real(f.rend)           AS rendimiento,
        stg.fn_a_real(f.kg)             AS kg,
-       stg.fn_a_entero(f.dr)           AS dr
-FROM raw.r09_forecast_semanal f
+       stg.fn_a_entero(f.dr)           AS dr,
+       f.source_snapshot_id,
+       f.source_row_number,
+       f.source_row_hash
+FROM raw.v_r09_forecast_semanal_vigente f
 LEFT JOIN stg.v_resolucion r
        ON r.clave = stg.fn_clave_ubicacion(f.fundo, f.modulo, f.lote);

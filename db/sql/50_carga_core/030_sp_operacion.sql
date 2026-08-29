@@ -8,7 +8,7 @@ AS $$
 DECLARE
     v_n integer; v_basura integer;
 BEGIN
-    TRUNCATE core.cosecha RESTART IDENTITY CASCADE;
+    TRUNCATE core.op_cosecha RESTART IDENTITY CASCADE;
     TRUNCATE qua.reconciliacion_cosecha;
 
     -- Las filas de subtotal de Excel: todos los identificadores vacíos y un valor grande en
@@ -18,7 +18,7 @@ BEGIN
     -- las filas de subtotal (sin lote ni fecha) y LOTE_INEXISTENTE las que sí traen lote pero
     -- no está en el maestro vigente. Distinguirlos es lo que hace la cuarentena accionable.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H00_VolumenCampo', 'core.cosecha',
+    SELECT 'H00_VolumenCampo', 'core.op_cosecha',
            coalesce(v.motivo, 'SIN_IDENTIFICADORES'),
            CASE WHEN coalesce(v.motivo, 'SIN_IDENTIFICADORES') = 'SIN_IDENTIFICADORES'
                 THEN 'H-06' ELSE 'N-3' END,
@@ -31,7 +31,7 @@ BEGIN
     FROM stg.h00_cosecha v WHERE v.lote_id IS NULL OR v.fecha IS NULL;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H01_ProdHistorica', 'core.cosecha',
+    SELECT 'H01_ProdHistorica', 'core.op_cosecha',
            coalesce(v.motivo, 'SIN_IDENTIFICADORES'),
            CASE WHEN coalesce(v.motivo, 'SIN_IDENTIFICADORES') = 'SIN_IDENTIFICADORES'
                 THEN 'H-06' ELSE 'N-3' END,
@@ -44,7 +44,7 @@ BEGIN
     FROM stg.h01_cosecha v WHERE v.lote_id IS NULL OR v.fecha IS NULL;
 
     SELECT count(*) INTO v_basura FROM qua.rechazos
-     WHERE tabla_destino = 'core.cosecha' AND motivo = 'SIN_IDENTIFICADORES';
+     WHERE tabla_destino = 'core.op_cosecha' AND motivo = 'SIN_IDENTIFICADORES';
 
     WITH h00 AS (
         SELECT h.lote_id, h.fecha, c.campania_id,
@@ -52,8 +52,8 @@ BEGIN
                count(*)::smallint       AS registros,
                max(va.variedad_id)      AS variedad_id
         FROM stg.h00_cosecha h
-        JOIN core.campania c ON c.codigo = h.campania
-        LEFT JOIN core.variedad_alias va ON va.alias_norm = stg.fn_norm_texto(h.variedad)
+        JOIN core.t_campania c ON c.codigo = h.campania
+        LEFT JOIN core.m_variedad_alias va ON va.alias_norm = stg.fn_norm_texto(h.variedad)
         WHERE h.lote_id IS NOT NULL AND h.fecha IS NOT NULL
         GROUP BY h.lote_id, h.fecha, c.campania_id
     ), h01 AS (
@@ -64,11 +64,11 @@ BEGIN
                max(h.n_plantas) AS n_plantas,
                max(h.semana)    AS semana
         FROM stg.h01_cosecha h
-        JOIN core.campania c ON c.codigo = h.campania
+        JOIN core.t_campania c ON c.codigo = h.campania
         WHERE h.lote_id IS NOT NULL AND h.fecha IS NOT NULL
         GROUP BY h.lote_id, h.fecha, c.campania_id
     )
-    INSERT INTO core.cosecha (lote_id, fecha, campania_id, variedad_id, kg, pana, peso_baya,
+    INSERT INTO core.op_cosecha (lote_id, fecha, campania_id, variedad_id, kg, pana, peso_baya,
                               n_plantas, semana, en_h00, en_h01, kg_h01, registros_h00)
     SELECT coalesce(a.lote_id, b.lote_id),
            coalesce(a.fecha, b.fecha),
@@ -76,7 +76,7 @@ BEGIN
            -- ADR-0005: las 4 filas que solo existen en H01 (que nunca tuvo columna de
            -- variedad) no tienen a.variedad_id — apuntan al centinela en vez de quedar NULL
            -- (N-15). No es un fallo de resolución: el dato no existe en el origen.
-           coalesce(a.variedad_id, (SELECT variedad_id FROM core.variedad WHERE es_sentinel)),
+           coalesce(a.variedad_id, (SELECT variedad_id FROM core.m_variedad WHERE es_sentinel)),
            -- H00 es la referencia de kilos (decisión D-3): conserva los registros completos
            -- en C2023 y C2024, donde H01 tiene 187 filas menos.
            coalesce(a.kg, b.kg),
@@ -96,7 +96,7 @@ BEGIN
     -- esta consulta devuelve 0 filas (N-22). Se conserva porque es barata y porque, si el
     -- origen vuelve a repetir una clave, los kilos se suman y aquí queda el rastro.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H00_VolumenCampo', 'core.cosecha', 'CLAVE_NATURAL_REPETIDA', 'N-9',
+    SELECT 'H00_VolumenCampo', 'core.op_cosecha', 'CLAVE_NATURAL_REPETIDA', 'N-9',
            'El mismo lote, fecha y campaña aparece ' || n || ' veces; los kilos se suman.',
            jsonb_build_object('lote_id', lote_id, 'fecha', fecha, 'campania', campania,
                               'veces', n, 'kg_total', kg)
@@ -116,8 +116,8 @@ BEGIN
            coalesce(sum(co.kg_h01) FILTER (WHERE co.en_h01), 0),
            count(*) FILTER (WHERE co.en_h00 AND NOT co.en_h01),
            count(*) FILTER (WHERE co.en_h01 AND NOT co.en_h00)
-    FROM core.cosecha co
-    JOIN core.campania c ON c.campania_id = co.campania_id
+    FROM core.op_cosecha co
+    JOIN core.t_campania c ON c.campania_id = co.campania_id
     GROUP BY c.codigo;
 
     RAISE NOTICE 'Cosecha: % filas unificadas, % filas de subtotal apartadas', v_n, v_basura;
@@ -136,13 +136,23 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer; v_dup integer;
 BEGIN
-    TRUNCATE core.clima;
+    TRUNCATE core.op_clima;
 
     -- Un timestamp identifica una medición: no puede haber dos temperaturas para el mismo
     -- instante en la misma estación, y la tabla no tiene columna de estación. Los duplicados
     -- son exactos, así que da igual cuál se conserve (H-08).
-    INSERT INTO core.clima
-    SELECT DISTINCT ON (fecha_hora) *
+    INSERT INTO core.op_clima (
+        fecha_hora, barometro, temp, temp_alta, temp_baja, humedad, punto_rocio,
+        bulbo_humedo, vel_viento, direc_viento, viento_corriente, alta_vel_viento,
+        alta_direc_viento, viento_frio, indice_calor, thw_index, tshw_index, lluvia,
+        tasa_lluvia, rad_sol, ener_solar, rad_sol_alta, et_mm, dg_calentamiento,
+        dg_enfriamiento)
+    SELECT DISTINCT ON (fecha_hora)
+        fecha_hora, barometro, temp, temp_alta, temp_baja, humedad, punto_rocio,
+        bulbo_humedo, vel_viento, direc_viento, viento_corriente, alta_vel_viento,
+        alta_direc_viento, viento_frio, indice_calor, thw_index, tshw_index, lluvia,
+        tasa_lluvia, rad_sol, ener_solar, rad_sol_alta, et_mm, dg_calentamiento,
+        dg_enfriamiento
     FROM stg.h05_clima
     WHERE fecha_hora IS NOT NULL
     ORDER BY fecha_hora;
@@ -150,7 +160,7 @@ BEGIN
     GET DIAGNOSTICS v_n = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H05_Clima', 'core.clima', 'TIMESTAMP_DUPLICADO', 'H-08',
+    SELECT 'H05_Clima', 'core.op_clima', 'TIMESTAMP_DUPLICADO', 'H-08',
            'El mismo instante registrado ' || n || ' veces por una recarga.',
            jsonb_build_object('fecha_hora', fecha_hora, 'veces', n)
     FROM (
@@ -170,9 +180,9 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_n integer; v_merc integer;
 BEGIN
-    TRUNCATE core.packing RESTART IDENTITY CASCADE;
-    TRUNCATE core.calibre RESTART IDENTITY CASCADE;
-    TRUNCATE core.productor_equivalencia;
+    TRUNCATE core.op_packing RESTART IDENTITY CASCADE;
+    TRUNCATE core.m_calibre RESTART IDENTITY CASCADE;
+    TRUNCATE core.m_productor_equivalencia;
 
     -- Calibre como dimensión ORDENADA: en el origen era texto y se ordenaba alfabéticamente,
     -- con "10" antes que "2" (H-10). Los valores que no son un calibre conviven en la misma
@@ -184,7 +194,7 @@ BEGIN
     -- sean sinónimos — fusionarlas sería asumir una regla de negocio que nadie confirmó
     -- (ver ADR-0003 "nunca adivina"). La grafía canónica es la más frecuente de cada grupo,
     -- para que el catálogo muestre la forma que de verdad predomina en el origen.
-    INSERT INTO core.calibre (etiqueta, mm, orden, es_descarte)
+    INSERT INTO core.m_calibre (etiqueta, mm, orden, es_descarte)
     SELECT etiqueta, mm,
            (row_number() OVER (ORDER BY mm NULLS LAST, etiqueta))::smallint,
            mm IS NULL
@@ -200,16 +210,16 @@ BEGIN
         ORDER BY stg.fn_norm_texto(calibre), n DESC
     ) c;
 
-    INSERT INTO core.productor_equivalencia (productor_norm, productor, empresa_id, origen)
+    INSERT INTO core.m_productor_equivalencia (productor_norm, productor, empresa_id, origen)
     SELECT DISTINCT ON (stg.fn_norm_texto(e.productor))
            stg.fn_norm_texto(e.productor), btrim(e.productor), em.empresa_id,
            'M_EquivalenciaElifab'
-    FROM raw.m_equivalencia_elifab e
-    LEFT JOIN core.empresa em
+    FROM raw.v_m_equivalencia_elifab_vigente e
+    LEFT JOIN core.m_empresa em
            ON stg.fn_norm_texto(em.nombre) = stg.fn_norm_texto(e.empresa)
     WHERE e.productor IS NOT NULL;
 
-    INSERT INTO core.packing (
+    INSERT INTO core.op_packing (
         modulo_id, empresa_id, variedad_id, calibre_id, fecha_cosecha, fecha_proceso,
         semana, anio, turno_packing, clase, mercado, mercado_valido, recuento, peso_kg,
         peso_kg_lote, porcentaje, nota_packing, calibrador, acdt, acidez, defecto, programa,
@@ -229,21 +239,24 @@ BEGIN
     -- packing no trae fundo: se toma el primero por orden estable y se documenta la
     -- limitación en lugar de fingir una precisión que el origen no tiene.
     LEFT JOIN LATERAL (
-        SELECT mo.modulo_id FROM core.modulo mo
+        SELECT mo.modulo_id FROM core.m_modulo mo
         WHERE mo.codigo = p.modulo ORDER BY mo.modulo_id LIMIT 1
     ) m ON true
-    LEFT JOIN core.productor_equivalencia pe
+    LEFT JOIN core.m_productor_equivalencia pe
            ON pe.productor_norm = stg.fn_norm_texto(p.productor)
-    LEFT JOIN core.variedad_alias va ON va.alias_norm = stg.fn_norm_texto(p.variedad)
+    LEFT JOIN core.m_variedad_alias va ON va.alias_norm = stg.fn_norm_texto(p.variedad)
     -- Por texto normalizado, no exacto: si no, "Descarte" (minúscula) queda sin resolver
     -- una vez que el catálogo unificó "Descarte"/"DESCARTE" bajo una sola grafía canónica.
-    LEFT JOIN core.calibre ca ON stg.fn_norm_texto(ca.etiqueta) = stg.fn_norm_texto(p.calibre)
-    WHERE p.fecha_proceso IS NOT NULL;
+    LEFT JOIN core.m_calibre ca ON stg.fn_norm_texto(ca.etiqueta) = stg.fn_norm_texto(p.calibre)
+    WHERE p.fecha_proceso IS NOT NULL
+    -- source_row_number es la posición técnica del snapshot; hacer explícito el orden permite
+    -- construir el lineage 1:1 sin comparar 25 columnas contra 142 mil filas de packing.
+    ORDER BY p.source_row_number;
 
     GET DIAGNOSTICS v_n = ROW_COUNT;
 
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H02_BDElifab', 'core.packing', 'MERCADO_INVALIDO', 'N-2',
+    SELECT 'H02_BDElifab', 'core.op_packing', 'MERCADO_INVALIDO', 'N-2',
            'Valor de mercado no reconocible: ' || n || ' filas.',
            jsonb_build_object('mercado', mercado, 'filas', n)
     FROM (
@@ -255,19 +268,19 @@ BEGIN
     -- El valor se rescata en la vista de stg; aquí queda el rastro de que hubo que moverlo,
     -- porque un dato en la columna equivocada es un defecto del origen, no una curiosidad.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'H02_BDElifab', 'core.packing', 'VALOR_EN_COLUMNA_EQUIVOCADA', 'N-19',
+    SELECT 'H02_BDElifab', 'core.op_packing', 'VALOR_EN_COLUMNA_EQUIVOCADA', 'N-19',
            'El nombre del programa venía en [Contenedores volcados] y '
            '[Programa de clasificación] estaba vacío: ' || n || ' filas. El valor se movió '
-           'a core.packing.programa; el contenedor volcado queda NULL porque no era un número.',
+           'a core.op_packing.programa; el contenedor volcado queda NULL porque no era un número.',
            jsonb_build_object('programa', programa, 'filas', n)
     FROM (
         SELECT programa, count(*) AS n FROM stg.h02_packing
         WHERE programa_rescatado GROUP BY 1
     ) d;
 
-    SELECT count(*) INTO v_merc FROM core.packing WHERE NOT mercado_valido;
+    SELECT count(*) INTO v_merc FROM core.op_packing WHERE NOT mercado_valido;
     RAISE NOTICE 'Packing: % filas, % calibres, % sin mercado asignable, % con el programa rescatado',
-        v_n, (SELECT count(*) FROM core.calibre), v_merc,
+        v_n, (SELECT count(*) FROM core.m_calibre), v_merc,
         (SELECT count(*) FROM stg.h02_packing WHERE programa_rescatado);
 END;
 $$;
@@ -279,20 +292,20 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_c integer; v_s integer;
 BEGIN
-    TRUNCATE core.forecast_semanal, core.forecast_campania RESTART IDENTITY CASCADE;
-    TRUNCATE core.version_forecast RESTART IDENTITY CASCADE;
+    TRUNCATE core.op_forecast_semanal, core.op_forecast_campania RESTART IDENTITY CASCADE;
+    TRUNCATE core.m_version_forecast RESTART IDENTITY CASCADE;
 
     -- La versión deja de ser un texto que hay que parsear en cada consulta: se descompone
     -- una vez. El origen lo hacía con Int(Right(Left(Version,3),2)), que falla en silencio
     -- si alguien escribe S5 y no distingue S27 de S27_v2.
-    INSERT INTO core.version_forecast (sistema, codigo, semana_emision, iteracion, es_presupuesto)
+    INSERT INTO core.m_version_forecast (sistema, codigo, semana_emision, iteracion, es_presupuesto)
     SELECT 'campania', codigo, NULL,
            (row_number() OVER (PARTITION BY regexp_replace(codigo, '_v\d+$', '') ORDER BY codigo))::smallint,
            codigo ILIKE 'presupuesto%'
     FROM (SELECT DISTINCT version AS codigo FROM stg.r08_forecast
           WHERE version IS NOT NULL AND version <> '') v;
 
-    INSERT INTO core.version_forecast (sistema, codigo, semana_emision, iteracion, es_presupuesto)
+    INSERT INTO core.m_version_forecast (sistema, codigo, semana_emision, iteracion, es_presupuesto)
     SELECT 'semanal', codigo,
            CASE WHEN codigo ~ '^S(\d{1,2})' THEN (regexp_match(codigo, '^S(\d{1,2})'))[1]::smallint END,
            -- La iteración se numera por orden dentro de la semana: así S27, S27_v2, S27_v3 y
@@ -309,7 +322,7 @@ BEGIN
     -- mayor de todas: el 3,9% de la cifra de control de SUM([KG Exp]) que publica la auditoría
     -- (N-13). Queda fuera por no tener versión, y se registra para que conste.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'R08_Forecast_Campaña', 'core.forecast_campania', 'SIN_IDENTIFICADORES', 'N-13',
+    SELECT 'R08_Forecast_Campaña', 'core.op_forecast_campania', 'SIN_IDENTIFICADORES', 'N-13',
            'Fila de subtotal de Excel: ' || round(kg_exp::numeric, 2)
            || ' kg exportables sin versión, módulo, campaña ni semana.',
            to_jsonb(f)
@@ -321,37 +334,38 @@ BEGIN
     -- primero (con el mismo criterio LEFT JOIN que usa la carga) y luego se cargan con el
     -- módulo apuntando al centinela.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'R08_Forecast_Campaña', 'core.forecast_campania', 'MODULO_INEXISTENTE', 'N-15',
+    SELECT 'R08_Forecast_Campaña', 'core.op_forecast_campania', 'MODULO_INEXISTENTE', 'N-15',
            'El módulo del origen no resuelve contra el maestro vigente.', to_jsonb(f)
     FROM stg.r08_forecast f
     WHERE (f.version IS NOT NULL AND f.version <> '')
       AND NOT EXISTS (
-        SELECT 1 FROM core.modulo mo
-        LEFT JOIN core.fundo_alias af ON af.alias_norm = f.fundo_norm
+        SELECT 1 FROM core.m_modulo mo
+        LEFT JOIN core.m_fundo_alias af ON af.alias_norm = f.fundo_norm
         WHERE mo.codigo = f.modulo AND (af.fundo_id IS NULL OR mo.fundo_id = af.fundo_id)
       );
 
-    INSERT INTO core.forecast_campania (version_id, modulo_id, empresa_id, turno_id,
+    INSERT INTO core.op_forecast_campania (version_id, modulo_id, empresa_id, turno_id,
         campania_id, anio, semana, kg_exp, kg_des, kg_con, frutos_exp,
         c12, c14, c16, c18, c19, c20, c22, c24, c26)
     SELECT ve.version_id,
-           coalesce(m.modulo_id, (SELECT modulo_id FROM core.modulo WHERE es_sentinel)),
+           coalesce(m.modulo_id, (SELECT modulo_id FROM core.m_modulo WHERE es_sentinel)),
            al.empresa_id, t.turno_id, ca.campania_id,
            f.anio, f.semana, f.kg_exp, f.kg_des, f.kg_con, f.frutos_exp,
            f.c12, f.c14, f.c16, f.c18, f.c19, f.c20, f.c22, f.c24, f.c26
     FROM stg.r08_forecast f
-    JOIN core.version_forecast ve ON ve.sistema = 'campania' AND ve.codigo = f.version
+    JOIN core.m_version_forecast ve ON ve.sistema = 'campania' AND ve.codigo = f.version
     -- empresa_norm viene de la columna Fundo, que en R08 contiene la empresa (N-5).
-    LEFT JOIN core.fundo_alias al ON al.alias_norm = f.empresa_norm
-    LEFT JOIN core.fundo_alias af ON af.alias_norm = f.fundo_norm
+    LEFT JOIN core.m_fundo_alias al ON al.alias_norm = f.empresa_norm
+    LEFT JOIN core.m_fundo_alias af ON af.alias_norm = f.fundo_norm
     LEFT JOIN LATERAL (
-        SELECT mo.modulo_id FROM core.modulo mo
+        SELECT mo.modulo_id FROM core.m_modulo mo
         WHERE mo.codigo = f.modulo
           AND (af.fundo_id IS NULL OR mo.fundo_id = af.fundo_id)
         ORDER BY mo.modulo_id LIMIT 1
     ) m ON true
-    LEFT JOIN core.turno t ON t.codigo = f.turno
-    LEFT JOIN core.campania ca ON ca.codigo = f.campania;
+    LEFT JOIN core.m_turno t ON t.codigo = f.turno
+    LEFT JOIN core.t_campania ca ON ca.codigo = f.campania
+    ORDER BY f.source_row_number;
 
     GET DIAGNOSTICS v_c = ROW_COUNT;
 
@@ -359,28 +373,29 @@ BEGIN
     -- con lote_id NULL a la vez — doble registro sin excluirlas, distinto del resto de los
     -- hechos. Ahora se registran igual, pero cargan con el lote apuntando al centinela.
     INSERT INTO qua.rechazos (tabla_origen, tabla_destino, motivo, hallazgo, detalle, fila)
-    SELECT 'R09_Forecast_Semanal', 'core.forecast_semanal',
+    SELECT 'R09_Forecast_Semanal', 'core.op_forecast_semanal',
            coalesce(motivo, 'LOTE_INEXISTENTE'), 'H-01',
            'Proyección sin lote identificable.', to_jsonb(v)
     FROM stg.r09_forecast v WHERE lote_id IS NULL;
 
-    INSERT INTO core.forecast_semanal (version_id, lote_id, campania_id, pasada, area_ha,
+    INSERT INTO core.op_forecast_semanal (version_id, lote_id, campania_id, pasada, area_ha,
         fecha_cos_ant, fecha_cos, semana, frutos_por_planta, peso_baya, frutos_total,
         rendimiento, kg, dr)
     SELECT ve.version_id,
-           coalesce(f.lote_id, (SELECT lote_id FROM core.lote WHERE es_sentinel)),
+           coalesce(f.lote_id, (SELECT lote_id FROM core.m_lote WHERE es_sentinel)),
            ca.campania_id, f.pasada, f.area_ha,
            f.fecha_cos_ant, f.fecha_cos, f.semana, f.frutos_por_planta, f.peso_baya,
            f.frutos_total, f.rendimiento, f.kg, f.dr
     FROM stg.r09_forecast f
-    JOIN core.version_forecast ve ON ve.sistema = 'semanal' AND ve.codigo = f.version
-    LEFT JOIN core.campania ca ON ca.codigo = f.campania;
+    JOIN core.m_version_forecast ve ON ve.sistema = 'semanal' AND ve.codigo = f.version
+    LEFT JOIN core.t_campania ca ON ca.codigo = f.campania
+    ORDER BY f.source_row_number;
 
     GET DIAGNOSTICS v_s = ROW_COUNT;
 
     RAISE NOTICE 'Forecast: % de campaña (% al módulo centinela) y % semanales (% al lote centinela), en % versiones',
-        v_c, (SELECT count(*) FROM core.forecast_campania fc JOIN core.modulo mo USING (modulo_id) WHERE mo.es_sentinel),
-        v_s, (SELECT count(*) FROM core.forecast_semanal fs JOIN core.lote l USING (lote_id) WHERE l.es_sentinel),
-        (SELECT count(*) FROM core.version_forecast);
+        v_c, (SELECT count(*) FROM core.op_forecast_campania fc JOIN core.m_modulo mo USING (modulo_id) WHERE mo.es_sentinel),
+        v_s, (SELECT count(*) FROM core.op_forecast_semanal fs JOIN core.m_lote l USING (lote_id) WHERE l.es_sentinel),
+        (SELECT count(*) FROM core.m_version_forecast);
 END;
 $$;

@@ -18,33 +18,33 @@
 -- ============================================================================
 
 -- ── Ramas: cabecera por planta ──────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.evaluacion_ramas (
+CREATE TABLE IF NOT EXISTS core.ev_evaluacion_ramas (
     evaluacion_ramas_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
     cortina         smallint NOT NULL,
     hilera          smallint NOT NULL,
     planta          smallint NOT NULL,
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     ramas_menor5    smallint CHECK (ramas_menor5 >= 0),
     ramas_mayor5    smallint CHECK (ramas_mayor5 >= 0),
     creado_en       timestamptz NOT NULL DEFAULT now(),
     UNIQUE (lote_id, fecha, cortina, hilera, planta)
 );
 
-COMMENT ON TABLE core.evaluacion_ramas IS
+COMMENT ON TABLE core.ev_evaluacion_ramas IS
     'Una fila por planta evaluada en una fecha: 5.384 filas. Guarda los conteos DECLARADOS por '
     'el evaluador, que en el origen venían repetidos en cada fila de rama.';
-COMMENT ON COLUMN core.evaluacion_ramas.ramas_mayor5 IS
+COMMENT ON COLUMN core.ev_evaluacion_ramas.ramas_mayor5 IS
     'Ramas de más de 5 mm declaradas: son las que sostienen producción, frente a las menores, '
     'que son crecimiento vegetativo. La suma declarada (110.095) no coincide con el número de '
     'ramas medidas (71.095) porque se mide una submuestra.';
 
 -- ── Ramas: detalle por rama medida ──────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.rama_medicion (
+CREATE TABLE IF NOT EXISTS core.ev_rama_medicion (
     rama_medicion_id    bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     evaluacion_ramas_id integer NOT NULL
-        REFERENCES core.evaluacion_ramas(evaluacion_ramas_id) ON DELETE CASCADE,
+        REFERENCES core.ev_evaluacion_ramas(evaluacion_ramas_id) ON DELETE CASCADE,
     nro_rama        smallint NOT NULL CHECK (nro_rama BETWEEN 1 AND 99),
     -- numeric(10,4) y no (6,3): el origen tiene diámetros de hasta 8.789 mm, que son
     -- imposibles pero entran igual porque las cifras de control los incluyen (N-13).
@@ -53,31 +53,31 @@ CREATE TABLE IF NOT EXISTS core.rama_medicion (
     id_origen       text
 );
 
-COMMENT ON TABLE core.rama_medicion IS
+COMMENT ON TABLE core.ev_rama_medicion IS
     'Una fila por RAMA medida: 71.095 tras deduplicar. El origen tenía 94.236 filas, con '
     '23.141 duplicados exactos por una recarga (H-03); la deduplicación se define como fila '
     'de origen idéntica, que es la única definición que reproduce la cifra de aceptación.';
-COMMENT ON COLUMN core.rama_medicion.nro_rama IS
+COMMENT ON COLUMN core.ev_rama_medicion.nro_rama IS
     'Número de orden de la rama dentro de la planta, rango observado 1-33. En el origen se '
     'llamaba [# Ramas] y estaba documentado como "total de ramas": sumarlo (730.318) no '
     'significa nada (hallazgo N-1).';
-COMMENT ON COLUMN core.rama_medicion.diametro IS
+COMMENT ON COLUMN core.ev_rama_medicion.diametro IS
     'Diámetro de ESA rama, en mm. AVG deduplicado = 10,8869 frente a 10,9777 con duplicados.';
 -- Sin UNIQUE (evaluacion_ramas_id, nro_rama) a propósito: hay 4.557 filas donde la misma
 -- rama aparece con dos diámetros distintos. Eso no es una recarga, es un conflicto de
 -- captura; declarar la restricción obligaría a elegir un valor al azar. Se cargan las dos y
 -- se registran en qua.rechazos para que Agronomía decida (ADR-0002).
-CREATE INDEX IF NOT EXISTS rama_medicion_cab_idx ON core.rama_medicion (evaluacion_ramas_id);
+CREATE INDEX IF NOT EXISTS rama_medicion_cab_idx ON core.ev_rama_medicion (evaluacion_ramas_id);
 
 -- ── Flores, cuajo y yemas ───────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.flores (
+CREATE TABLE IF NOT EXISTS core.ev_flores (
     flores_id       integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
     cortina         smallint NOT NULL,
     hilera          smallint NOT NULL,
     planta          smallint NOT NULL,
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     n_flores        smallint CHECK (n_flores >= 0),
     cuajo           smallint CHECK (cuajo >= 0),
     yemas_abiertas  smallint CHECK (yemas_abiertas >= 0),
@@ -86,30 +86,30 @@ CREATE TABLE IF NOT EXISTS core.flores (
     item            text
 );
 
-COMMENT ON TABLE core.flores IS
+COMMENT ON TABLE core.ev_flores IS
     'Conteo de flores, cuajo y yemas por planta: 43.469 filas, de las 43.490 del origen (21 '
     'con lote fuera del maestro vigente van a cuarentena). Mide el potencial productivo antes '
     'de que se forme el fruto. Sin clave natural única en el origen — ninguna combinación '
     'distingue las 43.490 filas, la mejor llega a 43.329 (hallazgo N-9) — así que se usa clave '
     'sustituta y los 116 conflictos se registran en cuarentena.';
-COMMENT ON COLUMN core.flores.cuajo IS
+COMMENT ON COLUMN core.ev_flores.cuajo IS
     'Flores fecundadas que se convertirán en fruto. La tasa de cuajo es el principal predictor '
     'de producción. 87,7% nula en el origen, y no es un defecto: el cuajo solo se evalúa en '
     'ventanas fenológicas concretas. Pero todo promedio sobre esta columna va sobre el 12,3% '
     'de los datos, y el tablero debe decirlo.';
 
-CREATE INDEX IF NOT EXISTS flores_lote_fecha_idx ON core.flores (lote_id, fecha);
-CREATE INDEX IF NOT EXISTS flores_evaluador_idx ON core.flores (evaluador_id, fecha);
+CREATE INDEX IF NOT EXISTS flores_lote_fecha_idx ON core.ev_flores (lote_id, fecha);
+CREATE INDEX IF NOT EXISTS flores_evaluador_idx ON core.ev_flores (evaluador_id, fecha);
 
 -- ── Estados de madurez del fruto ────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.estados (
+CREATE TABLE IF NOT EXISTS core.ev_estados (
     estados_id      integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
     cortina         smallint NOT NULL,
     hilera          smallint NOT NULL,
     planta          smallint NOT NULL,
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     e1 smallint NOT NULL DEFAULT 0 CHECK (e1 >= 0),
     e2 smallint NOT NULL DEFAULT 0 CHECK (e2 >= 0),
     e3 smallint NOT NULL DEFAULT 0 CHECK (e3 >= 0),
@@ -124,36 +124,36 @@ CREATE TABLE IF NOT EXISTS core.estados (
     UNIQUE (item, lote_id, fecha, cortina, hilera, planta)
 );
 
-COMMENT ON TABLE core.estados IS
+COMMENT ON TABLE core.ev_estados IS
     'Distribución de frutos por estado de madurez E1 a E5, por planta y fecha: 18.708 filas, '
     'de las 18.714 del origen (6 con lote fuera del maestro vigente van a cuarentena). '
     'Es la base del pronóstico de cosecha: conociendo cuántos frutos hay en cada estado se '
     'estima cuándo estarán listos. La PK del origen incluía E1, que es una medida, así que '
     'corregir un conteo duplicaba el registro en lugar de sustituirlo (H-02).';
-COMMENT ON COLUMN core.estados.total IS
+COMMENT ON COLUMN core.ev_estados.total IS
     'Columna GENERADA. En el origen se capturaba aparte y no se recalculaba: SUM(Total) daba '
     '9.060.271 frente a SUM(E1..E5) = 9.057.841, una diferencia de 2.430 frutos que aquí '
     'desaparece por construcción.';
-COMMENT ON COLUMN core.estados.total_origen IS
+COMMENT ON COLUMN core.ev_estados.total_origen IS
     'El Total tal como venía del origen, para poder auditar esa diferencia de 2.430 frutos.';
-COMMENT ON COLUMN core.estados.hora IS
+COMMENT ON COLUMN core.ev_estados.hora IS
     'Hora de captura. En el origen es la columna [F16], que perdió su encabezado al importar y '
     'por eso se descartaba como residuo, aunque E02 y E04 sí conservaban la suya (N-17). '
     '13.230 de 18.708 filas la traen.';
 
-CREATE INDEX IF NOT EXISTS estados_lote_fecha_idx ON core.estados (lote_id, fecha);
-CREATE INDEX IF NOT EXISTS estados_evaluador_idx ON core.estados (evaluador_id, fecha);
+CREATE INDEX IF NOT EXISTS estados_lote_fecha_idx ON core.ev_estados (lote_id, fecha);
+CREATE INDEX IF NOT EXISTS estados_evaluador_idx ON core.ev_estados (evaluador_id, fecha);
 
 -- ── Brotes ──────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.brotes (
+CREATE TABLE IF NOT EXISTS core.ev_brotes (
     brotes_id       integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
     piso            text NOT NULL,
     cortina         smallint NOT NULL,
     hilera          smallint NOT NULL,
     planta          smallint NOT NULL,
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     brotes          smallint NOT NULL CHECK (brotes >= 0),
     des1            text,
     des2            text,
@@ -164,18 +164,18 @@ CREATE TABLE IF NOT EXISTS core.brotes (
     UNIQUE (lote_id, fecha, piso, cortina, hilera, planta)
 );
 
-COMMENT ON TABLE core.brotes IS
+COMMENT ON TABLE core.ev_brotes IS
     'Conteo de brotes nuevos por planta: la primera evaluación del ciclo, posterior a la poda. '
     '3.385 filas en el origen, y son tan pocas porque su clave primaria no incluía la fecha '
     '(H-02). Con la fecha en la clave, la captura deja de estar limitada.';
 -- Des4 y Des5 no se migran: 100% nulas en el origen.
 
-CREATE INDEX IF NOT EXISTS brotes_lote_fecha_idx ON core.brotes (lote_id, fecha);
+CREATE INDEX IF NOT EXISTS brotes_lote_fecha_idx ON core.ev_brotes (lote_id, fecha);
 
 -- ── Diámetro de baya ────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.baya_medicion (
+CREATE TABLE IF NOT EXISTS core.ev_baya_medicion (
     baya_medicion_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     fecha           date NOT NULL,
     cortina         smallint NOT NULL,
     hilera          smallint NOT NULL,
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS core.baya_medicion (
     UNIQUE (lote_id, fecha, cortina, hilera, nro_muestra)
 );
 
-COMMENT ON TABLE core.baya_medicion IS
+COMMENT ON TABLE core.ev_baya_medicion IS
     'Una fila por BAYA medida: 3.889 filas, de las 4.193 del origen (304 de los módulos M10 y '
     'M10B, que E05 escribe sin el sufijo A/B, van a cuarentena). Son 43 combinaciones de '
     'hilera y fecha, unas 97 '
@@ -193,20 +193,77 @@ COMMENT ON TABLE core.baya_medicion IS
     'asigna en la carga por orden estable. Es la tabla más limpia del origen — sin un solo '
     'nulo. E05 es una de las dos evaluaciones que SÍ trae turno de origen (la otra es H01) — '
     'stg.v_e05_bayas lo normaliza (stg.fn_norm_turno), pero esta tabla no tiene columna para '
-    'él: 3.788 de 3.889 filas coinciden con el turno de core.lote resuelto por lote_id, y 101 '
+    'él: 3.788 de 3.889 filas coinciden con el turno de core.m_lote resuelto por lote_id, y 101 '
     'no coinciden (T09 en el origen contra T11 en el maestro vigente, siempre el mismo par) '
     '— por eso no se deriva de lote sin decisión (N-18).';
-COMMENT ON COLUMN core.baya_medicion.diametro IS
+COMMENT ON COLUMN core.ev_baya_medicion.diametro IS
     'Calibre comercial de la baya en mm, AVG 19,885. Es el indicador que conecta la evaluación '
     'de campo con el resultado de packing: permitiría anticipar a qué mercado irá la fruta '
     'semanas antes de cosechar, y hoy ningún tablero lo cruza.';
 
-CREATE INDEX IF NOT EXISTS baya_lote_fecha_idx ON core.baya_medicion (lote_id, fecha);
+CREATE INDEX IF NOT EXISTS baya_lote_fecha_idx ON core.ev_baya_medicion (lote_id, fecha);
+
+-- ── Evaluación de baya extensible (Access / Excel / futura app) ─────────────
+-- `core.ev_baya_medicion` conserva el histórico estrecho de E05_DiametrosBayas. Este modelo
+-- separado admite los tres contratos de captura que ya existen en el negocio:
+-- madurez (E1..E5, caído, deshoje), crecimiento (diámetro) y peso (gramos + diámetro).
+-- No se usa H02_BDElifab: allí el peso es de packing y su grano no llega a baya/planta.
+CREATE TABLE IF NOT EXISTS core.ev_evaluacion_baya (
+    evaluacion_baya_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    lote_id            integer NOT NULL REFERENCES core.m_lote(lote_id),
+    fecha              date NOT NULL,
+    cortina            smallint NOT NULL,
+    hilera             smallint NOT NULL,
+    planta             smallint NOT NULL,
+    evaluador_id       smallint REFERENCES core.m_evaluador(evaluador_id),
+    tipo               text NOT NULL CHECK (tipo IN ('madurez', 'crecimiento', 'peso')),
+    origen             text NOT NULL CHECK (origen IN ('access', 'xlsx', 'mobile')),
+    idempotency_key    text,
+    source_snapshot_id bigint REFERENCES raw.source_snapshot(source_snapshot_id),
+    source_row_hash    text,
+    creado_en          timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (origen, idempotency_key)
+);
+
+CREATE TABLE IF NOT EXISTS core.ev_baya_observacion (
+    baya_observacion_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    evaluacion_baya_id  bigint NOT NULL
+        REFERENCES core.ev_evaluacion_baya(evaluacion_baya_id) ON DELETE CASCADE,
+    numero_muestra      smallint NOT NULL CHECK (numero_muestra BETWEEN 1 AND 99),
+    numero_medicion     smallint NOT NULL DEFAULT 1 CHECK (numero_medicion > 0),
+    estado_codigo       text,
+    diametro_mm         numeric(10,4) CHECK (diametro_mm IS NULL OR diametro_mm > 0),
+    peso_g              numeric(10,4) CHECK (peso_g IS NULL OR peso_g > 0),
+    deshoje             boolean,
+    valor_x             text,
+    observacion         text,
+    UNIQUE (evaluacion_baya_id, numero_muestra, numero_medicion),
+    CHECK (
+        estado_codigo IS NOT NULL OR diametro_mm IS NOT NULL OR peso_g IS NOT NULL
+        OR deshoje IS NOT NULL OR valor_x IS NOT NULL OR observacion IS NOT NULL
+    )
+);
+
+COMMENT ON TABLE core.ev_evaluacion_baya IS
+    'Cabecera canónica para evaluaciones de baya de Access, Excel y futura app. No confundir '
+    'el peso de campo con el peso agregado de H02 packing. idempotency_key evita duplicados '
+    'cuando una misma captura se reintenta desde la app o el ETL.';
+COMMENT ON TABLE core.ev_baya_observacion IS
+    'Detalle por muestra de baya. Un registro puede contener estado, diámetro, peso o una '
+    'combinación; por eso las métricas son opcionales y el significado lo fija tipo.';
+COMMENT ON COLUMN core.ev_baya_observacion.valor_x IS
+    'Valor textual adicional del formulario, por ejemplo X en el contrato de madurez; se '
+    'conserva hasta cerrar su semántica de negocio.';
+
+CREATE INDEX IF NOT EXISTS evaluacion_baya_ubicacion_idx
+    ON core.ev_evaluacion_baya (lote_id, fecha, cortina, hilera, planta);
+CREATE INDEX IF NOT EXISTS baya_observacion_estado_idx
+    ON core.ev_baya_observacion (estado_codigo);
 
 -- ── Muestreo requerido ──────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS core.muestra_requerida (
+CREATE TABLE IF NOT EXISTS core.cfg_muestra_requerida (
     muestra_id      integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    lote_id         integer NOT NULL REFERENCES core.lote(lote_id),
+    lote_id         integer NOT NULL REFERENCES core.m_lote(lote_id),
     evaluacion      text NOT NULL,
     cortina         smallint,
     hilera          smallint,
@@ -215,7 +272,7 @@ CREATE TABLE IF NOT EXISTS core.muestra_requerida (
     UNIQUE (lote_id, evaluacion, cortina, hilera, planta)
 );
 
-COMMENT ON TABLE core.muestra_requerida IS
+COMMENT ON TABLE core.cfg_muestra_requerida IS
     'Cuántas muestras corresponden por lote y tipo de evaluación: 681 filas. Es la referencia '
     'para saber qué evaluaciones se hicieron con muestreo insuficiente, y por tanto qué '
     'estimaciones son poco fiables. Ninguna consulta del origen la usaba (H-12). Conviven dos '

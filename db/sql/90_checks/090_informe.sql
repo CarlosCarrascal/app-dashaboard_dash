@@ -5,6 +5,8 @@
 -- está.
 -- ============================================================================
 
+\set ON_ERROR_STOP on
+
 \pset border 2
 \pset footer off
 
@@ -77,3 +79,27 @@ SELECT count(*) FILTER (WHERE estado = 'ok')    AS ok,
          ELSE 'CONTRATO CUMPLIDO'
        END AS veredicto
 FROM qua.fn_validar();
+
+-- El informe no es solo una pantalla: debe cerrar con código distinto de cero cuando
+-- el contrato no pasa. Así `npm run validate` y CI no pueden confundir un texto rojo con
+-- una ejecución exitosa.
+SELECT (
+    count(*) = 0
+    OR count(*) FILTER (WHERE estado <> 'ok') > 0
+    OR (SELECT count(*) FROM qua.fn_probar_funciones() WHERE estado <> 'ok') > 0
+    OR EXISTS (SELECT 1 FROM qua.v_alertas)
+) AS contrato_invalido
+FROM qua.fn_validar()
+\gset validacion_
+
+\if :validacion_contrato_invalido
+\echo 'ERROR: el contrato de aceptación no está cumplido; la validación termina con código 1.'
+-- `\quit 1` no es portable entre versiones de psql: en PostgreSQL 18 el argumento se
+-- ignora y el proceso puede terminar con código 0. Una excepción SQL bajo ON_ERROR_STOP
+-- sí propaga de forma estable el fallo al lanzador y a CI.
+DO $validacion_fallida$
+BEGIN
+    RAISE EXCEPTION 'El contrato de aceptación no está cumplido';
+END
+$validacion_fallida$;
+\endif

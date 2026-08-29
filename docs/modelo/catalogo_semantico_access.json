@@ -1,0 +1,1302 @@
+{
+  "modelo_version": "access-c2026-2026-08-28.v2",
+  "tablas": [
+    {
+      "tabla_raw": "m_lotes",
+      "bloque": "B01_IDENTIDAD",
+      "dominio": "identidad",
+      "rol": "maestro",
+      "grano": "una fila por empresa/fundo físico, módulo, turno y lote",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.maestro_lote"
+      ],
+      "core_objetos": [
+        "core.m_empresa",
+        "core.m_fundo",
+        "core.m_modulo",
+        "core.m_turno",
+        "core.m_variedad",
+        "core.m_lote",
+        "core.m_fundo_alias",
+        "core.m_variedad_alias"
+      ],
+      "depende_de": [],
+      "claves_candidatas": [
+        [
+          "fundo_ppto",
+          "modulo",
+          "lote"
+        ],
+        [
+          "fundo",
+          "modulo",
+          "lote"
+        ]
+      ],
+      "evidencia": [
+        "docs/adr/0012-maestro-lotes-access-principal.md",
+        "docs/seguimiento/18_diseccion_access_y_contrato_app_2026-08-27.md"
+      ],
+      "notas": "Access es el maestro primario. Fundo y FundoPPto tienen vocabularios distintos; no se unen por alias sin resolver.",
+      "fuente_maestra": true
+    },
+    {
+      "tabla_raw": "m_evaluadores",
+      "bloque": "B02_CONTEXTO",
+      "dominio": "identidad",
+      "rol": "maestro",
+      "grano": "una fila por DNI de evaluador",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.m_evaluadores"
+      ],
+      "core_objetos": [
+        "core.m_evaluador"
+      ],
+      "depende_de": [],
+      "claves_candidatas": [
+        [
+          "dni"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "El DNI es la clave de identidad; Cod es un atributo, no la clave.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "m_time",
+      "bloque": "B02_CONTEXTO",
+      "dominio": "tiempo",
+      "rol": "referencia",
+      "grano": "una fila por fecha de calendario con semana de evaluación",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.m_time"
+      ],
+      "core_objetos": [
+        "core.t_campania",
+        "core.t_calendario",
+        "core.t_semana_evaluacion"
+      ],
+      "depende_de": [],
+      "claves_candidatas": [
+        [
+          "fecha"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La campaña no se deriva solo por fecha porque las campañas pueden solaparse.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "m_n_muestra",
+      "bloque": "B02_CONTEXTO",
+      "dominio": "calidad_muestreo",
+      "rol": "referencia",
+      "grano": "una fila por evaluación y ubicación, con dos granos observados",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.m_n_muestra"
+      ],
+      "core_objetos": [
+        "core.cfg_muestra_requerida"
+      ],
+      "depende_de": [
+        "m_lotes"
+      ],
+      "claves_candidatas": [
+        [
+          "evaluacion",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La nulidad de cortina/hilera/planta puede ser parte del grano de lote; no se fuerza una única clave.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "m_poda",
+      "bloque": "B02_CONTEXTO",
+      "dominio": "fenologia",
+      "rol": "evento_maestro",
+      "grano": "una fila por campaña y lote podado",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.m_poda"
+      ],
+      "core_objetos": [
+        "core.evt_poda"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "campania",
+          "fundo",
+          "modulo",
+          "lote"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La poda es el origen del tiempo agronómico y de la campaña por lote.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "m_equivalencia_elifab",
+      "bloque": "B02_CONTEXTO",
+      "dominio": "packing",
+      "rol": "referencia",
+      "grano": "una fila por productor de packing y empresa equivalente",
+      "decision": "core",
+      "stg_objetos": [],
+      "core_objetos": [
+        "core.m_productor_equivalencia"
+      ],
+      "depende_de": [],
+      "claves_candidatas": [
+        [
+          "productor"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Se conserva como vocabulario auxiliar; no se mezcla con el maestro de lotes.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e01_ramas",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion",
+      "grano": "una fila por rama medida, dentro de planta, ubicación y fecha",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e01_ramas"
+      ],
+      "core_objetos": [
+        "core.ev_evaluacion_ramas",
+        "core.ev_rama_medicion"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_evaluadores",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta",
+          "num_ramas"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La fuente combina cabecera de planta y detalle de rama; el destino se separa.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e02_conteo_flores",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion",
+      "grano": "una fila por planta, ubicación, fecha y posible item",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e02_flores"
+      ],
+      "core_objetos": [
+        "core.ev_flores"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_evaluadores",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta",
+          "item"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "No se fuerza unicidad si los valores reales no la soportan; los conflictos van a qua.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e03_conteo_estados",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion",
+      "grano": "una fila por item, planta, ubicación y fecha",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e03_estados"
+      ],
+      "core_objetos": [
+        "core.ev_estados"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_evaluadores",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "item",
+          "fecha",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "E1..E5 y Total son medidas; no forman parte de la identidad.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e04_brotes",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion",
+      "grano": "una fila por piso, planta, ubicación y fecha",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e04_brotes"
+      ],
+      "core_objetos": [
+        "core.ev_brotes"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_evaluadores",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha",
+          "piso",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La fecha debe integrar la identidad; la PK de Access histórica la omitía.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e05_diametros_bayas",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion",
+      "grano": "una fila por baya medida, hilera y fecha",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e05_bayas"
+      ],
+      "core_objetos": [
+        "core.ev_baya_medicion"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "diametro"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Access no trae identificador de baya; nro_muestra se asigna en staging y queda documentado.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "e05_seguimiento",
+      "bloque": "B03_FENOLOGIA",
+      "dominio": "fenologia",
+      "rol": "medicion_detalle",
+      "grano": "una fila por planta y fecha con hasta 25 pares diámetro/estado",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.e05_seguimiento"
+      ],
+      "core_objetos": [
+        "core.ev_evaluacion_baya",
+        "core.ev_baya_observacion"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_evaluadores",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "id_origen",
+          "numero_muestra"
+        ],
+        [
+          "fecha",
+          "fundo",
+          "modulo",
+          "lote",
+          "cortina",
+          "hilera",
+          "planta",
+          "numero_muestra"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "El formato ancho se conserva en raw y se desancha únicamente en staging.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "h00_volumen_campo",
+      "bloque": "B04_OPERACION",
+      "dominio": "cosecha",
+      "rol": "hecho",
+      "grano": "una fila por campaña, fecha, fundo, variedad, módulo y lote",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.h00_cosecha"
+      ],
+      "core_objetos": [
+        "core.op_cosecha"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "campania",
+          "fecha",
+          "fundo",
+          "variedad",
+          "modulo",
+          "lote"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Se concilia con H01 antes de publicar cosecha.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "h01_prod_historica",
+      "bloque": "B04_OPERACION",
+      "dominio": "cosecha",
+      "rol": "hecho",
+      "grano": "una fila por campaña, fecha, fundo, módulo, turno y lote",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.h01_cosecha"
+      ],
+      "core_objetos": [
+        "core.op_cosecha"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "campania",
+          "fecha",
+          "fundo",
+          "modulo",
+          "turno",
+          "lote"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Alimenta la misma entidad de cosecha que H00; no se duplica como tabla paralela sin conciliación.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "h02_bd_elifab",
+      "bloque": "B04_OPERACION",
+      "dominio": "packing",
+      "rol": "hecho",
+      "grano": "una fila por registro de clasificación y proceso de packing",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.h02_packing"
+      ],
+      "core_objetos": [
+        "core.op_packing"
+      ],
+      "depende_de": [
+        "m_equivalencia_elifab",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha_cosecha",
+          "fecha_proceso",
+          "modulo",
+          "turno",
+          "clases",
+          "calibre"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Lote es una nota del proceso; no se fuerza como lote de campo.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "h05_clima",
+      "bloque": "B04_OPERACION",
+      "dominio": "clima",
+      "rol": "observacion",
+      "grano": "una fila por timestamp de estación y variables meteorológicas",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.h05_clima"
+      ],
+      "core_objetos": [
+        "core.op_clima"
+      ],
+      "depende_de": [
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "fecha"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La duplicación por recarga se deduplica con evidencia en qua; no se elimina de raw.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "r08_forecast_campania",
+      "bloque": "B05_PRONOSTICO",
+      "dominio": "forecast",
+      "rol": "hecho_versionado",
+      "grano": "una fila por versión, campaña, módulo, turno y semana",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.r08_forecast"
+      ],
+      "core_objetos": [
+        "core.op_forecast_campania"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "version",
+          "campania",
+          "fundo_ppto",
+          "modulo",
+          "turno",
+          "anio",
+          "semana"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Todas las versiones permanecen en raw; core publicará la versión operativa aprobada.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "r09_forecast_semanal",
+      "bloque": "B05_PRONOSTICO",
+      "dominio": "forecast",
+      "rol": "hecho_versionado",
+      "grano": "una fila por versión, campaña, lote y semana",
+      "decision": "core",
+      "stg_objetos": [
+        "stg.r09_forecast"
+      ],
+      "core_objetos": [
+        "core.op_forecast_semanal"
+      ],
+      "depende_de": [
+        "m_lotes",
+        "m_time"
+      ],
+      "claves_candidatas": [
+        [
+          "version",
+          "campania",
+          "modulo",
+          "turno",
+          "lote",
+          "sem"
+        ]
+      ],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Versiones S27, S27_v2 y S27_v3 no se deben sumar; se conservan como iteraciones.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "h01_detalle_cosecha",
+      "bloque": "B06_PENDIENTES",
+      "dominio": "cosecha",
+      "rol": "detalle_auxiliar",
+      "grano": "pendiente de confirmar: detalle operativo de cosecha",
+      "decision": "raw_only",
+      "stg_objetos": [],
+      "core_objetos": [],
+      "depende_de": [
+        "m_lotes"
+      ],
+      "claves_candidatas": [],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Se conserva íntegra en raw hasta definir grano, clave y conciliación con H00/H01.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "m_presupuesto_mo",
+      "bloque": "B06_PENDIENTES",
+      "dominio": "planificacion",
+      "rol": "referencia_auxiliar",
+      "grano": "pendiente de confirmar: presupuesto semanal por evaluación",
+      "decision": "raw_only",
+      "stg_objetos": [],
+      "core_objetos": [],
+      "depende_de": [
+        "m_time"
+      ],
+      "claves_candidatas": [],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "No se inventa una entidad core mientras no exista contrato de negocio.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "r08_forecast_campania_24",
+      "bloque": "B06_PENDIENTES",
+      "dominio": "forecast",
+      "rol": "historico_auxiliar",
+      "grano": "pendiente de confirmar: variante histórica de forecast de campaña",
+      "decision": "raw_only",
+      "stg_objetos": [],
+      "core_objetos": [],
+      "depende_de": [],
+      "claves_candidatas": [],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Se compara contra R08 actual antes de decidir integración por campaña o snapshot.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "r08_forecast_campania_25",
+      "bloque": "B06_PENDIENTES",
+      "dominio": "forecast",
+      "rol": "historico_auxiliar",
+      "grano": "pendiente de confirmar: variante histórica de forecast de campaña",
+      "decision": "raw_only",
+      "stg_objetos": [],
+      "core_objetos": [],
+      "depende_de": [],
+      "claves_candidatas": [],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "La diferencia de columnas impide asumir equivalencia 1:1.",
+      "fuente_maestra": false
+    },
+    {
+      "tabla_raw": "r09_forecast_semanal_25",
+      "bloque": "B06_PENDIENTES",
+      "dominio": "forecast",
+      "rol": "historico_auxiliar",
+      "grano": "pendiente de confirmar: variante histórica de forecast semanal",
+      "decision": "raw_only",
+      "stg_objetos": [],
+      "core_objetos": [],
+      "depende_de": [],
+      "claves_candidatas": [],
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "notas": "Se conserva en raw hasta definir la relación entre versiones históricas y campaña.",
+      "fuente_maestra": false
+    }
+  ],
+  "bloques": [
+    {
+      "codigo": "B01_IDENTIDAD",
+      "orden": 1,
+      "nombre": "Identidad y maestro de lotes",
+      "tablas_raw": [
+        "m_lotes"
+      ],
+      "prerequisitos": [],
+      "cargable": true,
+      "notas": "Access M_Lotes es la fuente primaria; Excel solo se compara."
+    },
+    {
+      "codigo": "B02_CONTEXTO",
+      "orden": 2,
+      "nombre": "Tiempo, evaluadores, poda y muestreo",
+      "tablas_raw": [
+        "m_evaluadores",
+        "m_time",
+        "m_n_muestra",
+        "m_poda",
+        "m_equivalencia_elifab"
+      ],
+      "prerequisitos": [
+        "B01_IDENTIDAD"
+      ],
+      "cargable": true,
+      "notas": ""
+    },
+    {
+      "codigo": "B03_FENOLOGIA",
+      "orden": 3,
+      "nombre": "Evaluaciones E01–E05",
+      "tablas_raw": [
+        "e01_ramas",
+        "e02_conteo_flores",
+        "e03_conteo_estados",
+        "e04_brotes",
+        "e05_diametros_bayas",
+        "e05_seguimiento"
+      ],
+      "prerequisitos": [
+        "B01_IDENTIDAD",
+        "B02_CONTEXTO"
+      ],
+      "cargable": true,
+      "notas": ""
+    },
+    {
+      "codigo": "B04_OPERACION",
+      "orden": 4,
+      "nombre": "Cosecha, packing y clima",
+      "tablas_raw": [
+        "h00_volumen_campo",
+        "h01_prod_historica",
+        "h02_bd_elifab",
+        "h05_clima"
+      ],
+      "prerequisitos": [
+        "B01_IDENTIDAD",
+        "B02_CONTEXTO"
+      ],
+      "cargable": true,
+      "notas": ""
+    },
+    {
+      "codigo": "B05_PRONOSTICO",
+      "orden": 5,
+      "nombre": "Forecast R08 y R09 vigente",
+      "tablas_raw": [
+        "r08_forecast_campania",
+        "r09_forecast_semanal"
+      ],
+      "prerequisitos": [
+        "B01_IDENTIDAD",
+        "B02_CONTEXTO"
+      ],
+      "cargable": true,
+      "notas": ""
+    },
+    {
+      "codigo": "B06_PENDIENTES",
+      "orden": 6,
+      "nombre": "Fuentes conservadas en raw hasta decisión",
+      "tablas_raw": [
+        "h01_detalle_cosecha",
+        "m_presupuesto_mo",
+        "r08_forecast_campania_24",
+        "r08_forecast_campania_25",
+        "r09_forecast_semanal_25"
+      ],
+      "prerequisitos": [],
+      "cargable": false,
+      "notas": "raw_only no es una pérdida: significa fuente preservada sin destino core aprobado."
+    }
+  ],
+  "relaciones": [
+    {
+      "codigo": "REL_EVAL_E01",
+      "padre_raw": "m_evaluadores",
+      "hijo_raw": "e01_ramas",
+      "columnas_padre": [
+        "dni"
+      ],
+      "columnas_hijo": [
+        "evaluador"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_EVAL_E02",
+      "padre_raw": "m_evaluadores",
+      "hijo_raw": "e02_conteo_flores",
+      "columnas_padre": [
+        "dni"
+      ],
+      "columnas_hijo": [
+        "evaluador"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_EVAL_E03",
+      "padre_raw": "m_evaluadores",
+      "hijo_raw": "e03_conteo_estados",
+      "columnas_padre": [
+        "dni"
+      ],
+      "columnas_hijo": [
+        "evaluador"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_EVAL_E04",
+      "padre_raw": "m_evaluadores",
+      "hijo_raw": "e04_brotes",
+      "columnas_padre": [
+        "dni"
+      ],
+      "columnas_hijo": [
+        "evaluador"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_EVAL_E05",
+      "padre_raw": "m_evaluadores",
+      "hijo_raw": "e05_seguimiento",
+      "columnas_padre": [
+        "dni"
+      ],
+      "columnas_hijo": [
+        "evaluador"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_E01",
+      "padre_raw": "m_time",
+      "hijo_raw": "e01_ramas",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_E02",
+      "padre_raw": "m_time",
+      "hijo_raw": "e02_conteo_flores",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_E03",
+      "padre_raw": "m_time",
+      "hijo_raw": "e03_conteo_estados",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_E04",
+      "padre_raw": "m_time",
+      "hijo_raw": "e04_brotes",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_E05",
+      "padre_raw": "m_time",
+      "hijo_raw": "e05_seguimiento",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_H00",
+      "padre_raw": "m_time",
+      "hijo_raw": "h00_volumen_campo",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_H01",
+      "padre_raw": "m_time",
+      "hijo_raw": "h01_prod_historica",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_fecha",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_TIME_H05",
+      "padre_raw": "m_time",
+      "hijo_raw": "h05_clima",
+      "columnas_padre": [
+        "fecha"
+      ],
+      "columnas_hijo": [
+        "fecha"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_timestamp",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_E01",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "e01_ramas",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": "Los vocabularios de fundo no son equivalentes sin mapa de identidad."
+    },
+    {
+      "codigo": "REL_LOTES_E02",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "e02_conteo_flores",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_E03",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "e03_conteo_estados",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_E04",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "e04_brotes",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_E05",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "e05_seguimiento",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_H00",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "h00_volumen_campo",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_H01",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "h01_prod_historica",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_PODA",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "m_poda",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_MUESTRA",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "m_n_muestra",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_LOTES_R09",
+      "padre_raw": "m_lotes",
+      "hijo_raw": "r09_forecast_semanal",
+      "columnas_padre": [
+        "fundo_ppto",
+        "modulo",
+        "lote"
+      ],
+      "columnas_hijo": [
+        "fundo",
+        "modulo",
+        "lote"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "normalizacion_ubicacion",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    },
+    {
+      "codigo": "REL_EQUIV_H02",
+      "padre_raw": "m_equivalencia_elifab",
+      "hijo_raw": "h02_bd_elifab",
+      "columnas_padre": [
+        "productor"
+      ],
+      "columnas_hijo": [
+        "productor"
+      ],
+      "cardinalidad_esperada": "1:N",
+      "metodo": "directa_trim",
+      "evidencia": [
+        "docs/historico-access/evidencia/02_esquema_tablas.txt",
+        "docs/historico-access/evidencia/05_linaje_dependencias.txt"
+      ],
+      "estado": "candidata",
+      "notas": ""
+    }
+  ],
+  "hash_modelo": "2bad29e74dfa65bb483c32a4d643f618105eb65af8632cb75d684f10f0254260"
+}

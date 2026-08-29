@@ -10,7 +10,7 @@
 -- credencial.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS core.evaluador (
+CREATE TABLE IF NOT EXISTS core.m_evaluador (
     evaluador_id    smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     dni             text NOT NULL UNIQUE,
     nombres         text,
@@ -26,75 +26,75 @@ CREATE TABLE IF NOT EXISTS core.evaluador (
     CHECK (dni ~ '^[0-9]{8}$' OR NOT en_maestro)
 );
 
-COMMENT ON TABLE core.evaluador IS
+COMMENT ON TABLE core.m_evaluador IS
     'Evaluador de campo, enlazado por DNI — que es lo que efectivamente se captura (H-09). '
     'La variabilidad entre evaluadores es una fuente de error conocida en evaluación '
     'fenológica: el informe SEGUIMIENTO DE PERSONAL ya la mide con CV Evaluador, pero por su '
     'cuenta y sin este maestro (hallazgo B-5).';
-COMMENT ON COLUMN core.evaluador.codigo IS
+COMMENT ON COLUMN core.m_evaluador.codigo IS
     'Código de 4 letras del maestro (Cod). Se conserva como atributo descriptivo: no aparece '
     'en ninguna tabla de evaluación y por tanto no sirve como clave.';
-COMMENT ON COLUMN core.evaluador.en_maestro IS
+COMMENT ON COLUMN core.m_evaluador.en_maestro IS
     'false para los DNI que aparecen capturando datos pero no están en M_Evaluadores. Son 2 '
     'en E01_Ramas. Se crean para no perder la evaluación y se marcan para que Agronomía los '
     'complete.';
-COMMENT ON COLUMN core.evaluador.inicio_labores IS
+COMMENT ON COLUMN core.m_evaluador.inicio_labores IS
     'Fecha guardada como texto en el origen; aquí tipada. Permite responder si la calidad de '
     'las mediciones mejora con la antigüedad.';
 
-CREATE TABLE IF NOT EXISTS core.tareo (
+CREATE TABLE IF NOT EXISTS core.op_tareo (
     tareo_id        bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     documento       text NOT NULL,
     fecha           date NOT NULL,
     horas           numeric(6,2) NOT NULL CHECK (horas >= 0),
     nombre          text,
     labor           text,
-    lote_id         integer REFERENCES core.lote(lote_id),
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    lote_id         integer REFERENCES core.m_lote(lote_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     origen_fila     integer,
     UNIQUE (documento, fecha, labor)
 );
 
-COMMENT ON TABLE core.tareo IS
+COMMENT ON TABLE core.op_tareo IS
     'Horas-hombre por documento y fecha, de Query Tareo 2026.xlsx. Es el origen de las medidas '
     'de productividad del informe SEGUIMIENTO DE PERSONAL (Flores por Hora, Frutos por Hora, '
     'Jornadas Evaluador). Sin este dominio ese informe seguiría dependiendo de un Excel en la '
     'carpeta de un equipo personal (hallazgo B-1).';
-COMMENT ON COLUMN core.tareo.evaluador_id IS
+COMMENT ON COLUMN core.op_tareo.evaluador_id IS
     'Enlace al evaluador por DNI, cuando existe. NULL para personal que no evalúa.';
 
-CREATE INDEX IF NOT EXISTS tareo_fecha_idx ON core.tareo (fecha);
-CREATE INDEX IF NOT EXISTS tareo_evaluador_idx ON core.tareo (evaluador_id);
+CREATE INDEX IF NOT EXISTS tareo_fecha_idx ON core.op_tareo (fecha);
+CREATE INDEX IF NOT EXISTS tareo_evaluador_idx ON core.op_tareo (evaluador_id);
 
 -- ── Acceso a la aplicación ──────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS core.rol (
+CREATE TABLE IF NOT EXISTS core.m_rol (
     rol_id          smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     codigo          text NOT NULL UNIQUE,
     descripcion     text NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS core.usuario (
+CREATE TABLE IF NOT EXISTS core.m_usuario (
     usuario_id      integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     email           text NOT NULL UNIQUE,
     nombre          text NOT NULL,
     hash_password   text,
-    rol_id          smallint NOT NULL REFERENCES core.rol(rol_id),
-    evaluador_id    smallint REFERENCES core.evaluador(evaluador_id),
+    rol_id          smallint NOT NULL REFERENCES core.m_rol(rol_id),
+    evaluador_id    smallint REFERENCES core.m_evaluador(evaluador_id),
     activo          boolean NOT NULL DEFAULT true,
     ultimo_acceso   timestamptz,
     creado_en       timestamptz NOT NULL DEFAULT now()
 );
 
-COMMENT ON TABLE core.usuario IS
-    'Identidad de acceso a la aplicación. NO reemplaza a core.evaluador: un evaluador es una '
+COMMENT ON TABLE core.m_usuario IS
+    'Identidad de acceso a la aplicación. NO reemplaza a core.m_evaluador: un evaluador es una '
     'persona del dominio y un usuario es una forma de entrar al sistema. Un usuario puede '
     'apuntar al evaluador que representa, pero el DNI no se almacena aquí ni se usa como '
     'contraseña.';
-COMMENT ON COLUMN core.usuario.hash_password IS
+COMMENT ON COLUMN core.m_usuario.hash_password IS
     'Hash de la contraseña. NULL cuando la autenticación es externa (SSO).';
 
-INSERT INTO core.rol (codigo, descripcion) VALUES
+INSERT INTO core.m_rol (codigo, descripcion) VALUES
     ('admin',     'Administra maestros, usuarios y cargas'),
     ('agronomo',  'Consulta todo y corrige evaluaciones'),
     ('evaluador', 'Captura evaluaciones de campo'),

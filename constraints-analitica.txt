@@ -1,0 +1,46 @@
+# Constraints verificadas en el entorno de trabajo del 2026-08-27 (Python 3.14).
+#
+# Este archivo no instala paquetes por sí mismo: fija las versiones directas que deben
+# resolver las instalaciones de analítica y dashboard. Solo se debe actualizar después de
+# ejecutar las suites completas, la comparación fuente/wheel y la auditoría del refactor.
+# pyodbc y gunicorn se fijan aunque sean opcionales: la instalación reproducible debe
+# resolverlos siempre igual; el controlador Access del sistema sigue siendo una dependencia
+# externa que no puede venir en este archivo.
+
+numpy==2.5.2
+pandas==2.3.3
+openpyxl==3.1.5
+xlsxwriter==3.2.9
+scipy==1.18.1
+psycopg==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.3
+joblib==1.5.3
+scikit-learn==1.9.0
+xgboost==3.4.1
+shap==0.52.0
+matplotlib==3.11.1
+plotly==6.9.0
+statsmodels==0.14.6
+statsforecast==2.1.1
+hierarchicalforecast==1.5.1
+MAPIE==1.5.0
+mlflow==3.15.2
+pandera==0.32.1
+pyarrow==25.0.1
+
+# Dashboard
+dash==4.4.1
+dash-extensions==2.0.6
+dash-ag-grid==35.3.0
+flask-caching==2.4.1
+
+# Herramientas de desarrollo
+build==1.5.0
+pytest==9.1.1
+pytest-cov==7.1.0
+hypothesis==6.165.10
+ruff==0.16.4
+python-calamine==0.8.2
+pyodbc==5.3.0
+gunicorn==23.0.0

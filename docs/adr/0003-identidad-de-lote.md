@@ -48,7 +48,7 @@ stg.fn_resolver_lote(empresa, modulo, lote) → lote_id
 **Nunca adivina.** Una fila sin identidad resoluble se aparta con su motivo, no se fuerza a un
 lote plausible.
 
-La empresa se deriva del vocabulario de origen mediante `core.fundo_alias`, que registra los seis
+La empresa se deriva del vocabulario de origen mediante `core.m_fundo_alias`, que registra los seis
 vocabularios observados (los cuatro de Access más los dos que aportan `R08`/`R09`), cada uno con
 su `tipo` (empresa / físico / operativo) y su `origen`.
 

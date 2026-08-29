@@ -27,68 +27,77 @@ SELECT
     -- MOVIMIENTO   captura de campo u operación: crece con cada evaluación, cosecha,
     --              medición de clima o proyección. Es lo que en un modelo dimensional
     --              serían los hechos (fact.*).
-    -- CONFIGURACIÓN parámetros de negocio (core.config_decision), no describe una
+    -- CONFIGURACIÓN parámetros de negocio (core.cfg_*), no describe una
     --              entidad del dominio agronómico.
     CASE c.relname
-        WHEN 'empresa' THEN 'MAESTRO' WHEN 'fundo' THEN 'MAESTRO'
-        WHEN 'fundo_alias' THEN 'MAESTRO' WHEN 'modulo' THEN 'MAESTRO'
-        WHEN 'turno' THEN 'MAESTRO' WHEN 'lote' THEN 'MAESTRO'
-        WHEN 'variedad' THEN 'MAESTRO' WHEN 'variedad_alias' THEN 'MAESTRO'
-        WHEN 'calibre' THEN 'MAESTRO' WHEN 'productor_equivalencia' THEN 'MAESTRO'
-        WHEN 'version_forecast' THEN 'MAESTRO'
-        WHEN 'evaluador' THEN 'MAESTRO' WHEN 'rol' THEN 'MAESTRO'
-        WHEN 'usuario' THEN 'MAESTRO' WHEN 'muestra_requerida' THEN 'MAESTRO'
-        WHEN 'calendario' THEN 'TIEMPO' WHEN 'campania' THEN 'TIEMPO'
-        WHEN 'semana_evaluacion' THEN 'TIEMPO'
-        WHEN 'poda' THEN 'EVENTO'
-        WHEN 'evaluacion_ramas' THEN 'MOVIMIENTO' WHEN 'rama_medicion' THEN 'MOVIMIENTO'
-        WHEN 'flores' THEN 'MOVIMIENTO' WHEN 'estados' THEN 'MOVIMIENTO'
-        WHEN 'brotes' THEN 'MOVIMIENTO' WHEN 'baya_medicion' THEN 'MOVIMIENTO'
-        WHEN 'cosecha' THEN 'MOVIMIENTO' WHEN 'clima' THEN 'MOVIMIENTO'
-        WHEN 'packing' THEN 'MOVIMIENTO' WHEN 'forecast_campania' THEN 'MOVIMIENTO'
-        WHEN 'forecast_semanal' THEN 'MOVIMIENTO' WHEN 'tareo' THEN 'MOVIMIENTO'
-        WHEN 'config_decision' THEN 'CONFIGURACIÓN'
+        WHEN 'm_empresa' THEN 'MAESTRO' WHEN 'm_fundo' THEN 'MAESTRO'
+        WHEN 'm_fundo_alias' THEN 'MAESTRO' WHEN 'm_modulo' THEN 'MAESTRO'
+        WHEN 'm_turno' THEN 'MAESTRO' WHEN 'm_lote' THEN 'MAESTRO'
+        WHEN 'm_variedad' THEN 'MAESTRO' WHEN 'm_variedad_alias' THEN 'MAESTRO'
+        WHEN 'm_calibre' THEN 'MAESTRO' WHEN 'm_productor_equivalencia' THEN 'MAESTRO'
+        WHEN 'm_version_forecast' THEN 'MAESTRO'
+        WHEN 'm_evaluador' THEN 'MAESTRO' WHEN 'm_rol' THEN 'MAESTRO'
+        WHEN 'm_usuario' THEN 'MAESTRO'
+        WHEN 't_calendario' THEN 'TIEMPO' WHEN 't_campania' THEN 'TIEMPO'
+        WHEN 't_semana_evaluacion' THEN 'TIEMPO'
+        WHEN 'evt_poda' THEN 'EVENTO'
+        WHEN 'ev_evaluacion_ramas' THEN 'MOVIMIENTO' WHEN 'ev_rama_medicion' THEN 'MOVIMIENTO'
+        WHEN 'ev_flores' THEN 'MOVIMIENTO' WHEN 'ev_estados' THEN 'MOVIMIENTO'
+        WHEN 'ev_brotes' THEN 'MOVIMIENTO' WHEN 'ev_baya_medicion' THEN 'MOVIMIENTO'
+        WHEN 'ev_evaluacion_baya' THEN 'MOVIMIENTO' WHEN 'ev_baya_observacion' THEN 'MOVIMIENTO'
+        WHEN 'op_cosecha' THEN 'MOVIMIENTO' WHEN 'op_clima' THEN 'MOVIMIENTO'
+        WHEN 'op_packing' THEN 'MOVIMIENTO' WHEN 'op_forecast_campania' THEN 'MOVIMIENTO'
+        WHEN 'op_forecast_semanal' THEN 'MOVIMIENTO' WHEN 'op_riego_semanal' THEN 'MOVIMIENTO'
+        WHEN 'op_tareo' THEN 'MOVIMIENTO'
+        WHEN 'cfg_muestra_requerida' THEN 'CONFIGURACIÓN'
+        WHEN 'cfg_decision' THEN 'CONFIGURACIÓN'
         ELSE '(sin clasificar)'
     END AS tipo,
     CASE c.relname
-        WHEN 'empresa'      THEN 1 WHEN 'fundo'       THEN 1 WHEN 'fundo_alias' THEN 1
-        WHEN 'modulo'       THEN 1 WHEN 'turno'       THEN 1 WHEN 'lote'        THEN 1
-        WHEN 'calendario'   THEN 2 WHEN 'campania'    THEN 2 WHEN 'semana_evaluacion' THEN 2
-        WHEN 'poda'         THEN 2
-        WHEN 'evaluador'    THEN 3 WHEN 'usuario'     THEN 3 WHEN 'rol'          THEN 3
-        WHEN 'tareo'        THEN 3
-        WHEN 'evaluacion_ramas' THEN 4 WHEN 'rama_medicion' THEN 4 WHEN 'flores' THEN 4
-        WHEN 'estados'      THEN 4 WHEN 'brotes'      THEN 4 WHEN 'baya_medicion' THEN 4
-        WHEN 'muestra_requerida' THEN 4
-        WHEN 'cosecha'      THEN 5 WHEN 'clima'       THEN 5 WHEN 'packing'      THEN 5
-        WHEN 'calibre'      THEN 5 WHEN 'productor_equivalencia' THEN 5
-        WHEN 'forecast_campania' THEN 5 WHEN 'forecast_semanal'  THEN 5
-        WHEN 'version_forecast'  THEN 5
-        WHEN 'variedad'     THEN 6 WHEN 'variedad_alias' THEN 6
-        WHEN 'config_decision'   THEN 7
+        WHEN 'm_empresa'      THEN 1 WHEN 'm_fundo'       THEN 1 WHEN 'm_fundo_alias' THEN 1
+        WHEN 'm_modulo'       THEN 1 WHEN 'm_turno'       THEN 1 WHEN 'm_lote'        THEN 1
+        WHEN 'm_calibre'      THEN 1 WHEN 'm_productor_equivalencia' THEN 1
+        WHEN 'm_version_forecast' THEN 1 WHEN 'm_evaluador' THEN 1
+        WHEN 'm_rol'          THEN 1 WHEN 'm_usuario' THEN 1
+        WHEN 't_calendario'   THEN 2 WHEN 't_campania'    THEN 2
+        WHEN 't_semana_evaluacion' THEN 2 WHEN 'evt_poda' THEN 2
+        WHEN 'op_tareo'       THEN 3
+        WHEN 'ev_evaluacion_ramas' THEN 4 WHEN 'ev_rama_medicion' THEN 4
+        WHEN 'ev_flores'      THEN 4 WHEN 'ev_estados'      THEN 4
+        WHEN 'ev_brotes'      THEN 4 WHEN 'ev_baya_medicion' THEN 4
+        WHEN 'ev_evaluacion_baya' THEN 4 WHEN 'ev_baya_observacion' THEN 4
+        WHEN 'cfg_muestra_requerida' THEN 7
+        WHEN 'op_cosecha'      THEN 5 WHEN 'op_clima'       THEN 5
+        WHEN 'op_packing'      THEN 5 WHEN 'op_forecast_campania' THEN 5
+        WHEN 'op_forecast_semanal' THEN 5 WHEN 'op_riego_semanal' THEN 5
+        WHEN 'm_variedad'     THEN 6 WHEN 'm_variedad_alias' THEN 6
+        WHEN 'cfg_decision'       THEN 7
         ELSE 99
     END AS orden_dominio,
     CASE c.relname
-        WHEN 'empresa' THEN 'Ubicación' WHEN 'fundo' THEN 'Ubicación'
-        WHEN 'fundo_alias' THEN 'Ubicación' WHEN 'modulo' THEN 'Ubicación'
-        WHEN 'turno' THEN 'Ubicación' WHEN 'lote' THEN 'Ubicación'
-        WHEN 'calendario' THEN 'Tiempo' WHEN 'campania' THEN 'Tiempo'
-        WHEN 'semana_evaluacion' THEN 'Tiempo' WHEN 'poda' THEN 'Tiempo'
-        WHEN 'evaluador' THEN 'Identidad' WHEN 'usuario' THEN 'Identidad'
-        WHEN 'rol' THEN 'Identidad' WHEN 'tareo' THEN 'Identidad'
-        WHEN 'evaluacion_ramas' THEN 'Evaluación fenológica'
-        WHEN 'rama_medicion' THEN 'Evaluación fenológica'
-        WHEN 'flores' THEN 'Evaluación fenológica' WHEN 'estados' THEN 'Evaluación fenológica'
-        WHEN 'brotes' THEN 'Evaluación fenológica' WHEN 'baya_medicion' THEN 'Evaluación fenológica'
-        WHEN 'muestra_requerida' THEN 'Evaluación fenológica'
-        WHEN 'cosecha' THEN 'Operación comercial' WHEN 'clima' THEN 'Operación comercial'
-        WHEN 'packing' THEN 'Operación comercial' WHEN 'calibre' THEN 'Operación comercial'
-        WHEN 'productor_equivalencia' THEN 'Operación comercial'
-        WHEN 'forecast_campania' THEN 'Operación comercial'
-        WHEN 'forecast_semanal' THEN 'Operación comercial'
-        WHEN 'version_forecast' THEN 'Operación comercial'
-        WHEN 'variedad' THEN 'Variedad' WHEN 'variedad_alias' THEN 'Variedad'
-        WHEN 'config_decision' THEN 'Configuración'
+        WHEN 'm_empresa' THEN 'Ubicación' WHEN 'm_fundo' THEN 'Ubicación'
+        WHEN 'm_fundo_alias' THEN 'Ubicación' WHEN 'm_modulo' THEN 'Ubicación'
+        WHEN 'm_turno' THEN 'Ubicación' WHEN 'm_lote' THEN 'Ubicación'
+        WHEN 't_calendario' THEN 'Tiempo' WHEN 't_campania' THEN 'Tiempo'
+        WHEN 't_semana_evaluacion' THEN 'Tiempo' WHEN 'evt_poda' THEN 'Tiempo'
+        WHEN 'm_evaluador' THEN 'Identidad' WHEN 'm_usuario' THEN 'Identidad'
+        WHEN 'm_rol' THEN 'Identidad' WHEN 'op_tareo' THEN 'Identidad'
+        WHEN 'ev_evaluacion_ramas' THEN 'Evaluación fenológica'
+        WHEN 'ev_rama_medicion' THEN 'Evaluación fenológica'
+        WHEN 'ev_flores' THEN 'Evaluación fenológica' WHEN 'ev_estados' THEN 'Evaluación fenológica'
+        WHEN 'ev_brotes' THEN 'Evaluación fenológica' WHEN 'ev_baya_medicion' THEN 'Evaluación fenológica'
+        WHEN 'ev_evaluacion_baya' THEN 'Evaluación fenológica'
+        WHEN 'ev_baya_observacion' THEN 'Evaluación fenológica'
+        WHEN 'cfg_muestra_requerida' THEN 'Configuración'
+        WHEN 'op_cosecha' THEN 'Operación comercial' WHEN 'op_clima' THEN 'Operación comercial'
+        WHEN 'op_packing' THEN 'Operación comercial' WHEN 'm_calibre' THEN 'Operación comercial'
+        WHEN 'm_productor_equivalencia' THEN 'Operación comercial'
+        WHEN 'op_forecast_campania' THEN 'Operación comercial'
+        WHEN 'op_forecast_semanal' THEN 'Operación comercial'
+        WHEN 'op_riego_semanal' THEN 'Operación agrícola'
+        WHEN 'm_version_forecast' THEN 'Operación comercial'
+        WHEN 'm_variedad' THEN 'Variedad' WHEN 'm_variedad_alias' THEN 'Variedad'
+        WHEN 'cfg_decision' THEN 'Configuración'
         ELSE '(sin clasificar)'
     END AS dominio,
     c.relname AS tabla,

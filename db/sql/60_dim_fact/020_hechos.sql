@@ -25,7 +25,7 @@ SELECT c.cosecha_id,
        c.en_h01,
        c.kg_h01,
        c.registros_h00
-FROM core.cosecha c;
+FROM core.op_cosecha c;
 
 COMMENT ON VIEW fact.cosecha IS
     'Kilos cosechados por lote y fecha. `kg` es la referencia (H00); `kg_h01` permite auditar '
@@ -44,11 +44,11 @@ SELECT er.evaluacion_ramas_id,
        er.ramas_menor5,
        er.ramas_mayor5,
        coalesce(er.ramas_menor5, 0) + coalesce(er.ramas_mayor5, 0) AS ramas_declaradas,
-       (SELECT count(*) FROM core.rama_medicion m
+       (SELECT count(*) FROM core.ev_rama_medicion m
          WHERE m.evaluacion_ramas_id = er.evaluacion_ramas_id) AS ramas_medidas,
-       (SELECT avg(m.diametro) FROM core.rama_medicion m
+       (SELECT avg(m.diametro) FROM core.ev_rama_medicion m
          WHERE m.evaluacion_ramas_id = er.evaluacion_ramas_id) AS diametro_medio
-FROM core.evaluacion_ramas er;
+FROM core.ev_evaluacion_ramas er;
 
 COMMENT ON VIEW fact.evaluacion_ramas IS
     'Grano PLANTA: 5.384 filas. `ramas_declaradas` es lo que declaró el evaluador (110.095 en '
@@ -67,8 +67,8 @@ SELECT m.rama_medicion_id,
        m.nro_rama,
        m.diametro,
        m.sospechoso
-FROM core.rama_medicion m
-JOIN core.evaluacion_ramas er USING (evaluacion_ramas_id);
+FROM core.ev_rama_medicion m
+JOIN core.ev_evaluacion_ramas er USING (evaluacion_ramas_id);
 
 COMMENT ON VIEW fact.rama_medicion IS
     'Grano RAMA: 71.095 filas, una por rama medida. Es el hecho correcto para el diámetro '
@@ -87,7 +87,7 @@ SELECT f.flores_id, f.lote_id, f.fecha, f.evaluador_id,
        CASE WHEN f.n_flores > 0 AND f.cuajo IS NOT NULL
             THEN f.cuajo::numeric / f.n_flores END AS tasa_cuajo,
        f.hora
-FROM core.flores f;
+FROM core.ev_flores f;
 
 CREATE OR REPLACE VIEW fact.estados AS
 SELECT e.estados_id, e.lote_id, e.fecha, e.evaluador_id,
@@ -102,7 +102,7 @@ SELECT e.estados_id, e.lote_id, e.fecha, e.evaluador_id,
        CASE WHEN e.total > 0 THEN e.e4::numeric / e.total END AS p_e4,
        CASE WHEN e.total > 0 THEN e.e5::numeric / e.total END AS p_e5,
        e.item
-FROM core.estados e;
+FROM core.ev_estados e;
 
 COMMENT ON VIEW fact.estados IS
     'Distribución de frutos por estado de madurez, con las proporciones ya calculadas. Si p_e5 '
@@ -111,12 +111,12 @@ COMMENT ON VIEW fact.estados IS
 CREATE OR REPLACE VIEW fact.brotes AS
 SELECT b.brotes_id, b.lote_id, b.fecha, b.evaluador_id,
        b.piso, b.cortina, b.hilera, b.planta, b.brotes, b.hora
-FROM core.brotes b;
+FROM core.ev_brotes b;
 
 CREATE OR REPLACE VIEW fact.baya_medicion AS
 SELECT bm.baya_medicion_id, bm.lote_id, bm.fecha,
        bm.cortina, bm.hilera, bm.nro_muestra, bm.diametro, bm.sospechoso
-FROM core.baya_medicion bm;
+FROM core.ev_baya_medicion bm;
 
 COMMENT ON VIEW fact.baya_medicion IS
     'Diámetro de baya, una fila por baya medida. Es el eslabón que conectaría la evaluación de '
@@ -136,7 +136,7 @@ SELECT c.fecha_hora,
        c.rad_sol, c.ener_solar,
        c.et_mm, c.dg_calentamiento, c.dg_enfriamiento,
        c.thw_index
-FROM core.clima c;
+FROM core.op_clima c;
 
 COMMENT ON VIEW fact.clima IS
     'Clima por instante, ya deduplicado (H-08). `amplitud_termica` es un factor determinante '
@@ -155,7 +155,7 @@ SELECT p.packing_id,
        p.hora_inicio, p.hora_fin,
        CASE WHEN p.hora_inicio IS NOT NULL AND p.hora_fin IS NOT NULL
             THEN p.hora_fin - p.hora_inicio END AS duracion
-FROM core.packing p;
+FROM core.op_packing p;
 
 COMMENT ON VIEW fact.packing IS
     'Resultado de packing. Referencia módulo y no lote (N-2). `duracion` solo existe en el '
@@ -168,7 +168,7 @@ SELECT f.forecast_campania_id, f.version_id, f.modulo_id, f.empresa_id, f.turno_
        coalesce(f.kg_exp, 0) + coalesce(f.kg_des, 0) + coalesce(f.kg_con, 0) AS kg_total,
        f.frutos_exp,
        f.c12, f.c14, f.c16, f.c18, f.c19, f.c20, f.c22, f.c24, f.c26
-FROM core.forecast_campania f;
+FROM core.op_forecast_campania f;
 
 COMMENT ON VIEW fact.forecast_campania IS
     'Proyección por campaña y módulo. FILTRAR SIEMPRE por versión: sin filtro se suman 15 '
@@ -181,18 +181,18 @@ CREATE VIEW fact.forecast_semanal AS
 SELECT f.forecast_semanal_id, f.version_id, f.lote_id, f.campania_id,
        f.pasada, f.fecha_cos, f.fecha_cos_ant, f.semana, f.dr,
        f.frutos_por_planta, f.peso_baya, f.frutos_total, f.rendimiento, f.kg
-FROM core.forecast_semanal f;
+FROM core.op_forecast_semanal f;
 
 COMMENT ON VIEW fact.forecast_semanal IS
     'dr (días de reingreso) se añadió al construir R0901_Forecas_SemAc/R0903_Forecast_FrtsTotal '
-    '(bloque 4 de reporting): existía en core.forecast_semanal pero se había quedado fuera de '
+    '(bloque 4 de reporting): existía en core.op_forecast_semanal pero se había quedado fuera de '
     'esta vista.';
 
 -- ── Personal ────────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE VIEW fact.tareo AS
 SELECT t.tareo_id, t.evaluador_id, t.documento, t.fecha, t.horas, t.labor, t.lote_id
-FROM core.tareo t;
+FROM core.op_tareo t;
 
 COMMENT ON VIEW fact.tareo IS
     'Horas-hombre por persona y fecha. Es lo que el informe SEGUIMIENTO DE PERSONAL necesita '

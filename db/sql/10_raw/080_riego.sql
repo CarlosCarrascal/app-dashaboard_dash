@@ -28,11 +28,11 @@ CREATE TABLE IF NOT EXISTS raw.riego_diario (
     mes             text,
     semana_origen   text,                  -- [SEMANA] del origen: semana calendario simple
                                             -- (1-52/53), NO la semana ISO. No se usa para
-                                            -- agregar — eso lo hace core.calendario.anio_semana
+                                            -- agregar — eso lo hace core.t_calendario.anio_semana
                                             -- a partir de la fecha, igual que el resto del modelo.
     fecha           text,
     modulo_local    text,                  -- número de módulo TAL COMO está en el archivo
-    turno_local     text,                  -- 1-12, sin resolver contra core.turno todavía
+    turno_local     text,                  -- 1-12, sin resolver contra core.m_turno todavía
     area_ha         text,
     agua_m3         text,
     lamina_mm       text,
@@ -50,7 +50,7 @@ COMMENT ON COLUMN raw.riego_diario.archivo IS
     '(salvo el módulo 11, ver stg) ni para Aqu Anqa 6: no hay riego cargado para esos.';
 COMMENT ON COLUMN raw.riego_diario.modulo_local IS
     'El número de módulo tal como aparece en el archivo de origen. NO es directamente '
-    'core.modulo.codigo: cada archivo reinicia su numeración desde 1 o continúa la global '
+    'core.m_modulo.codigo: cada archivo reinicia su numeración desde 1 o continúa la global '
     'según el fundo. La resolución completa, verificada por área, está en '
     'stg.mapa_modulo_riego.';
 COMMENT ON COLUMN raw.riego_diario.lamina_mm IS

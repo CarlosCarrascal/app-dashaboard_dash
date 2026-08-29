@@ -6,13 +6,19 @@ on:
     paths:
       - 'apps/dashboard/**'
       - 'packages/analitica/**'
+      - 'db/**'
       - 'docs/data/**'
+      - 'docs/cientifico/**'
+      - 'constraints-analitica.txt'
       - '.github/workflows/dashboard.yml'
   pull_request:
     paths:
       - 'apps/dashboard/**'
       - 'packages/analitica/**'
+      - 'db/**'
       - 'docs/data/**'
+      - 'docs/cientifico/**'
+      - 'constraints-analitica.txt'
       - '.github/workflows/dashboard.yml'
 
 concurrency:
@@ -28,11 +34,67 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -e packages/analitica
-      - run: pip install -e 'apps/dashboard[dev]'
-      - run: ruff check packages/analitica apps/dashboard
+      - run: python -m pip install -c constraints-analitica.txt -e 'packages/analitica[dev,operativo]'
+      - run: python -m pip install -c constraints-analitica.txt -e 'apps/dashboard[dev]'
+      - run: python -m pytest packages/analitica/tests -q
+      - run: python -m ruff check packages/analitica apps/dashboard
       - run: python -m compileall -q packages/analitica apps/dashboard
-      - run: pytest apps/dashboard/tests -q
+      - name: Limpiar caches antes de construir wheels
+        shell: bash
+        run: |
+          find packages/analitica apps/dashboard -type d -name '__pycache__' -prune -exec rm -rf {} +
+          find packages/analitica apps/dashboard -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+          rm -rf packages/analitica/build packages/analitica/dist apps/dashboard/build apps/dashboard/dist
+      - name: Construir wheel reproducible
+        shell: bash
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python -m build packages/analitica --wheel
+      - run: python -m analitica.cli --help
+      - name: Probar el wheel analítico aislado
+        shell: bash
+        run: |
+          wheel="$(find packages/analitica/dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python - "$wheel" <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import sys
+
+          source = Path("packages/analitica")
+          excluded = {"tests", "build", ".cache", ".tmp", ".pytest_cache", ".ruff_cache"}
+          expected = {
+              "analitica/" + path.relative_to(source).as_posix()
+              for path in source.rglob("*.py")
+              if not any(
+                  part in excluded or part.startswith("dist") or part.endswith(".egg-info")
+                  for part in path.relative_to(source).parts
+              )
+          }
+          with ZipFile(sys.argv[1]) as archive:
+              names = set(archive.namelist())
+              actual = {name for name in names if name.endswith(".py")}
+              missing = sorted(expected - actual)
+              if missing:
+                  raise SystemExit(f"Faltan módulos Python en el wheel: {missing}")
+              if any(name.endswith((".pyc", ".pyo")) for name in names):
+                  raise SystemExit("El wheel contiene bytecode generado")
+              entry_points = next(
+                  archive.read(name).decode("utf-8")
+                  for name in names
+                  if name.endswith(".dist-info/entry_points.txt")
+              )
+              if "aquanqa-analytics = analitica.cli:main" not in entry_points:
+                  raise SystemExit("Falta el entry point aquanqa-analytics")
+          print(f"wheel_contract_ok: {len(actual)} módulos Python")
+          PY
+          python -m venv "$RUNNER_TEMP/aquanqa-analitica-wheel-venv"
+          "$RUNNER_TEMP/aquanqa-analitica-wheel-venv/bin/python" -m pip install "$wheel"
+          "$RUNNER_TEMP/aquanqa-analitica-wheel-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/aquanqa-analitica-wheel-venv/bin/python" -c "import analitica.cli, analitica.visualizaciones.graficos; from analitica.proyeccion import candidatos, horizonte, parametros; print('wheel_imports_ok')"
+          "$RUNNER_TEMP/aquanqa-analitica-wheel-venv/bin/python" -m analitica.cli --help
+          "$RUNNER_TEMP/aquanqa-analitica-wheel-venv/bin/aquanqa-analytics" --help
+      - run: python -m pytest apps/dashboard/tests -q
 
   image:
     name: Dash · imagen de despliegue
