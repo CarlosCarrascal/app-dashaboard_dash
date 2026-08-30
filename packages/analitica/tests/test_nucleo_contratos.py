@@ -4,14 +4,14 @@ import sys
 from dataclasses import fields
 from pathlib import Path
 
-from analitica.nucleo import Hallazgo as HallazgoDesdeLaFachada
-from analitica.nucleo import Panel as PanelDesdeLaFachada
-from analitica.nucleo.contratos import Hallazgo
-from analitica.nucleo.contratos import Panel as PanelDesdeContratos
-from analitica.nucleo.datos import Hallazgo as HallazgoDesdeDatos
-from analitica.nucleo.datos import Panel
-from analitica.nucleo.floracion import _hallazgo as hallazgo_de_floracion
-from analitica.nucleo.poda import _hallazgo as hallazgo_de_poda
+from analitica.dominio.nucleo import Hallazgo as HallazgoDesdeLaFachada
+from analitica.dominio.nucleo import Panel as PanelDesdeLaFachada
+from analitica.dominio.nucleo.contratos import Hallazgo
+from analitica.dominio.nucleo.contratos import Panel as PanelDesdeContratos
+from analitica.dominio.nucleo.datos import Hallazgo as HallazgoDesdeDatos
+from analitica.dominio.nucleo.datos import Panel
+from analitica.dominio.nucleo.floracion import _hallazgo as hallazgo_de_floracion
+from analitica.dominio.nucleo.poda import _hallazgo as hallazgo_de_poda
 
 
 def test_hallazgo_conserva_el_contrato_publico_del_nucleo():
@@ -28,7 +28,7 @@ def test_hallazgo_conserva_el_contrato_publico_del_nucleo():
         "detalle",
         "efecto",
     ]
-    assert Panel.__module__ == "analitica.nucleo.datos"
+    assert Panel.__module__ == "analitica.dominio.nucleo.datos"
     assert hallazgo.clave == "clave"
     assert hallazgo.gravedad == "media"
 
@@ -36,11 +36,11 @@ def test_hallazgo_conserva_el_contrato_publico_del_nucleo():
 def test_contratos_no_importa_transformaciones_del_nucleo():
     import sys
 
-    modulo = sys.modules["analitica.nucleo.contratos"]
+    modulo = sys.modules["analitica.dominio.nucleo.contratos"]
 
-    assert "analitica.nucleo.datos" not in modulo.__dict__
-    assert "analitica.nucleo.floracion" not in modulo.__dict__
-    assert "analitica.nucleo.poda" not in modulo.__dict__
+    assert "analitica.dominio.nucleo.datos" not in modulo.__dict__
+    assert "analitica.dominio.nucleo.floracion" not in modulo.__dict__
+    assert "analitica.dominio.nucleo.poda" not in modulo.__dict__
 
 
 def test_datos_no_carga_floracion_ni_poda_al_importarse():
@@ -49,9 +49,9 @@ def test_datos_no_carga_floracion_ni_poda_al_importarse():
     entorno["PYTHONPATH"] = str(raiz_paquetes)
     entorno["PYTHONDONTWRITEBYTECODE"] = "1"
     codigo = (
-        "import sys; import analitica.nucleo.datos; "
-        "print('analitica.nucleo.floracion' in sys.modules, "
-        "'analitica.nucleo.poda' in sys.modules)"
+        "import sys; import analitica.dominio.nucleo.datos; "
+        "print('analitica.dominio.nucleo.floracion' in sys.modules, "
+        "'analitica.dominio.nucleo.poda' in sys.modules)"
     )
     resultado = subprocess.run(
         [sys.executable, "-c", codigo],

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from analitica.proyeccion.candidatos import (
+from analitica.aplicacion.procesos.candidatos import (
     ConfiguracionTurnoTemporal,
     aplicar_turno_reingreso_candidate,
     auditar_universo_candidate,
@@ -9,10 +9,18 @@ from analitica.proyeccion.candidatos import (
     metricas_adversariales,
     normalizar_forecast_candidate,
 )
-from analitica.proyeccion.candidatos import turno_temporal_contratos as contratos
-from analitica.proyeccion.candidatos import turno_temporal_nowcast as nowcast
-from analitica.proyeccion.candidatos import turno_temporal_reingreso as reingreso
-from analitica.proyeccion.candidatos import turno_temporal_validacion as validacion
+from analitica.aplicacion.procesos.candidatos import (
+    turno_temporal_contratos as contratos,
+)
+from analitica.aplicacion.procesos.candidatos import (
+    turno_temporal_nowcast as nowcast,
+)
+from analitica.aplicacion.procesos.candidatos import (
+    turno_temporal_reingreso as reingreso,
+)
+from analitica.aplicacion.procesos.candidatos import (
+    turno_temporal_validacion as validacion,
+)
 
 
 def test_api_de_turno_temporal_apunta_a_las_implementaciones_canonicas():

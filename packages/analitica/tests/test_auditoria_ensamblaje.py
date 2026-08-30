@@ -5,9 +5,9 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.calidad import controles_ensamblaje
-from analitica.proyeccion.ensamblaje import _merge_auditado
-from analitica.proyeccion.relaciones_partes.panel import construir_panel_relaciones
+from analitica.dominio.evaluacion.calidad import controles_ensamblaje
+from analitica.dominio.evaluacion.ensamblaje import _merge_auditado
+from analitica.dominio.evaluacion.relaciones_partes.panel import construir_panel_relaciones
 
 
 def _datos_base(cosecha: pd.DataFrame | None = None):

@@ -9,9 +9,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_parameter_delta_replay as facade
-from analitica.servicios import parameter_delta_replay as service
-from analitica.servicios import parametros_replay
+from analitica.aplicacion.servicios import parameter_delta_replay as service
+from analitica.aplicacion.servicios import parametros_replay
+from analitica.interfaces.scripts import screening_parameter_delta_replay as facade
 
 NOMBRES_COMPATIBLES = (
     "_conexion_access",
@@ -210,5 +210,5 @@ def test_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

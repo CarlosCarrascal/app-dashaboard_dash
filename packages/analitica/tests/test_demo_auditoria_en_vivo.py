@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from analitica.scripts import demo_auditoria_en_vivo as cli
-from analitica.servicios import demo_auditoria_en_vivo as demo
+from analitica.aplicacion.servicios import demo_auditoria_en_vivo as demo
+from analitica.interfaces.scripts import demo_auditoria_en_vivo as cli
 
 
 def test_demo_reutilizable_preserva_datos_formulas_y_llamadas(monkeypatch, capsys):

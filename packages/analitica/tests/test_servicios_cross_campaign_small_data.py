@@ -4,16 +4,16 @@ import ast
 import inspect
 from pathlib import Path
 
-from analitica.scripts import (
+from analitica.aplicacion.servicios import cross_campaign, small_data
+from analitica.interfaces.scripts import (
     screening_active_lot_scheduler,
     screening_cross_campaign_h1,
     screening_excel_parameter_deltas,
     screening_small_data_h1,
 )
-from analitica.servicios import cross_campaign, small_data
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "scripts"
+SCRIPTS = ROOT / "interfaces" / "scripts"
 TARGETS = (
     "screening_active_lot_scheduler.py",
     "screening_cross_campaign_h1.py",
@@ -29,11 +29,11 @@ def test_los_scripts_del_alcance_no_importan_otros_scripts() -> None:
         arbol = ast.parse(ruta.read_text(encoding="utf-8"), filename=str(ruta))
         for nodo in ast.walk(arbol):
             if isinstance(nodo, ast.ImportFrom) and nodo.module:
-                if nodo.module.startswith("analitica.scripts."):
+                if nodo.module.startswith("analitica.interfaces.scripts."):
                     problemas.append(f"{nombre}: from {nodo.module}")
             elif isinstance(nodo, ast.Import):
                 for alias in nodo.names:
-                    if alias.name.startswith("analitica.scripts."):
+                    if alias.name.startswith("analitica.interfaces.scripts."):
                         problemas.append(f"{nombre}: import {alias.name}")
 
     assert not problemas, "; ".join(problemas)

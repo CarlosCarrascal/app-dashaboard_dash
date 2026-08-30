@@ -10,8 +10,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.componentes import intervalos_producto_montecarlo
-from analitica.proyeccion.torneo import FAMILIAS_CHALLENGER
+from analitica.aplicacion.procesos.torneo import FAMILIAS_CHALLENGER
+from analitica.dominio.modelos.componentes import intervalos_producto_montecarlo
 
 
 def _salida(correlacion: float = 0.0, n_emisiones: int = 14, semilla: int = 7) -> pd.DataFrame:
@@ -103,7 +103,7 @@ def test_sin_las_columnas_necesarias_devuelve_la_tabla_intacta():
 def test_esta_desactivado_por_defecto_en_el_ensamblado():
     import inspect
 
-    from analitica.proyeccion.componentes import challengers_componentes
+    from analitica.dominio.modelos.componentes import challengers_componentes
 
     firma = inspect.signature(challengers_componentes)
     assert firma.parameters["diagnostico_montecarlo"].default is False
@@ -128,7 +128,7 @@ def test_el_registro_cubre_todas_las_familias_y_todas_avisan_si_no_emiten():
 
 
 def test_una_familia_vacia_deja_advertencia_y_no_tumba_el_torneo():
-    from analitica.proyeccion import torneo as modulo
+    from analitica.aplicacion.procesos import torneo as modulo
 
     backtest = pd.DataFrame(
         {
@@ -161,7 +161,7 @@ def test_una_familia_vacia_deja_advertencia_y_no_tumba_el_torneo():
 
 
 def test_una_familia_que_falla_por_dependencia_ausente_no_detiene_el_torneo(monkeypatch):
-    from analitica.proyeccion import torneo as modulo
+    from analitica.aplicacion.procesos import torneo as modulo
 
     def explota(_contexto):
         raise RuntimeError("Instale StatsForecast para habilitar los modelos de serie.")

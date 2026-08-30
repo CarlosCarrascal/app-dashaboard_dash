@@ -4,7 +4,7 @@ import json
 
 import pandas as pd
 
-from analitica.proyeccion.clima_futuro import (
+from analitica.infraestructura.clima import (
     AdaptadorOpenMeteo,
     resolver_horizonte_climatico,
 )

@@ -7,12 +7,12 @@ from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
-from analitica.scripts import certificar_releases_replay as fachada
-from analitica.servicios import certificar_releases_replay as servicio
-from analitica.servicios import certificar_releases_replay_certificacion as certificacion
-from analitica.servicios import certificar_releases_replay_lectura as lectura
-from analitica.servicios import certificar_releases_replay_persistencia as persistencia
-from analitica.servicios import certificar_releases_replay_serializacion as serializacion
+from analitica.aplicacion.servicios import certificar_releases_replay as servicio
+from analitica.aplicacion.servicios import certificar_releases_replay_certificacion as certificacion
+from analitica.aplicacion.servicios import certificar_releases_replay_lectura as lectura
+from analitica.aplicacion.servicios import certificar_releases_replay_persistencia as persistencia
+from analitica.aplicacion.servicios import certificar_releases_replay_serializacion as serializacion
+from analitica.interfaces.scripts import certificar_releases_replay as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -90,7 +90,7 @@ def test_modulos_internos_no_importan_la_ruta_historica() -> None:
         assert not any(
             isinstance(nodo, ast.ImportFrom)
             and nodo.module
-            and nodo.module.startswith("analitica.scripts")
+            and nodo.module.startswith("analitica.interfaces.scripts")
             for nodo in ast.walk(arbol)
         )
 

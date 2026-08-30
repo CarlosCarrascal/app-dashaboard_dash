@@ -10,9 +10,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.servicios import small_data_farm
+from analitica.aplicacion.servicios import small_data_farm
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "screening_small_data_farm.py"
+SCRIPT = Path(__file__).parents[1] / "interfaces" / "scripts" / "screening_small_data_farm.py"
 SPEC = importlib.util.spec_from_file_location("screening_small_data_farm_test", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULO = importlib.util.module_from_spec(SPEC)
@@ -58,7 +58,7 @@ def test_fachada_es_delgada_y_no_importa_otros_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol)
     )
 

@@ -6,18 +6,18 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.motor_proyeccion_semanal import (
+from analitica.aplicacion.operativo import (
+    construir_modelo_operativo_excel,
+    seleccionar_libros_operativos,
+    validar_libro_operativo,
+)
+from analitica.aplicacion.procesos.motor_proyeccion_semanal import (
     LoteParametrosProyeccion,
     ajustar_dia_habil,
     extraer_fechas_pasadas,
     norm_cdf,
     proyectar_lote_pasadas,
     semana_iso_21,
-)
-from analitica.proyeccion.operativo import (
-    construir_modelo_operativo_excel,
-    seleccionar_libros_operativos,
-    validar_libro_operativo,
 )
 
 

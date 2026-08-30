@@ -17,14 +17,14 @@ import dataclasses
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.contratos import DatosProyeccion, FuenteInfo
-from analitica.proyeccion.relaciones_partes.estadistica import (
+from analitica.dominio.contratos import DatosProyeccion, FuenteInfo
+from analitica.dominio.evaluacion.relaciones_partes.estadistica import (
     _p_agrupado,
     _placebo_parcial,
     _residuos_controles,
 )
-from analitica.proyeccion.relaciones_partes.packing import panel_packing
-from analitica.proyeccion.relaciones_partes.panel import construir_panel_relaciones
+from analitica.dominio.evaluacion.relaciones_partes.packing import panel_packing
+from analitica.dominio.evaluacion.relaciones_partes.panel import construir_panel_relaciones
 
 # ── Defecto 1: el riego duplicaba filas ──────────────────────────────────────
 
@@ -276,7 +276,7 @@ def test_el_corte_asof_deja_fuera_lo_posterior():
     """«Corte de datos» era solo la fecha máxima encontrada: describía hasta dónde llegaban
     los datos, no hasta dónde se había decidido mirar. La corrida vigente se ejecutó el
     2026-08-19 con datos hasta el 2026-09-10, tres semanas por delante."""
-    from analitica.proyeccion.fuentes import _aplicar_asof
+    from analitica.infraestructura.fuentes import _aplicar_asof
 
     tablas = {
         "cosecha": pd.DataFrame(

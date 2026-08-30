@@ -11,13 +11,13 @@ import json
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.calidad import controles_componentes
-from analitica.proyeccion.metricas import (
+from analitica.aplicacion.procesos.torneo import REGLA_PROMOCION, _identidad_coherente
+from analitica.dominio.evaluacion.calidad import controles_componentes
+from analitica.dominio.evaluacion.metricas import (
     _escala_naive,
     metricas_pareadas_modelos,
     metricas_pronostico,
 )
-from analitica.proyeccion.torneo import REGLA_PROMOCION, _identidad_coherente
 
 
 def _predicciones(base_plantas: str = "catalogo", coherente: bool = True) -> pd.DataFrame:
@@ -162,7 +162,7 @@ def test_el_check_de_identidad_no_penaliza_a_quien_no_publica_componentes():
 
 def test_la_decision_registra_el_check_nuevo():
     """Con un retador comparable, la fila de decisión debe llevar el check de identidad."""
-    from analitica.proyeccion.torneo import decidir_campeon
+    from analitica.aplicacion.procesos.torneo import decidir_campeon
 
     retador = _predicciones()
     base = retador.assign(modelo="R09_publicado", p50_kg=retador.p50_kg * 1.15)
@@ -177,7 +177,7 @@ def test_la_decision_registra_el_check_nuevo():
 
 def test_un_retador_con_identidad_rota_no_se_promueve():
     """Aunque gane en error, si su producto no reconstruye su kg no puede promoverse."""
-    from analitica.proyeccion.torneo import decidir_campeon
+    from analitica.aplicacion.procesos.torneo import decidir_campeon
 
     retador = _predicciones(coherente=False)
     base = retador.assign(modelo="R09_publicado", p50_kg=retador.real_kg * 3)
@@ -197,7 +197,7 @@ def test_la_combinacion_no_hereda_la_autoria_de_los_componentes():
     predicciones combinadas. Si arrastra `base_plantas`, el control de identidad le exige
     reconstruir un kg que por definición no puede reconstruir.
     """
-    from analitica.proyeccion.modelos import challenger_combinacion
+    from analitica.dominio.modelos.challengers import challenger_combinacion
 
     componentes = _predicciones()
     base = componentes.assign(modelo="R09_publicado", p50_kg=componentes.p50_kg * 1.2)
@@ -214,7 +214,7 @@ def test_el_contrato_rechaza_un_ensamblado_que_no_cierra():
     """Falla en el momento del ensamblado, antes de que el número llegue a una métrica."""
     import pytest
 
-    from analitica.proyeccion.contratos import validar_predicciones_componentes
+    from analitica.dominio.contratos import validar_predicciones_componentes
 
     with pytest.raises(ValueError, match="no reconstruye"):
         validar_predicciones_componentes(_predicciones(coherente=False))
@@ -224,7 +224,7 @@ def test_el_contrato_rechaza_un_ensamblado_que_no_cierra():
 def test_el_contrato_rechaza_componentes_fisicamente_imposibles():
     import pytest
 
-    from analitica.proyeccion.contratos import validar_predicciones_componentes
+    from analitica.dominio.contratos import validar_predicciones_componentes
 
     tabla = _predicciones()
     tabla.loc[tabla.index[0], "plantas"] = 0
@@ -237,7 +237,7 @@ def test_el_contrato_de_backtest_acota_el_peso_de_baya():
     import pandera.pandas as pa
     import pytest
 
-    from analitica.proyeccion.contratos import LIMITE_PESO_BAYA_G, validar_backtest
+    from analitica.dominio.contratos import LIMITE_PESO_BAYA_G, validar_backtest
 
     assert LIMITE_PESO_BAYA_G > 7.14, "debe dejar margen sobre el máximo observado"
     tabla = _predicciones().assign(
@@ -249,7 +249,7 @@ def test_el_contrato_de_backtest_acota_el_peso_de_baya():
 
 def test_las_familias_sin_componentes_siguen_validando():
     """`required=False`: un modelo que no publica componentes no debe fallar el contrato."""
-    from analitica.proyeccion.contratos import validar_backtest
+    from analitica.dominio.contratos import validar_backtest
 
     tabla = (
         _predicciones()
@@ -267,7 +267,7 @@ def test_una_metrica_descriptiva_no_intenta_guardarse_como_numero():
     """
     import inspect
 
-    from analitica.proyeccion.persistencia import RepositorioAnalytics
+    from analitica.infraestructura.persistencia import RepositorioAnalytics
 
     codigo = inspect.getsource(RepositorioAnalytics.guardar_metricas)
     assert "is_numeric_dtype" in codigo, "debe separar métricas numéricas de descriptivas"

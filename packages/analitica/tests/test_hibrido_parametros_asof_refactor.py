@@ -16,22 +16,22 @@ def test_el_paquete_reexporta_las_implementaciones_fisicas():
     }
 
     for nombre, funciones in modulos.items():
-        modulo = importlib.import_module(f"analitica.proyeccion.parametros.{nombre}")
+        modulo = importlib.import_module(f"analitica.aplicacion.parametros.{nombre}")
         for funcion in funciones:
             modulo_implementacion = (
-                "analitica.proyeccion.parametros.mezcla"
+                "analitica.aplicacion.parametros.mezcla"
                 if nombre == "seleccion"
                 else modulo.__name__
             )
             assert getattr(modulo, funcion).__module__ == modulo_implementacion
 
-    contratos = importlib.import_module("analitica.proyeccion.parametros.contratos")
-    parametros = importlib.import_module("analitica.proyeccion.parametros")
+    contratos = importlib.import_module("analitica.aplicacion.parametros.contratos")
+    parametros = importlib.import_module("analitica.aplicacion.parametros")
     assert parametros.ConfiguracionParametrosAsOf is contratos.ConfiguracionParametrosAsOf
 
 
 def test_los_modulos_internos_no_importan_la_fachada_historica():
-    raiz = Path(__file__).resolve().parents[1] / "proyeccion" / "parametros"
+    raiz = Path(__file__).resolve().parents[1] / "aplicacion" / "parametros"
     for ruta in raiz.glob("*.py"):
         arbol = ast.parse(ruta.read_text(encoding="utf-8"), filename=str(ruta))
         imports = [
@@ -50,18 +50,20 @@ def test_los_modulos_internos_no_importan_la_fachada_historica():
 
 
 def test_ejecucion_depende_de_las_implementaciones_internas_y_no_de_la_fachada_legacy():
-    ejecucion = importlib.import_module("analitica.proyeccion.parametros.ejecucion")
-    priors = importlib.import_module("analitica.proyeccion.hibrido.priors")
-    replay = importlib.import_module("analitica.proyeccion.hibrido.replay")
-    servicio = importlib.import_module("analitica.proyeccion.hibrido.servicio")
+    ejecucion = importlib.import_module("analitica.aplicacion.parametros.ejecucion")
+    priors = importlib.import_module("analitica.dominio.modelos.hibrido.priors")
+    replay = importlib.import_module("analitica.dominio.modelos.hibrido.replay")
+    proyecciones = importlib.import_module(
+        "analitica.dominio.modelos.hibrido.proyecciones"
+    )
 
     assert ejecucion._campania_defecto is priors._campania_defecto
     assert ejecucion._normalizar_emisiones is priors._normalizar_emisiones
     assert ejecucion._panel_corte_replay is replay.panel_corte_replay
     assert ejecucion._panel_replay_cache is replay.panel_replay_cache
-    assert ejecucion._legacy_panel is servicio._legacy_panel
-    assert ejecucion.proyectar_hibrido_v1 is servicio.proyectar_hibrido_v1
-    assert ejecucion.proyectar_macro_legacy_v1 is servicio.proyectar_macro_legacy_v1
+    assert ejecucion._legacy_panel is proyecciones._legacy_panel
+    assert ejecucion.proyectar_hibrido_v1 is proyecciones.proyectar_hibrido_v1
+    assert ejecucion.proyectar_macro_legacy_v1 is proyecciones.proyectar_macro_legacy_v1
 
     fuente = Path(ejecucion.__file__).read_text(encoding="utf-8")
     assert "hibrido_legacy" not in fuente

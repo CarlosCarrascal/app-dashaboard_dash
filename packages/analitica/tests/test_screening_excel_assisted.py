@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_excel_assisted as facade
-from analitica.servicios import excel_assisted as service
+from analitica.aplicacion.servicios import excel_assisted as service
+from analitica.interfaces.scripts import screening_excel_assisted as facade
 
 NOMBRES_COMPATIBLES = (
     "_conexion_access",
@@ -206,5 +206,5 @@ def test_fachada_es_compuerta_cli_y_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol_servicio)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

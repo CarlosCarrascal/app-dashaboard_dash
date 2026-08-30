@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.scripts import loop_forecast_horizontes as fachada
-from analitica.servicios import loop_forecast_horizontes as servicio
+from analitica.aplicacion.servicios import loop_forecast_horizontes as servicio
+from analitica.interfaces.scripts import loop_forecast_horizontes as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -79,7 +79,7 @@ def test_fachada_es_delgada_y_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol_fachada)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
     arbol_servicio = ast.parse(
@@ -90,7 +90,7 @@ def test_fachada_es_delgada_y_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol_servicio)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
 

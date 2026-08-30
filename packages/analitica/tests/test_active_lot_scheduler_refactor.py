@@ -4,15 +4,15 @@ import ast
 import inspect
 from pathlib import Path
 
-from analitica.servicios import active_lot_scheduler as fachada
-from analitica.servicios import active_lot_scheduler_contratos as contratos
-from analitica.servicios import active_lot_scheduler_fuentes as fuentes
-from analitica.servicios import active_lot_scheduler_metricas as metricas
-from analitica.servicios import active_lot_scheduler_prediccion as prediccion
-from analitica.servicios import active_lot_scheduler_salida as salida
-from analitica.servicios import cross_campaign
+from analitica.aplicacion.servicios import active_lot_scheduler as fachada
+from analitica.aplicacion.servicios import active_lot_scheduler_contratos as contratos
+from analitica.aplicacion.servicios import active_lot_scheduler_fuentes as fuentes
+from analitica.aplicacion.servicios import active_lot_scheduler_metricas as metricas
+from analitica.aplicacion.servicios import active_lot_scheduler_prediccion as prediccion
+from analitica.aplicacion.servicios import active_lot_scheduler_salida as salida
+from analitica.aplicacion.servicios import cross_campaign
 
-SERVICIOS = Path(__file__).parents[1] / "servicios"
+SERVICIOS = Path(__file__).parents[1] / "aplicacion" / "servicios"
 
 
 def test_fachada_conserva_aliases_historicos_por_identidad_y_firma() -> None:

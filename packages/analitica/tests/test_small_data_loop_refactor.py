@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from analitica.servicios import (
+from analitica.aplicacion.servicios import (
     loop_forecast_horizontes,
     loop_forecast_horizontes_configuracion,
     loop_forecast_horizontes_evaluacion,

@@ -4,7 +4,8 @@ import ast
 import inspect
 from pathlib import Path
 
-from analitica.scripts import (
+from analitica.aplicacion.servicios import parametros_replay, replay, router_horizonte
+from analitica.interfaces.scripts import (
     evaluar_ocurrencia_v3,
     replay_campania_completo,
     screening_lagged_parameters_horizons,
@@ -13,10 +14,9 @@ from analitica.scripts import (
     screening_router_horizonte,
     screening_router_parametros_lagged,
 )
-from analitica.servicios import parametros_replay, replay, router_horizonte
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "scripts"
+SCRIPTS = ROOT / "interfaces" / "scripts"
 TARGETS = {
     "replay_campania_completo",
     "evaluar_ocurrencia_v3",
@@ -41,13 +41,13 @@ def _imports_de_scripts(ruta: Path) -> list[str]:
             encontrados.extend(
                 alias.name
                 for alias in nodo.names
-                if nodo.module.startswith("analitica.scripts.")
+                if nodo.module.startswith("analitica.interfaces.scripts.")
             )
         elif isinstance(nodo, ast.Import):
             encontrados.extend(
                 alias.name
                 for alias in nodo.names
-                if alias.name.startswith("analitica.scripts.")
+                if alias.name.startswith("analitica.interfaces.scripts.")
             )
     return encontrados
 
@@ -64,7 +64,7 @@ def test_la_cadena_no_importa_un_script_desde_otro_script():
 def test_los_servicios_compartidos_no_dependen_de_scripts():
     problemas = {
         ruta.name: _imports_de_scripts(ruta)
-        for ruta in (ROOT / "servicios" / nombre for nombre in SERVICE_FILES)
+        for ruta in (ROOT / "aplicacion" / "servicios" / nombre for nombre in SERVICE_FILES)
         if _imports_de_scripts(ruta)
     }
     assert not problemas

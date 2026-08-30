@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_param_delta_momentum as facade
-from analitica.servicios import param_delta_momentum as service
+from analitica.aplicacion.servicios import param_delta_momentum as service
+from analitica.interfaces.scripts import screening_param_delta_momentum as facade
 
 NOMBRES_COMPATIBLES = (
     "_fundo",

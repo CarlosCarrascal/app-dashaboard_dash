@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.hibrido_parametros_lagged import (
+from analitica.aplicacion.procesos.hibrido_parametros_lagged import (
     ConfiguracionHibridoParametrosLagged,
     construir_hibrido_parametros_lagged,
     seleccionar_peso_parametros_asof,

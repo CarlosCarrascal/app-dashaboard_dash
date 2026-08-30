@@ -55,42 +55,56 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = [
     "analitica",
-    "analitica.nucleo",
+    "analitica.dominio.nucleo",
+    "analitica.dominio",
+    "analitica.dominio.compartido",
+    "analitica.dominio.modelos",
+    "analitica.dominio.modelos.hibrido",
+    "analitica.dominio.modelos.fenologico",
+    "analitica.dominio.evaluacion",
+    "analitica.dominio.evaluacion.relaciones_partes",
+    "analitica.aplicacion",
+    "analitica.aplicacion.procesos",
+    "analitica.aplicacion.procesos.candidatos",
+    "analitica.aplicacion.parametros",
+    "analitica.aplicacion.operativo",
+    "analitica.infraestructura",
+    "analitica.infraestructura.persistencia",
+    "analitica.interfaces",
     "analitica.proyeccion",
-    "analitica.proyeccion.compartido",
-    "analitica.proyeccion.candidatos",
-    "analitica.proyeccion.relaciones_partes",
-    "analitica.proyeccion.fenologico",
-    "analitica.proyeccion.hibrido",
     "analitica.proyeccion.horizonte",
-    "analitica.proyeccion.infraestructura",
-    "analitica.proyeccion.operativo",
-    "analitica.proyeccion.parametros",
-    "analitica.proyeccion.persistencia",
-    "analitica.visualizaciones",
-    "analitica.commands",
-    "analitica.servicios",
-    "analitica.servicios.infraestructura",
-    "analitica.scripts",
+    "analitica.aplicacion.servicios",
+    "analitica.aplicacion.servicios.infraestructura",
+    "analitica.interfaces.commands",
+    "analitica.interfaces.scripts",
+    "analitica.interfaces.visualizaciones",
 ]
 
 [tool.setuptools.package-dir]
 analitica = "."
-"analitica.nucleo" = "nucleo"
+"analitica.dominio.nucleo" = "dominio/nucleo"
+"analitica.dominio" = "dominio"
+"analitica.dominio.compartido" = "dominio/compartido"
+"analitica.dominio.modelos" = "dominio/modelos"
+"analitica.dominio.modelos.hibrido" = "dominio/modelos/hibrido"
+"analitica.dominio.modelos.fenologico" = "dominio/modelos/fenologico"
+"analitica.dominio.evaluacion" = "dominio/evaluacion"
+"analitica.dominio.evaluacion.relaciones_partes" = "dominio/evaluacion/relaciones_partes"
+"analitica.aplicacion" = "aplicacion"
+"analitica.aplicacion.procesos" = "aplicacion/procesos"
+"analitica.aplicacion.procesos.candidatos" = "aplicacion/procesos/candidatos"
+"analitica.aplicacion.parametros" = "aplicacion/parametros"
+"analitica.aplicacion.operativo" = "aplicacion/operativo"
+"analitica.infraestructura" = "infraestructura"
+"analitica.infraestructura.persistencia" = "infraestructura/persistencia"
+"analitica.interfaces" = "interfaces"
 "analitica.proyeccion" = "proyeccion"
-"analitica.proyeccion.compartido" = "proyeccion/compartido"
-"analitica.proyeccion.candidatos" = "proyeccion/candidatos"
-"analitica.proyeccion.relaciones_partes" = "proyeccion/relaciones_partes"
-"analitica.proyeccion.fenologico" = "proyeccion/fenologico"
-"analitica.proyeccion.hibrido" = "proyeccion/hibrido"
 "analitica.proyeccion.horizonte" = "proyeccion/horizonte"
-"analitica.proyeccion.persistencia" = "proyeccion/persistencia"
-"analitica.proyeccion.parametros" = "proyeccion/parametros"
-"analitica.proyeccion.operativo" = "proyeccion/operativo"
-"analitica.visualizaciones" = "visualizaciones"
-"analitica.commands" = "commands"
-"analitica.servicios" = "servicios"
-"analitica.scripts" = "scripts"
+"analitica.aplicacion.servicios" = "aplicacion/servicios"
+"analitica.aplicacion.servicios.infraestructura" = "aplicacion/servicios/infraestructura"
+"analitica.interfaces.commands" = "interfaces/commands"
+"analitica.interfaces.scripts" = "interfaces/scripts"
+"analitica.interfaces.visualizaciones" = "interfaces/visualizaciones"
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.py[cod]"]

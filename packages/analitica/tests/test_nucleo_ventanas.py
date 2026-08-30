@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-from analitica.nucleo import datos as modulo_datos
-from analitica.nucleo.contratos import Hallazgo
-from analitica.nucleo.datos import diagnostico_ventanas as diagnostico_compat
-from analitica.nucleo.ventanas import (
+from analitica.dominio.nucleo import datos as modulo_datos
+from analitica.dominio.nucleo.contratos import Hallazgo
+from analitica.dominio.nucleo.datos import diagnostico_ventanas as diagnostico_compat
+from analitica.dominio.nucleo.ventanas import (
     _agregar_lags,
     _rolling_climatico,
     _rolling_por_modulo,

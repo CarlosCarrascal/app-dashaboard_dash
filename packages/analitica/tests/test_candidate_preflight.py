@@ -5,7 +5,7 @@ import json
 import pandas as pd
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.candidatos import (
+from analitica.aplicacion.procesos.candidatos import (
     EXIT_CONTRACT_REJECTED,
     EXIT_OK,
     EXIT_QUALITY_REJECTED,
@@ -17,7 +17,7 @@ from analitica.proyeccion.candidatos import (
     seleccionar_emisiones_micro_desde_fuente,
     sha256_dataframe,
 )
-from analitica.scripts import persistir_hibrido_parametros_asof as runner
+from analitica.interfaces.scripts import persistir_hibrido_parametros_asof as runner
 
 HORIZONTES = (1, 2, 4, 6)
 REFERENCIAS = {

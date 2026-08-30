@@ -3,8 +3,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from analitica.servicios import excel_parameter_deltas as deltas
-from analitica.servicios import extract_excel_parameter_transitions as transitions
+from analitica.aplicacion.servicios import excel_parameter_deltas as deltas
+from analitica.aplicacion.servicios import extract_excel_parameter_transitions as transitions
 
 
 def test_deltas_expone_responsabilidades_desde_modulos_internos() -> None:

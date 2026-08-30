@@ -8,11 +8,11 @@ from pathlib import Path
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.scripts import (
+from analitica.aplicacion.servicios import estado_expertos
+from analitica.interfaces.scripts import (
     screening_expert_override_state as override,
 )
-from analitica.scripts import screening_residual_state_online as residual
-from analitica.servicios import estado_expertos
+from analitica.interfaces.scripts import screening_residual_state_online as residual
 
 
 def _contrato_sintetico() -> pd.DataFrame:
@@ -58,7 +58,7 @@ def test_scripts_son_fachadas_y_conservan_aliases() -> None:
     assert residual.ejecutar is estado_expertos.ejecutar_residual
 
     for nombre in ("screening_expert_override_state.py", "screening_residual_state_online.py"):
-        ruta = Path(__file__).parents[1] / "scripts" / nombre
+        ruta = Path(__file__).parents[1] / "interfaces" / "scripts" / nombre
         arbol = ast.parse(ruta.read_text(encoding="utf-8"))
         assert {n.name for n in ast.walk(arbol) if isinstance(n, ast.FunctionDef)} == {"main"}
 

@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from pandera.errors import SchemaError
 
-from analitica.proyeccion.contratos import validar_backtest
-from analitica.proyeccion.metricas import (
+from analitica.dominio.contratos import validar_backtest
+from analitica.dominio.evaluacion.metricas import (
     bootstrap_diferencia_wape_pareada,
     cobertura,
     interval_score,
@@ -16,7 +16,7 @@ from analitica.proyeccion.metricas import (
     sesgo,
     wape,
 )
-from analitica.proyeccion.versiones import banda_horizonte, parsear_version
+from analitica.dominio.versiones import banda_horizonte, parsear_version
 
 
 @pytest.mark.parametrize(

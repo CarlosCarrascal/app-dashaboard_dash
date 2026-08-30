@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.scripts import screening_lagged_parameters_horizons as fachada
-from analitica.servicios import lagged_parameters_horizons as servicio
-from analitica.servicios import parametros_replay
+from analitica.aplicacion.servicios import lagged_parameters_horizons as servicio
+from analitica.aplicacion.servicios import parametros_replay
+from analitica.interfaces.scripts import screening_lagged_parameters_horizons as fachada
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -185,7 +185,9 @@ def test_fachada_cli_conserva_argumentos_salida_serializacion_y_ruta(
 
 def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
     script_ast = ast.parse(
-        (ROOT / "scripts" / "screening_lagged_parameters_horizons.py").read_text(encoding="utf-8")
+        (
+            ROOT / "interfaces" / "scripts" / "screening_lagged_parameters_horizons.py"
+        ).read_text(encoding="utf-8")
     )
     assert [
         nodo.name
@@ -199,7 +201,7 @@ def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(script_ast)
     )
 
@@ -207,6 +209,6 @@ def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(service_ast)
     )

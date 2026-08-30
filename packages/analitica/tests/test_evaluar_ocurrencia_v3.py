@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.scripts import evaluar_ocurrencia_v3 as facade
-from analitica.servicios import evaluacion_ocurrencia_v3 as service
-from analitica.servicios import replay
+from analitica.aplicacion.servicios import evaluacion_ocurrencia_v3 as service
+from analitica.aplicacion.servicios import replay
+from analitica.interfaces.scripts import evaluar_ocurrencia_v3 as facade
 
 SCRIPT = Path(facade.__file__)
 
@@ -186,7 +186,7 @@ def test_fachada_es_compuerta_cli_y_servicio_no_depende_de_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_fachada)
     )
 
@@ -196,6 +196,6 @@ def test_fachada_es_compuerta_cli_y_servicio_no_depende_de_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_servicio)
     )

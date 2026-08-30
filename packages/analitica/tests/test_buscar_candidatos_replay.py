@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.scripts import buscar_candidatos_replay as fachada
-from analitica.servicios import buscar_candidatos_replay as servicio
+from analitica.aplicacion.servicios import buscar_candidatos_replay as servicio
+from analitica.interfaces.scripts import buscar_candidatos_replay as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -126,7 +126,7 @@ def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_fachada)
     )
 
@@ -136,7 +136,7 @@ def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_servicio)
     )
 

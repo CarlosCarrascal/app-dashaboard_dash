@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
+SCRIPTS = Path(__file__).parents[1] / "interfaces" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 SCRIPT = SCRIPTS / "screening_adaptive_nowcast.py"
-SERVICE = Path(__file__).parents[1] / "servicios" / "nowcast.py"
+SERVICE = Path(__file__).parents[1] / "aplicacion" / "servicios" / "nowcast.py"
 SPEC = importlib.util.spec_from_file_location("screening_adaptive_nowcast_test", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULO = importlib.util.module_from_spec(SPEC)

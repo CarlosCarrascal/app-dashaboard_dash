@@ -3,10 +3,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from analitica.servicios import cross_campaign
+from analitica.aplicacion.servicios import cross_campaign
 
 ROOT = Path(__file__).resolve().parents[1]
-SERVICIOS = ROOT / "servicios"
+SERVICIOS = ROOT / "aplicacion" / "servicios"
 PARTES = (
     SERVICIOS / "cross_campaign_lectura.py",
     SERVICIOS / "cross_campaign_features.py",
@@ -29,7 +29,7 @@ def test_la_fachada_reexporta_implementaciones_fisicamente_separadas() -> None:
     }
     for nombre, modulo in simbolos.items():
         implementacion = getattr(cross_campaign, nombre)
-        assert implementacion.__module__ == f"analitica.servicios.{modulo}"
+        assert implementacion.__module__ == f"analitica.aplicacion.servicios.{modulo}"
 
 
 def test_las_partes_no_importan_la_fachada() -> None:
@@ -42,9 +42,12 @@ def test_las_partes_no_importan_la_fachada() -> None:
             ):
                 problemas.append(f"{ruta.name}: from {nodo.module}")
             elif isinstance(nodo, ast.Import) and any(
-                alias.name == "analitica.servicios.cross_campaign" for alias in nodo.names
+                alias.name == "analitica.aplicacion.servicios.cross_campaign"
+                for alias in nodo.names
             ):
-                problemas.append(f"{ruta.name}: import analitica.servicios.cross_campaign")
+                problemas.append(
+                    f"{ruta.name}: import analitica.aplicacion.servicios.cross_campaign"
+                )
     assert not problemas, "; ".join(problemas)
 
 

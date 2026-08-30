@@ -9,14 +9,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_turno_reingreso_h1 as fachada
-from analitica.scripts.screening_turno_reingreso_h1 import (
+from analitica.aplicacion.servicios import turno_reingreso_h1 as servicio
+from analitica.interfaces.scripts import screening_turno_reingreso_h1 as fachada
+from analitica.interfaces.scripts.screening_turno_reingreso_h1 import (
     auditar_aplicabilidad_h1,
     derivar_turno_reingreso_asof,
     evaluar_panel,
     preparar_contrato,
 )
-from analitica.servicios import turno_reingreso_h1 as servicio
 
 SCRIPT = Path(fachada.__file__)
 
@@ -220,5 +220,5 @@ def test_fachada_es_compuerta_ast_sin_logica_de_negocio():
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

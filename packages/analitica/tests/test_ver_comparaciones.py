@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.scripts import ver_comparaciones as fachada
-from analitica.servicios import ver_comparaciones as servicio
+from analitica.aplicacion.servicios import ver_comparaciones as servicio
+from analitica.interfaces.scripts import ver_comparaciones as fachada
 
 NOMBRES_COMPATIBLES = (
     "ACCDB_PATH",
@@ -204,7 +204,7 @@ def test_fachada_es_delgada_y_dependencias_opcionales_no_se_cargan_en_importacio
         for node in ast.walk(facade_tree)
         if isinstance(node, ast.ImportFrom)
         and node.module
-        and node.module.startswith("analitica.scripts.")
+        and node.module.startswith("analitica.interfaces.scripts.")
     ]
 
     service_tree = ast.parse(Path(servicio.__file__).read_text(encoding="utf-8"))
@@ -226,5 +226,5 @@ def test_fachada_es_delgada_y_dependencias_opcionales_no_se_cargan_en_importacio
         for node in ast.walk(service_tree)
         if isinstance(node, ast.ImportFrom)
         and node.module
-        and node.module.startswith("analitica.scripts.")
+        and node.module.startswith("analitica.interfaces.scripts.")
     ]

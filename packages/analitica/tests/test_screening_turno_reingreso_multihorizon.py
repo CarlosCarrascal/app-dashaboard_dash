@@ -7,22 +7,27 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidatos import ConfiguracionTurnoTemporal
-from analitica.scripts.screening_turno_reingreso_multihorizon import (
+from analitica.aplicacion.procesos.candidatos import ConfiguracionTurnoTemporal
+from analitica.aplicacion.servicios import turno_reingreso as SERVICIO
+from analitica.interfaces.scripts.screening_turno_reingreso_multihorizon import (
     aplicar_configuracion,
     derivar_contexto_asof,
     enriquecer_macro,
     evaluar_panel,
     preparar_macro,
 )
-from analitica.servicios import turno_reingreso as SERVICIO
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "screening_turno_reingreso_multihorizon.py"
+SCRIPT = (
+    Path(__file__).parents[1]
+    / "interfaces"
+    / "scripts"
+    / "screening_turno_reingreso_multihorizon.py"
+)
 FUNDOS = ["Aqu Anqa 1", "Aqu Anqa 4", "Aqu Anqa 3", "Aqu Anqa 2"]
 
 
 def test_fachada_reexporta_aliases_y_firmas_del_servicio() -> None:
-    from analitica.scripts import screening_turno_reingreso_multihorizon as fachada
+    from analitica.interfaces.scripts import screening_turno_reingreso_multihorizon as fachada
 
     nombres = (
         "ConfiguracionTurnoTemporal",
@@ -51,7 +56,7 @@ def test_fachada_reexporta_aliases_y_firmas_del_servicio() -> None:
 
 
 def test_fachada_es_delgada_y_conserva_parser_y_ruta_historicos() -> None:
-    from analitica.scripts import screening_turno_reingreso_multihorizon as fachada
+    from analitica.interfaces.scripts import screening_turno_reingreso_multihorizon as fachada
 
     arbol = ast.parse(SCRIPT.read_text(encoding="utf-8"), filename=str(SCRIPT))
     definiciones = {
@@ -63,7 +68,7 @@ def test_fachada_es_delgada_y_conserva_parser_y_ruta_historicos() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol)
     )
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.hibrido_ocurrencia_v3 import (
+from analitica.dominio.modelos.ocurrencia_v3 import (
     NOMBRE_MODELO,
     ejecutar_replay_hibrido_ocurrencia_v3,
 )

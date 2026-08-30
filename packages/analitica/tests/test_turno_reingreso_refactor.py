@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from analitica.servicios import turno_reingreso, turno_reingreso_h1
+from analitica.aplicacion.servicios import turno_reingreso, turno_reingreso_h1
 
 
 def _arbol(modulo: object) -> ast.Module:
@@ -24,10 +24,10 @@ def test_las_rutas_historicas_son_fachadas_y_reexportan_la_implementacion_fisica
             for nodo in ast.walk(arbol)
             if isinstance(nodo, ast.ImportFrom)
             and nodo.module
-            and nodo.module.startswith("analitica.scripts.")
+            and nodo.module.startswith("analitica.interfaces.scripts.")
         ]
 
-    from analitica.servicios import (
+    from analitica.aplicacion.servicios import (
         turno_reingreso_configuracion,
         turno_reingreso_contexto,
         turno_reingreso_fuentes,
@@ -92,5 +92,5 @@ def test_los_componentes_no_importan_las_fachadas_historicas() -> None:
             for nodo in ast.walk(arbol)
             if isinstance(nodo, ast.ImportFrom) and nodo.module
         ]
-        assert "analitica.servicios.turno_reingreso" not in imports
-        assert "analitica.servicios.turno_reingreso_h1" not in imports
+        assert "analitica.aplicacion.servicios.turno_reingreso" not in imports
+        assert "analitica.aplicacion.servicios.turno_reingreso_h1" not in imports

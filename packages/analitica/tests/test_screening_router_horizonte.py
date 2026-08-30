@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.scripts import screening_router_horizonte as fachada
-from analitica.servicios import router_horizonte as servicio
+from analitica.aplicacion.servicios import router_horizonte as servicio
+from analitica.interfaces.scripts import screening_router_horizonte as fachada
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -123,6 +123,8 @@ def test_cli_conserva_salida_json_y_argumentos(monkeypatch, capsys) -> None:
 
 def test_fachada_no_contiene_logica_de_negocio() -> None:
     arbol = ast.parse(
-        (ROOT / "scripts" / "screening_router_horizonte.py").read_text(encoding="utf-8")
+        (ROOT / "interfaces" / "scripts" / "screening_router_horizonte.py").read_text(
+            encoding="utf-8"
+        )
     )
     assert [n.name for n in arbol.body if isinstance(n, ast.FunctionDef)] == ["main"]

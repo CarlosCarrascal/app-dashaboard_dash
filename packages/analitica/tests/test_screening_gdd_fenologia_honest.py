@@ -7,7 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.scripts.screening_gdd_fenologia_honest import (
+from analitica.aplicacion.servicios import fenologia_honest as SERVICIO
+from analitica.interfaces.scripts.screening_gdd_fenologia_honest import (
     SQL_CLIMA,
     SQL_ESTADOS,
     SQL_FLORES,
@@ -20,9 +21,8 @@ from analitica.scripts.screening_gdd_fenologia_honest import (
     redistribuir_curva,
     seleccionar_configuracion,
 )
-from analitica.servicios import fenologia_honest as SERVICIO
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "screening_gdd_fenologia_honest.py"
+SCRIPT = Path(__file__).parents[1] / "interfaces" / "scripts" / "screening_gdd_fenologia_honest.py"
 
 
 def test_la_fachada_reexporta_el_servicio_unico_y_conserva_firmas() -> None:
@@ -43,7 +43,7 @@ def test_la_fachada_reexporta_el_servicio_unico_y_conserva_firmas() -> None:
         "evaluar_gates",
         "evaluar",
     )
-    import analitica.scripts.screening_gdd_fenologia_honest as FACHADA
+    import analitica.interfaces.scripts.screening_gdd_fenologia_honest as FACHADA
 
     for nombre in nombres:
         fachada = getattr(FACHADA, nombre)
@@ -80,7 +80,7 @@ def test_el_script_solo_conserva_el_adaptador_cli() -> None:
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
 

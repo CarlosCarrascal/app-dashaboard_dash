@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.hibrido_ocurrencia import (
+from analitica.dominio.modelos.ocurrencia_v1 import (
     ConfiguracionHibridoOcurrencia,
     ejecutar_replay_hibrido_ocurrencia,
 )

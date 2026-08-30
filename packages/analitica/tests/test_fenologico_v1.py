@@ -10,97 +10,87 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.proyeccion.asof import detectar_fuga, enriquecer_asof
-from analitica.proyeccion.asof import detectar_fuga as detectar_fuga_asof
-from analitica.proyeccion.asof import enriquecer_asof as enriquecer_asof_asof
-from analitica.proyeccion.compartido.fechas import (
+from analitica.dominio.asof import detectar_fuga, enriquecer_asof
+from analitica.dominio.asof import detectar_fuga as detectar_fuga_asof
+from analitica.dominio.asof import enriquecer_asof as enriquecer_asof_asof
+from analitica.dominio.compartido.fechas import (
     lunes_semana,
     ultimo_disponible,
 )
-from analitica.proyeccion.contratos import DatosProyeccion, FuenteInfo
-from analitica.proyeccion.fenologico import (
-    ajuste,
-    especificacion,
-    evidencia,
-    incertidumbre,
-    metricas,
-    panel,
-    servicio,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    _MixedLMFinal,
-    _ModeloAjustado,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    ajustar_clasificador as _ajustar_clasificador,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    ajustar_mixedlm as _ajustar_mixedlm,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    ajustar_regresor as _ajustar_regresor,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    clasificadores as _clasificadores,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    columnas_modelo as _columnas_modelo,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    corte_temporal as _corte_temporal,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    pipeline as _pipeline,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    predecir as _predecir,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    preprocesador as _preprocesador,
-)
-from analitica.proyeccion.fenologico.ajuste import (
-    regresores as _regresores,
-)
-from analitica.proyeccion.fenologico.contratos import EscenarioFenologico
-from analitica.proyeccion.fenologico.especificacion import (
+from analitica.dominio.contratos import DatosProyeccion, FuenteInfo
+from analitica.dominio.modelos.fenologico import (
     FEATURES_CONTROL,
     FEATURES_PROHIBIDAS,
     HIPOTESIS_FEATURE,
     REFERENCIAS_HIPOTESIS,
-)
-from analitica.proyeccion.fenologico.evidencia import (
-    correlacion as _correlacion,
-)
-from analitica.proyeccion.fenologico.evidencia import (
+    EscenarioFenologico,
+    _MixedLMFinal,
+    _ModeloAjustado,
+    _predecir_emision,
+    ajuste,
+    aplicar_escenario_fenologico,
+    auditar_panel_fenologico,
+    backtest_fenologico_v1,
+    construir_panel_fenologico,
+    especificacion,
     evaluar_evidencia_fold,
+    evidencia,
+    incertidumbre,
+    metricas,
+    panel,
+    proyectar_fenologico_v1,
+    servicio,
 )
-from analitica.proyeccion.fenologico.evidencia import (
-    hipotesis as _hipotesis,
+from analitica.dominio.modelos.fenologico import (
+    ajustar_clasificador as _ajustar_clasificador,
 )
-from analitica.proyeccion.fenologico.incertidumbre import aplicar_escenario_fenologico
-from analitica.proyeccion.fenologico.metricas import (
+from analitica.dominio.modelos.fenologico import (
+    ajustar_mixedlm as _ajustar_mixedlm,
+)
+from analitica.dominio.modelos.fenologico import (
+    ajustar_regresor as _ajustar_regresor,
+)
+from analitica.dominio.modelos.fenologico import (
     calibrar_factor_volumen as _calibrar_factor_volumen,
 )
-from analitica.proyeccion.fenologico.metricas import (
+from analitica.dominio.modelos.fenologico import (
+    clasificadores as _clasificadores,
+)
+from analitica.dominio.modelos.fenologico import (
+    columnas_modelo as _columnas_modelo,
+)
+from analitica.dominio.modelos.fenologico import (
+    correlacion as _correlacion,
+)
+from analitica.dominio.modelos.fenologico import (
+    corte_temporal as _corte_temporal,
+)
+from analitica.dominio.modelos.fenologico import (
+    hipotesis as _hipotesis,
+)
+from analitica.dominio.modelos.fenologico import (
     intervalos_validacion as _intervalos_validacion,
 )
-from analitica.proyeccion.fenologico.metricas import (
+from analitica.dominio.modelos.fenologico import (
     intervalos_volumen_directo as _intervalos_volumen_directo,
 )
-from analitica.proyeccion.fenologico.metricas import (
-    sensibilidades as _sensibilidades,
-)
-from analitica.proyeccion.fenologico.panel import (
-    auditar_panel_fenologico,
-    construir_panel_fenologico,
-)
-from analitica.proyeccion.fenologico.panel import (
+from analitica.dominio.modelos.fenologico import (
     normalizar_emisiones as _normalizar_emisiones,
 )
-from analitica.proyeccion.fenologico.servicio import (
-    _predecir_emision,
-    backtest_fenologico_v1,
-    proyectar_fenologico_v1,
+from analitica.dominio.modelos.fenologico import (
+    pipeline as _pipeline,
+)
+from analitica.dominio.modelos.fenologico import (
+    predecir as _predecir,
+)
+from analitica.dominio.modelos.fenologico import (
+    preprocesador as _preprocesador,
+)
+from analitica.dominio.modelos.fenologico import (
+    regresores as _regresores,
+)
+from analitica.dominio.modelos.fenologico import (
+    sensibilidades as _sensibilidades,
 )
 
 lunes_semana_temporal = lunes_semana
@@ -220,9 +210,9 @@ def test_importar_submodulo_liviano_no_arrastra_dependencias_pesadas():
     )
     codigo = """
 import sys
-import analitica.proyeccion.fenologico
+import analitica.dominio.modelos.fenologico
 from analitica.proyeccion import DatosProyeccion
-import analitica.proyeccion.fenologico.ajuste
+import analitica.dominio.modelos.fenologico
 assert DatosProyeccion.__name__ == "DatosProyeccion"
 assert not any(nombre in sys.modules for nombre in ("sklearn", "statsmodels", "xgboost"))
 """

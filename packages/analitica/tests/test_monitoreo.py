@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.proyeccion.monitoreo import monitorear_llegada_reales
+from analitica.aplicacion.procesos.monitoreo import monitorear_llegada_reales
 
 
 def test_monitoreo_registra_reales_deriva_y_fuera_de_rango():

@@ -4,8 +4,8 @@ from contextlib import contextmanager
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.persistencia import RepositorioAnalytics
-from analitica.proyeccion.persistencia.repositorio import ClaimHistoryConflictError
+from analitica.infraestructura.persistencia import RepositorioAnalytics
+from analitica.infraestructura.persistencia.repositorio import ClaimHistoryConflictError
 
 
 class _Cursor:

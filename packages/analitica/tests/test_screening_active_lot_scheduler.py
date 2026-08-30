@@ -7,10 +7,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_active_lot_scheduler as modulo
-from analitica.servicios import active_lot_scheduler as servicio
+from analitica.aplicacion.servicios import active_lot_scheduler as servicio
+from analitica.interfaces.scripts import screening_active_lot_scheduler as modulo
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "screening_active_lot_scheduler.py"
+SCRIPT = Path(__file__).parents[1] / "interfaces" / "scripts" / "screening_active_lot_scheduler.py"
 
 
 def test_fachada_reexporta_aliases_historicos_por_identidad_y_firma():
@@ -73,7 +73,7 @@ def test_fachada_solo_conserva_el_adaptador_cli():
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
 

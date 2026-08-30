@@ -4,37 +4,37 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.proyeccion.compartido.serializacion import (
+from analitica.dominio.compartido.serializacion import (
     limpiar_valor,
     serializar_json,
     serializar_jsonb,
 )
-from analitica.proyeccion.infraestructura import (
+from analitica.infraestructura import (
     commit_actual,
 )
-from analitica.proyeccion.infraestructura import commit_actual as commit_actual_git
-from analitica.proyeccion.infraestructura import (
+from analitica.infraestructura import commit_actual as commit_actual_git
+from analitica.infraestructura import (
     limpiar_valor as _limpio,
 )
-from analitica.proyeccion.infraestructura import (
+from analitica.infraestructura import (
     serializar_json as _json,
 )
-from analitica.proyeccion.persistencia import (
+from analitica.infraestructura.persistencia import (
     RepositorioAnalytics,
     log_metricas_mlflow,
     registrar_modelos_mlflow,
     tracking_mlflow,
 )
-from analitica.proyeccion.persistencia.mlflow import (
+from analitica.infraestructura.persistencia.mlflow import (
     log_metricas_mlflow as log_metricas_mlflow_canonico,
 )
-from analitica.proyeccion.persistencia.mlflow import (
+from analitica.infraestructura.persistencia.mlflow import (
     registrar_modelos_mlflow as registrar_modelos_mlflow_canonico,
 )
-from analitica.proyeccion.persistencia.mlflow import (
+from analitica.infraestructura.persistencia.mlflow import (
     tracking_mlflow as tracking_mlflow_canonico,
 )
-from analitica.proyeccion.persistencia.repositorio import (
+from analitica.infraestructura.persistencia.repositorio import (
     RepositorioAnalytics as RepositorioPersistencia,
 )
 

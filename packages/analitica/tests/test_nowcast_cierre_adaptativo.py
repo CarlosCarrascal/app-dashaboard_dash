@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.proyeccion import nowcast_cierre_adaptativo as nowcast
+from analitica.aplicacion.procesos import nowcast
 
 ARTEFACTO_DORADO = (
     Path(__file__).resolve().parent / "fixtures" / "nowcast_cierre_adaptativo_c2026.json"

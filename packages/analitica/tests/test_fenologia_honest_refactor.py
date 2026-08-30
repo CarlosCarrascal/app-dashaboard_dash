@@ -8,14 +8,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.servicios import fenologia_honest as fachada
-from analitica.servicios import fenologia_honest_contratos as contratos
-from analitica.servicios import fenologia_honest_evaluacion as evaluacion
-from analitica.servicios import fenologia_honest_fuentes as fuentes
-from analitica.servicios import fenologia_honest_modelo as modelo
-from analitica.servicios import fenologia_honest_salida as salida
+from analitica.aplicacion.servicios import fenologia_honest as fachada
+from analitica.aplicacion.servicios import fenologia_honest_contratos as contratos
+from analitica.aplicacion.servicios import fenologia_honest_evaluacion as evaluacion
+from analitica.aplicacion.servicios import fenologia_honest_fuentes as fuentes
+from analitica.aplicacion.servicios import fenologia_honest_modelo as modelo
+from analitica.aplicacion.servicios import fenologia_honest_salida as salida
 
-SERVICIOS = Path(__file__).parents[1] / "servicios"
+SERVICIOS = Path(__file__).parents[1] / "aplicacion" / "servicios"
 
 
 def test_fachada_conserva_aliases_y_firmas_de_la_api() -> None:

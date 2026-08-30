@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from analitica import cli
-from analitica.commands import bhattacharya, common, operational, relations, torneo
+from analitica.interfaces.commands import bhattacharya, common, operational, relations, torneo
 
 
 def _subcomandos(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:

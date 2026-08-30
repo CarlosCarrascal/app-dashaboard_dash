@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.scripts import diagnostico_v2_vs_nowcast_horizontes as fachada
-from analitica.servicios import diagnostico_nowcast_horizontes as servicio
+from analitica.aplicacion.servicios import diagnostico_nowcast_horizontes as servicio
+from analitica.interfaces.scripts import diagnostico_v2_vs_nowcast_horizontes as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -63,7 +63,7 @@ def test_fachada_solo_conserva_el_adaptador_cli() -> None:
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
 

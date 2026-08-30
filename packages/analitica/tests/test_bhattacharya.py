@@ -6,18 +6,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.nucleo.bhattacharya import (
+from analitica.aplicacion.parametros.automaticos import reemplazar_parametros_excel_por_db
+from analitica.aplicacion.servicios.servicio_bhattacharya import (
+    calibrar_todos_los_lotes,
+    generar_proyeccion_empresa,
+)
+from analitica.dominio.nucleo.bhattacharya import (
     ParametrosBhattacharya,
     ajustar_lote,
     ajustar_lote_automatico,
     cdf_interval,
     proyectar_curva_oleadas,
     simular_escenario,
-)
-from analitica.proyeccion.parametros_automaticos import reemplazar_parametros_excel_por_db
-from analitica.servicios.servicio_bhattacharya import (
-    calibrar_todos_los_lotes,
-    generar_proyeccion_empresa,
 )
 
 

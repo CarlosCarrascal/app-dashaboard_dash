@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.rapid_candidate_loop import (
+from analitica.aplicacion.procesos.seleccion_candidatos import (
     CandidatoMezcla,
     aplicar_candidato,
     preparar_panel,

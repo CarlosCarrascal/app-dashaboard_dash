@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.scripts import screening_turno_reingreso as fachada
-from analitica.servicios import screening_turno_reingreso as servicio
+from analitica.aplicacion.servicios import screening_turno_reingreso as servicio
+from analitica.interfaces.scripts import screening_turno_reingreso as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -165,5 +165,5 @@ def test_fachada_es_delgada_y_servicio_no_importa_scripts() -> None:
         for nodo in ast.walk(servicio_ast)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

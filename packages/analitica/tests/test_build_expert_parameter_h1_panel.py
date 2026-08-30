@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.scripts import build_expert_parameter_h1_panel as facade
-from analitica.servicios import expert_parameter_h1_panel as service
+from analitica.aplicacion.servicios import expert_parameter_h1_panel as service
+from analitica.interfaces.scripts import build_expert_parameter_h1_panel as facade
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -177,7 +177,7 @@ def test_fachada_es_delgada_y_servicio_no_depende_de_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_fachada)
     )
 
@@ -188,6 +188,6 @@ def test_fachada_es_delgada_y_servicio_no_depende_de_scripts() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol_servicio)
     )

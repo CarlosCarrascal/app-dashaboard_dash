@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.hibrido_ocurrencia import ConfiguracionHibridoOcurrencia
-from analitica.proyeccion.hibrido_ocurrencia_v2 import (
+from analitica.dominio.evaluacion.metricas import metricas_cobertura_operacional
+from analitica.dominio.modelos.ocurrencia_v1 import ConfiguracionHibridoOcurrencia
+from analitica.dominio.modelos.ocurrencia_v2 import (
     NOMBRE_MODELO,
     ejecutar_replay_hibrido_ocurrencia_v2,
 )
-from analitica.proyeccion.metricas import metricas_cobertura_operacional
 
 
 def _panel(semanas: int = 8, lotes: int = 40) -> pd.DataFrame:

@@ -33,7 +33,7 @@ def postgres_context():
     import pandas
     import psycopg
 
-    from analitica.proyeccion.persistencia.repositorio import (
+    from analitica.infraestructura.persistencia.repositorio import (
         ClaimHistoryConflictError,
         RepositorioAnalytics,
     )

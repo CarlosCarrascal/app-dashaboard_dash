@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.scripts import replay_campania_completo as facade
-from analitica.servicios import persistir_replay_campania as persistir_replay
-from analitica.servicios import replay_campania_completo as service
+from analitica.aplicacion.servicios import persistir_replay_campania as persistir_replay
+from analitica.aplicacion.servicios import replay_campania_completo as service
+from analitica.interfaces.scripts import replay_campania_completo as facade
 
 
 def _datos_sinteticos() -> SimpleNamespace:

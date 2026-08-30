@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.proyeccion.ocurrencia import (
+from analitica.dominio.modelos.ocurrencia import (
     OccurrenceConfig,
     construir_rejilla_ocurrencia,
     estimar_ocurrencia,

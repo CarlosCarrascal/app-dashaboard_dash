@@ -9,9 +9,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.servicios import cross_campaign as SERVICIO
+from analitica.aplicacion.servicios import cross_campaign as SERVICIO
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "screening_cross_campaign_h1.py"
+SCRIPT = Path(__file__).parents[1] / "interfaces" / "scripts" / "screening_cross_campaign_h1.py"
 SPEC = importlib.util.spec_from_file_location("screening_cross_campaign_h1_test", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULO = importlib.util.module_from_spec(SPEC)
@@ -61,7 +61,7 @@ def test_el_script_solo_conserva_el_adaptador_cli() -> None:
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
 

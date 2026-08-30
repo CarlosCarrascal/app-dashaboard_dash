@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.scripts import validate_intraweek_nowcast_external as fachada
-from analitica.servicios import validate_intraweek_nowcast_external as servicio
+from analitica.aplicacion.servicios import validate_intraweek_nowcast_external as servicio
+from analitica.interfaces.scripts import validate_intraweek_nowcast_external as fachada
 
 SCRIPT = Path(fachada.__file__)
 
@@ -191,7 +191,7 @@ def test_script_es_fachada_ast_y_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol_script)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
     service_path = Path(servicio.__file__)
@@ -201,5 +201,5 @@ def test_script_es_fachada_ast_y_servicio_no_depende_de_scripts() -> None:
         for nodo in ast.walk(arbol_servicio)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

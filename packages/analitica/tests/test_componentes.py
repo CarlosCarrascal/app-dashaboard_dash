@@ -15,14 +15,14 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.proyeccion.componentes import (
+from analitica.dominio.modelos.challengers import _elegir_anidado_etiquetado
+from analitica.dominio.modelos.componentes import (
     FEATURES_FRUTOS,
     FEATURES_PESO,
     FEATURES_PROHIBIDAS,
     NOMBRE_MODELO,
     challengers_componentes,
 )
-from analitica.proyeccion.modelos import _elegir_anidado_etiquetado
 
 # Panel mínimo que aún deja varias emisiones entrenando: con 8 lotes y 2 horizontes son 16
 # filas por semana, así que el umbral de entrenamiento se alcanza hacia la semana 7 y

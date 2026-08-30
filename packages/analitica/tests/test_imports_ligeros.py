@@ -22,8 +22,8 @@ def _ejecutar_importacion(codigo: str) -> str:
 
 def test_fachadas_ligeras_no_arrastran_modelos_al_importar():
     salida = _ejecutar_importacion(
-        "import sys; import analitica.nucleo; "
-        "import analitica.cli; import analitica.visualizaciones.graficos; "
+        "import sys; import analitica.dominio.nucleo; "
+        "import analitica.cli; import analitica.interfaces.visualizaciones.graficos; "
         "print('xgboost' not in sys.modules and 'sklearn' not in sys.modules "
         "and 'plotly' not in sys.modules)"
     )

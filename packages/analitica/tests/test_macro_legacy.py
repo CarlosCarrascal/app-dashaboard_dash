@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.hibrido.macro import MacroParams, parametros_desde_fila, proyectar_macro
+from analitica.dominio.modelos.hibrido import MacroParams, parametros_desde_fila, proyectar_macro
 
 
 def test_la_macro_legacy_reconstruye_la_identidad_de_kilos():

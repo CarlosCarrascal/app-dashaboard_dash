@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from analitica.scripts import persistir_hibrido_parametros_asof as facade
-from analitica.servicios import persistir_hibrido_parametros_asof as service
+from analitica.aplicacion.servicios import persistir_hibrido_parametros_asof as service
+from analitica.interfaces.scripts import persistir_hibrido_parametros_asof as facade
 
 
 def test_flujo_se_divide_por_responsabilidad_sin_importar_la_fachada_historica() -> None:
@@ -34,7 +34,7 @@ def test_flujo_se_divide_por_responsabilidad_sin_importar_la_fachada_historica()
                 or isinstance(nodo, ast.Import)
             )
             and any(
-                alias.name.startswith("analitica.scripts")
+                alias.name.startswith("analitica.interfaces.scripts")
                 for alias in (
                     nodo.names
                     if isinstance(nodo, ast.Import)

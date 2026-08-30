@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.hibrido import priors
+from analitica.dominio.modelos.hibrido import priors
 
 
 def test_cache_de_fuentes_de_calibracion_es_por_snapshot():

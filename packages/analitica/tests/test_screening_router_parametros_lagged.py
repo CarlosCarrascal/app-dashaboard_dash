@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.scripts import screening_router_parametros_lagged as fachada
-from analitica.servicios import router_parametros_lagged as servicio
+from analitica.aplicacion.servicios import router_parametros_lagged as servicio
+from analitica.interfaces.scripts import screening_router_parametros_lagged as fachada
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -144,12 +144,14 @@ def test_cli_conserva_argumentos_salida_y_serializacion(monkeypatch, tmp_path, c
 
 
 def test_script_es_fachada_ast_sin_logica_de_negocio_y_servicio_sin_scripts():
-    script = ROOT / "scripts" / "screening_router_parametros_lagged.py"
+    script = ROOT / "interfaces" / "scripts" / "screening_router_parametros_lagged.py"
     arbol_script = ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
     assert [n.name for n in arbol_script.body if isinstance(n, ast.FunctionDef)] == ["main"]
 
     servicio_ast = ast.parse(
-        (ROOT / "servicios" / "router_parametros_lagged.py").read_text(encoding="utf-8"),
+        (ROOT / "aplicacion" / "servicios" / "router_parametros_lagged.py").read_text(
+            encoding="utf-8"
+        ),
         filename="router_parametros_lagged.py",
     )
     imports_de_scripts = [
@@ -157,6 +159,6 @@ def test_script_es_fachada_ast_sin_logica_de_negocio_y_servicio_sin_scripts():
         for nodo in ast.walk(servicio_ast)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
     assert imports_de_scripts == []

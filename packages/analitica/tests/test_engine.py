@@ -3,12 +3,12 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.componentes import FEATURES_FRUTOS, FEATURES_PESO
-from analitica.proyeccion.engine import (
+from analitica.aplicacion.procesos.engine import (
     ProjectionConfig,
     ProjectionScenario,
     proyectar_desde_corte,
 )
+from analitica.dominio.modelos.componentes import FEATURES_FRUTOS, FEATURES_PESO
 
 
 def _r09() -> pd.DataFrame:

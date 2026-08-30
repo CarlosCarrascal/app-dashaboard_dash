@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.proyeccion.fuentes import _firma
+from analitica.infraestructura.fuentes import _firma
 
 
 def test_firma_snapshot_es_reproducible_y_detecta_mutacion():

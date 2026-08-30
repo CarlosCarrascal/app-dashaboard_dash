@@ -10,8 +10,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.scripts import persistir_proyeccion_operativa_v2 as facade
-from analitica.servicios import persistir_proyeccion_operativa_v2 as service
+from analitica.aplicacion.servicios import persistir_proyeccion_operativa_v2 as service
+from analitica.interfaces.scripts import persistir_proyeccion_operativa_v2 as facade
 
 SCRIPT = Path(facade.__file__)
 

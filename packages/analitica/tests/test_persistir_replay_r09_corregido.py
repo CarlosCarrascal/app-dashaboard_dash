@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.scripts import persistir_replay_r09_corregido as facade
-from analitica.servicios import persistir_replay_r09_corregido as service
+from analitica.aplicacion.servicios import persistir_replay_r09_corregido as service
+from analitica.interfaces.scripts import persistir_replay_r09_corregido as facade
 
 SCRIPT = facade.__file__
 

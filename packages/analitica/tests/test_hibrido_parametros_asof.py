@@ -5,21 +5,21 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.fenologico import construir_panel_fenologico
-from analitica.proyeccion.parametros.contratos import (
+from analitica.aplicacion.parametros.contratos import (
     NOMBRE_MODELO,
     ConfiguracionParametrosAsOf,
 )
-from analitica.proyeccion.parametros.desplazamientos import (
+from analitica.aplicacion.parametros.desplazamientos import (
     _desplazamiento_gdd_por_fila,
     aprender_desplazamiento,
     seleccionar_gdd_config,
 )
-from analitica.proyeccion.parametros.ejecucion import ejecutar_emision_parametros_asof
-from analitica.proyeccion.parametros.mezcla import seleccionar_peso_macro
-from analitica.proyeccion.parametros.normalizacion import normalizar_parametros_excel
-from analitica.proyeccion.parametros.snapshots import construir_snapshot_parametros
-from analitica.proyeccion.parametros_excel import seleccionar_libros_parametros
+from analitica.aplicacion.parametros.ejecucion import ejecutar_emision_parametros_asof
+from analitica.aplicacion.parametros.excel import seleccionar_libros_parametros
+from analitica.aplicacion.parametros.mezcla import seleccionar_peso_macro
+from analitica.aplicacion.parametros.normalizacion import normalizar_parametros_excel
+from analitica.aplicacion.parametros.snapshots import construir_snapshot_parametros
+from analitica.dominio.modelos.fenologico import construir_panel_fenologico
 
 
 def _emisiones() -> pd.DataFrame:

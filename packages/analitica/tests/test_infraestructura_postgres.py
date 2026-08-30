@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from analitica.servicios.infraestructura.postgres import (
+from analitica.aplicacion.servicios.infraestructura.postgres import (
     conexion_postgres,
     obtener_conexion_pg,
 )
@@ -32,10 +32,10 @@ def test_obtener_conexion_pg_concentra_configuracion_sin_conectar_a_una_db_real(
 
 def test_fachada_historica_del_servicio_delega_en_infraestructura():
     with patch(
-        "analitica.servicios.servicio_bhattacharya.obtener_conexion_pg",
+        "analitica.aplicacion.servicios.servicio_bhattacharya.obtener_conexion_pg",
         return_value="conexion_falsa",
     ) as obtener:
-        from analitica.servicios.servicio_bhattacharya import _obtener_conexion_pg
+        from analitica.aplicacion.servicios.servicio_bhattacharya import _obtener_conexion_pg
 
         assert _obtener_conexion_pg() == "conexion_falsa"
 

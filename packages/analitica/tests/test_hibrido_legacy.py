@@ -9,43 +9,47 @@ import pytest
 from pandas.testing import assert_frame_equal
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.fenologico import construir_panel_fenologico
-from analitica.proyeccion.hibrido import priors, proyecciones, replay, residual, servicio
-from analitica.proyeccion.hibrido.priors import (
+from analitica.dominio.modelos import hibrido
+from analitica.dominio.modelos.fenologico import construir_panel_fenologico
+from analitica.dominio.modelos.hibrido import (
+    NOMBRE_MODELO,
+    priors,
+    proyecciones,
+    proyectar_hibrido_v1,
+    replay,
+    residual,
+)
+from analitica.dominio.modelos.hibrido.priors import (
     ParametroLegacyAsOf,
     _normalizar_emisiones,
     calibrar_parametros_legacy_asof,
 )
-from analitica.proyeccion.hibrido.proyecciones import (
-    NOMBRE_MODELO,
-    proyectar_hibrido_v1,
-)
-from analitica.proyeccion.hibrido.replay import (
+from analitica.dominio.modelos.hibrido.replay import (
     backtest_hibrido_v1,
     backtest_macro_legacy_v1,
     construir_curva_historica,
 )
-from analitica.proyeccion.hibrido.replay import (
+from analitica.dominio.modelos.hibrido.replay import (
     panel_corte_replay as _panel_corte_replay,
 )
-from analitica.proyeccion.hibrido.replay import (
+from analitica.dominio.modelos.hibrido.replay import (
     panel_replay_cache as _panel_replay_cache,
 )
-from analitica.proyeccion.hibrido.residual import (
+from analitica.dominio.modelos.hibrido.residual import (
     EPSILON,
     FEATURES_PROHIBIDAS,
     FEATURES_RESIDUALES,
 )
-from analitica.proyeccion.hibrido.residual import (
+from analitica.dominio.modelos.hibrido.residual import (
     CorreccionResidual as _CorreccionResidual,
 )
-from analitica.proyeccion.hibrido.residual import (
+from analitica.dominio.modelos.hibrido.residual import (
     ajustar_residuales as _ajustar_residuales,
 )
-from analitica.proyeccion.hibrido.residual import (
+from analitica.dominio.modelos.hibrido.residual import (
     features_presentes as _features_presentes,
 )
-from analitica.proyeccion.hibrido.residual import (
+from analitica.dominio.modelos.hibrido.residual import (
     pipeline_residual as _pipeline_residual,
 )
 
@@ -128,21 +132,13 @@ def test_fachada_legacy_conserva_identidad_del_replay():
 
 
 def test_servicio_es_la_implementacion_y_no_depende_de_una_fachada_historica():
-    assert servicio._legacy_panel is proyecciones._legacy_panel
-    assert servicio.proyectar_hibrido_v1 is proyecciones.proyectar_hibrido_v1
-    assert servicio.proyectar_macro_legacy_v1 is proyecciones.proyectar_macro_legacy_v1
+    assert proyecciones._legacy_panel is proyecciones._legacy_panel
+    assert proyecciones.proyectar_hibrido_v1 is proyecciones.proyectar_hibrido_v1
+    assert proyecciones.proyectar_macro_legacy_v1 is proyecciones.proyectar_macro_legacy_v1
 
-    raiz = Path(servicio.__file__).parent
-    for ruta in (raiz / "servicio.py", raiz / "replay.py"):
-        arbol = ast.parse(ruta.read_text(encoding="utf-8"))
-        imports_historicos = [
-            nodo
-            for nodo in ast.walk(arbol)
-            if isinstance(nodo, ast.ImportFrom)
-            and nodo.module
-            and nodo.module.endswith("hibrido_legacy")
-        ]
-        assert imports_historicos == []
+    raiz = Path(proyecciones.__file__).parent
+    assert not (raiz / "hibrido_legacy.py").exists()
+    assert not (raiz / "_hibrido_legacy").exists()
 
 
 def test_replay_y_servicio_conservan_dependencias_unidireccionales():
@@ -156,14 +152,8 @@ def test_replay_y_servicio_conservan_dependencias_unidireccionales():
                 encontrados.update(alias.name for alias in nodo.names)
         return encontrados
 
-    imports_replay = imports_de(Path(replay.__file__))
-    imports_servicio = imports_de(Path(servicio.__file__))
-    imports_proyecciones = imports_de(Path(proyecciones.__file__))
-
-    assert "servicio" not in imports_replay
-    assert "replay" in imports_servicio
-    assert "servicio" not in imports_proyecciones
-    assert "replay" not in imports_proyecciones
+    imports_hibrido = imports_de(Path(hibrido.__file__))
+    assert not any(nombre.startswith(".hibrido") for nombre in imports_hibrido)
 
 
 def test_los_motores_canonicos_contienen_la_implementacion_de_negocio():

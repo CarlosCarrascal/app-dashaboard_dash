@@ -9,9 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.servicios import nowcast
+from analitica.aplicacion.servicios import nowcast
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
+SCRIPTS = Path(__file__).parents[1] / "interfaces" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 SCRIPT = SCRIPTS / "screening_adaptive_nowcast_fund_guard.py"
 SPEC = importlib.util.spec_from_file_location("screening_adaptive_nowcast_fund_guard_test", SCRIPT)

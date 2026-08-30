@@ -1,6 +1,6 @@
 """Fachada pública de la interfaz de línea de órdenes analítica.
 
-Los handlers viven en ``analitica.commands``; este módulo conserva la ruta
+Los handlers viven en ``analitica.interfaces.commands``; este módulo conserva la ruta
 histórica, el entrypoint ``aquanqa-analytics`` y los símbolos que consumidores
 existentes importan desde ``analitica.cli``.
 """
@@ -10,18 +10,18 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .commands.bhattacharya import ejecutar_bhattacharya
-from .commands.common import (
+from .interfaces.commands.bhattacharya import ejecutar_bhattacharya
+from .interfaces.commands.common import (
     _parsear_horizontes,
     _raiz_operativa,
     _registrar_inicio,
     _repositorio,
     _salida,
 )
-from .commands.operational import ejecutar_project_operativo, ejecutar_validar_operativo
-from .commands.parser import construir_parser
-from .commands.relations import ejecutar_relaciones
-from .commands.torneo import (
+from .interfaces.commands.operational import ejecutar_project_operativo, ejecutar_validar_operativo
+from .interfaces.commands.parser import construir_parser
+from .interfaces.commands.relations import ejecutar_relaciones
+from .interfaces.commands.torneo import (
     _torneo,
     ejecutar_backtest,
     ejecutar_export,

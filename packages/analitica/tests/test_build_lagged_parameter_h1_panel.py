@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.scripts import build_lagged_parameter_h1_panel as facade
-from analitica.servicios import lagged_parameter_h1_panel as service
+from analitica.aplicacion.servicios import lagged_parameter_h1_panel as service
+from analitica.interfaces.scripts import build_lagged_parameter_h1_panel as facade
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "build_lagged_parameter_h1_panel.py"
+SCRIPT = ROOT / "interfaces" / "scripts" / "build_lagged_parameter_h1_panel.py"
 
 
 def test_fachada_conserva_aliases_identidad_y_firmas() -> None:
@@ -186,7 +186,7 @@ def test_script_es_fachada_cli_y_no_importa_opcionales_en_carga() -> None:
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]
 
     imports = [
@@ -210,5 +210,5 @@ def test_script_es_fachada_cli_y_no_importa_opcionales_en_carga() -> None:
         for nodo in service_imports
         if isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
     ]

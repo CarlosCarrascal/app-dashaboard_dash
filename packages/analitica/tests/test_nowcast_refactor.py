@@ -3,9 +3,9 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from analitica.servicios import nowcast
+from analitica.aplicacion.servicios import nowcast
 
-SERVICIOS = Path(__file__).parents[1] / "servicios"
+SERVICIOS = Path(__file__).parents[1] / "aplicacion" / "servicios"
 PARTES = (
     SERVICIOS / "nowcast_partes_base.py",
     SERVICIOS / "nowcast_partes_intraweek.py",
@@ -61,4 +61,4 @@ def test_las_partes_no_importan_la_fachada() -> None:
             if isinstance(nodo, ast.Import)
             for alias in nodo.names
         )
-        assert "analitica.servicios.nowcast" not in imports
+        assert "analitica.aplicacion.servicios.nowcast" not in imports

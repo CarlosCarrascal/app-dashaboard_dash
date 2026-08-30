@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.scripts import persistir_nowcast_cierre_adaptativo as facade
-from analitica.servicios import persistir_nowcast_cierre_adaptativo as service
+from analitica.aplicacion.servicios import persistir_nowcast_cierre_adaptativo as service
+from analitica.interfaces.scripts import persistir_nowcast_cierre_adaptativo as facade
 
 
 def _salida_sintetica() -> pd.DataFrame:

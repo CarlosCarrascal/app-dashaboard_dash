@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.scripts import extract_excel_parameter_transitions as facade
-from analitica.servicios import extract_excel_parameter_transitions as service
+from analitica.aplicacion.servicios import extract_excel_parameter_transitions as service
+from analitica.interfaces.scripts import extract_excel_parameter_transitions as facade
 
 COMPATIBLE_NAMES = (
     "WorkbookSnapshot",
@@ -256,7 +256,7 @@ def test_ast_deja_la_fachada_como_compuerta_cli_y_el_servicio_sin_scripts() -> N
         for node in ast.walk(service_tree)
         if isinstance(node, ast.ImportFrom)
         and node.module
-        and node.module.startswith("analitica.scripts.")
+        and node.module.startswith("analitica.interfaces.scripts.")
     ]
     top_level_imports = [
         alias.name

@@ -9,12 +9,12 @@ from contextlib import contextmanager
 
 import pandas as pd
 
-from analitica.proyeccion.persistencia.artefactos import ArtefactosMixin
-from analitica.proyeccion.persistencia.conexiones_snapshots import ConexionSnapshotsMixin
-from analitica.proyeccion.persistencia.escenarios_decisiones import EscenariosDecisionesMixin
-from analitica.proyeccion.persistencia.metricas_claims import MetricasClaimsMixin
-from analitica.proyeccion.persistencia.repositorio import RepositorioAnalytics
-from analitica.proyeccion.persistencia.runs_predicciones import RunsPrediccionesMixin
+from analitica.infraestructura.persistencia.artefactos import ArtefactosMixin
+from analitica.infraestructura.persistencia.conexiones_snapshots import ConexionSnapshotsMixin
+from analitica.infraestructura.persistencia.escenarios_decisiones import EscenariosDecisionesMixin
+from analitica.infraestructura.persistencia.metricas_claims import MetricasClaimsMixin
+from analitica.infraestructura.persistencia.repositorio import RepositorioAnalytics
+from analitica.infraestructura.persistencia.runs_predicciones import RunsPrediccionesMixin
 
 
 class _CursorCapturado:

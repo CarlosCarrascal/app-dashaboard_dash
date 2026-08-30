@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analitica.scripts import screening_excel_parameter_deltas as facade
-from analitica.servicios import excel_parameter_deltas as service
+from analitica.aplicacion.servicios import excel_parameter_deltas as service
+from analitica.interfaces.scripts import screening_excel_parameter_deltas as facade
 
 NOMBRES_COMPATIBLES = (
     "Configuracion",

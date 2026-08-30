@@ -5,8 +5,8 @@ from __future__ import annotations
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.scripts import screening_expert_adjustment_online as facade
-from analitica.servicios import expertos
+from analitica.aplicacion.servicios import expertos
+from analitica.interfaces.scripts import screening_expert_adjustment_online as facade
 
 
 def _tabla_contrato() -> pd.DataFrame:

@@ -12,11 +12,11 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidatos import json_reproducible
-from analitica.scripts import certificar_releases_replay as cert_fachada
-from analitica.scripts import persistir_hibrido_parametros_asof as hpa_fachada
-from analitica.servicios import certificar_releases_replay as cert
-from analitica.servicios import persistir_hibrido_parametros_asof as hpa
+from analitica.aplicacion.procesos.candidatos import json_reproducible
+from analitica.aplicacion.servicios import certificar_releases_replay as cert
+from analitica.aplicacion.servicios import persistir_hibrido_parametros_asof as hpa
+from analitica.interfaces.scripts import certificar_releases_replay as cert_fachada
+from analitica.interfaces.scripts import persistir_hibrido_parametros_asof as hpa_fachada
 
 
 def _secciones(ruta: Path) -> list[str]:
@@ -41,7 +41,7 @@ def test_las_fronteras_fisicas_y_las_fachadas_se_conservan() -> None:
             for nodo in ast.walk(arbol)
             if isinstance(nodo, ast.ImportFrom)
             and nodo.module
-            and nodo.module.startswith("analitica.scripts")
+            and nodo.module.startswith("analitica.interfaces.scripts")
         ]
         assert not imports_scripts
 

@@ -5,10 +5,10 @@ from types import SimpleNamespace
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from analitica.proyeccion.asof import detectar_fuga, enriquecer_asof
-from analitica.proyeccion.asof import lunes_semana as lunes_compat
-from analitica.proyeccion.asof import ultimo_disponible as ultimo_compat
-from analitica.proyeccion.compartido import lunes_semana, ultimo_disponible
+from analitica.dominio.asof import detectar_fuga, enriquecer_asof
+from analitica.dominio.asof import lunes_semana as lunes_compat
+from analitica.dominio.asof import ultimo_disponible as ultimo_compat
+from analitica.dominio.compartido import lunes_semana, ultimo_disponible
 
 
 def _datos(flores_futuras: int, temperatura_futura: float):
@@ -110,7 +110,7 @@ def test_censos_con_campania_no_se_mezclan_entre_ciclos():
 
 def test_los_censos_del_arranque_del_ciclo_llegan_al_panel():
     """Ramas, brotes y yemas se levantan en campo y hasta ahora no entraban a ningún cálculo."""
-    from analitica.proyeccion.asof import agregar_fenologia
+    from analitica.dominio.asof import agregar_fenologia
 
     datos = _datos(100, 30.0)
     datos.flores["yemas_abiertas"] = [4, 20]

@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 
-from analitica.proyeccion.modelos import challenger_combinacion, intervalos_enbpi
-from analitica.proyeccion.reconciliacion import mint_shrink_no_negativo
+from analitica.dominio.evaluacion.reconciliacion import mint_shrink_no_negativo
+from analitica.dominio.modelos.challengers import challenger_combinacion, intervalos_enbpi
 
 
 def test_enbpi_produce_intervalos_ordenados():

@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pandas as pd
 
-import analitica.proyeccion.operativo as operativo
-from analitica.proyeccion.compartido.hashes import sha256_archivo
-from analitica.proyeccion.operativo import (
+import analitica.aplicacion.operativo as operativo
+from analitica.aplicacion.operativo import (
     excel,
     lectura,
     modelo,
     validacion,
 )
+from analitica.dominio.compartido.hashes import sha256_archivo
 
 
 def test_la_api_operativa_apunta_a_las_implementaciones_canonicas() -> None:

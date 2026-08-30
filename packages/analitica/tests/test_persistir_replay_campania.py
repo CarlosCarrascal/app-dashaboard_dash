@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.scripts import persistir_replay_campania as facade
-from analitica.servicios import persistir_replay_campania as service
+from analitica.aplicacion.servicios import persistir_replay_campania as service
+from analitica.interfaces.scripts import persistir_replay_campania as facade
 
 SCRIPT = Path(facade.__file__)
 
@@ -254,7 +254,7 @@ def test_fachada_es_adaptador_cli_delgado() -> None:
     assert not any(
         isinstance(nodo, ast.ImportFrom)
         and nodo.module
-        and nodo.module.startswith("analitica.scripts.")
+        and nodo.module.startswith("analitica.interfaces.scripts.")
         for nodo in ast.walk(arbol)
     )
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidate_residual_asof import (
+from analitica.aplicacion.procesos.candidate_residual_asof import (
     ConfiguracionResidualAsOf,
     aplicar_calibracion_residual_asof,
 )

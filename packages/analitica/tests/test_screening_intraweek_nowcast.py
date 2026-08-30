@@ -7,9 +7,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.servicios import nowcast as SERVICIO
+from analitica.aplicacion.servicios import nowcast as SERVICIO
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
+SCRIPTS = Path(__file__).parents[1] / "interfaces" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 SCRIPT = SCRIPTS / "screening_intraweek_nowcast.py"
 SPEC = importlib.util.spec_from_file_location("screening_intraweek_nowcast_test", SCRIPT)

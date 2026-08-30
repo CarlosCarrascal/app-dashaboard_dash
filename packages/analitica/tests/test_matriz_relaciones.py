@@ -10,14 +10,14 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.relaciones_partes.estadistica import (
+from analitica.dominio.evaluacion.relaciones_partes.estadistica import (
     ORDEN_CICLO,
     PREDICTORES_EXTERNOS,
     RESPUESTAS_MATRIZ,
     _pares_matriz,
     evaluar_matriz_relaciones,
 )
-from analitica.proyeccion.relaciones_partes.evidencia import (
+from analitica.dominio.evaluacion.relaciones_partes.evidencia import (
     hallazgos_matriz,
     resumen_matriz,
 )
