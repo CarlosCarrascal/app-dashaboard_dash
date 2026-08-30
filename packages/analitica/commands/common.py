@@ -10,7 +10,7 @@ from pathlib import Path
 def _repositorio(no_persist: bool):
     if no_persist:
         return None
-    from ..proyeccion.gobernanza import RepositorioAnalytics
+    from ..proyeccion.persistencia import RepositorioAnalytics
 
     return RepositorioAnalytics()
 

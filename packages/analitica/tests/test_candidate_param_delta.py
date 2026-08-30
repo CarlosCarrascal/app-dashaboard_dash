@@ -6,7 +6,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidate_param_delta import CandidateParamDelta
+from analitica.proyeccion.parametros import CandidateParamDelta
 
 
 def _parametros_previos() -> dict:

@@ -1,8 +1,4 @@
-"""API canónica del modelo fenológico.
-
-La fachada histórica :mod:`analitica.proyeccion.fenologico_v1` sigue disponible,
-pero las dependencias productivas deben apuntar a los módulos de este paquete.
-"""
+"""API canónica del modelo fenológico por componentes."""
 
 import sys
 import types

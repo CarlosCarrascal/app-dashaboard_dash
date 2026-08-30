@@ -67,7 +67,7 @@ para evaluar emisiones históricas ya cerradas.
 
 ### Macro legacy
 
-`packages/analitica/proyeccion/macro_legacy.py` reproduce la lógica de la macro Excel con
+`packages/analitica/proyeccion/hibrido/macro.py` reproduce la lógica de la macro Excel con
 parámetros nombrados:
 
 - tres olas de distribución normal para repartir frutos por ventana de pasada;

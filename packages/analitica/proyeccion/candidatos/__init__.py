@@ -1,7 +1,7 @@
 """Componentes internos para el preflight de candidatos.
 
-La superficie histórica continúa en :mod:`analitica.proyeccion.candidate_preflight`.
-Este paquete solo separa responsabilidades; no publica ni persiste candidatos.
+Este paquete separa contratos, fuentes, validación, snapshots y caché; no publica
+ni persiste candidatos por sí mismo.
 """
 
 from .cache import (

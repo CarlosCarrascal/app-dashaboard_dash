@@ -18,13 +18,13 @@ import numpy as np
 import pandas as pd
 
 from analitica.proyeccion.contratos import DatosProyeccion, FuenteInfo
-from analitica.proyeccion.relaciones import (
+from analitica.proyeccion.relaciones_partes.estadistica import (
     _p_agrupado,
     _placebo_parcial,
     _residuos_controles,
-    construir_panel_relaciones,
-    panel_packing,
 )
+from analitica.proyeccion.relaciones_partes.packing import panel_packing
+from analitica.proyeccion.relaciones_partes.panel import construir_panel_relaciones
 
 # ── Defecto 1: el riego duplicaba filas ──────────────────────────────────────
 

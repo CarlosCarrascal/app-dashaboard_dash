@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidate_turno_temporal import (
+from analitica.proyeccion.candidatos import (
     ConfiguracionTurnoTemporal,
     aplicar_turno_reingreso_candidate,
     auditar_universo_candidate,

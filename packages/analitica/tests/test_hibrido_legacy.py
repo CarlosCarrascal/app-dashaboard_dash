@@ -9,27 +9,44 @@ import pytest
 from pandas.testing import assert_frame_equal
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion import hibrido_legacy
-from analitica.proyeccion.fenologico_v1 import construir_panel_fenologico
+from analitica.proyeccion.fenologico import construir_panel_fenologico
 from analitica.proyeccion.hibrido import priors, proyecciones, replay, residual, servicio
-from analitica.proyeccion.hibrido_legacy import (
+from analitica.proyeccion.hibrido.priors import (
+    ParametroLegacyAsOf,
+    _normalizar_emisiones,
+    calibrar_parametros_legacy_asof,
+)
+from analitica.proyeccion.hibrido.proyecciones import (
+    NOMBRE_MODELO,
+    proyectar_hibrido_v1,
+)
+from analitica.proyeccion.hibrido.replay import (
+    backtest_hibrido_v1,
+    backtest_macro_legacy_v1,
+    construir_curva_historica,
+)
+from analitica.proyeccion.hibrido.replay import (
+    panel_corte_replay as _panel_corte_replay,
+)
+from analitica.proyeccion.hibrido.replay import (
+    panel_replay_cache as _panel_replay_cache,
+)
+from analitica.proyeccion.hibrido.residual import (
     EPSILON,
     FEATURES_PROHIBIDAS,
     FEATURES_RESIDUALES,
-    NOMBRE_MODELO,
-    ParametroLegacyAsOf,
-    _ajustar_residuales,
-    _CorreccionResidual,
-    _features_presentes,
-    _normalizar_emisiones,
-    _panel_corte_replay,
-    _panel_replay_cache,
-    _pipeline_residual,
-    backtest_hibrido_v1,
-    backtest_macro_legacy_v1,
-    calibrar_parametros_legacy_asof,
-    construir_curva_historica,
-    proyectar_hibrido_v1,
+)
+from analitica.proyeccion.hibrido.residual import (
+    CorreccionResidual as _CorreccionResidual,
+)
+from analitica.proyeccion.hibrido.residual import (
+    ajustar_residuales as _ajustar_residuales,
+)
+from analitica.proyeccion.hibrido.residual import (
+    features_presentes as _features_presentes,
+)
+from analitica.proyeccion.hibrido.residual import (
+    pipeline_residual as _pipeline_residual,
 )
 
 
@@ -110,10 +127,10 @@ def test_fachada_legacy_conserva_identidad_del_replay():
     assert construir_curva_historica is replay.construir_curva_historica
 
 
-def test_servicio_es_la_implementacion_y_no_depende_de_la_fachada_historica():
-    assert servicio._legacy_panel is hibrido_legacy._legacy_panel
-    assert servicio.proyectar_hibrido_v1 is hibrido_legacy.proyectar_hibrido_v1
-    assert servicio.proyectar_macro_legacy_v1 is hibrido_legacy.proyectar_macro_legacy_v1
+def test_servicio_es_la_implementacion_y_no_depende_de_una_fachada_historica():
+    assert servicio._legacy_panel is proyecciones._legacy_panel
+    assert servicio.proyectar_hibrido_v1 is proyecciones.proyectar_hibrido_v1
+    assert servicio.proyectar_macro_legacy_v1 is proyecciones.proyectar_macro_legacy_v1
 
     raiz = Path(servicio.__file__).parent
     for ruta in (raiz / "servicio.py", raiz / "replay.py"):
@@ -149,15 +166,16 @@ def test_replay_y_servicio_conservan_dependencias_unidireccionales():
     assert "replay" not in imports_proyecciones
 
 
-def test_fachada_historica_no_contiene_implementacion_de_negocio():
-    ruta = Path(hibrido_legacy.__file__)
-    arbol = ast.parse(ruta.read_text(encoding="utf-8"))
-    definiciones = [
-        nodo
-        for nodo in arbol.body
-        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-    ]
-    assert definiciones == []
+def test_los_motores_canonicos_contienen_la_implementacion_de_negocio():
+    for modulo, simbolo in (
+        (proyecciones, "proyectar_hibrido_v1"),
+        (replay, "backtest_hibrido_v1"),
+        (residual, "ajustar_residuales"),
+    ):
+        assert any(
+            isinstance(nodo, (ast.FunctionDef, ast.ClassDef)) and nodo.name == simbolo
+            for nodo in ast.walk(ast.parse(Path(modulo.__file__).read_text(encoding="utf-8")))
+        )
 
 
 def test_cache_replay_se_invalida_al_mutar_una_fuente():

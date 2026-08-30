@@ -4,22 +4,36 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.proyeccion import tracking
 from analitica.proyeccion.compartido.serializacion import (
     limpiar_valor,
     serializar_json,
     serializar_jsonb,
 )
-from analitica.proyeccion.gobernanza import (
-    RepositorioAnalytics,
-    _json,
-    _limpio,
+from analitica.proyeccion.infraestructura import (
     commit_actual,
+)
+from analitica.proyeccion.infraestructura import commit_actual as commit_actual_git
+from analitica.proyeccion.infraestructura import (
+    limpiar_valor as _limpio,
+)
+from analitica.proyeccion.infraestructura import (
+    serializar_json as _json,
+)
+from analitica.proyeccion.persistencia import (
+    RepositorioAnalytics,
     log_metricas_mlflow,
     registrar_modelos_mlflow,
     tracking_mlflow,
 )
-from analitica.proyeccion.infraestructura.git import commit_actual as commit_actual_git
+from analitica.proyeccion.persistencia.mlflow import (
+    log_metricas_mlflow as log_metricas_mlflow_canonico,
+)
+from analitica.proyeccion.persistencia.mlflow import (
+    registrar_modelos_mlflow as registrar_modelos_mlflow_canonico,
+)
+from analitica.proyeccion.persistencia.mlflow import (
+    tracking_mlflow as tracking_mlflow_canonico,
+)
 from analitica.proyeccion.persistencia.repositorio import (
     RepositorioAnalytics as RepositorioPersistencia,
 )
@@ -58,12 +72,12 @@ def test_fachadas_privadas_de_gobernanza_conservan_los_serializadores():
     assert limpiar_valor([np.nan, np.float64(2.0)]) == [None, 2.0]
 
 
-def test_gobernanza_conserva_fachadas_de_tracking_y_commit():
+def test_persistencia_conserva_tracking_y_commit_en_las_implementaciones_canonicas():
     assert commit_actual is commit_actual_git
     assert RepositorioAnalytics is RepositorioPersistencia
-    assert tracking_mlflow is tracking.tracking_mlflow
-    assert log_metricas_mlflow is tracking.log_metricas_mlflow
-    assert registrar_modelos_mlflow is tracking.registrar_modelos_mlflow
+    assert tracking_mlflow is tracking_mlflow_canonico
+    assert log_metricas_mlflow is log_metricas_mlflow_canonico
+    assert registrar_modelos_mlflow is registrar_modelos_mlflow_canonico
 
 
 def test_tracking_sin_uri_no_abre_un_run_implicitamente(monkeypatch):

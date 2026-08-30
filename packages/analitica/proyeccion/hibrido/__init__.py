@@ -1,9 +1,4 @@
-"""API canónica de la familia híbrida.
-
-Las rutas históricas continúan disponibles en :mod:`analitica.proyeccion.macro_legacy`
-y :mod:`analitica.proyeccion.hibrido_legacy`, pero el código productivo debe importar
-desde este paquete o desde sus módulos especializados.
-"""
+"""API canónica de la familia híbrida y sus módulos especializados."""
 
 from .macro import (
     MacroParams,

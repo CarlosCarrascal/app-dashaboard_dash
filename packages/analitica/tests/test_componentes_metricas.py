@@ -267,7 +267,7 @@ def test_una_metrica_descriptiva_no_intenta_guardarse_como_numero():
     """
     import inspect
 
-    from analitica.proyeccion.gobernanza import RepositorioAnalytics
+    from analitica.proyeccion.persistencia import RepositorioAnalytics
 
     codigo = inspect.getsource(RepositorioAnalytics.guardar_metricas)
     assert "is_numeric_dtype" in codigo, "debe separar métricas numéricas de descriptivas"

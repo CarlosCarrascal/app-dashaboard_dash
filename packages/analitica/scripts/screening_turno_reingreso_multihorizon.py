@@ -3,7 +3,7 @@
 El script lee ``MacroLegacy_v1`` h1-h6 de la misma emision y lote, deriva el
 ultimo cierre, Turno y una mediana jerarquica de reingreso usando solo H01
 anterior a cada emision, y redistribuye el total h1-h6 con las funciones puras
-de :mod:`analitica.proyeccion.candidate_turno_temporal`.
+de :mod:`analitica.proyeccion.candidatos`.
 
 La seleccion usa exclusivamente semanas objetivo S13-S30. S31-S33 es holdout.
 R09 se incorpora solo despues de elegir la configuracion y se evalua sobre las

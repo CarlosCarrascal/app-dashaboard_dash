@@ -3,11 +3,11 @@ from hashlib import sha256
 import pytest
 
 from analitica.proyeccion.compartido import sha256_archivo
-from analitica.proyeccion.exportacion import sha256_archivo as hash_de_exportacion
-from analitica.proyeccion.hibrido_parametros_asof import (
+from analitica.proyeccion.compartido import (
     sha256_archivo as hash_de_parametros,
 )
-from analitica.proyeccion.validacion_operativa import sha256_archivo as hash_de_validacion
+from analitica.proyeccion.compartido import sha256_archivo as hash_de_validacion
+from analitica.proyeccion.exportacion import sha256_archivo as hash_de_exportacion
 
 
 def test_las_fachadas_de_hash_comparten_la_misma_implementacion(tmp_path):

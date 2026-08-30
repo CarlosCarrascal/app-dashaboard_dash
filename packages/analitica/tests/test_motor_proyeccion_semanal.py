@@ -14,11 +14,11 @@ from analitica.proyeccion.motor_proyeccion_semanal import (
     proyectar_lote_pasadas,
     semana_iso_21,
 )
-from analitica.proyeccion.operativo_excel import (
+from analitica.proyeccion.operativo import (
     construir_modelo_operativo_excel,
     seleccionar_libros_operativos,
+    validar_libro_operativo,
 )
-from analitica.proyeccion.validacion_operativa import validar_libro_operativo
 
 
 def test_extraer_fechas_pasadas_detecta_calendario_completo():

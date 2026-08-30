@@ -6,37 +6,35 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.proyeccion import operativo_excel, validacion_operativa
+import analitica.proyeccion.operativo as operativo
 from analitica.proyeccion.compartido.hashes import sha256_archivo
 from analitica.proyeccion.operativo import (
-    contratos,
+    excel,
     lectura,
     modelo,
-    salida,
-    seleccion,
     validacion,
 )
 
 
-def test_las_fachadas_conservan_aliases_y_firmas() -> None:
+def test_la_api_operativa_apunta_a_las_implementaciones_canonicas() -> None:
     assert (
-        operativo_excel.construir_modelo_operativo_excel
+        operativo.construir_modelo_operativo_excel
         is modelo.construir_modelo_operativo_excel
     )
     assert (
-        operativo_excel.seleccionar_libros_operativos
-        is seleccion.seleccionar_libros_operativos
+        operativo.seleccionar_libros_operativos
+        is excel.seleccionar_libros_operativos
     )
-    assert operativo_excel.datos_proyeccion_operativo is salida.datos_proyeccion_operativo
-    assert operativo_excel.leer_libro_operativo is lectura.leer_libro_operativo
-    assert operativo_excel.sha256_archivo is sha256_archivo
-    assert validacion_operativa.validar_libro_operativo is validacion.validar_libro_operativo
-    assert validacion_operativa.validar_libros_semana is validacion.validar_libros_semana
+    assert operativo.datos_proyeccion_operativo is excel.datos_proyeccion_operativo
+    assert operativo.leer_libro_operativo is lectura.leer_libro_operativo
+    assert excel.sha256_archivo is sha256_archivo
+    assert operativo.validar_libro_operativo is validacion.validar_libro_operativo
+    assert operativo.validar_libros_semana is validacion.validar_libros_semana
     assert (
-        validacion_operativa.ResultadoValidacionOperativa
-        is contratos.ResultadoValidacionOperativa
+        operativo.ResultadoValidacionOperativa
+        is excel.ResultadoValidacionOperativa
     )
-    assert inspect.signature(operativo_excel.construir_modelo_operativo_excel) == inspect.signature(
+    assert inspect.signature(operativo.construir_modelo_operativo_excel) == inspect.signature(
         modelo.construir_modelo_operativo_excel
     )
 
@@ -103,6 +101,6 @@ def test_validacion_interna_conserva_resultado_y_reporte(monkeypatch) -> None:
 
 
 def test_selector_y_constantes_historicas_apuntan_a_la_implementacion() -> None:
-    assert operativo_excel.LIBROS_OPERATIVOS is seleccion.LIBROS_OPERATIVOS
-    assert operativo_excel.FUNDOS_ARCHIVO is seleccion.FUNDOS_ARCHIVO
-    assert validacion_operativa.CLAVES_CORRIDA is contratos.CLAVES_CORRIDA
+    assert operativo.LIBROS_OPERATIVOS is excel.LIBROS_OPERATIVOS
+    assert operativo.FUNDOS_ARCHIVO is excel.FUNDOS_ARCHIVO
+    assert operativo.CLAVES_CORRIDA is excel.CLAVES_CORRIDA

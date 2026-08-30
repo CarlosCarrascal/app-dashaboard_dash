@@ -8,7 +8,7 @@ from pandas.testing import assert_frame_equal
 from analitica.proyeccion.asof import detectar_fuga, enriquecer_asof
 from analitica.proyeccion.asof import lunes_semana as lunes_compat
 from analitica.proyeccion.asof import ultimo_disponible as ultimo_compat
-from analitica.proyeccion.temporal import lunes_semana, ultimo_disponible
+from analitica.proyeccion.compartido import lunes_semana, ultimo_disponible
 
 
 def _datos(flores_futuras: int, temperatura_futura: float):

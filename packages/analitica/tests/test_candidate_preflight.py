@@ -5,7 +5,7 @@ import json
 import pandas as pd
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.candidate_preflight import (
+from analitica.proyeccion.candidatos import (
     EXIT_CONTRACT_REJECTED,
     EXIT_OK,
     EXIT_QUALITY_REJECTED,

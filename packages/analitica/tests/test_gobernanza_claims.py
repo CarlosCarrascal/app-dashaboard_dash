@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 from analitica.proyeccion.persistencia.repositorio import ClaimHistoryConflictError
 
 

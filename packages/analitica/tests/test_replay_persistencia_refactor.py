@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidate_preflight import json_reproducible
+from analitica.proyeccion.candidatos import json_reproducible
 from analitica.scripts import certificar_releases_replay as cert_fachada
 from analitica.scripts import persistir_hibrido_parametros_asof as hpa_fachada
 from analitica.servicios import certificar_releases_replay as cert

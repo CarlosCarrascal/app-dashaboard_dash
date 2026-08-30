@@ -6,10 +6,8 @@ import pandas as pd
 import pytest
 
 from analitica.proyeccion.calidad import controles_ensamblaje
-from analitica.proyeccion.relaciones import (
-    _merge_auditado,
-    construir_panel_relaciones,
-)
+from analitica.proyeccion.ensamblaje import _merge_auditado
+from analitica.proyeccion.relaciones_partes.panel import construir_panel_relaciones
 
 
 def _datos_base(cosecha: pd.DataFrame | None = None):

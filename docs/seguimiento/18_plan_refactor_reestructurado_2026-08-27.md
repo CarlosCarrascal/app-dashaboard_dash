@@ -2892,3 +2892,25 @@ peso en `parametros/mezcla.py`. Los imports históricos de esos micro-módulos s
 mediante aliases controlados, mientras el código productivo usa las entradas canónicas.
 
 Regresión posterior a la compactación: `942 passed, 3 skipped`.
+
+## Retiro final de fachadas históricas (2026-08-29)
+
+El propietario confirmó que este proyecto no usa notebooks, jobs programados ni integraciones
+externas que dependan de las rutas históricas. Después de migrar los imports internos y ejecutar
+una búsqueda AST completa (imports absolutos, relativos y dinámicos), no quedaron consumidores
+internos de las fachadas retiradas.
+
+Se retiraron las fachadas raíz de `proyeccion` para candidatos, fenología, híbrido, parámetros,
+operativo, relaciones, temporal, tracking y gobernanza. La carpeta queda en `91` archivos Python
+(`32` raíz y `59` internos). Permanecen las implementaciones reales,
+`candidate_residual_asof.py` y, por separado, `pronostico_horizonte.py` junto con `horizonte/`,
+porque esa validación paralela no formaba parte de este cambio.
+
+Validación del retiro:
+
+```text
+python -m pytest -q    943 passed, 3 skipped
+```
+
+Los caches, bytecode y carpetas de build se eliminan después de las comprobaciones. Se conservan
+temporalmente los wheels, `mlflow.db` y la evidencia de auditoría, tal como se acordó.

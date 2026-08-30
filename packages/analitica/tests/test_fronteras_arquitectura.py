@@ -32,17 +32,13 @@ def test_fronteras_nuevas_se_pueden_importar(nombre_modulo: str):
 
 
 def test_los_aliases_conservan_identidad_de_la_implementacion_unica():
-    from analitica.proyeccion import (
-        candidate_residual_asof,
-        candidate_turno_temporal,
-        fenologico_v1,
-        hibrido_legacy,
-        infraestructura,
-        relaciones,
-        temporal,
-        tracking,
+    from analitica.proyeccion import candidate_residual_asof, fenologico, hibrido, infraestructura
+    from analitica.proyeccion.candidatos import (
+        fuentes,
+        preflight,
+        snapshot,
+        turno_temporal_validacion,
     )
-    from analitica.proyeccion.candidatos import fuentes, preflight, snapshot
     from analitica.proyeccion.compartido import fechas, normalizacion
     from analitica.proyeccion.compartido import serializacion as serializacion_comun
     from analitica.proyeccion.fenologico import ajuste, incertidumbre, metricas
@@ -50,22 +46,28 @@ def test_los_aliases_conservan_identidad_de_la_implementacion_unica():
     from analitica.proyeccion.hibrido import replay
     from analitica.proyeccion.hibrido import servicio as servicio_hibrido
     from analitica.proyeccion.persistencia import mlflow
-    from analitica.proyeccion.relaciones_partes import estadistica, evidencia, packing
-    from analitica.proyeccion.relaciones_partes import panel as panel_relaciones
+    from analitica.proyeccion.relaciones_partes import (
+        estadistica,
+        evidencia,
+        packing,
+    )
+    from analitica.proyeccion.relaciones_partes import (
+        panel as panel_relaciones,
+    )
 
     modelos = importlib.import_module("analitica.proyeccion.fenologico.modelos")
     assert modelos.ajustar_regresor is ajuste.ajustar_regresor
     assert incertidumbre.sensibilidades is metricas.sensibilidades
-    assert servicio_fenologico.proyectar_fenologico_v1 is fenologico_v1.proyectar_fenologico_v1
-    assert servicio_hibrido.proyectar_hibrido_v1 is hibrido_legacy.proyectar_hibrido_v1
+    assert servicio_fenologico.proyectar_fenologico_v1 is fenologico.proyectar_fenologico_v1
+    assert servicio_hibrido.proyectar_hibrido_v1 is hibrido.proyectar_hibrido_v1
     assert servicio_hibrido.backtest_hibrido_v1 is replay.backtest_hibrido_v1
-    assert mlflow.tracking_mlflow is tracking.tracking_mlflow
-    assert fechas.lunes_semana is temporal.lunes_semana
-    assert fechas.ultimo_disponible is temporal.ultimo_disponible
+    assert mlflow.tracking_mlflow.__module__ == mlflow.__name__
+    assert fechas.lunes_semana.__module__ == "analitica.proyeccion.compartido.utilidades"
+    assert fechas.ultimo_disponible.__module__ == "analitica.proyeccion.compartido.utilidades"
     assert normalizacion.normalizar_panel is candidate_residual_asof.normalizar_panel
     assert (
         normalizacion.normalizar_forecast_candidate
-        is candidate_turno_temporal.normalizar_forecast_candidate
+        is turno_temporal_validacion.normalizar_forecast_candidate
     )
     assert serializacion_comun.serializar_json is infraestructura.serializar_json
     assert serializacion_comun.serializar_jsonb is infraestructura.serializar_jsonb
@@ -80,14 +82,14 @@ def test_los_aliases_conservan_identidad_de_la_implementacion_unica():
     assert preflight.evaluar_preflight is (
         importlib.import_module("analitica.proyeccion.candidatos.preflight").evaluar_preflight
     )
-    assert panel_relaciones.construir_panel_relaciones is relaciones.construir_panel_relaciones
-    assert estadistica.evaluar_relaciones is relaciones.evaluar_relaciones
-    assert packing.relaciones_packing is relaciones.relaciones_packing
-    assert evidencia.generar_claims is relaciones.generar_claims
+    assert panel_relaciones.construir_panel_relaciones.__module__ == panel_relaciones.__name__
+    assert estadistica.evaluar_relaciones.__module__ == estadistica.__name__
+    assert packing.relaciones_packing.__module__ == packing.__name__
+    assert evidencia.generar_claims.__module__ == evidencia.__name__
 
 
-def test_relaciones_partes_son_implementaciones_fisicas_y_no_importan_la_fachada():
-    from analitica.proyeccion import relaciones
+def test_relaciones_partes_son_implementaciones_fisicas_y_no_importan_una_fachada():
+    from analitica.proyeccion import relaciones_partes as relaciones
     from analitica.proyeccion.relaciones_partes import estadistica, evidencia, packing
     from analitica.proyeccion.relaciones_partes import panel as panel_relaciones
 
@@ -130,7 +132,7 @@ def test_compartido_es_capa_inferior_y_mlflow_vive_en_persistencia():
         if isinstance(nodo, ast.ImportFrom)
     ]
     assert "..tracking" not in imports_mlflow
-    assert (raiz / "tracking.py").read_text(encoding="utf-8").count("persistencia.mlflow") == 1
+    assert not (raiz / "tracking.py").exists()
 
 
 def test_las_capas_nuevas_no_reintroducen_fachadas_legacy_internas():

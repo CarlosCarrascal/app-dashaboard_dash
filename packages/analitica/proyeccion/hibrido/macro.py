@@ -1,8 +1,7 @@
 """Implementación pura de la macro ``forecast`` de Excel.
 
 Este módulo contiene únicamente la matemática y sus adaptadores de parámetros. No lee
-libros Excel ni conoce PostgreSQL; la ruta histórica ``macro_legacy`` queda como fachada
-compatible para los consumidores existentes.
+libros Excel ni conoce PostgreSQL; los consumidores deben usar este módulo canónico.
 """
 
 from __future__ import annotations

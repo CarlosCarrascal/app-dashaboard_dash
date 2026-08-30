@@ -1,9 +1,4 @@
-"""Implementaciones físicas por responsabilidad para análisis de relaciones.
-
-Cada submódulo es independiente de la fachada histórica ``relaciones.py``. La
-fachada conserva los reexports para consumidores existentes, mientras este
-paquete ofrece fronteras explícitas para panel, estadística, packing y evidencia.
-"""
+"""Implementaciones físicas por responsabilidad para análisis de relaciones."""
 
 from .estadistica import (
     HIPOTESIS,

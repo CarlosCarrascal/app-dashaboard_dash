@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from analitica.proyeccion.reconciliacion import bottom_up, verificar_coherencia
-from analitica.proyeccion.relaciones import generar_claims
+from analitica.proyeccion.relaciones_partes import generar_claims
 from analitica.proyeccion.torneo import decidir_campeon
 
 RAIZ = Path(__file__).resolve().parents[3]

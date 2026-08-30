@@ -2,7 +2,7 @@
 
 Este módulo no conoce hipótesis, modelos ni persistencia. Su única responsabilidad es
 dejar evidencia de cada unión y fallar antes de que una duplicación infle una relación.
-``relaciones.py`` conserva los aliases históricos para no romper consumidores ni pruebas.
+Las responsabilidades de relaciones se consumen desde ``relaciones_partes``.
 """
 
 from __future__ import annotations

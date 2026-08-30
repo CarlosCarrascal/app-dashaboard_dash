@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from analitica.proyeccion.candidate_turno_temporal import ConfiguracionTurnoTemporal
+from analitica.proyeccion.candidatos import ConfiguracionTurnoTemporal
 from analitica.scripts.screening_turno_reingreso_multihorizon import (
     aplicar_configuracion,
     derivar_contexto_asof,

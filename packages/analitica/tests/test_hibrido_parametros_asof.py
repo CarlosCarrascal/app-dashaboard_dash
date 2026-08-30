@@ -5,18 +5,20 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from test_fenologico_v1 import _datos
 
-from analitica.proyeccion.fenologico_v1 import construir_panel_fenologico
-from analitica.proyeccion.hibrido_parametros_asof import (
+from analitica.proyeccion.fenologico import construir_panel_fenologico
+from analitica.proyeccion.parametros.contratos import (
     NOMBRE_MODELO,
     ConfiguracionParametrosAsOf,
+)
+from analitica.proyeccion.parametros.desplazamientos import (
     _desplazamiento_gdd_por_fila,
     aprender_desplazamiento,
-    construir_snapshot_parametros,
-    ejecutar_emision_parametros_asof,
-    normalizar_parametros_excel,
     seleccionar_gdd_config,
-    seleccionar_peso_macro,
 )
+from analitica.proyeccion.parametros.ejecucion import ejecutar_emision_parametros_asof
+from analitica.proyeccion.parametros.mezcla import seleccionar_peso_macro
+from analitica.proyeccion.parametros.normalizacion import normalizar_parametros_excel
+from analitica.proyeccion.parametros.snapshots import construir_snapshot_parametros
 from analitica.proyeccion.parametros_excel import seleccionar_libros_parametros
 
 

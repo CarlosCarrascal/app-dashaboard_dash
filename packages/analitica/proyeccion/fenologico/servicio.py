@@ -1,10 +1,4 @@
-"""Orquestación del modelo fenológico por componentes.
-
-Este módulo contiene la implementación de las operaciones históricas de
-predicción, backtest y proyección. La fachada
-``analitica.proyeccion.fenologico_v1`` solo conserva la superficie de
-compatibilidad y reexporta estas funciones.
-"""
+"""Orquestación del modelo fenológico por componentes."""
 
 from __future__ import annotations
 

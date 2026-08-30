@@ -4,10 +4,8 @@ import ast
 import importlib
 from pathlib import Path
 
-from analitica.proyeccion import hibrido_parametros_asof as fachada
 
-
-def test_la_fachada_reexporta_las_implementaciones_fisicas():
+def test_el_paquete_reexporta_las_implementaciones_fisicas():
     modulos = {
         "normalizacion": ("normalizar_parametros_excel",),
         "seleccion": ("seleccionar_peso_macro",),
@@ -20,16 +18,16 @@ def test_la_fachada_reexporta_las_implementaciones_fisicas():
     for nombre, funciones in modulos.items():
         modulo = importlib.import_module(f"analitica.proyeccion.parametros.{nombre}")
         for funcion in funciones:
-            assert getattr(fachada, funcion) is getattr(modulo, funcion)
             modulo_implementacion = (
                 "analitica.proyeccion.parametros.mezcla"
                 if nombre == "seleccion"
                 else modulo.__name__
             )
-            assert getattr(fachada, funcion).__module__ == modulo_implementacion
+            assert getattr(modulo, funcion).__module__ == modulo_implementacion
 
     contratos = importlib.import_module("analitica.proyeccion.parametros.contratos")
-    assert fachada.ConfiguracionParametrosAsOf is contratos.ConfiguracionParametrosAsOf
+    parametros = importlib.import_module("analitica.proyeccion.parametros")
+    assert parametros.ConfiguracionParametrosAsOf is contratos.ConfiguracionParametrosAsOf
 
 
 def test_los_modulos_internos_no_importan_la_fachada_historica():

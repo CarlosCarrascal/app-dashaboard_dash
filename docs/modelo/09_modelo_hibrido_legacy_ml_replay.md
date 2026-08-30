@@ -59,8 +59,8 @@ coeficientes causales.
 ## Cómo se reconstruye la curva legacy
 
 La implementación está en
-[`macro_legacy.py`](../../packages/analitica/proyeccion/macro_legacy.py) y el ensamblaje
-as-of en [`hibrido_legacy.py`](../../packages/analitica/proyeccion/hibrido_legacy.py).
+[`hibrido/macro.py`](../../packages/analitica/proyeccion/hibrido/macro.py) y el ensamblaje
+as-of en [`hibrido/proyecciones.py`](../../packages/analitica/proyeccion/hibrido/proyecciones.py).
 
 Para cada lote y emisión se calibran parámetros nombrados equivalentes a `X/O/N` y `A/B`:
 
