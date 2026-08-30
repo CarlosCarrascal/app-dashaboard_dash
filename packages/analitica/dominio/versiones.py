@@ -35,6 +35,20 @@ def parsear_version(codigo: object) -> VersionForecast:
     return VersionForecast(texto, int(match.group("semana")), None, sufijo.upper())
 
 
+def seleccionar_versiones_oficiales(forecast: pd.DataFrame) -> pd.DataFrame:
+    """Conserva la última iteración oficial de cada campaña y semana de emisión."""
+    f = forecast.copy()
+    parsed = f.version.map(parsear_version)
+    f["semana_emision"] = [v.semana_emision for v in parsed]
+    f["iteracion"] = [v.iteracion for v in parsed]
+    f["escenario"] = [v.escenario for v in parsed]
+    f = f[f.escenario.isna() & f.semana_emision.notna()].copy()
+    if f.empty:
+        return f
+    max_iter = f.groupby(["campania", "semana_emision"], dropna=False).iteracion.transform("max")
+    return f[f.iteracion.eq(max_iter)].copy()
+
+
 def fecha_emision_desde_objetivo(fecha_objetivo: object, semana_emision: int) -> pd.Timestamp:
     """Lunes ISO de emisión usando el año ISO de la fecha objetivo.
 

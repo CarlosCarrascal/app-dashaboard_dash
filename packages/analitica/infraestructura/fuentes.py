@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.aplicacion.servicios.infraestructura.postgres import conexion_postgres
 from analitica.dominio.contratos import DatosProyeccion, FuenteInfo
+from analitica.infraestructura.postgres import conexion_postgres
 
 SQL = {
     "forecast_campania": """

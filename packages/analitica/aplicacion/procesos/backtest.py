@@ -10,23 +10,10 @@ from analitica.dominio.contratos import validar_backtest
 from analitica.dominio.versiones import (
     banda_horizonte,
     fecha_emision_desde_objetivo,
-    parsear_version,
+    seleccionar_versiones_oficiales,
 )
 
 IDENTIDAD = ["campania", "lote_id", "empresa", "fundo", "modulo", "lote"]
-
-
-def seleccionar_versiones_oficiales(forecast: pd.DataFrame) -> pd.DataFrame:
-    f = forecast.copy()
-    parsed = f.version.map(parsear_version)
-    f["semana_emision"] = [v.semana_emision for v in parsed]
-    f["iteracion"] = [v.iteracion for v in parsed]
-    f["escenario"] = [v.escenario for v in parsed]
-    f = f[f.escenario.isna() & f.semana_emision.notna()].copy()
-    if f.empty:
-        return f
-    max_iter = f.groupby(["campania", "semana_emision"], dropna=False).iteracion.transform("max")
-    return f[f.iteracion.eq(max_iter)].copy()
 
 
 def preparar_r09(forecast: pd.DataFrame, cosecha: pd.DataFrame) -> pd.DataFrame:

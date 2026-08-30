@@ -1,5 +1,5 @@
-"""Adaptadores para recursos externos usados por los servicios analíticos."""
+"""Compatibilidad histórica para el adaptador PostgreSQL."""
 
-from .postgres import conexion_postgres, obtener_conexion_pg
+from analitica.infraestructura.postgres import conexion_postgres, obtener_conexion_pg
 
 __all__ = ["conexion_postgres", "obtener_conexion_pg"]

@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from .infraestructura.postgres import obtener_conexion_pg
+from analitica.infraestructura.postgres import obtener_conexion_pg
 
 if TYPE_CHECKING:
     from ...dominio.nucleo.bhattacharya import (

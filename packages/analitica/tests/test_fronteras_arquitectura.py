@@ -66,6 +66,14 @@ def test_los_imports_productivos_usan_rutas_canonicas():
         assert "analitica.proyeccion.interfaces" not in fuente
 
 
+def test_el_dominio_y_la_infraestructura_no_dependen_de_la_aplicacion():
+    raiz = Path(__file__).resolve().parents[1]
+    for carpeta in (raiz / "dominio", raiz / "infraestructura"):
+        for ruta in carpeta.rglob("*.py"):
+            fuente = ruta.read_text(encoding="utf-8")
+            assert "analitica.aplicacion" not in fuente, ruta
+
+
 def test_no_quedan_fachadas_historicas_en_la_raiz_de_proyeccion():
     raiz = Path(__file__).resolve().parents[1] / "proyeccion"
     obsoletos = {

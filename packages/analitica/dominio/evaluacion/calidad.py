@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.aplicacion.procesos.backtest import seleccionar_versiones_oficiales
 from analitica.dominio.asof import detectar_fuga
 from analitica.dominio.evaluacion.reconciliacion import verificar_coherencia
-from analitica.dominio.versiones import parsear_version
+from analitica.dominio.versiones import parsear_version, seleccionar_versiones_oficiales
 
 
 def controles_fuente(datos) -> pd.DataFrame:

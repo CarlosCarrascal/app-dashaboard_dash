@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ...servicios.infraestructura.postgres import conexion_postgres
+from ....infraestructura.postgres import conexion_postgres
 from .contratos import ContratoBaselines
 
 
