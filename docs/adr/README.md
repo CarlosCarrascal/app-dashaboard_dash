@@ -19,6 +19,7 @@ descartó — para que dentro de un año se pueda saber si la razón sigue siend
 | [0012](0012-maestro-lotes-access-principal.md) | `M_Lotes` de Access es el maestro primario; Excel queda como contraste | La conciliación actual muestra que Access contiene las 879 claves de Excel y agrega 3 |
 | [0013](0013-trazabilidad-migracion-por-tabla.md) | La migración se controla por snapshot y por tabla desde `raw` hasta `core` | No basta con saber que Access llegó a `raw`: hay que demostrar qué tablas pasaron a cada capa |
 | [0014](0014-prefijos-semanticos-core.md) | `core` usa prefijos semánticos; `raw` conserva los nombres físicos de Access | Facilita la navegación en pgAdmin sin mezclar origen, modelo canónico y dashboard |
+| [0015](0015-arquitectura-actual-analitica.md) | Arquitectura actual de `packages/analitica`: modelos, procesos, infraestructura e interfaces | `nowcast` es un proceso; `híbrido`, `fenológico` y `ocurrencia` son modelos o familias de modelos |
 
 ## Cómo añadir uno
 

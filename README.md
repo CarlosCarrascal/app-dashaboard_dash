@@ -99,6 +99,7 @@ los maestros de `core`; el dato sigue fluyendo `raw → stg → core`.
 | Documento | Para quién |
 |---|---|
 | [`docs/adr/`](docs/adr/) | por qué el modelo es como es |
+| [`docs/adr/0015-arquitectura-actual-analitica.md`](docs/adr/0015-arquitectura-actual-analitica.md) | **qué significa cada carpeta de `packages/analitica` y por qué no todo lo grande debe partirse** |
 | [`docs/runbooks/02-cierre-de-migracion.md`](docs/runbooks/02-cierre-de-migracion.md) | **qué significa "migrado con éxito", y qué decisiones siguen abiertas** |
 | [`docs/modelo/01_mapeo_access_core.md`](docs/modelo/01_mapeo_access_core.md) | **dónde vive hoy cada una de las 235 columnas de Access, y por qué hay cada nulo** |
 | [`docs/runbooks/03-cambiar-el-esquema.md`](docs/runbooks/03-cambiar-el-esquema.md) | cómo tocar el DDL sin romper el contrato |

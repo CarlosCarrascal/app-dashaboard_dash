@@ -27,6 +27,21 @@ def test_las_capas_canonicas_se_pueden_importar():
         assert importlib.import_module(nombre).__name__ == nombre
 
 
+def test_las_fachadas_de_paquete_apuntan_a_las_capas_canonicas():
+    aliases = {
+        "analitica.nucleo": "analitica.dominio.nucleo",
+        "analitica.servicios": "analitica.aplicacion.servicios",
+        "analitica.visualizaciones": "analitica.interfaces.visualizaciones",
+        "analitica.scripts": "analitica.interfaces.scripts",
+        "analitica.commands": "analitica.interfaces.commands",
+    }
+    for fachada, canonica in aliases.items():
+        assert importlib.import_module(fachada) is importlib.import_module(canonica)
+
+    exportar = importlib.import_module("analitica.nucleo.exportar")
+    assert exportar.__file__.endswith("dominio\\nucleo\\exportar.py")
+
+
 def test_proyeccion_es_un_punto_de_entrada_pequeno_y_estable():
     raiz = Path(__file__).resolve().parents[1] / "proyeccion"
     archivos_raiz = {ruta.name for ruta in raiz.glob("*.py")}
