@@ -18,10 +18,10 @@ import pandas as pd
 import psycopg
 
 from analitica import settings
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
 from analitica.proyeccion.nowcast_cierre_adaptativo import (
     calcular_nowcast_cierre_adaptativo,
 )
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 from analitica.servicios import persistir_nowcast_cierre_adaptativo_lectura as _lectura
 from analitica.servicios import (
     persistir_nowcast_cierre_adaptativo_persistencia as _persistencia,

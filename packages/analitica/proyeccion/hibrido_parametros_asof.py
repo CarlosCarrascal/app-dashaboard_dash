@@ -7,7 +7,7 @@ la identidad y la API histórica permanezcan compatibles.
 
 from __future__ import annotations
 
-from .compartido.hashes import sha256_archivo
+from .compartido import sha256_archivo
 from .parametros.contratos import (
     CLAVES,  # noqa: F401 - alias histórico
     NOMBRE_MODELO,  # noqa: F401 - alias histórico
@@ -29,13 +29,13 @@ from .parametros.mezcla import (  # noqa: F401 - aliases históricos
     _completar_gdd,
     _interpolar_componentes,
     _mezclar_componentes,
+    seleccionar_peso_macro,  # noqa: F401 - alias histórico
 )
 from .parametros.normalizacion import (
     _parametros_excel_asof,  # noqa: F401 - alias histórico
     _serie_numerica,  # noqa: F401 - alias histórico
     normalizar_parametros_excel,  # noqa: F401 - alias histórico
 )
-from .parametros.seleccion import seleccionar_peso_macro  # noqa: F401 - alias histórico
 from .parametros.snapshots import (  # noqa: F401 - aliases históricos
     _deltas_parametros,
     construir_snapshot_parametros,

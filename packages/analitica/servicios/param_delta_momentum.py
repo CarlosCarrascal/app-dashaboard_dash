@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_param_delta import CandidateParamDelta
+from analitica.proyeccion.parametros import CandidateParamDelta
 from analitica.servicios.parametros_replay import (
     ACCESS_DEFAULT,
     ROOT_DEFAULT,

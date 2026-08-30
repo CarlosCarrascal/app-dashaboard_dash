@@ -25,8 +25,8 @@ un notebook o una integración externa no se rompa mientras los consumidores mig
 | `proyeccion/candidate_turno_temporal.py` | servicios de turno/reingreso y tests | Mantener |
 | `proyeccion/temporal.py` | tests y posibles consumidores externos; ya redirige a `compartido.fechas` | Mantener como compatibilidad |
 | `proyeccion/tracking.py` | sin consumidor productivo interno detectado; API externa posible | Mantener hasta la siguiente revisión de uso |
-| `proyeccion/infraestructura/serializacion.py` | tests y superficie histórica | Mantener como reexport |
-| `proyeccion/persistencia/serializacion.py` | superficie nueva/compatibilidad | Mantener; implementación única en `compartido` |
+| `proyeccion/infraestructura/serializacion.py` | alias interno sin consumidores productivos | Retirada; serialización canónica en `compartido` |
+| `proyeccion/persistencia/serializacion.py` | alias interno sin implementación propia | Retirada; serialización canónica en `compartido` |
 | `proyeccion/macro_legacy.py` | tests y API histórica | Mantener |
 
 La búsqueda se hizo sobre los imports de `packages/analitica`, `apps/dashboard`, `etl` y
@@ -47,3 +47,31 @@ periodo:
 
 Las rutas de horizonte y `pronostico_horizonte.py` quedan fuera de esta matriz porque pertenecen
 a otro trabajo paralelo y no deben ser modificadas por esta limpieza.
+
+## Actualización de consolidación productiva (2026-08-29)
+
+La migración interna ya fue ejecutada. Los comandos, servicios, scripts y dashboard importan
+desde las implementaciones canónicas (`candidatos`, `fenologico`, `hibrido`, `horizonte`,
+`operativo`, `parametros`, `persistencia` y `relaciones_partes`). La búsqueda sobre código
+productivo devuelve cero imports hacia las fachadas raíz históricas; los imports que permanecen
+están confinados a pruebas de compatibilidad o a la propia fachada.
+
+Se retiraron cinco aliases internos sin lógica:
+
+- `proyeccion/candidatos/baselines.py`
+- `proyeccion/candidatos/evaluacion.py`
+- `proyeccion/candidatos/snapshots.py`
+- `proyeccion/infraestructura/serializacion.py`
+- `proyeccion/persistencia/serializacion.py`
+
+También se centralizaron en `relaciones_partes/estadistica.py` los helpers estadísticos que
+estaban duplicados en `relaciones_partes/packing.py`. La primera limpieza pasó de `120` a `115`
+módulos Python. Después se compactaron los micro-módulos internos sin cambiar las rutas de
+importación: `compartido` concentra sus utilidades en `utilidades.py`, `operativo` en
+`excel.py`, `infraestructura` contiene su función Git directamente y la selección de pesos
+vive junto a la mezcla de parámetros. El inventario físico final de `proyeccion` queda en
+`104` archivos Python; los aliases de compatibilidad se resuelven en memoria desde los
+`__init__.py` y no duplican implementación.
+
+Las fachadas raíz se conservan deliberadamente hasta completar la ventana de compatibilidad:
+eliminarlas ahora sí cambiaría imports externos, pickles y notebooks.

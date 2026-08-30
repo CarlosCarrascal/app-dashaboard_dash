@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ..compartido.serializacion import limpiar_valor as _limpio
-from ..compartido.serializacion import serializar_json as _json
+from ..compartido import limpiar_valor as _limpio
+from ..compartido import serializar_json as _json
 
 
 class EscenariosDecisionesMixin:

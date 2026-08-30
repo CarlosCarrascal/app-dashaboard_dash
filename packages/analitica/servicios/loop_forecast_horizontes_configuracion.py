@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.proyeccion.pronostico_horizonte import (
+from analitica.proyeccion.horizonte import (
     ConfiguracionCorreccionHorizonte,
     configuraciones_loop,
 )

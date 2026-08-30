@@ -11,7 +11,7 @@ import argparse
 import json
 from pathlib import Path
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.servicios import nowcast as _nowcast
 from analitica.servicios.parametros_nowcast import (
     columna_campania,  # noqa: F401

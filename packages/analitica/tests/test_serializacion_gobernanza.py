@@ -5,6 +5,11 @@ import pandas as pd
 
 from analitica import settings
 from analitica.proyeccion import tracking
+from analitica.proyeccion.compartido.serializacion import (
+    limpiar_valor,
+    serializar_json,
+    serializar_jsonb,
+)
 from analitica.proyeccion.gobernanza import (
     RepositorioAnalytics,
     _json,
@@ -15,11 +20,6 @@ from analitica.proyeccion.gobernanza import (
     tracking_mlflow,
 )
 from analitica.proyeccion.infraestructura.git import commit_actual as commit_actual_git
-from analitica.proyeccion.infraestructura.serializacion import (
-    limpiar_valor,
-    serializar_json,
-    serializar_jsonb,
-)
 from analitica.proyeccion.persistencia.repositorio import (
     RepositorioAnalytics as RepositorioPersistencia,
 )

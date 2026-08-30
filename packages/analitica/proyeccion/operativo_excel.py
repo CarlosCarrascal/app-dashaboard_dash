@@ -7,23 +7,21 @@ scripts. La lectura opcional de Excel permanece lazy en ``operativo.lectura``.
 
 from __future__ import annotations
 
-from .compartido.hashes import sha256_archivo
+from .compartido import sha256_archivo
 from .contratos import DatosProyeccion, FuenteInfo
 from .motor_proyeccion_semanal import ejecutar_proyeccion_semanal_dataframe
-from .operativo.contratos import MODELO_OPERATIVO_ACTUAL
-from .operativo.lectura import leer_libro_operativo
-from .operativo.modelo import construir_modelo_operativo_excel
-from .operativo.normalizacion import _fecha  # noqa: F401 - alias histórico
-from .operativo.salida import (  # noqa: F401 - alias histórico
-    _firma_manifest,
-    datos_proyeccion_operativo,
-)
-from .operativo.seleccion import (
+from .operativo.excel import (  # noqa: F401 - aliases históricos
     FUNDOS_ARCHIVO,
     LIBROS_OPERATIVOS,
+    MODELO_OPERATIVO_ACTUAL,
     VARIANTES_NO_PROMOVIDAS,
+    _fecha,
+    _firma_manifest,
+    datos_proyeccion_operativo,
+    leer_libro_operativo,
     seleccionar_libros_operativos,
 )
+from .operativo.modelo import construir_modelo_operativo_excel
 from .parametros_automaticos import (
     calibrar_universo_operativo,
     reemplazar_parametros_excel_por_db,

@@ -9,8 +9,8 @@ import pandas as pd
 
 from analitica import settings
 
-from ..compartido.serializacion import limpiar_valor as _limpio
-from ..compartido.serializacion import serializar_json as _json
+from ..compartido import limpiar_valor as _limpio
+from ..compartido import serializar_json as _json
 
 
 class ConexionSnapshotsMixin:

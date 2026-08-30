@@ -20,18 +20,18 @@ def _torneo(args, tipo: str):
     from ..proyeccion.clima_futuro import AdaptadorOpenMeteo
     from ..proyeccion.engine import ProjectionConfig, ProjectionScenario, proyectar_desde_corte
     from ..proyeccion.exportacion import exportar_paquete
-    from ..proyeccion.fenologico_v1 import construir_panel_fenologico, proyectar_fenologico_v1
+    from ..proyeccion.fenologico import construir_panel_fenologico, proyectar_fenologico_v1
     from ..proyeccion.fuentes import cargar_datos
-    from ..proyeccion.gobernanza import (
-        log_metricas_mlflow,
-        registrar_modelos_mlflow,
-        tracking_mlflow,
-    )
-    from ..proyeccion.hibrido_legacy import proyectar_hibrido_v1
+    from ..proyeccion.hibrido import proyectar_hibrido_v1
     from ..proyeccion.interpretabilidad import paquete_interpretabilidad_xgboost
     from ..proyeccion.metricas import metricas_pareadas_modelos
     from ..proyeccion.modelos import entrenar_challengers_finales
     from ..proyeccion.monitoreo import monitorear_llegada_reales
+    from ..proyeccion.persistencia import (
+        log_metricas_mlflow,
+        registrar_modelos_mlflow,
+        tracking_mlflow,
+    )
     from ..proyeccion.reconciliacion import bottom_up
     from ..proyeccion.torneo import ejecutar_torneo
 

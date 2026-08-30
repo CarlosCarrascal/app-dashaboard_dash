@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_preflight import (
+from analitica.proyeccion.candidatos import (
     escribir_json_reproducible as _escribir_json_reproducible,
 )
 from analitica.servicios.parametros_nowcast import (

@@ -627,7 +627,7 @@ def guardar_escenario_proyeccion(
     parametros: dict,
     advertencias: list[str],
 ) -> int:
-    from analitica.proyeccion.gobernanza import RepositorioAnalytics
+    from analitica.proyeccion.persistencia import RepositorioAnalytics
 
     scenario_id = RepositorioAnalytics().guardar_escenario(
         nombre=nombre,
@@ -642,7 +642,7 @@ def guardar_escenario_proyeccion(
 
 
 def enviar_escenario_revision(scenario_id: int) -> None:
-    from analitica.proyeccion.gobernanza import RepositorioAnalytics
+    from analitica.proyeccion.persistencia import RepositorioAnalytics
 
     RepositorioAnalytics().cambiar_estado_escenario(
         scenario_id,

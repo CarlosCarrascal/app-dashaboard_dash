@@ -10,7 +10,7 @@ import pandas as pd
 
 from analitica import settings
 
-from ..infraestructura.git import commit_actual
+from ..infraestructura import commit_actual
 
 
 @contextmanager

@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.proyeccion.motor_proyeccion_semanal import ejecutar_proyeccion_semanal_dataframe
+from analitica.proyeccion.operativo import leer_libro_operativo
 from analitica.proyeccion.parametros_excel import seleccionar_libros_parametros
-from analitica.proyeccion.validacion_operativa import leer_libro_operativo
 from analitica.servicios import parametros_replay as _parametros_replay
 
 ACCESS_DEFAULT = _parametros_replay.ACCESS_DEFAULT

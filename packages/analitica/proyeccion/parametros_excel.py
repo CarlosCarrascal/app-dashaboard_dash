@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .hibrido_parametros_asof import normalizar_parametros_excel, sha256_archivo
+from .compartido import sha256_archivo
+from .parametros.normalizacion import normalizar_parametros_excel
 
 FUNDOS = {
     "Arena": ("arena",),

@@ -15,6 +15,7 @@ from .ensamblaje import (
     _merge_auditado,  # noqa: F401
     _registrar_base,  # noqa: F401
 )
+from .relaciones_partes import DAG_AGRONOMICO
 from .relaciones_partes.estadistica import (
     HIPOTESIS,
     ORDEN_CICLO,
@@ -49,51 +50,6 @@ from .relaciones_partes.panel import (
     _clima_semanal,
     construir_panel_relaciones,
 )
-
-# Metadato documental histórico. No participa en los cálculos y se conserva aquí para
-# que los consumidores que lo importan desde ``relaciones`` mantengan la misma ruta.
-DAG_AGRONOMICO = {
-    "version": "1.0.0",
-    "nodos": [
-        "poda",
-        "temperatura",
-        "gdd",
-        "floracion",
-        "polinizacion_no_observada",
-        "cuajo",
-        "estados_e1_e5",
-        "diametro",
-        "peso_baya",
-        "frutos_por_planta",
-        "plantas_productivas",
-        "kg",
-        "riego",
-        "eto",
-        "dpv",
-        "suelo_no_observado",
-        "nutricion_no_observada",
-    ],
-    "aristas": [
-        ["poda", "floracion"],
-        ["temperatura", "gdd"],
-        ["gdd", "floracion"],
-        ["floracion", "cuajo"],
-        ["polinizacion_no_observada", "cuajo"],
-        ["cuajo", "estados_e1_e5"],
-        ["estados_e1_e5", "diametro"],
-        ["diametro", "peso_baya"],
-        ["frutos_por_planta", "kg"],
-        ["plantas_productivas", "kg"],
-        ["peso_baya", "kg"],
-        ["riego", "peso_baya"],
-        ["eto", "riego"],
-        ["dpv", "peso_baya"],
-        ["suelo_no_observado", "peso_baya"],
-        ["nutricion_no_observada", "peso_baya"],
-    ],
-    "nota": "El DAG declara supuestos; no convierte asociaciones observacionales en causas.",
-}
-
 
 __all__ = [
     "AUDITORIA_ENSAMBLADO_COLUMNAS",

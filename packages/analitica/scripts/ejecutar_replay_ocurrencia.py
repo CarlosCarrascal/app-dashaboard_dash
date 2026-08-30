@@ -9,12 +9,12 @@ import pandas as pd
 import psycopg
 
 from analitica import settings
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
 from analitica.proyeccion.hibrido_ocurrencia import (
     NOMBRE_MODELO,
     ejecutar_replay_hibrido_ocurrencia,
     metricas_semanales,
 )
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 
 
 def main() -> None:

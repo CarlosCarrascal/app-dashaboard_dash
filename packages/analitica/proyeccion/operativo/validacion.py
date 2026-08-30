@@ -7,11 +7,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..compartido.hashes import sha256_archivo
+from ..compartido import sha256_archivo
 from ..motor_proyeccion_semanal import ejecutar_proyeccion_semanal_dataframe
-from .contratos import CAMPOS_NUMERICOS, CLAVES_CORRIDA, ResultadoValidacionOperativa
-from .lectura import leer_libro_operativo
-from .normalizacion import _campana_unica, _normalizar_claves
+from .excel import (
+    CAMPOS_NUMERICOS,
+    CLAVES_CORRIDA,
+    ResultadoValidacionOperativa,
+    _campana_unica,
+    _normalizar_claves,
+    leer_libro_operativo,
+)
 
 
 def validar_libro_operativo(

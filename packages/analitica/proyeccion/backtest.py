@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .compartido.fechas import lunes_semana
+from .compartido import lunes_semana
 from .contratos import validar_backtest
 from .versiones import banda_horizonte, fecha_emision_desde_objetivo, parsear_version
 

@@ -15,9 +15,9 @@ import pandas as pd
 
 from analitica import settings
 
-from .compartido.hashes import sha256_archivo
-from .gobernanza import commit_actual
-from .relaciones import DAG_AGRONOMICO
+from .compartido import sha256_archivo
+from .infraestructura import commit_actual
+from .relaciones_partes import DAG_AGRONOMICO
 from .torneo import REGLA_PROMOCION
 
 

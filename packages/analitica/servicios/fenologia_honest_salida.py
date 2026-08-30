@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_preflight import sha256_dataframe
+from analitica.proyeccion.candidatos import sha256_dataframe
 
 from .fenologia_honest_contratos import CAMPANIA, HORIZONTES, RUN_ID
 

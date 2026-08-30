@@ -23,7 +23,7 @@ from dash.exceptions import PreventUpdate
 
 from analitica.config import VALORES_ANALITICOS, etiqueta
 from analitica.nucleo.exportar import Hoja, construir_libro
-from analitica.proyeccion.fenologico_v1 import (
+from analitica.proyeccion.fenologico import (
     EscenarioFenologico,
     aplicar_escenario_fenologico,
 )

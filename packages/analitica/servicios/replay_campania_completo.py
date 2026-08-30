@@ -19,8 +19,7 @@ import pandas as pd
 
 from analitica import settings
 from analitica.proyeccion.fuentes import cargar_datos
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
-from analitica.proyeccion.hibrido_legacy import backtest_macro_legacy_v1
+from analitica.proyeccion.hibrido import backtest_macro_legacy_v1
 from analitica.proyeccion.hibrido_ocurrencia import (
     NOMBRE_MODELO as MODELO_V1,
 )
@@ -40,6 +39,7 @@ from analitica.proyeccion.hibrido_ocurrencia_v2 import (
     ejecutar_replay_hibrido_ocurrencia_v2,
 )
 from analitica.proyeccion.metricas import metricas_cobertura_operacional, metricas_pronostico
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 from analitica.servicios.replay import (
     emisiones_completas,
     normalizar_modelo,

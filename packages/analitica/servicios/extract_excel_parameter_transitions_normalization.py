@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 import pandas as pd
 
-from analitica.proyeccion.hibrido_parametros_asof import (
+from analitica.proyeccion.parametros import (
     PARAMETROS_NOMBRADOS,
     normalizar_parametros_excel,
 )

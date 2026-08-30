@@ -9,7 +9,7 @@ interfaz ejecutable.
 from __future__ import annotations
 
 from analitica.proyeccion.fuentes import cargar_datos
-from analitica.proyeccion.hibrido_legacy import backtest_macro_legacy_v1
+from analitica.proyeccion.hibrido import backtest_macro_legacy_v1
 from analitica.proyeccion.hibrido_ocurrencia import ejecutar_replay_hibrido_ocurrencia
 from analitica.proyeccion.hibrido_ocurrencia_v2 import ejecutar_replay_hibrido_ocurrencia_v2
 from analitica.proyeccion.hibrido_ocurrencia_v3 import ejecutar_replay_hibrido_ocurrencia_v3

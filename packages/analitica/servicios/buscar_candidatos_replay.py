@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.proyeccion.rapid_candidate_loop import preparar_panel, successive_halving
 from analitica.settings import postgres_dsn
 

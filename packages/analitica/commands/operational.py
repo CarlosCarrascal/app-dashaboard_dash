@@ -11,9 +11,8 @@ def ejecutar_validar_operativo(args) -> int:
     """Valida los libros actuales y bloquea el éxito si las fuentes no están alineadas."""
 
     raiz = _raiz_operativa(args)
-    from ..proyeccion.gobernanza import RepositorioAnalytics
-    from ..proyeccion.operativo_excel import seleccionar_libros_operativos
-    from ..proyeccion.validacion_operativa import validar_libro_operativo
+    from ..proyeccion.operativo import seleccionar_libros_operativos, validar_libro_operativo
+    from ..proyeccion.persistencia import RepositorioAnalytics
 
     libros = seleccionar_libros_operativos(raiz, args.version_fuente)
     filas = []
@@ -72,12 +71,12 @@ def ejecutar_project_operativo(args) -> int:
     """
 
     from ..proyeccion.exportacion import exportar_paquete
-    from ..proyeccion.gobernanza import RepositorioAnalytics, tracking_mlflow
-    from ..proyeccion.operativo_excel import (
+    from ..proyeccion.operativo import (
         MODELO_OPERATIVO_ACTUAL,
         construir_modelo_operativo_excel,
         datos_proyeccion_operativo,
     )
+    from ..proyeccion.persistencia import RepositorioAnalytics, tracking_mlflow
 
     raiz = _raiz_operativa(args)
     predicciones, fuente, detalles = construir_modelo_operativo_excel(

@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from ...nucleo.bhattacharya import ParametrosBhattacharya
-from ..compartido.identidad import sha256_dataframe
+from ..compartido import sha256_dataframe
 from ..fenologico.panel import construir_panel_fenologico
 from ..versiones import banda_horizonte
 from .priors import _campania_defecto, _normalizar_emisiones

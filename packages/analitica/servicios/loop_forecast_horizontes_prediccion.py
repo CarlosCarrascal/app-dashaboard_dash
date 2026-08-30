@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from analitica.proyeccion.pronostico_horizonte import (
+from analitica.proyeccion.horizonte import (
     ConfiguracionCorreccionHorizonte,
     aplicar_correccion_horizonte,
     ejecutar_loop_por_horizonte,

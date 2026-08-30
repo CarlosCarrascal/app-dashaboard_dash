@@ -11,9 +11,9 @@ def ejecutar_relaciones(args) -> int:
     from ..proyeccion.calidad import controles_ensamblaje, controles_fuente
     from ..proyeccion.exportacion import exportar_paquete
     from ..proyeccion.fuentes import cargar_datos
-    from ..proyeccion.gobernanza import tracking_mlflow
     from ..proyeccion.inferencia import evaluar_matriz_inferencial
-    from ..proyeccion.relaciones import (
+    from ..proyeccion.persistencia import tracking_mlflow
+    from ..proyeccion.relaciones_partes import (
         construir_panel_relaciones,
         evaluar_matriz_relaciones,
         evaluar_relaciones,

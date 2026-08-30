@@ -30,6 +30,17 @@ from .fuentes import (
 )
 from .preflight import evaluar_preflight
 from .snapshot import cargar_o_construir_snapshot_datos, clonar_datos_proyeccion
+from .turno_temporal_contratos import ConfiguracionTurnoTemporal
+from .turno_temporal_nowcast import construir_nowcast_separado
+from .turno_temporal_reingreso import (
+    aplicar_turno_reingreso_candidate,
+    estimar_desplazamiento_temporal_asof,
+)
+from .turno_temporal_validacion import (
+    auditar_universo_candidate,
+    metricas_adversariales,
+    normalizar_forecast_candidate,
+)
 
 __all__ = [
     "CLAVES_EVALUACION",
@@ -53,4 +64,11 @@ __all__ = [
     "obtener_o_construir_cache",
     "seleccionar_emisiones_micro_desde_fuente",
     "sha256_dataframe",
+    "ConfiguracionTurnoTemporal",
+    "aplicar_turno_reingreso_candidate",
+    "auditar_universo_candidate",
+    "construir_nowcast_separado",
+    "estimar_desplazamiento_temporal_asof",
+    "metricas_adversariales",
+    "normalizar_forecast_candidate",
 ]

@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .compartido.normalizacion import normalizar_panel
+from .compartido import normalizar_panel
 
 
 @dataclass(frozen=True)

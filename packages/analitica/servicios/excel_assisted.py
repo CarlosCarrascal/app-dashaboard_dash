@@ -18,8 +18,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
-from analitica.proyeccion.operativo_excel import construir_modelo_operativo_excel
+from analitica.proyeccion.candidatos import escribir_json_reproducible
+from analitica.proyeccion.operativo import construir_modelo_operativo_excel
 
 ROOT_DEFAULT = Path(r"C:\Users\CCARRASCAL\Downloads\Proyecciones")
 ACCESS_DEFAULT = Path(

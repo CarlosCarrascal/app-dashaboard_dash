@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_preflight import (
+from analitica.proyeccion.candidatos import (
     escribir_json_reproducible as _escribir_json_reproducible,
 )
 from analitica.settings import postgres_dsn

@@ -6,7 +6,14 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from ..compartido.fechas import lunes_semana
+from .estadistica import (
+    _bh,
+    _efecto_practico,
+    _p_agrupado,
+    _placebo_parcial,
+    _residuos_controles,
+)
+from .panel import _agregar_semana, _clima_semanal
 
 PREDICTORES_EXTERNOS = [
     "temp_min",
@@ -22,51 +29,6 @@ PREDICTORES_EXTERNOS = [
     "agua_m3",
     "reposicion_pct",
 ]
-
-
-def _agregar_semana(tabla: pd.DataFrame, fecha: str = "fecha") -> pd.DataFrame:
-    salida = tabla.copy()
-    salida["fecha_semana"] = lunes_semana(salida[fecha])
-    return salida
-
-
-def _clima_semanal(clima: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    if clima.empty:
-        return pd.DataFrame(), pd.DataFrame()
-    c = clima.copy()
-    c["fecha"] = pd.to_datetime(c.fecha_hora).dt.normalize()
-    diario = c.groupby("fecha", as_index=False).agg(
-        temp_media=("temp", "mean"),
-        temp_max=("temp_alta", "max"),
-        temp_min=("temp_baja", "min"),
-        humedad=("humedad", "mean"),
-        radiacion=("rad_sol", "sum"),
-        eto=("et_mm", "sum"),
-        lluvia=("lluvia", "sum"),
-    )
-    diario["dpv_kpa"] = (
-        0.6108
-        * np.exp(17.27 * diario.temp_media / (diario.temp_media + 237.3))
-        * (1 - diario.humedad.clip(0, 100) / 100)
-    )
-    for base, nombre in ((0.0, "gdd_0"), (4.4, "gdd_4_4"), (7.0, "gdd_7"), (8.0, "gdd_8")):
-        diario[nombre] = (diario.temp_media - base).clip(lower=0)
-    diario["fecha_semana"] = lunes_semana(diario.fecha)
-    semanal = diario.groupby("fecha_semana", as_index=False).agg(
-        temp_media=("temp_media", "mean"),
-        temp_max=("temp_max", "max"),
-        temp_min=("temp_min", "min"),
-        humedad=("humedad", "mean"),
-        dpv_kpa=("dpv_kpa", "mean"),
-        radiacion=("radiacion", "sum"),
-        eto=("eto", "sum"),
-        lluvia=("lluvia", "sum"),
-        gdd_0=("gdd_0", "sum"),
-        gdd_4_4=("gdd_4_4", "sum"),
-        gdd_7=("gdd_7", "sum"),
-        gdd_8=("gdd_8", "sum"),
-    )
-    return semanal, diario
 
 
 def panel_packing(datos) -> pd.DataFrame:
@@ -246,105 +208,6 @@ def relaciones_packing(panel: pd.DataFrame, minimo_semanas: int = 12) -> pd.Data
         & (salida.correlacion_parcial.abs() >= 0.1)
     )
     return salida.sort_values("p_ajustado_bh").reset_index(drop=True)
-
-
-def _residuos_controles(tabla: pd.DataFrame, variable: str) -> np.ndarray:
-    semana = tabla.fecha_semana.dt.isocalendar().week.astype(float)
-    controles = pd.DataFrame(
-        {
-            "intercepto": 1.0,
-            "semana_sin": np.sin(2 * np.pi * semana / 52.18),
-            "semana_cos": np.cos(2 * np.pi * semana / 52.18),
-        },
-        index=tabla.index,
-    )
-    if "modulo" in tabla:
-        controles = pd.concat(
-            [controles, pd.get_dummies(tabla.modulo, prefix="mod", drop_first=True, dtype=float)],
-            axis=1,
-        )
-    x = controles.to_numpy(float)
-    y = tabla[variable].to_numpy(float)
-    return y - x @ np.linalg.lstsq(x, y, rcond=None)[0]
-
-
-def _p_agrupado(
-    residuos_x: np.ndarray, residuos_y: np.ndarray, grupos: pd.DataFrame
-) -> tuple[float, int]:
-    """Significancia de la correlación parcial con errores agrupados."""
-    x = np.asarray(residuos_x, dtype=float)
-    y = np.asarray(residuos_y, dtype=float)
-    sxx = float(x @ x)
-    if not np.isfinite(sxx) or sxx <= 0:
-        return 1.0, 0
-    beta = float(x @ y) / sxx
-    e = y - beta * x
-    peor_p, peor_gl = 0.0, 0
-    for columna in grupos.columns:
-        codigos = pd.factorize(grupos[columna])[0]
-        n_grupos = int(codigos.max()) + 1 if len(codigos) else 0
-        if n_grupos < 3:
-            continue
-        puntajes = np.bincount(codigos, weights=x * e, minlength=n_grupos)
-        meat = float(puntajes @ puntajes)
-        ajuste = n_grupos / max(n_grupos - 1, 1)
-        varianza = ajuste * meat / (sxx**2)
-        if not np.isfinite(varianza) or varianza <= 0:
-            continue
-        gl = n_grupos - 1
-        p = float(2 * stats.t.sf(abs(beta) / np.sqrt(varianza), gl))
-        if p >= peor_p:
-            peor_p, peor_gl = p, gl
-    if peor_gl == 0:
-        return 1.0, 0
-    return min(max(peor_p, 0.0), 1.0), peor_gl
-
-
-def _placebo_parcial(
-    orden: pd.DataFrame, predictor: str, respuesta: str, rezago: int, grupo: str, minimo: int
-) -> float:
-    """El placebo medido con la misma vara que la estimación: correlación parcial."""
-    futuro = orden.groupby(grupo)[predictor].shift(-(rezago + 1))
-    columnas = ["fecha_semana", respuesta] + (["modulo"] if "modulo" in orden else [])
-    m = orden[columnas].assign(x=futuro).dropna(subset=["x", respuesta, "fecha_semana"])
-    if len(m) < minimo or m.x.nunique() < 3 or m[respuesta].nunique() < 3:
-        return float("nan")
-    m = m.rename(columns={respuesta: "y"})
-    r = float(np.corrcoef(_residuos_controles(m, "x"), _residuos_controles(m, "y"))[0, 1])
-    return r if np.isfinite(r) else float("nan")
-
-
-def _bh(pvalores: pd.Series) -> pd.Series:
-    p = pvalores.fillna(1).to_numpy(float)
-    orden = np.argsort(p)
-    ajustado = np.empty(len(p))
-    ordenados = p[orden] * len(p) / np.arange(1, len(p) + 1)
-    ordenados = np.minimum.accumulate(ordenados[::-1])[::-1].clip(0, 1)
-    ajustado[orden] = ordenados
-    return pd.Series(ajustado, index=pvalores.index)
-
-
-def _efecto_practico(
-    muestra: pd.DataFrame, residuos_x: np.ndarray, residuos_y: np.ndarray
-) -> dict[str, float]:
-    """Traduce la correlación a un efecto en las unidades reales de cada variable."""
-    varianza = float(np.var(residuos_x))
-    if varianza <= 0:
-        return {
-            "pendiente": np.nan,
-            "efecto_rango_iqr": np.nan,
-            "iqr_predictor": np.nan,
-            "mediana_respuesta": np.nan,
-        }
-    pendiente = float(np.cov(residuos_x, residuos_y, ddof=0)[0, 1] / varianza)
-    x = muestra.x.astype(float)
-    iqr = float(x.quantile(0.75) - x.quantile(0.25))
-    return {
-        "pendiente": pendiente,
-        "efecto_rango_iqr": pendiente * iqr,
-        "iqr_predictor": iqr,
-        "mediana_respuesta": float(muestra.y.astype(float).median()),
-    }
 
 
 __all__ = ["panel_packing", "relaciones_packing"]

@@ -26,7 +26,50 @@ from .evidencia import (
 from .packing import panel_packing, relaciones_packing
 from .panel import construir_panel_relaciones
 
+DAG_AGRONOMICO = {
+    "version": "1.0.0",
+    "nodos": [
+        "poda",
+        "temperatura",
+        "gdd",
+        "floracion",
+        "polinizacion_no_observada",
+        "cuajo",
+        "estados_e1_e5",
+        "diametro",
+        "peso_baya",
+        "frutos_por_planta",
+        "plantas_productivas",
+        "kg",
+        "riego",
+        "eto",
+        "dpv",
+        "suelo_no_observado",
+        "nutricion_no_observada",
+    ],
+    "aristas": [
+        ["poda", "floracion"],
+        ["temperatura", "gdd"],
+        ["gdd", "floracion"],
+        ["floracion", "cuajo"],
+        ["polinizacion_no_observada", "cuajo"],
+        ["cuajo", "estados_e1_e5"],
+        ["estados_e1_e5", "diametro"],
+        ["diametro", "peso_baya"],
+        ["frutos_por_planta", "kg"],
+        ["plantas_productivas", "kg"],
+        ["peso_baya", "kg"],
+        ["riego", "peso_baya"],
+        ["eto", "riego"],
+        ["dpv", "peso_baya"],
+        ["suelo_no_observado", "peso_baya"],
+        ["nutricion_no_observada", "peso_baya"],
+    ],
+    "nota": "El DAG declara supuestos; no convierte asociaciones observacionales en causas.",
+}
+
 __all__ = [
+    "DAG_AGRONOMICO",
     "clasificar_hallazgos",
     "construir_panel_relaciones",
     "evaluar_matriz_relaciones",

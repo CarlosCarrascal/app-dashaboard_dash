@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ..asof import detectar_fuga, enriquecer_asof
-from ..compartido.fechas import lunes_semana, ultimo_disponible
+from ..compartido import lunes_semana, ultimo_disponible
 from ..versiones import banda_horizonte
 from .especificacion import FEATURES_HISTORIAL
 

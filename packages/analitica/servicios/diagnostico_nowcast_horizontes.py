@@ -16,7 +16,7 @@ from __future__ import annotations
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.pronostico_horizonte import (
+from analitica.proyeccion.horizonte import (
     ConfiguracionCorreccionHorizonte,
     aplicar_correccion_horizonte,
     configuraciones_loop,

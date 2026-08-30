@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analitica.proyeccion.fenologico_v1 import cosecha_real_semanal
+from analitica.proyeccion.fenologico import cosecha_real_semanal
 
 
 def semanas_cerradas(datos, campania: str) -> pd.DatetimeIndex:

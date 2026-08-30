@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..compartido.normalizacion import normalizar_forecast_candidate
+from ..compartido import normalizar_forecast_candidate
 from .turno_temporal_contratos import (
     CLAVE_UNIVERSO,
 )

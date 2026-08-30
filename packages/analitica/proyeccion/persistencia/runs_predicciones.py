@@ -9,9 +9,9 @@ import json
 import numpy as np
 import pandas as pd
 
-from ..compartido.serializacion import limpiar_valor as _limpio
-from ..compartido.serializacion import serializar_json as _json
-from ..infraestructura.git import commit_actual
+from ..compartido import limpiar_valor as _limpio
+from ..compartido import serializar_json as _json
+from ..infraestructura import commit_actual
 
 
 class RunsPrediccionesMixin:

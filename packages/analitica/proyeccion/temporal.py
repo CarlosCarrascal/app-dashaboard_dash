@@ -1,6 +1,6 @@
 """Fachada histórica de las primitivas temporales compartidas."""
 
-from .compartido.fechas import (
+from .compartido import (
     lunes_semana,
     ultimo_disponible,
 )

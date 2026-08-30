@@ -21,7 +21,12 @@ def test_la_fachada_reexporta_las_implementaciones_fisicas():
         modulo = importlib.import_module(f"analitica.proyeccion.parametros.{nombre}")
         for funcion in funciones:
             assert getattr(fachada, funcion) is getattr(modulo, funcion)
-            assert getattr(fachada, funcion).__module__ == modulo.__name__
+            modulo_implementacion = (
+                "analitica.proyeccion.parametros.mezcla"
+                if nombre == "seleccion"
+                else modulo.__name__
+            )
+            assert getattr(fachada, funcion).__module__ == modulo_implementacion
 
     contratos = importlib.import_module("analitica.proyeccion.parametros.contratos")
     assert fachada.ConfiguracionParametrosAsOf is contratos.ConfiguracionParametrosAsOf

@@ -15,7 +15,7 @@ import argparse
 import json
 from pathlib import Path
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.servicios import parameter_delta_replay as _servicio
 
 # Aliases públicos y privados históricos. La implementación de negocio vive en

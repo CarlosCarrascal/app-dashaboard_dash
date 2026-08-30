@@ -12,7 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.servicios import router_parametros_lagged as _servicio
 
 # Reexportaciones históricas: el cálculo vive en el servicio, pero el módulo

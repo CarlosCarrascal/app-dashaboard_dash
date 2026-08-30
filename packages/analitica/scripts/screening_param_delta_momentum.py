@@ -10,7 +10,7 @@ import argparse
 import json
 from pathlib import Path
 
-from analitica.proyeccion.candidate_preflight import escribir_json_reproducible
+from analitica.proyeccion.candidatos import escribir_json_reproducible
 from analitica.servicios import param_delta_momentum as _servicio
 
 # Compatibilidad histórica: todos los símbolos de negocio apuntan al servicio único.

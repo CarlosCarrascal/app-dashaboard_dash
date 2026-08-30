@@ -19,7 +19,7 @@ from analitica import settings
 from analitica.proyeccion.asof import lunes_semana
 from analitica.proyeccion.backtest import seleccionar_versiones_oficiales
 from analitica.proyeccion.calidad import controles_predicciones
-from analitica.proyeccion.candidate_preflight import (
+from analitica.proyeccion.candidatos import (
     EXIT_CONTRACT_REJECTED,
     EXIT_EXECUTION_ERROR,
     EXIT_OK,
@@ -37,14 +37,14 @@ from analitica.proyeccion.candidate_preflight import (
     sha256_dataframe,
 )
 from analitica.proyeccion.fuentes import cargar_datos
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
-from analitica.proyeccion.hibrido_parametros_asof import (
+from analitica.proyeccion.metricas import metricas_pronostico
+from analitica.proyeccion.parametros import (
     NOMBRE_MODELO,
     VERSION_MODELO,
     backtest_hibrido_parametros_asof,
 )
-from analitica.proyeccion.metricas import metricas_pronostico
 from analitica.proyeccion.parametros_excel import cargar_parametros_historicos
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 from analitica.proyeccion.versiones import fecha_emision_desde_objetivo
 from analitica.servicios import persistir_hibrido_parametros_asof_candidate as _candidate
 from analitica.servicios import (

@@ -149,7 +149,7 @@ def distributed_lag_spline(
 
 def evaluar_matriz_inferencial(panel: pd.DataFrame) -> pd.DataFrame:
     """Ejecuta MixedLM, ARDL/HAC y spline para cada ruta con variables observadas."""
-    from .relaciones import HIPOTESIS
+    from .relaciones_partes import HIPOTESIS
 
     filas = []
     for hipotesis in HIPOTESIS:

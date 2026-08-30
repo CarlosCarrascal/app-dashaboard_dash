@@ -15,11 +15,14 @@ from ..parametros_automaticos import (
     reemplazar_parametros_excel_por_db,
 )
 from ..versiones import banda_horizonte
-from .contratos import MODELO_OPERATIVO_ACTUAL
-from .lectura import leer_libro_operativo, sha256_archivo
-from .normalizacion import _fecha
-from .salida import _firma_manifest
-from .seleccion import seleccionar_libros_operativos
+from .excel import (
+    MODELO_OPERATIVO_ACTUAL,
+    _fecha,
+    _firma_manifest,
+    leer_libro_operativo,
+    seleccionar_libros_operativos,
+    sha256_archivo,
+)
 
 
 def construir_modelo_operativo_excel(

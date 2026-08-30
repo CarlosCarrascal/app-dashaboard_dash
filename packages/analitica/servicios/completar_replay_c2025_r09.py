@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
 from analitica.proyeccion.metricas import metricas_cobertura_operacional, metricas_pronostico
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 
 RUN_COMPLETO = 77
 RUN_ORIGEN = 76

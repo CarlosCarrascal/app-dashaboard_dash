@@ -13,10 +13,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_param_delta import CandidateParamDelta
 from analitica.proyeccion.motor_proyeccion_semanal import ejecutar_proyeccion_semanal_dataframe
+from analitica.proyeccion.operativo import leer_libro_operativo
+from analitica.proyeccion.parametros import CandidateParamDelta
 from analitica.proyeccion.parametros_excel import seleccionar_libros_parametros
-from analitica.proyeccion.validacion_operativa import leer_libro_operativo
 
 ROOT_DEFAULT = Path(r"C:\Users\CCARRASCAL\Downloads\Proyecciones")
 TRANSITIONS_DEFAULT = (

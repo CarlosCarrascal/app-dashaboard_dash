@@ -2858,3 +2858,37 @@ no versionados pendientes; el repositorio tiene `0` cachés/builds/bytecode resi
 el diagnóstico temporal, los entregables y los snapshots ETL permanecen preservados y excluidos
 localmente de Git. La única modificación tracked fuera de estos commits es `CODEOWNERS` eliminado
 en el árbol de trabajo, que se deja intacto por ser un cambio ajeno a esta limpieza.
+
+## Consolidación productiva de `proyeccion` (2026-08-29)
+
+La fase pendiente de migración interna se ejecutó sin cambiar fórmulas, contratos ni rutas
+históricas. Los comandos, servicios, scripts y dashboard dejaron de importar fachadas raíz y
+usan las implementaciones canónicas de cada subpaquete. La comprobación sobre código productivo
+encontró `0` imports hacia esas fachadas.
+
+Se eliminaron cinco archivos que eran aliases internos sin lógica y se centralizaron los helpers
+estadísticos duplicados de `relaciones_partes/packing.py` en `relaciones_partes/estadistica.py`.
+Como resultado, `packages/analitica/proyeccion` queda en `115` módulos Python (`45` raíz y `70`
+internos), sin caches/builds/bytecode después de la limpieza final. Se conservaron las fachadas
+raíz históricas que pueden consumir notebooks o integraciones externas; su retiro sigue siendo
+un cambio posterior a la ventana de compatibilidad, con regresión y rollback separados.
+
+Validación de esta fase:
+
+```text
+python -m pytest -q                         942 passed, 3 skipped
+python -m ruff check packages/analitica apps/dashboard       All checks passed
+python -m compileall -q packages/analitica apps/dashboard   exit 0
+python -m pip check                           No broken requirements found
+importación de los 114 submódulos de proyeccion               0 fallos
+```
+
+## Compactación física posterior (2026-08-29)
+
+La revisión solicitada sobre el exceso de archivos redujo `proyeccion` de `115` a `104`
+archivos Python. Las utilidades comunes se consolidaron en `compartido/utilidades.py`, el flujo
+Excel operativo en `operativo/excel.py`, Git en `infraestructura/__init__.py` y la selección de
+peso en `parametros/mezcla.py`. Los imports históricos de esos micro-módulos siguen resolviendo
+mediante aliases controlados, mientras el código productivo usa las entradas canónicas.
+
+Regresión posterior a la compactación: `942 passed, 3 skipped`.

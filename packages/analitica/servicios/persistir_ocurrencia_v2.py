@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
 from analitica.proyeccion.hibrido_ocurrencia import (
     NOMBRE_MODELO as MODELO_V1,
 )
@@ -36,6 +35,7 @@ from analitica.proyeccion.metricas import (
     metricas_cobertura_operacional,
     metricas_pronostico,
 )
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 
 MODELO_R09 = "R09_publicado"
 MODELO_MACRO = "MacroLegacy_v1"

@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_turno_temporal import (
+from analitica.proyeccion.candidatos import (
     ConfiguracionTurnoTemporal,
     aplicar_turno_reingreso_candidate,
     normalizar_forecast_candidate,

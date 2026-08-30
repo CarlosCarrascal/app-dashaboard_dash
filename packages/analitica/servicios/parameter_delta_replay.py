@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_param_delta import CandidateParamDelta
+from analitica.proyeccion.parametros import CandidateParamDelta
 from analitica.servicios import parametros_replay as _parametros_replay
 
 # Defaults y constantes históricas: se conservan por identidad con el

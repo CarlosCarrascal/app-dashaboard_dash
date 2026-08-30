@@ -9,11 +9,11 @@ import pandas as pd
 
 from .componentes import challengers_componentes
 from .contratos import ResultadoTorneo
-from .fenologico_v1 import backtest_fenologico_v1
-from .hibrido_legacy import (
+from .fenologico.servicio import backtest_fenologico_v1
+from .hibrido.proyecciones import (
     NOMBRE_MODELO as NOMBRE_MODELO_HIBRIDO,
 )
-from .hibrido_legacy import (
+from .hibrido.replay import (
     backtest_hibrido_v1,
     backtest_macro_legacy_v1,
 )

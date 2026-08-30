@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from ..compartido.fechas import lunes_semana
+from ..compartido import lunes_semana
 from ..ensamblaje import _auditoria_dataframe, _merge_auditado, _registrar_base
 
 

@@ -22,12 +22,12 @@ import numpy as np
 import pandas as pd
 
 from analitica import settings
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
 from analitica.proyeccion.hibrido_ocurrencia_v2 import (
     NOMBRE_MODELO,
     VERSION_MODELO,
     ejecutar_replay_hibrido_ocurrencia_v2,
 )
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 from analitica.proyeccion.versiones import banda_horizonte
 
 MODELO_BASE = "ModeloOperativoActual_v1"

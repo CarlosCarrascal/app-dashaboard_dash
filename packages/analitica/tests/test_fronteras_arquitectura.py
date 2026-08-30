@@ -8,14 +8,9 @@ from pathlib import Path
 import pytest
 
 FRONTERAS_NUEVAS = (
-    "analitica.proyeccion.fenologico.modelos",
     "analitica.proyeccion.fenologico.incertidumbre",
     "analitica.proyeccion.fenologico.servicio",
     "analitica.proyeccion.hibrido.servicio",
-    "analitica.proyeccion.candidatos.snapshots",
-    "analitica.proyeccion.candidatos.baselines",
-    "analitica.proyeccion.candidatos.evaluacion",
-    "analitica.proyeccion.persistencia.serializacion",
     "analitica.proyeccion.persistencia.mlflow",
     "analitica.proyeccion.compartido.fechas",
     "analitica.proyeccion.compartido.normalizacion",
@@ -50,20 +45,20 @@ def test_los_aliases_conservan_identidad_de_la_implementacion_unica():
     from analitica.proyeccion.candidatos import fuentes, preflight, snapshot
     from analitica.proyeccion.compartido import fechas, normalizacion
     from analitica.proyeccion.compartido import serializacion as serializacion_comun
-    from analitica.proyeccion.fenologico import ajuste, incertidumbre, metricas, modelos
+    from analitica.proyeccion.fenologico import ajuste, incertidumbre, metricas
     from analitica.proyeccion.fenologico import servicio as servicio_fenologico
     from analitica.proyeccion.hibrido import replay
     from analitica.proyeccion.hibrido import servicio as servicio_hibrido
-    from analitica.proyeccion.persistencia import mlflow, serializacion
+    from analitica.proyeccion.persistencia import mlflow
     from analitica.proyeccion.relaciones_partes import estadistica, evidencia, packing
     from analitica.proyeccion.relaciones_partes import panel as panel_relaciones
 
+    modelos = importlib.import_module("analitica.proyeccion.fenologico.modelos")
     assert modelos.ajustar_regresor is ajuste.ajustar_regresor
     assert incertidumbre.sensibilidades is metricas.sensibilidades
     assert servicio_fenologico.proyectar_fenologico_v1 is fenologico_v1.proyectar_fenologico_v1
     assert servicio_hibrido.proyectar_hibrido_v1 is hibrido_legacy.proyectar_hibrido_v1
     assert servicio_hibrido.backtest_hibrido_v1 is replay.backtest_hibrido_v1
-    assert serializacion.serializar_json is infraestructura.serializar_json
     assert mlflow.tracking_mlflow is tracking.tracking_mlflow
     assert fechas.lunes_semana is temporal.lunes_semana
     assert fechas.ultimo_disponible is temporal.ultimo_disponible
@@ -176,6 +171,40 @@ def test_las_capas_nuevas_no_reintroducen_fachadas_legacy_internas():
 
     replay = (raiz / "hibrido" / "replay.py").read_text(encoding="utf-8")
     assert "fenologico_v1" not in replay
+
+
+def test_codigo_productivo_importa_implementaciones_canónicas_y_no_fachadas():
+    fachadas = {
+        "candidate_param_delta",
+        "candidate_preflight",
+        "candidate_turno_temporal",
+        "fenologico_v1",
+        "gobernanza",
+        "hibrido_legacy",
+        "hibrido_parametros_asof",
+        "macro_legacy",
+        "operativo_excel",
+        "pronostico_horizonte",
+        "temporal",
+        "tracking",
+        "validacion_operativa",
+    }
+    raiz_repo = Path(__file__).resolve().parents[3]
+    rutas = []
+    for carpeta in ("commands", "servicios", "scripts"):
+        rutas.extend((raiz_repo / "packages" / "analitica" / carpeta).rglob("*.py"))
+    for carpeta in ("legacy", "servicios"):
+        rutas.extend((raiz_repo / "apps" / "dashboard" / carpeta).rglob("*.py"))
+    for ruta in rutas:
+        arbol = ast.parse(ruta.read_text(encoding="utf-8"), filename=str(ruta))
+        imports = [
+            nodo.module.split(".")[-1]
+            for nodo in ast.walk(arbol)
+            if isinstance(nodo, ast.ImportFrom)
+            and nodo.module
+            and nodo.module.startswith("analitica.proyeccion.")
+        ]
+        assert not fachadas.intersection(imports), f"{ruta} importa una fachada histórica"
 
 
 def test_el_empaquetado_declara_las_fronteras_nuevas():

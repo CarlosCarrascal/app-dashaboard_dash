@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..compartido.fechas import lunes_semana
+from ..compartido import lunes_semana
 
 CLAVE_FORECAST = [
     "evaluation_contract_id",

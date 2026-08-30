@@ -18,12 +18,12 @@ import numpy as np
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_preflight import (
-    escribir_json_reproducible as _escribir_json_reproducible,
-)
-from analitica.proyeccion.candidate_turno_temporal import (
+from analitica.proyeccion.candidatos import (
     ConfiguracionTurnoTemporal,
     aplicar_turno_reingreso_candidate,
+)
+from analitica.proyeccion.candidatos import (
+    escribir_json_reproducible as _escribir_json_reproducible,
 )
 from analitica.settings import postgres_dsn
 

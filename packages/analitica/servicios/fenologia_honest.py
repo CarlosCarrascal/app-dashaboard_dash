@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 import psycopg
 
-from analitica.proyeccion.candidate_preflight import sha256_dataframe
+from analitica.proyeccion.candidatos import sha256_dataframe
 from analitica.settings import postgres_dsn
 
 from .fenologia_honest_contratos import (

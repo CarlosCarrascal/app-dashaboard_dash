@@ -1,5 +1,41 @@
-"""Componentes internos del baseline híbrido y su macro legacy.
+"""API canónica de la familia híbrida.
 
 Las rutas históricas continúan disponibles en :mod:`analitica.proyeccion.macro_legacy`
-y :mod:`analitica.proyeccion.hibrido_legacy`.
+y :mod:`analitica.proyeccion.hibrido_legacy`, pero el código productivo debe importar
+desde este paquete o desde sus módulos especializados.
 """
+
+from .macro import (
+    MacroParams,
+    parametros_desde_bhattacharya,
+    parametros_desde_fila,
+    proyectar_macro,
+)
+from .priors import ParametroLegacyAsOf, calibrar_parametros_legacy_asof
+from .proyecciones import (
+    NOMBRE_MODELO,
+    VERSION_MODELO,
+    proyectar_hibrido_v1,
+    proyectar_macro_legacy_v1,
+)
+from .replay import (
+    backtest_hibrido_v1,
+    backtest_macro_legacy_v1,
+    construir_curva_historica,
+)
+
+__all__ = [
+    "MacroParams",
+    "NOMBRE_MODELO",
+    "ParametroLegacyAsOf",
+    "VERSION_MODELO",
+    "backtest_hibrido_v1",
+    "backtest_macro_legacy_v1",
+    "calibrar_parametros_legacy_asof",
+    "construir_curva_historica",
+    "parametros_desde_bhattacharya",
+    "parametros_desde_fila",
+    "proyectar_hibrido_v1",
+    "proyectar_macro",
+    "proyectar_macro_legacy_v1",
+]

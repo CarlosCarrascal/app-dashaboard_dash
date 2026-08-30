@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from analitica.proyeccion.candidate_turno_temporal import ConfiguracionTurnoTemporal
+from analitica.proyeccion.candidatos import ConfiguracionTurnoTemporal
 
 from .turno_reingreso_fuentes import (
     CLAVE,

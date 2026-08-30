@@ -19,8 +19,8 @@ import pandas as pd
 from analitica.proyeccion.motor_proyeccion_semanal import (
     ejecutar_proyeccion_semanal_dataframe,
 )
+from analitica.proyeccion.operativo import leer_libro_operativo
 from analitica.proyeccion.parametros_excel import seleccionar_libros_parametros
-from analitica.proyeccion.validacion_operativa import leer_libro_operativo
 
 ROOT_DEFAULT = Path(r"C:\Users\CCARRASCAL\Downloads\Proyecciones")
 

@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from .compartido.hashes import sha256_archivo
-from .operativo.contratos import (
+from .compartido import sha256_archivo
+from .operativo.excel import (  # noqa: F401 - aliases históricos
     CAMPOS_NUMERICOS,
     CLAVES_CORRIDA,
     MODELO_OPERATIVO_ACTUAL,
     ResultadoValidacionOperativa,
-)
-from .operativo.lectura import leer_libro_operativo
-from .operativo.normalizacion import (  # noqa: F401 - aliases históricos
     _campana_unica,
     _normalizar_claves,
+    leer_libro_operativo,
 )
 from .operativo.validacion import validar_libro_operativo, validar_libros_semana
 

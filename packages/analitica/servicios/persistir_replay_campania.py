@@ -24,14 +24,14 @@ from analitica import settings
 from analitica.proyeccion.backtest import construir_backtest
 from analitica.proyeccion.calidad import controles_predicciones
 from analitica.proyeccion.fuentes import cargar_datos
-from analitica.proyeccion.gobernanza import RepositorioAnalytics
-from analitica.proyeccion.hibrido_legacy import (
+from analitica.proyeccion.hibrido import (
     NOMBRE_MODELO,
     VERSION_MODELO,
     backtest_hibrido_v1,
     backtest_macro_legacy_v1,
 )
 from analitica.proyeccion.metricas import metricas_pareadas_modelos, metricas_pronostico
+from analitica.proyeccion.persistencia import RepositorioAnalytics
 
 MODELO_MACRO = "MacroLegacy_v1"
 MODELO_R09 = "R09_publicado"

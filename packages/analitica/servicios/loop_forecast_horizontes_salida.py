@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from analitica.proyeccion.pronostico_horizonte import seleccionar_vintage_coherente
+from analitica.proyeccion.horizonte import seleccionar_vintage_coherente
 
 from . import loop_forecast_horizontes_configuracion as _configuracion
 from .loop_forecast_horizontes_evaluacion import (
