@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from aquanqa_etl.catalogo import CATALOGO_ACCESS
+from aquanqa_etl.catalogo import CATALOGO_ACCESS, CATALOGO_VERSION
 from aquanqa_etl.config import Config
 
 
@@ -84,6 +84,22 @@ def _validar_con_cursor(cur, snapshot_id: int, tipo: str, estado: str, sha256: s
             "el manifiesto Access es parcial y no puede publicarse como snapshot completo"
         )
     if tipo == "access":
+        contrato = manifiesto.get("contrato_raw") or {}
+        if manifiesto.get("catalogo_version", 0) < CATALOGO_VERSION:
+            problemas.append(
+                "el manifiesto Access usa un contrato de columnas antiguo: "
+                f"v{manifiesto.get('catalogo_version', 0)}; se requiere v{CATALOGO_VERSION}"
+            )
+        if contrato.get("version") != CATALOGO_VERSION or contrato.get("estado") != "completo":
+            problemas.append(
+                "el manifiesto Access no demuestra revisión completa de tablas y columnas "
+                "físicas"
+            )
+        if contrato.get("columnas_no_mapeadas"):
+            problemas.append(
+                "existen columnas Access no mapeadas: "
+                f"{contrato.get('columnas_no_mapeadas')}"
+            )
         catalogo = {tabla.destino for tabla in CATALOGO_ACCESS}
         faltantes_catalogo = sorted(catalogo - tablas)
         if faltantes_catalogo:

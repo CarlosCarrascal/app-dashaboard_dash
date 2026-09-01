@@ -102,6 +102,17 @@ def test_parser_conserva_argumentos_de_project_y_operacion() -> None:
     assert operational_project.fuente_parametros == "excel"
     assert operational_project.no_persist is True
 
+    integrado = parser.parse_args(
+        [
+            "project",
+            "--modelo-proyeccion",
+            "HibridoGaussEstado_v1",
+            "--incluir-gauss-estado",
+        ]
+    )
+    assert integrado.modelo_proyeccion == "HibridoGaussEstado_v1"
+    assert integrado.incluir_gauss_estado is True
+
 
 def test_fachada_reexporta_handlers_y_utilidades_historicas() -> None:
     assert cli.ejecutar_relaciones is relations.ejecutar_relaciones

@@ -11,6 +11,15 @@ from .macro import (
     parametros_desde_fila,
     proyectar_macro,
 )
+from .oleadas_asof import (
+    ResultadoAjusteOleadasAsOf,
+    ajustar_oleadas_asof,
+    atribuir_cambio_oleadas,
+    construir_prior_automatico,
+    construir_ventanas_horizonte,
+    proyectar_fila_manual_horizonte,
+    proyectar_oleadas_horizonte,
+)
 from .priors import ParametroLegacyAsOf, calibrar_parametros_legacy_asof
 from .proyecciones import (
     NOMBRE_MODELO,
@@ -28,14 +37,21 @@ __all__ = [
     "MacroParams",
     "NOMBRE_MODELO",
     "ParametroLegacyAsOf",
+    "ResultadoAjusteOleadasAsOf",
     "VERSION_MODELO",
     "backtest_hibrido_v1",
     "backtest_macro_legacy_v1",
+    "ajustar_oleadas_asof",
+    "atribuir_cambio_oleadas",
     "calibrar_parametros_legacy_asof",
     "construir_curva_historica",
+    "construir_prior_automatico",
+    "construir_ventanas_horizonte",
     "parametros_desde_bhattacharya",
     "parametros_desde_fila",
     "proyectar_hibrido_v1",
+    "proyectar_fila_manual_horizonte",
     "proyectar_macro",
     "proyectar_macro_legacy_v1",
+    "proyectar_oleadas_horizonte",
 ]

@@ -271,7 +271,7 @@ def _cmd_baseline(args: argparse.Namespace) -> int:
     config = cargar_config()
     if args.database:
         config = replace(config, pg_database=args.database)
-    registrar_baseline(config, args.output)
+    registrar_baseline(config, args.output, schemas=args.schemas)
     return 0
 
 
@@ -435,6 +435,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_baseline.add_argument("--database", help="base PostgreSQL a registrar")
     p_baseline.add_argument("--output", help="JSON de salida para la línea base")
+    p_baseline.add_argument(
+        "--schema",
+        dest="schemas",
+        action="append",
+        help="limita la línea base a un esquema; puede repetirse",
+    )
     p_baseline.set_defaults(func=_cmd_baseline)
 
     p_modelo = sub.add_parser(

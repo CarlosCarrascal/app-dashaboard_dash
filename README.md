@@ -42,10 +42,9 @@ porque el driver Access es opcional y depende de cada equipo Windows.
 
 ```
 db/            PostgreSQL como código: las capas SQL y el contrato de aceptación
-domain/        reglas de negocio y acceso tipado a core — la importan el ETL y el backend
 etl/           ingesta por lotes del histórico de Access y de los Excel (solo Windows)
-backend/       campo-api: la API que reciben la app Flutter y las proyecciones en Excel
-packages/      librerías reutilizables (`analitica` y, progresivamente, `domain`)
+backend/       campo-api: monolito modular que recibe la app Flutter
+packages/      librerías reutilizables de analítica
 apps/          aplicaciones desplegables (`dashboard` y, progresivamente, `campo-api`)
 bi/            modelo semántico TMDL, medidas DAX, reapuntado del origen
 docs/          auditoría congelada · ADR · runbooks · diccionario de datos
@@ -58,17 +57,15 @@ interfaces. El dashboard Dash es la única interfaz web mantenida.
 
 ```
 pipelines/etl/       backend/campo-api/       apps/dashboard/
-       \                  |                       |
-        ▼                 ▼                       ▼
-      domain/  ───────▶  db/              packages/analitica
-                                               |
-                                               ▼
-                                           docs/data
+       |                    |                       |
+       └────────────────────┴──▶ db/ ◀─────────────┘
+                                                    ▲
+                                           packages/analitica
 ```
 
-Tres reglas sostienen esa frontera, y CI las verifica: `domain/` no importa `fastapi` ni
-`pyodbc`; `backend/` no define reglas de negocio propias; `etl/` y `backend/` no se importan entre
-sí. El porqué está en [ADR-0006](docs/adr/0006-un-solo-lenguaje-de-backend.md).
+La API organiza sus reglas por módulo y no importa `etl/`; el ETL tampoco importa la API.
+Solo se extraerá una librería compartida cuando exista un segundo consumidor real. El cambio
+queda documentado en [ADR-0016](docs/adr/0016-monolito-modular-api-campo.md).
 
 ## Las capas de la base
 
@@ -86,7 +83,7 @@ Power Query lo que ya se limpió en SQL.
 
 Y una que no se negocia: **las invariantes viven en el motor.** `NOT NULL`, `UNIQUE`, las claves
 foráneas y las filas centinela de [ADR-0005](docs/adr/0005-filas-centinela-sin-null-en-fk.md) están
-en el esquema, no en el código de aplicación. La validación de `domain/` es la primera línea —da un
+en el esquema, no en el código de aplicación. La validación del módulo de la API es la primera línea —da un
 error legible antes de tocar la base—, no la garantía: esa tiene que valer también para un `UPDATE`
 manual o un consumidor que aparezca en tres años.
 
@@ -117,10 +114,10 @@ los maestros de `core`; el dato sigue fluyendo `raw → stg → core`.
 | E5 | Hechos cargados con las correcciones aplicadas | ✅ |
 | E7 | Contrato de aceptación ejecutable | ✅ |
 | — | Cierre de nulos de FK con filas centinela (ADR-0005) | ✅ |
-| E4 | `core` como código en `domain/` | pendiente |
+| E4 | Reglas de captura por módulo dentro de `campo-api` | ✅ |
 | E6 | Las 40 vistas de compatibilidad en `reporting` | 40 de 40 |
 | E8 | Modelo estrella de BI y reapuntado de los dos informes | pendiente |
-| E9 | `backend/campo-api` para la app Flutter | pendiente |
+| E9 | `backend/campo-api` para la app Flutter | API interna v0.1 |
 
 El contrato actual contiene 92 comprobaciones, incluidas las 40 vistas de compatibilidad de
 `reporting`. El resultado vigente no se fija en este README: se obtiene ejecutando

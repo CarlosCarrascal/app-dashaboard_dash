@@ -54,7 +54,8 @@ COMMENT ON COLUMN raw.e01_ramas.diametro IS
     '[Diametro] — diámetro de ESA rama, en mm.';
 
 -- ── E02_ConteoFlores ────────────────────────────────────────────────────────
--- 43.490 filas. Sin clave natural única: ninguna combinación las distingue (N-9).
+-- 43.490 filas. Sin clave natural única: ninguna combinación las distingue (N-9). El contrato
+-- raw conserva también los campos físicos que antes no se transportaban a PostgreSQL.
 CREATE TABLE IF NOT EXISTS raw.e02_conteo_flores (
     item        text,
     fecha       text,
@@ -69,8 +70,18 @@ CREATE TABLE IF NOT EXISTS raw.e02_conteo_flores (
     cuajo       text,
     ya          text,
     yp          text,
-    hora        text
+    hora        text,
+    y_muertas   text,
+    brt_tiernos text,
+    des1        text
 );
+
+-- Evolución append-only del contrato. No se recrea la tabla: los snapshots históricos siguen
+-- siendo inmutables y las columnas nuevas quedan NULL en ellos hasta reextraer cada Access.
+ALTER TABLE raw.e02_conteo_flores
+    ADD COLUMN IF NOT EXISTS y_muertas text,
+    ADD COLUMN IF NOT EXISTS brt_tiernos text,
+    ADD COLUMN IF NOT EXISTS des1 text;
 
 COMMENT ON TABLE raw.e02_conteo_flores IS
     'E02_ConteoFlores — 43.490 filas. Una fila = una planta evaluada. Sin clave natural '
@@ -82,6 +93,15 @@ COMMENT ON COLUMN raw.e02_conteo_flores.cuajo IS
     'evalúa en ventanas fenológicas concretas, así que todo promedio va sobre el 12,3%.';
 COMMENT ON COLUMN raw.e02_conteo_flores.ya IS '[YA] — yemas abiertas. 72,6% nulo.';
 COMMENT ON COLUMN raw.e02_conteo_flores.yp IS '[YP] — yemas por abrir. 73,5% nulo.';
+COMMENT ON COLUMN raw.e02_conteo_flores.y_muertas IS
+    '[YMuertas] — yemas muertas del origen Access. Se conserva en raw y se promoverá a core '
+    'solo con la regla de negocio de la aplicación cerrada.';
+COMMENT ON COLUMN raw.e02_conteo_flores.brt_tiernos IS
+    '[BrtTiernos] — brotes tiernos del origen Access. Se conserva en raw; no se asume todavía '
+    'si su grano y definición son equivalentes a E04_Brotes.';
+COMMENT ON COLUMN raw.e02_conteo_flores.des1 IS
+    '[Des1] — campo adicional de Access. Se conserva literalmente en raw hasta confirmar su '
+    'semántica y si pertenece a flores o a otra medición.';
 
 -- ── E03_ConteoEstados ───────────────────────────────────────────────────────
 -- 18.714 filas. Clave natural válida: (item, fecha, modulo, lote, cortina, hilera, planta) (N-8).
@@ -155,8 +175,12 @@ CREATE TABLE IF NOT EXISTS raw.e05_diametros_bayas (
     cortina     text,
     hilera      text,
     diametro    text,
-    fecha       text
+    fecha       text,
+    fundo       text
 );
+
+ALTER TABLE raw.e05_diametros_bayas
+    ADD COLUMN IF NOT EXISTS fundo text;
 
 COMMENT ON TABLE raw.e05_diametros_bayas IS
     'E05_DiametrosBayas — 4.193 filas. Una fila = una baya medida: hay 43 combinaciones de '
@@ -168,3 +192,6 @@ COMMENT ON COLUMN raw.e05_diametros_bayas.turno IS
     'falta el join que falla en H-01.';
 COMMENT ON COLUMN raw.e05_diametros_bayas.diametro IS
     '[Diametro] — calibre comercial de la baya, en mm. AVG = 19,885.';
+COMMENT ON COLUMN raw.e05_diametros_bayas.fundo IS
+    '[Fundo] — identificador de fundo presente en la copia actual de Access. Se usa para '
+    'resolver la identidad completa cuando (módulo, lote) se repite entre fundos.';

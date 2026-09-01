@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,13 @@ from analitica.dominio.modelos.hibrido import (
     backtest_hibrido_v1,
     backtest_macro_legacy_v1,
 )
+
+from .estado_oleadas import (
+    ConfiguracionEstadoOleadas,
+    proyectar_estado_oleadas_asof,
+)
+from .gauss_estado_integrado import NOMBRE_MODELO as NOMBRE_MODELO_GAUSS_ESTADO
+from .gauss_estado_integrado import construir_lotes_gauss_estado, replay_gauss_estado_asof
 
 REGLA_PROMOCION = {
     "mejora_relativa_wape": 0.05,
@@ -239,6 +247,64 @@ def _familia_statsforecast(contexto: dict) -> pd.DataFrame:
     return challengers_statsforecast(contexto["backtest"], contexto["cosecha"])
 
 
+def _familia_estado_oleadas(contexto: dict) -> pd.DataFrame:
+    """R09 corregido por estado reciente, con oleadas solo como explicación opcional."""
+
+    base = contexto["backtest"]
+    base = base[base.modelo.eq("R09_publicado")].copy()
+    if base.empty:
+        return pd.DataFrame()
+    configuracion = contexto.get("configuracion_estado_oleadas")
+    if configuracion is not None and not isinstance(configuracion, ConfiguracionEstadoOleadas):
+        raise TypeError("configuracion_estado_oleadas debe ser ConfiguracionEstadoOleadas")
+    salida, metadata = proyectar_estado_oleadas_asof(
+        base,
+        config=configuracion,
+        panel_oleadas=contexto.get("panel_oleadas"),
+    )
+    contexto["evidencia_estado_oleadas"] = metadata
+    return salida
+
+
+def _familia_gauss_estado(contexto: dict) -> pd.DataFrame:
+    """Replay opt-in del integrado R09 + forma Gaussiana + estado as-of."""
+
+    base = contexto["backtest"]
+    base = base[base.modelo.eq("R09_publicado")].copy()
+    datos = contexto.get("datos")
+    maestro = contexto.get("lotes_gauss_estado")
+    poda = contexto.get("poda_gauss_estado")
+    if maestro is None and datos is not None:
+        maestro = getattr(datos, "lotes", None)
+    if poda is None and datos is not None:
+        poda = getattr(datos, "poda", None)
+    if base.empty or maestro is None or not isinstance(maestro, pd.DataFrame) or maestro.empty:
+        return pd.DataFrame()
+    lotes, metadata_lotes = construir_lotes_gauss_estado(
+        base,
+        maestro_lotes=maestro,
+        poda=poda,
+        cosecha=contexto["cosecha"],
+    )
+    emisiones = sorted(pd.to_datetime(base.fecha_emision, errors="coerce").dropna().unique())
+    if not emisiones:
+        return pd.DataFrame()
+    predicciones, metadata = replay_gauss_estado_asof(
+        base,
+        lotes,
+        contexto["cosecha"],
+        emisiones,
+        semanas=6,
+        config_estado=contexto.get("configuracion_estado_oleadas"),
+        modelo_contexto=contexto.get("modelo_contexto_oleadas"),
+        panel_oleadas_manual=contexto.get("panel_oleadas_manual"),
+        contexto_por_emision=contexto.get("contexto_por_emision_oleadas"),
+    )
+    metadata["lotes"] = metadata_lotes
+    contexto["evidencia_gauss_estado"] = metadata
+    return predicciones
+
+
 def _familia_fenologico_v1(contexto: dict) -> pd.DataFrame:
     datos = contexto.get("datos")
     if datos is None:
@@ -355,6 +421,22 @@ FAMILIAS_CHALLENGER: tuple[dict, ...] = (
         "funcion": _familia_statsforecast,
         "aviso_vacia": "Los modelos de serie no emitieron filas para estas emisiones.",
     },
+    {
+        "clave": "estado_oleadas",
+        "funcion": _familia_estado_oleadas,
+        "aviso_vacia": (
+            "HibridoEstadoOleadas_v1 no emitió filas: falta el panel R09 publicado "
+            "o no hay una rejilla comparable de emisiones, lotes y objetivos."
+        ),
+    },
+    {
+        "clave": "gauss_estado",
+        "funcion": _familia_gauss_estado,
+        "aviso_vacia": (
+            f"{NOMBRE_MODELO_GAUSS_ESTADO} no emitió filas: falta el maestro de lotes "
+            "con área/plantas y la poda con fecha de inicio válida."
+        ),
+    },
 )
 
 
@@ -368,9 +450,18 @@ def ejecutar_torneo(
     incluir_fenologico_v1: bool = True,
     incluir_macro_legacy: bool = True,
     incluir_hibrido_legacy: bool = True,
+    incluir_estado_oleadas: bool = False,
+    incluir_gauss_estado: bool = False,
     fenologico_usar_mixedlm: bool = False,
     datos=None,
     panel_asof: pd.DataFrame | None = None,
+    panel_oleadas: pd.DataFrame | None = None,
+    configuracion_estado_oleadas: ConfiguracionEstadoOleadas | None = None,
+    lotes_gauss_estado: pd.DataFrame | None = None,
+    poda_gauss_estado: pd.DataFrame | None = None,
+    modelo_contexto_oleadas: Any | None = None,
+    panel_oleadas_manual: pd.DataFrame | None = None,
+    contexto_por_emision_oleadas: dict | None = None,
     diagnostico_montecarlo: bool = False,
     sin_fuga: bool = True,
     reproducible: bool = True,
@@ -390,6 +481,13 @@ def ejecutar_torneo(
         "horizonte_semanas": horizonte_semanas,
         "hibrido_minimo_entrenamiento": 30,
         "hibrido_max_cortes": fenologico_max_cortes,
+        "panel_oleadas": panel_oleadas,
+        "configuracion_estado_oleadas": configuracion_estado_oleadas,
+        "lotes_gauss_estado": lotes_gauss_estado,
+        "poda_gauss_estado": poda_gauss_estado,
+        "modelo_contexto_oleadas": modelo_contexto_oleadas,
+        "panel_oleadas_manual": panel_oleadas_manual,
+        "contexto_por_emision_oleadas": contexto_por_emision_oleadas,
     }
     habilitadas = {
         "macro_legacy": incluir_macro_legacy,
@@ -398,6 +496,8 @@ def ejecutar_torneo(
         "componentes": incluir_componentes,
         "ml": incluir_ml,
         "statsforecast": incluir_statsforecast,
+        "estado_oleadas": incluir_estado_oleadas,
+        "gauss_estado": incluir_gauss_estado,
     }
     for familia in FAMILIAS_CHALLENGER:
         if not habilitadas.get(familia["clave"], False):

@@ -357,17 +357,27 @@ BEGIN
 
     PERFORM set_config('raw.migracion_control', 'on', true);
 
+    -- El bloque valida que el run y el contrato semántico sean el mismo. Esta asignación debe
+    -- ocurrir al abrir el run; dejarla NULL hace que fn_iniciar_bloque rechace correctamente la
+    -- ejecución aunque el snapshot y las 23 tablas raw estén completos.
+    IF raw.fn_modelo_version_vigente() IS NULL THEN
+        RAISE EXCEPTION
+            'No existe un modelo semántico aprobado y vigente para abrir la ejecución.';
+    END IF;
+
     INSERT INTO raw.migracion_run
-        (source_snapshot_id, tipo, campania, capa_destino, total_tablas_plan,
+        (source_snapshot_id, tipo, campania, capa_destino, total_tablas_plan, modelo_version,
          ejecutado_por, detalle)
     VALUES
         (v_snapshot, v_tipo, v_campania, p_capa_destino, v_total,
+         raw.fn_modelo_version_vigente(),
          coalesce(nullif(p_ejecutado_por, ''), current_user), p_detalle)
     RETURNING migracion_run_id INTO v_run;
 
     INSERT INTO raw.migracion_tabla
         (migracion_run_id, source_snapshot_id, tabla_raw, objeto_origen,
-         stg_objetos, core_objetos, criterio, filas_raw, detalle)
+         stg_objetos, core_objetos, criterio, filas_raw, detalle,
+         modelo_version, bloque, decision_modelo)
     SELECT v_run,
            v_snapshot,
            p.tabla_raw,
@@ -377,11 +387,17 @@ BEGIN
            p.criterio,
            ts.filas_csv,
            CASE WHEN ts.source_snapshot_id IS NULL
-                THEN 'No existe control raw.source_table_snapshot para esta tabla.' END
+                THEN 'No existe control raw.source_table_snapshot para esta tabla.' END,
+           raw.fn_modelo_version_vigente(),
+           mt.bloque,
+           mt.decision
     FROM raw.migracion_plan_access p
     LEFT JOIN raw.source_table_snapshot ts
       ON ts.source_snapshot_id = v_snapshot
      AND ts.tabla_destino = p.tabla_raw
+    LEFT JOIN raw.migracion_modelo_tabla mt
+      ON mt.modelo_version = raw.fn_modelo_version_vigente()
+     AND mt.tabla_raw = p.tabla_raw
     WHERE p.activo
     ORDER BY p.orden;
 

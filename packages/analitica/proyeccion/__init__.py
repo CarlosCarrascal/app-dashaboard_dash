@@ -11,6 +11,66 @@ _LAZY_ATTRS = {
     "ProjectionScenario": (".aplicacion.procesos.engine", "ProjectionScenario"),
     "proyectar_desde_corte": (".aplicacion.procesos.engine", "proyectar_desde_corte"),
     "replay_historico_ciego": (".aplicacion.procesos.engine", "replay_historico_ciego"),
+    "NOMBRE_MODELO_ESTADO_OLEADAS": (
+        ".aplicacion.procesos.estado_oleadas",
+        "NOMBRE_MODELO",
+    ),
+    "VERSION_MODELO_ESTADO_OLEADAS": (
+        ".aplicacion.procesos.estado_oleadas",
+        "VERSION_MODELO",
+    ),
+    "ConfiguracionEstadoOleadas": (
+        ".aplicacion.procesos.estado_oleadas",
+        "ConfiguracionEstadoOleadas",
+    ),
+    "proyectar_estado_oleadas_asof": (
+        ".aplicacion.procesos.estado_oleadas",
+        "proyectar_estado_oleadas_asof",
+    ),
+    "construir_panel_r09_exportado": (
+        ".aplicacion.procesos.r09_exportado",
+        "construir_panel_r09_exportado",
+    ),
+    "cargar_panel_r09_csv": (
+        ".aplicacion.procesos.r09_exportado",
+        "cargar_panel_r09_csv",
+    ),
+    "replay_automatico_oleadas_asof": (
+        ".aplicacion.procesos.replay_oleadas_automatico",
+        "replay_automatico_oleadas_asof",
+    ),
+    "construir_contexto_oleadas_asof": (
+        ".aplicacion.parametros.contexto_exportado",
+        "construir_contexto_oleadas_asof",
+    ),
+    "construir_contexto_por_lote_oleadas_asof": (
+        ".aplicacion.parametros.contexto_exportado",
+        "construir_contexto_por_lote_oleadas_asof",
+    ),
+    "construir_transiciones_gaussianas_asof": (
+        ".aplicacion.parametros.transiciones_inferidas",
+        "construir_transiciones_gaussianas_asof",
+    ),
+    "proyectar_gauss_estado_asof": (
+        ".aplicacion.procesos.gauss_estado_integrado",
+        "proyectar_gauss_estado_asof",
+    ),
+    "replay_gauss_estado_asof": (
+        ".aplicacion.procesos.gauss_estado_integrado",
+        "replay_gauss_estado_asof",
+    ),
+    "construir_lotes_gauss_estado": (
+        ".aplicacion.procesos.gauss_estado_integrado",
+        "construir_lotes_gauss_estado",
+    ),
+    "NOMBRE_MODELO_GAUSS_ESTADO": (
+        ".aplicacion.procesos.gauss_estado_integrado",
+        "NOMBRE_MODELO",
+    ),
+    "VERSION_MODELO_GAUSS_ESTADO": (
+        ".aplicacion.procesos.gauss_estado_integrado",
+        "VERSION_MODELO",
+    ),
     "AdaptadorOpenMeteo": (".infraestructura.clima", "AdaptadorOpenMeteo"),
     "PronosticoClima": (".infraestructura.clima", "PronosticoClima"),
     "resolver_horizonte_climatico": (".infraestructura.clima", "resolver_horizonte_climatico"),
@@ -126,6 +186,21 @@ __all__ = [
     "ProjectionScenario",
     "proyectar_desde_corte",
     "replay_historico_ciego",
+    "NOMBRE_MODELO_ESTADO_OLEADAS",
+    "VERSION_MODELO_ESTADO_OLEADAS",
+    "ConfiguracionEstadoOleadas",
+    "proyectar_estado_oleadas_asof",
+    "construir_panel_r09_exportado",
+    "cargar_panel_r09_csv",
+    "construir_contexto_oleadas_asof",
+    "construir_contexto_por_lote_oleadas_asof",
+    "construir_transiciones_gaussianas_asof",
+    "proyectar_gauss_estado_asof",
+    "replay_gauss_estado_asof",
+    "construir_lotes_gauss_estado",
+    "NOMBRE_MODELO_GAUSS_ESTADO",
+    "VERSION_MODELO_GAUSS_ESTADO",
+    "replay_automatico_oleadas_asof",
     "NOMBRE_MODELO_HIBRIDO",
     "backtest_hibrido_v1",
     "backtest_macro_legacy_v1",

@@ -121,6 +121,8 @@ def test_el_registro_cubre_todas_las_familias_y_todas_avisan_si_no_emiten():
         "componentes",
         "ml",
         "statsforecast",
+        "estado_oleadas",
+        "gauss_estado",
     ]
     for familia in FAMILIAS_CHALLENGER:
         assert callable(familia["funcion"])

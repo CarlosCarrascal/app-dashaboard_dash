@@ -34,17 +34,18 @@ BEGIN
     -- B02 se ejecuta antes de los hechos. Si se intenta reconstruirlo después, se detiene para
     -- no borrar FKs de bloques posteriores; un snapshot/modelo nuevo debe usar una estrategia
     -- de publicación atómica distinta.
-    IF EXISTS (SELECT 1 FROM core.m_usuario WHERE evaluador_id IS NOT NULL)
-       OR EXISTS (SELECT 1 FROM core.op_tareo WHERE evaluador_id IS NOT NULL)
-       OR EXISTS (SELECT 1 FROM core.ev_evaluacion_ramas)
-       OR EXISTS (SELECT 1 FROM core.ev_flores)
-       OR EXISTS (SELECT 1 FROM core.ev_estados)
-       OR EXISTS (SELECT 1 FROM core.ev_brotes)
-       OR EXISTS (SELECT 1 FROM core.ev_evaluacion_baya)
-       OR EXISTS (SELECT 1 FROM core.op_cosecha)
-       OR EXISTS (SELECT 1 FROM core.op_packing)
-       OR EXISTS (SELECT 1 FROM core.op_forecast_campania)
-       OR EXISTS (SELECT 1 FROM core.op_forecast_semanal) THEN
+    IF coalesce(current_setting('aquanqa.allow_full_core', true), '') <> 'on'
+       AND (EXISTS (SELECT 1 FROM core.m_usuario WHERE evaluador_id IS NOT NULL)
+            OR EXISTS (SELECT 1 FROM core.op_tareo WHERE evaluador_id IS NOT NULL)
+            OR EXISTS (SELECT 1 FROM core.ev_evaluacion_ramas)
+            OR EXISTS (SELECT 1 FROM core.ev_flores)
+            OR EXISTS (SELECT 1 FROM core.ev_estados)
+            OR EXISTS (SELECT 1 FROM core.ev_brotes)
+            OR EXISTS (SELECT 1 FROM core.ev_evaluacion_baya)
+            OR EXISTS (SELECT 1 FROM core.op_cosecha)
+            OR EXISTS (SELECT 1 FROM core.op_packing)
+            OR EXISTS (SELECT 1 FROM core.op_forecast_campania)
+            OR EXISTS (SELECT 1 FROM core.op_forecast_semanal)) THEN
         RAISE EXCEPTION
             'B02 bloqueado: ya existen hechos dependientes; no se permite reconstruir contexto destruyendo FKs.';
     END IF;
@@ -512,13 +513,16 @@ BEGIN
     END IF;
 
     -- B03 puede reintentarse si falló antes de publicar, pero no después de que un bloque
-    -- posterior dependa de sus claves. La limpieza queda limitada a sus propios destinos.
-    IF EXISTS (SELECT 1 FROM core.op_cosecha)
-       OR EXISTS (SELECT 1 FROM core.op_clima)
-       OR EXISTS (SELECT 1 FROM core.op_packing)
-       OR EXISTS (SELECT 1 FROM core.op_forecast_campania)
-       OR EXISTS (SELECT 1 FROM core.op_forecast_semanal)
-       OR EXISTS (SELECT 1 FROM core.op_tareo) THEN
+    -- posterior dependa de sus claves. La única excepción es la señal transaccional que el
+    -- orquestador antepone durante una reconstrucción completa autorizada; B04/B05 se
+    -- ejecutarán después dentro de la misma transacción y reemplazarán esos destinos.
+    IF coalesce(current_setting('aquanqa.allow_full_core', true), '') <> 'on'
+       AND (EXISTS (SELECT 1 FROM core.op_cosecha)
+            OR EXISTS (SELECT 1 FROM core.op_clima)
+            OR EXISTS (SELECT 1 FROM core.op_packing)
+            OR EXISTS (SELECT 1 FROM core.op_forecast_campania)
+            OR EXISTS (SELECT 1 FROM core.op_forecast_semanal)
+            OR EXISTS (SELECT 1 FROM core.op_tareo)) THEN
         RAISE EXCEPTION
             'B03 bloqueado: ya existen hechos de bloques posteriores; no se reconstruye fenología sobre dependencias publicadas.';
     END IF;
@@ -1032,8 +1036,9 @@ BEGIN
 
     -- Forecast es posterior y no se reconstruye implícitamente al repetir B04. Si ya existe,
     -- un nuevo snapshot/modelo debe publicar una nueva versión en vez de borrar operación.
-    IF EXISTS (SELECT 1 FROM core.op_forecast_campania)
-       OR EXISTS (SELECT 1 FROM core.op_forecast_semanal) THEN
+    IF coalesce(current_setting('aquanqa.allow_full_core', true), '') <> 'on'
+       AND (EXISTS (SELECT 1 FROM core.op_forecast_campania)
+            OR EXISTS (SELECT 1 FROM core.op_forecast_semanal)) THEN
         RAISE EXCEPTION
             'B04 bloqueado: ya existen proyecciones posteriores; no se reconstruye operación sobre dependencias publicadas.';
     END IF;

@@ -26,7 +26,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from aquanqa_etl.catalogo import CATALOGO_ACCESS, DESCARTADAS, Tabla
+from aquanqa_etl.catalogo import CATALOGO_ACCESS, CATALOGO_VERSION, DESCARTADAS, Tabla
 from aquanqa_etl.config import Config
 
 LOTE_FILAS = 50_000
@@ -40,6 +40,16 @@ DRIVERS_ACCESS = (
 
 MANIFIESTO_ACCESS = "access_snapshot.json"
 """Manifiesto reproducible de la copia Access que originó los CSV extraídos."""
+
+
+def _normalizar_nombre(valor: object) -> str:
+    """Normaliza nombres de objetos/columnas solo para comparar metadata.
+
+    El nombre original nunca se reemplaza en el contrato: Access puede distinguir grafías con
+    acentos o espacios y el SELECT se sigue construyendo con el nombre real. La comparación
+    case-insensitive evita tratar un cambio de mayúsculas como un cambio de estructura.
+    """
+    return str(valor or "").strip().casefold()
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,8 +171,9 @@ def _resolver_columnas(cursor, tabla: Tabla, origen: str) -> tuple[str | None, .
     """Resuelve alias de columnas sin cambiar el contrato canónico de raw."""
     try:
         disponibles = {
-            str(fila.column_name): str(fila.column_name)
+            _normalizar_nombre(fila.column_name): str(fila.column_name)
             for fila in cursor.columns(table=origen).fetchall()
+            if getattr(fila, "column_name", None) is not None
         }
     except Exception as exc:
         raise RuntimeError(f"No puedo inspeccionar las columnas de Access {origen}: {exc}") from exc
@@ -170,10 +181,18 @@ def _resolver_columnas(cursor, tabla: Tabla, origen: str) -> tuple[str | None, .
     resueltas = []
     faltantes = []
     for columna in tabla.cols_origen:
-        if columna in disponibles:
-            resueltas.append(columna)
+        encontrada = disponibles.get(_normalizar_nombre(columna))
+        if encontrada is not None:
+            resueltas.append(encontrada)
             continue
-        encontrada = next((c for c in alias.get(columna, ()) if c in disponibles), None)
+        encontrada = next(
+            (
+                disponibles.get(_normalizar_nombre(c))
+                for c in alias.get(columna, ())
+                if disponibles.get(_normalizar_nombre(c)) is not None
+            ),
+            None,
+        )
         if encontrada is None:
             if columna in tabla.columnas_opcionales:
                 resueltas.append(None)
@@ -184,9 +203,167 @@ def _resolver_columnas(cursor, tabla: Tabla, origen: str) -> tuple[str | None, .
     if faltantes:
         raise RuntimeError(
             f"La tabla Access {origen} no tiene las columnas {faltantes}; "
-            f"encontradas: {sorted(disponibles)}"
+            f"encontradas: {sorted(disponibles.values(), key=_normalizar_nombre)}"
         )
     return tuple(resueltas)
+
+
+def _tablas_fisicas_odbc(cursor) -> dict[str, str]:
+    """Lista las tablas físicas visibles por ACE/ODBC.
+
+    `cursor.tables(tableType='TABLE')` no está implementado igual en todos los drivers, por eso
+    hay un fallback al catálogo completo. Solo se elimina metadata del motor; una tabla de
+    negocio desconocida debe llegar al guard de contrato y detener la extracción.
+    """
+    try:
+        filas = cursor.tables(tableType="TABLE").fetchall()
+    except Exception:
+        try:
+            filas = cursor.tables().fetchall()
+        except Exception:
+            return {}
+    resultado: dict[str, str] = {}
+    for fila in filas:
+        nombre = getattr(fila, "table_name", None)
+        tipo = _normalizar_nombre(getattr(fila, "table_type", None))
+        normalizado = _normalizar_nombre(nombre)
+        if not normalizado or normalizado.startswith(("msys", "~")):
+            continue
+        if tipo and "table" not in tipo:
+            continue
+        resultado.setdefault(normalizado, str(nombre))
+    return resultado
+
+
+def _tablas_fisicas_dao(catalogo_dao: dict[str, Any] | None) -> dict[str, str]:
+    """Devuelve el inventario físico de tablas que obtuvo el inspector DAO, si existe."""
+    if not isinstance(catalogo_dao, dict) or catalogo_dao.get("estado") != "disponible":
+        return {}
+    resultado: dict[str, str] = {}
+    for tabla in catalogo_dao.get("tablas") or []:
+        nombre = tabla.get("nombre") if isinstance(tabla, dict) else None
+        normalizado = _normalizar_nombre(nombre)
+        if not normalizado or normalizado.startswith(("msys", "~")):
+            continue
+        resultado.setdefault(normalizado, str(nombre))
+    return resultado
+
+
+def _origenes_catalogados(tablas: list[Tabla]) -> dict[str, Tabla]:
+    resultado: dict[str, Tabla] = {}
+    for tabla in tablas:
+        for origen in (tabla.origen, *tabla.origen_alternativas):
+            resultado[_normalizar_nombre(origen)] = tabla
+    return resultado
+
+
+def _contrato_columnas_permitidas(tabla: Tabla) -> set[str]:
+    permitidas = {_normalizar_nombre(columna) for columna in tabla.cols_origen}
+    for canonica, alternativas in tabla.columnas_alternativas:
+        permitidas.add(_normalizar_nombre(canonica))
+        permitidas.update(_normalizar_nombre(columna) for columna in alternativas)
+    permitidas.update(
+        _normalizar_nombre(columna) for columna, _motivo in tabla.columnas_excluidas
+    )
+    return permitidas
+
+
+def _validar_contrato_access(
+    cursor, tablas: list[Tabla], catalogo_dao: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Valida que no existan tablas o columnas Access fuera del contrato raw.
+
+    Esta comprobación es deliberadamente previa a cualquier CSV. Si el archivo periódico trae
+    una columna nueva, el proceso falla con su nombre y obliga a decidir si se mapea a raw o se
+    excluye con una justificación versionada. Así una futura modificación no puede perderse en
+    silencio como ocurrió con los campos detectados en esta revisión.
+    """
+    odbc = _tablas_fisicas_odbc(cursor)
+    dao = _tablas_fisicas_dao(catalogo_dao)
+    detectadas = dict(odbc)
+    detectadas.update({clave: valor for clave, valor in dao.items() if clave not in detectadas})
+    if not detectadas:
+        raise RuntimeError(
+            "No pude obtener el inventario de tablas físicas de Access; "
+            "se detiene la extracción para no omitir objetos sin detectarlos."
+        )
+
+    por_origen = _origenes_catalogados(tablas)
+    descartadas = {_normalizar_nombre(nombre): nombre for nombre in DESCARTADAS}
+    desconocidas = sorted(
+        nombre for clave, nombre in detectadas.items()
+        if clave not in por_origen and clave not in descartadas
+    )
+    if desconocidas:
+        raise RuntimeError(
+            "Access contiene tablas físicas no catalogadas; no se extrae para evitar pérdida "
+            f"silenciosa: {desconocidas}. Añádelas al catálogo o documenta una exclusión explícita."
+        )
+
+    columnas_detectadas: dict[str, list[str]] = {}
+    columnas_no_mapeadas: dict[str, list[str]] = {}
+    columnas_excluidas: dict[str, list[dict[str, str]]] = {}
+    tablas_catalogadas: set[str] = set()
+    for tabla in tablas:
+        origen = next(
+            (detectadas[_normalizar_nombre(candidato)]
+             for candidato in (tabla.origen, *tabla.origen_alternativas)
+             if _normalizar_nombre(candidato) in detectadas),
+            None,
+        )
+        if origen is None:
+            continue
+        tablas_catalogadas.add(tabla.destino)
+        esquema = _schema_descriptor(cursor, origen)
+        columnas = [
+            str(columna.get("nombre"))
+            for columna in esquema
+            if columna.get("nombre") is not None
+        ]
+        columnas_detectadas[tabla.destino] = columnas
+        permitidas = _contrato_columnas_permitidas(tabla)
+        no_mapeadas = [
+            columna for columna in columnas if _normalizar_nombre(columna) not in permitidas
+        ]
+        if no_mapeadas:
+            columnas_no_mapeadas[tabla.destino] = no_mapeadas
+        exclusiones = {
+            _normalizar_nombre(columna): motivo
+            for columna, motivo in tabla.columnas_excluidas
+        }
+        aplicadas = [
+            {"columna": columna, "motivo": exclusiones[_normalizar_nombre(columna)]}
+            for columna in columnas
+            if _normalizar_nombre(columna) in exclusiones
+        ]
+        if aplicadas:
+            columnas_excluidas[tabla.destino] = aplicadas
+
+    if columnas_no_mapeadas:
+        detalle = "; ".join(
+            f"{tabla}: {', '.join(columnas)}"
+            for tabla, columnas in sorted(columnas_no_mapeadas.items())
+        )
+        raise RuntimeError(
+            "Access contiene columnas físicas fuera del contrato raw; no se extrae para evitar "
+            f"pérdida silenciosa: {detalle}. Mapea cada columna o documenta una exclusión "
+            "explícita en catalogo.py."
+        )
+
+    tablas_descartadas = sorted(
+        detectadas[clave] for clave in detectadas if clave in descartadas
+    )
+    return {
+        "estado": "completo",
+        "version": CATALOGO_VERSION,
+        "tablas_detectadas": sorted(detectadas.values(), key=_normalizar_nombre),
+        "tablas_catalogadas": sorted(tablas_catalogadas),
+        "tablas_descartadas": tablas_descartadas,
+        "tablas_no_catalogadas": [],
+        "columnas_detectadas": columnas_detectadas,
+        "columnas_no_mapeadas": {},
+        "columnas_excluidas": columnas_excluidas,
+    }
 
 
 def _schema_descriptor(cursor, origen: str) -> list[dict[str, Any]]:
@@ -604,6 +781,7 @@ def _guardar_manifiesto_access(
     claves_primarias: dict[str, list[dict[str, Any]]] | None = None,
     relaciones: list[dict[str, Any]] | None = None,
     catalogo_dao: dict[str, Any] | None = None,
+    contrato_raw: dict[str, Any] | None = None,
 ) -> Path:
     destinos_catalogo = {tabla.destino for tabla in CATALOGO_ACCESS}
     destinos_extraidos = {resultado.destino for resultado in resultados}
@@ -612,7 +790,21 @@ def _guardar_manifiesto_access(
     estadistica = config.access_db.stat()
     manifiesto = {
         "tipo": "access",
-        "catalogo_version": 4,
+        "catalogo_version": CATALOGO_VERSION,
+        "contrato_raw": contrato_raw or {
+            # Las pruebas y herramientas internas pueden construir un manifiesto sintético sin
+            # abrir Access. Las rutas reales de catalogar/extraer siempre pasan el inventario
+            # producido por _validar_contrato_access.
+            "estado": "completo",
+            "version": CATALOGO_VERSION,
+            "tablas_detectadas": [],
+            "tablas_catalogadas": sorted(destinos_extraidos),
+            "tablas_descartadas": [],
+            "tablas_no_catalogadas": [],
+            "columnas_detectadas": {},
+            "columnas_no_mapeadas": {},
+            "columnas_excluidas": {},
+        },
         "campania": config.access_campania,
         "solo_lectura": True,
         "ruta_origen": str(config.access_db.resolve()),
@@ -685,11 +877,13 @@ def _guardar_catalogo_access(
     consultas: list[dict[str, Any]],
     relaciones: list[dict[str, Any]] | None = None,
     catalogo_dao: dict[str, Any] | None = None,
+    contrato_raw: dict[str, Any] | None = None,
 ) -> Path:
     """Guarda el catálogo técnico fuera del snapshot CSV, sin mutar snapshots existentes."""
     payload = {
         "tipo": "access_catalogo",
-        "catalogo_version": 4,
+        "catalogo_version": CATALOGO_VERSION,
+        "contrato_raw": contrato_raw or {},
         "backend": "dao" if (catalogo_dao or {}).get("estado") == "disponible" else "odbc",
         "backend_estado": (catalogo_dao or {}).get("estado", "no_disponible"),
         "backend_detalle": (catalogo_dao or {}).get("detalle"),
@@ -766,6 +960,7 @@ def catalogar_access(
     try:
         cursor = conexion.cursor()
         tablas = list(CATALOGO_ACCESS)
+        contrato_raw = _validar_contrato_access(cursor, tablas, catalogo_dao)
         origenes, columnas, esquemas, indices, claves = _catalogar_tablas(cursor, tablas)
         _incorporar_catalogo_dao(esquemas, indices, claves, catalogo_dao)
         filas: dict[str, int] = {}
@@ -786,6 +981,7 @@ def catalogar_access(
             consultas=consultas,
             relaciones=list(catalogo_dao.get("relaciones") or []),
             catalogo_dao=catalogo_dao,
+            contrato_raw=contrato_raw,
         )
     finally:
         conexion.close()
@@ -811,6 +1007,14 @@ def _buscar_snapshot_existente(
         except (OSError, json.JSONDecodeError):
             continue
         if contenido.get("tipo") != "access" or contenido.get("sha256") != sha256:
+            continue
+        # El mismo archivo físico puede requerir otra extracción cuando cambia el contrato de
+        # columnas. Reutilizar un snapshot v4 aquí volvería a omitir exactamente los campos que
+        # estamos incorporando ahora.
+        contrato = contenido.get("contrato_raw") or {}
+        if contenido.get("catalogo_version", 0) < CATALOGO_VERSION:
+            continue
+        if contrato.get("version") != CATALOGO_VERSION or contrato.get("estado") != "completo":
             continue
         tablas = set((contenido.get("tablas") or {}).keys())
         if solo is None and contenido.get("snapshot_completo") is not True:
@@ -897,6 +1101,10 @@ def extraer_access(
     conexion = conectar(config)
     try:
         cursor = conexion.cursor()
+        # El inventario completo se valida aunque `solo` limite las tablas a extraer: una
+        # nueva columna o tabla debe detener también una ejecución parcial, de lo contrario la
+        # siguiente corrida podría mezclar contratos distintos sin avisar.
+        contrato_raw = _validar_contrato_access(cursor, list(CATALOGO_ACCESS), catalogo_dao)
         try:
             r09 = _versiones_r09(cursor)
         except Exception:
@@ -957,6 +1165,7 @@ def extraer_access(
             claves_primarias=claves_primarias,
             relaciones=list(catalogo_dao.get("relaciones") or []),
             catalogo_dao=catalogo_dao,
+            contrato_raw=contrato_raw,
         )
         registrar(
             "Snapshot Access: "

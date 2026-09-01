@@ -7,6 +7,7 @@ ETIQUETAS: dict[str, str] = {
     "DPV": "DPV (kPa)",
     "riego_lt_planta": "Riego (L/planta·sem)",
     "riego_m3_ha": "Riego (m³/ha, sin corregir)",
+    "riego_agua_ha": "Agua de riego por hectárea (unidad de la fuente)",
     "Rad": "Radiación solar",
     "ETo": "ETo (mm/sem)",
     "TempMax": "Temp. máxima (°C)",
@@ -55,6 +56,8 @@ GLOSARIO: dict[str, str] = {
     "riego_m3_ha": "Metros cúbicos por hectárea tal como vienen en el archivo. En la "
     "versión vigente esta columna está sumada sobre los turnos, así que su "
     "magnitud no es una lámina de riego real.",
+    "riego_agua_ha": "Agua de riego por hectárea tal como viene en la fuente. La unidad se "
+    "conserva sin convertir cuando el encabezado solo dice «Agua/ha».",
     "Rad": "Radiación solar incidente: la energía disponible para la fotosíntesis.",
     "ETo": "Evapotranspiración de referencia: cuánta agua evaporaría un cultivo patrón "
     "esa semana. Es la vara con la que se mide si el riego alcanza.",
@@ -607,6 +610,10 @@ VALORES_ANALITICOS: dict[str, dict[str, str]] = {
         "R09_componentes_publicados": "Proyección del equipo, rearmada desde sus piezas",
         "Fenologico_componentes": "Piezas publicadas por la proyección del equipo",
         "Componentes_identidad": "Modelo por piezas (frutos y peso)",
+        "HibridoEstadoOleadas_v1": "Proyección del equipo, ajustada por estado y oleadas",
+        "HibridoGaussEstado_v1": (
+            "Challenger R09 + forma Gaussiana + estado reciente (experimental)"
+        ),
         "Random_Forest": "Random Forest",
         "XGBoost": "XGBoost",
         "Ridge": "Ridge (corrección lineal)",

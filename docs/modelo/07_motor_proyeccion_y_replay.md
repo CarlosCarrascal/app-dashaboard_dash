@@ -79,6 +79,28 @@ No se promueve automáticamente. Es un baseline reproducible y una referencia de
 comparar la migración. La lectura de parámetros usa nombres (`X1`, `O1`, `N1`, `A1`, `B1`, ...),
 no posiciones `param(1)` ... `param(27)`.
 
+### `HibridoGaussEstado_v1`
+
+Es el challenger integrado para una proyección de seis semanas. Conserva el nivel P50 de
+R09, construye la forma temporal con la curva Gaussiana ajustada por H01 anterior a la
+emisión, la escala al total R09 del lote, aplica el corrector de estado as-of y completa
+H6 solo con una cola Gaussiana marcada como `horizonte_extendido`. El maestro aporta área y
+plantas; poda aporta la fecha pivote. Si PostgreSQL no expone `turno` en R09, solo se
+recupera desde H01 cuando la identidad sea unívoca.
+
+Se puede ejecutar como challenger con `--incluir-gauss-estado` o solicitar una emisión
+experimental con:
+
+```text
+aquanqa-analytics project --modelo-proyeccion HibridoGaussEstado_v1 \
+  --horizonte-semanas 6 --no-persist
+```
+
+No es el campeón por defecto. La forma manual del libro puede entregarse como panel de
+oleadas y toma prioridad por clave; las semanas faltantes usan la forma Gaussiana. Tanto
+las atribuciones de oleada como las variables de contexto son explicaciones mecánicas o
+asociativas, no causas agronómicas.
+
 ## Replay histórico ciego
 
 Una emisión histórica puede reconstruirse con:

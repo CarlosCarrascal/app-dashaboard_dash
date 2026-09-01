@@ -14,6 +14,9 @@ def _torneo(args, tipo: str):
         ProjectionScenario,
         proyectar_desde_corte,
     )
+    from ...aplicacion.procesos.gauss_estado_integrado import (
+        NOMBRE_MODELO as NOMBRE_MODELO_GAUSS_ESTADO,
+    )
     from ...aplicacion.procesos.monitoreo import monitorear_llegada_reales
     from ...aplicacion.procesos.torneo import ejecutar_torneo
     from ...dominio.asof import enriquecer_asof
@@ -48,6 +51,13 @@ def _torneo(args, tipo: str):
         "incluir_fenologico_v1": not getattr(args, "skip_fenologico_v1", False),
         "incluir_macro_legacy": not getattr(args, "skip_macro_legacy", False),
         "incluir_hibrido_legacy": not getattr(args, "skip_hibrido_legacy", False),
+        "incluir_estado_oleadas": bool(
+            getattr(args, "incluir_estado_oleadas", False)
+            or getattr(args, "modelo_proyeccion", "campeon") == "HibridoEstadoOleadas_v1"
+        ),
+        "incluir_gauss_estado": bool(
+            getattr(args, "incluir_gauss_estado", False)
+        ),
         "fenologico_usar_mixedlm": getattr(args, "fenologico_mixedlm", False),
         "incluir_explicaciones": not args.skip_explain,
         "modelo_proyeccion": getattr(args, "modelo_proyeccion", "campeon"),
@@ -76,6 +86,8 @@ def _torneo(args, tipo: str):
             getattr(args, "modelo_proyeccion", "campeon") == "Componentes_identidad"
             or getattr(args, "modelo_proyeccion", "campeon") == "FenologicoComponentes_v1"
             or getattr(args, "modelo_proyeccion", "campeon") == "HibridoLegacyResidual_v1"
+            or getattr(args, "modelo_proyeccion", "campeon") == "HibridoEstadoOleadas_v1"
+            or getattr(args, "modelo_proyeccion", "campeon") == NOMBRE_MODELO_GAUSS_ESTADO
             or any(
                 float(getattr(args, nombre, 0.0) or 0.0) != 0
                 for nombre in (
@@ -127,6 +139,8 @@ def _torneo(args, tipo: str):
                 ),
                 incluir_macro_legacy=not getattr(args, "skip_macro_legacy", False),
                 incluir_hibrido_legacy=not getattr(args, "skip_hibrido_legacy", False),
+                incluir_estado_oleadas=config["incluir_estado_oleadas"],
+                incluir_gauss_estado=config["incluir_gauss_estado"],
                 # MixedLM queda disponible como diagnóstico explícito; el replay operativo
                 # usa por defecto la ruta temporal más rápida y estable.
                 fenologico_usar_mixedlm=getattr(args, "fenologico_mixedlm", False),
@@ -201,7 +215,12 @@ def _torneo(args, tipo: str):
                         datos,
                         fecha_hibrido,
                     )
-                elif modelo_solicitado in {"Componentes_identidad", "R09_publicado"}:
+                elif modelo_solicitado in {
+                    "Componentes_identidad",
+                    "R09_publicado",
+                    "HibridoEstadoOleadas_v1",
+                    NOMBRE_MODELO_GAUSS_ESTADO,
+                }:
                     horizontes = _parsear_horizontes(getattr(args, "horizontes", None))
                     escenario = ProjectionScenario(
                         nombre=getattr(args, "nombre_escenario", "base"),

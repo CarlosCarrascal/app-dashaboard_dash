@@ -1,0 +1,1 @@
+"""Pruebas optativas contra PostgreSQL."""

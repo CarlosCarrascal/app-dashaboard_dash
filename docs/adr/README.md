@@ -10,7 +10,7 @@ descartó — para que dentro de un año se pueda saber si la razón sigue siend
 | [0003](0003-identidad-de-lote.md) | La identidad de un lote es `(empresa, módulo, lote)`; el alias de fundo no es clave | N-3, N-4, N-5: ni el alias ni `(módulo, lote)` identifican un lote |
 | [0004](0004-frontera-de-transformacion.md) | Cada transformación vive en una sola capa; Power BI solo mide | B-2, B-3, B-4, B-6: la misma lógica repartida en cuatro sitios, mal en tres |
 | [0005](0005-filas-centinela-sin-null-en-fk.md) | Ninguna FK de un hecho queda NULL: apunta a una fila "Sin identificar" | N-15: 624 filas de forecast sin registro en cuarentena, 23 con doble registro |
-| [0006](0006-un-solo-lenguaje-de-backend.md) | Un solo lenguaje de backend: `domain/` en Python. Fuera Drizzle, Zod y Next.js | La captura de campo pasa a Flutter, y deja sin propósito a las tres piezas TypeScript |
+| [0006](0006-un-solo-lenguaje-de-backend.md) | Un solo lenguaje de backend: Python. La parte de `domain/` fue superada por ADR-0016 | La captura de campo pasa a Flutter y elimina las piezas TypeScript |
 | [0007](0007-gobierno-analitico-y-champion-challenger.md) | Gobierno analítico y champion-challenger | R09 es campeón inicial; toda promoción exige evidencia temporal y trazabilidad |
 | [0008](0008-modulo-modelo-legacy.md) | El módulo XGBoost/SHAP/R² 2025 queda como legacy | Se conserva para auditoría, pero `/analitica/*` es la única capa oficial |
 | [0009](0009-refactor-interno-analitica.md) | Refactor interno de analítica, compatible y por etapas · antecedente conservado: [0009-refactor-interno-compatible.md](0009-refactor-interno-compatible.md) | Cada extracción conserva fachadas y contratos; el rollback requiere un baseline versionado |
@@ -20,6 +20,7 @@ descartó — para que dentro de un año se pueda saber si la razón sigue siend
 | [0013](0013-trazabilidad-migracion-por-tabla.md) | La migración se controla por snapshot y por tabla desde `raw` hasta `core` | No basta con saber que Access llegó a `raw`: hay que demostrar qué tablas pasaron a cada capa |
 | [0014](0014-prefijos-semanticos-core.md) | `core` usa prefijos semánticos; `raw` conserva los nombres físicos de Access | Facilita la navegación en pgAdmin sin mezclar origen, modelo canónico y dashboard |
 | [0015](0015-arquitectura-actual-analitica.md) | Arquitectura actual de `packages/analitica`: modelos, procesos, infraestructura e interfaces | `nowcast` es un proceso; `híbrido`, `fenológico` y `ocurrencia` son modelos o familias de modelos |
+| [0016](0016-monolito-modular-api-campo.md) | La API de campo es un monolito modular; no existe un paquete `domain` prematuro | El ETL no consume las reglas de captura y la API necesita crecer por módulos sin romper Flutter |
 
 ## Cómo añadir uno
 

@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS raw.carga_log (
 
 CREATE TABLE IF NOT EXISTS raw.source_table_delta (
     source_snapshot_id bigint NOT NULL REFERENCES raw.source_snapshot(source_snapshot_id),
+    snapshot_anterior_id bigint REFERENCES raw.source_snapshot(source_snapshot_id),
     tabla_destino      text NOT NULL,
     filas_anteriores   bigint NOT NULL,
     filas_actuales     bigint NOT NULL,
@@ -61,9 +62,31 @@ CREATE TABLE IF NOT EXISTS raw.source_table_delta (
     PRIMARY KEY (source_snapshot_id, tabla_destino)
 );
 
+-- La huella histórica se calcula contra el snapshot publicado en el momento de la carga.
+-- Guardar ese identificador evita presentar como vigente un delta calculado contra una base
+-- anterior, algo que ocurre durante una rebase de contrato (por ejemplo, v4 → v5).
+ALTER TABLE raw.source_table_delta
+    ADD COLUMN IF NOT EXISTS snapshot_anterior_id bigint;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'source_table_delta_snapshot_anterior_fk'
+          AND conrelid = 'raw.source_table_delta'::regclass
+    ) THEN
+        ALTER TABLE raw.source_table_delta
+            ADD CONSTRAINT source_table_delta_snapshot_anterior_fk
+            FOREIGN KEY (snapshot_anterior_id)
+            REFERENCES raw.source_snapshot(source_snapshot_id);
+    END IF;
+END $$;
+
 COMMENT ON TABLE raw.source_table_delta IS
     'Diferencia multiconjunto por huella de fila. Sin clave estable, una edición se expresa '
-    'como una fila eliminada y otra nueva; filas_modificadas permanece 0 para no inventar pares.';
+    'como una fila eliminada y otra nueva; filas_modificadas permanece 0 para no inventar pares. '
+    'snapshot_anterior_id identifica contra qué publicación se calculó.';
 
 ALTER TABLE raw.carga_log
     ADD COLUMN IF NOT EXISTS source_snapshot_id bigint;

@@ -79,6 +79,19 @@ def construir_parser(handlers: dict[str, object] | None = None) -> argparse.Argu
             help="No ejecutar el replay del híbrido Legacy–ML.",
         )
         p.add_argument(
+            "--incluir-estado-oleadas",
+            action="store_true",
+            help="Incluye el challenger R09 + estado as-of + oleadas en el torneo.",
+        )
+        p.add_argument(
+            "--incluir-gauss-estado",
+            action="store_true",
+            help=(
+                "Incluye el challenger integrado R09 + forma Gaussiana + estado as-of "
+                "en el torneo."
+            ),
+        )
+        p.add_argument(
             "--diagnostico-montecarlo",
             action="store_true",
             help="Añade un intervalo alternativo propagando el error de cada componente. "
@@ -101,11 +114,13 @@ def construir_parser(handlers: dict[str, object] | None = None) -> argparse.Argu
                     "Componentes_identidad",
                     "FenologicoComponentes_v1",
                     "HibridoLegacyResidual_v1",
+                    "HibridoEstadoOleadas_v1",
+                    "HibridoGaussEstado_v1",
                 ],
                 default="campeon",
                 help=(
                     "campeon conserva la decisión vigente; los modelos nuevos ejecutan su "
-                    "propio replay as-of y no usan predicciones R09 como feature."
+                    "propio replay as-of."
                 ),
             )
             p.add_argument("--fecha-emision", default=None, metavar="AAAA-MM-DD")

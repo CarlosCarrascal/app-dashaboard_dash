@@ -17,6 +17,7 @@ from pathlib import Path
 
 from aquanqa_etl.catalogo import (
     CATALOGO_ACCESS,
+    CATALOGO_VERSION,
     MAESTRO_LOTES_DESTINO,
     MAESTRO_LOTES_FILAS_ESPERADAS,
     TOTAL_FILAS_ORIGEN,
@@ -306,15 +307,17 @@ def _copiar(
                 FULL JOIN _aquanqa_huella_anterior anterior USING (huella)
             )
             INSERT INTO raw.source_table_delta
-                (source_snapshot_id, tabla_destino, filas_anteriores, filas_actuales,
+                (source_snapshot_id, snapshot_anterior_id, tabla_destino,
+                 filas_anteriores, filas_actuales,
                  filas_nuevas, filas_eliminadas, filas_modificadas, metodo)
-            SELECT %s, %s, %s, %s,
+            SELECT %s, %s, %s, %s, %s,
                    COALESCE(sum(GREATEST(delta, 0)), 0),
                    COALESCE(sum(GREATEST(-delta, 0)), 0),
                    0,
                    'huella_multiconjunto_por_snapshot'
             FROM diferencia
             ON CONFLICT (source_snapshot_id, tabla_destino) DO UPDATE SET
+                snapshot_anterior_id=EXCLUDED.snapshot_anterior_id,
                 filas_anteriores=EXCLUDED.filas_anteriores,
                 filas_actuales=EXCLUDED.filas_actuales,
                 filas_nuevas=EXCLUDED.filas_nuevas,
@@ -323,7 +326,7 @@ def _copiar(
                 metodo=EXCLUDED.metodo,
                 calculado_en=now()
             """,
-            (source_snapshot_id, tabla, filas_anteriores, filas),
+            (source_snapshot_id, snapshot_anterior_id, tabla, filas_anteriores, filas),
         )
         return filas
 
@@ -416,6 +419,14 @@ def _manifiesto_json(valor: object) -> dict:
 def _snapshot_access_cubre(
     manifiesto: dict, *, solo: set[str] | None, destinos_catalogo: set[str]
 ) -> bool:
+    contrato = manifiesto.get("contrato_raw") or {}
+    if (
+        manifiesto.get("catalogo_version", 0) < CATALOGO_VERSION
+        or contrato.get("version") != CATALOGO_VERSION
+        or contrato.get("estado") != "completo"
+        or contrato.get("columnas_no_mapeadas")
+    ):
+        return False
     tablas = set((manifiesto.get("tablas") or {}).keys())
     if solo is None or destinos_catalogo <= solo:
         return (
@@ -454,7 +465,10 @@ def _registrar_snapshot_access(
             """,
             (config.access_campania, manifiesto["sha256"]),
         )
+        snapshot_previo_id: int | None = None
         for existente in cur.fetchall():
+            if snapshot_previo_id is None:
+                snapshot_previo_id = int(existente[0])
             if not _snapshot_access_cubre(
                 _manifiesto_json(existente[2]),
                 solo=solo,
@@ -470,10 +484,11 @@ def _registrar_snapshot_access(
                 (tipo, campania, ruta_origen, nombre_archivo, sha256, bytes,
                  modificado_en, extraido_en, solo_lectura,
                  version_minima_r09, version_maxima_r09, filas_r09,
-                 conteos_tabla, manifiesto, version_fuente, schema_hash, estado)
+                 conteos_tabla, manifiesto, version_fuente, schema_hash, estado,
+                 reemplaza_snapshot_id)
             VALUES
                 (%s, %s, %s, %s, %s, %s, %s, %s, %s,
-                 %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s, 'detectado')
+                 %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s, 'detectado', %s)
             RETURNING source_snapshot_id
             """,
             (
@@ -493,6 +508,7 @@ def _registrar_snapshot_access(
                 json.dumps(manifiesto, ensure_ascii=False),
                 manifiesto.get("version_fuente"),
                 manifiesto.get("schema_hash"),
+                snapshot_previo_id,
             ),
         )
         fila = cur.fetchone()
@@ -620,6 +636,28 @@ def _validar_snapshot_access(config: Config, solo: set[str] | None) -> None:
             "La carga completa requiere un snapshot Access completo; "
             f"el manifiesto declara alcance={alcance!r}. Repite `python -m aquanqa_etl extract`."
         )
+
+    # Solo una carga completa puede convertirse en la base de comparación. Las cargas
+    # parciales siguen permitidas para reparar una tabla puntual; las rutas reales de
+    # extracción ya validaron el contrato completo antes de producir el CSV.
+    if carga_access_completa:
+        contrato = manifiesto.get("contrato_raw") or {}
+        if manifiesto.get("catalogo_version", 0) < CATALOGO_VERSION:
+            raise RuntimeError(
+                "El manifiesto Access usa un contrato de columnas antiguo "
+                f"(v{manifiesto.get('catalogo_version', 0)}; se requiere v{CATALOGO_VERSION}). "
+                "Repite la extracción completa para no cargar columnas omitidas."
+            )
+        if contrato.get("version") != CATALOGO_VERSION or contrato.get("estado") != "completo":
+            raise RuntimeError(
+                "El manifiesto Access no demuestra que todas las columnas físicas fueron revisadas "
+                "y mapeadas a raw. Repite la extracción con el catálogo vigente."
+            )
+        if contrato.get("columnas_no_mapeadas"):
+            raise RuntimeError(
+                "El manifiesto Access contiene columnas físicas no mapeadas: "
+                f"{contrato['columnas_no_mapeadas']}."
+            )
 
     if carga_access_completa:
         tablas_manifiesto_nombres = set(tablas_manifiesto.keys())

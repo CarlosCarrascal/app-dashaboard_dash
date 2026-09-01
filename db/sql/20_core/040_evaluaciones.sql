@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS core.ev_flores (
     cuajo           smallint CHECK (cuajo >= 0),
     yemas_abiertas  smallint CHECK (yemas_abiertas >= 0),
     yemas_por_abrir smallint CHECK (yemas_por_abrir >= 0),
+    yemas_muertas   smallint CHECK (yemas_muertas >= 0),
     hora            time,
     item            text
 );
@@ -97,6 +98,9 @@ COMMENT ON COLUMN core.ev_flores.cuajo IS
     'de producción. 87,7% nula en el origen, y no es un defecto: el cuajo solo se evalúa en '
     'ventanas fenológicas concretas. Pero todo promedio sobre esta columna va sobre el 12,3% '
     'de los datos, y el tablero debe decirlo.';
+COMMENT ON COLUMN core.ev_flores.yemas_muertas IS
+    'Yemas muertas capturadas por la aplicación móvil. El origen histórico la conserva en raw; '
+    'la API la promueve aquí para no perder un dato que el formulario declara explícitamente.';
 
 CREATE INDEX IF NOT EXISTS flores_lote_fecha_idx ON core.ev_flores (lote_id, fecha);
 CREATE INDEX IF NOT EXISTS flores_evaluador_idx ON core.ev_flores (evaluador_id, fecha);

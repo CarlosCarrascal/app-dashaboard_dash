@@ -72,8 +72,18 @@ CREATE TABLE IF NOT EXISTS raw.m_time (
     anio           text,
     sev_conteo     text,
     aqii           text,
-    mes_sem        text
+    mes_sem        text,
+    n_mes_sem      text,
+    feriados       text,
+    camp_pro_ara   text,
+    trimestre      text
 );
+
+ALTER TABLE raw.m_time
+    ADD COLUMN IF NOT EXISTS n_mes_sem text,
+    ADD COLUMN IF NOT EXISTS feriados text,
+    ADD COLUMN IF NOT EXISTS camp_pro_ara text,
+    ADD COLUMN IF NOT EXISTS trimestre text;
 
 COMMENT ON TABLE raw.m_time IS
     'M_Time — 2.189 filas, una por día, del 2022-03-01 al 2027-12-31. La única tabla del '
@@ -84,8 +94,18 @@ COMMENT ON COLUMN raw.m_time.sev_conteo IS
     '527 de los 1.224 días poblados. Unir una tabla semanal contra esta columna, que tiene '
     'grano diario, es lo que produce la explosión x54 de H-05.';
 COMMENT ON COLUMN raw.m_time.aqii IS '[AQII] — 100% nula. Se descarta.';
--- Faltan CampProAra y Trimestre, y dos consultas las piden: es H-04 caso 5. El trimestre es
--- trivial; la campaña productiva requiere que Planeamiento defina las fechas de corte (D-2).
+COMMENT ON COLUMN raw.m_time.n_mes_sem IS
+    '[nMesSem] — atributo semanal del origen. Se conserva literalmente aunque la copia actual '
+    'lo tenga completamente nulo.';
+COMMENT ON COLUMN raw.m_time.feriados IS
+    '[Feriados] — indicador de feriado del origen. Se conserva en raw y no se interpreta como '
+    'booleano hasta fijar su dominio.';
+COMMENT ON COLUMN raw.m_time.camp_pro_ara IS
+    '[CampProAra] — campaña productiva del origen. Se conserva separada de la campaña canónica '
+    'derivada en core hasta confirmar las fechas de corte con Planeamiento.';
+COMMENT ON COLUMN raw.m_time.trimestre IS
+    '[Trimestre] — trimestre informado por Access. El core mantiene además su trimestre '
+    'calendario derivado; no se sobrescriben conceptos distintos.';
 
 -- ── M_Poda ──────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS raw.m_poda (
@@ -117,8 +137,12 @@ CREATE TABLE IF NOT EXISTS raw.m_evaluadores (
     nacimiento       text,
     zona             text,
     celular          text,
-    estado           text
+    estado           text,
+    talla_polo       text
 );
+
+ALTER TABLE raw.m_evaluadores
+    ADD COLUMN IF NOT EXISTS talla_polo text;
 
 COMMENT ON TABLE raw.m_evaluadores IS
     'M_Evaluadores — 31 filas. Ninguna de las 40 consultas la usa y el enlace se pensó por '
@@ -129,6 +153,9 @@ COMMENT ON COLUMN raw.m_evaluadores.cod IS
     '[Cod] — código de 4 letras, 1 vacío de 31. Se conserva como atributo, no como clave.';
 COMMENT ON COLUMN raw.m_evaluadores.inicio_labores IS
     '[InicioLabores] — fecha guardada como texto en el origen.';
+COMMENT ON COLUMN raw.m_evaluadores.talla_polo IS
+    '[TallaPolo] — talla declarada en el maestro Access. Se conserva como texto porque el '
+    'dominio puede incluir letras y todavía no se usa como clave.';
 
 -- ── M_nMuestra ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS raw.m_n_muestra (

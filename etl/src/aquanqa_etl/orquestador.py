@@ -22,6 +22,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -45,11 +46,126 @@ BLOCK_SCRIPTS: dict[str, str] = {
 RAW_ONLY_SCRIPT = "db/tools/cerrar_b06_raw_only.sql"
 PREFLIGHT_SCRIPT = "db/tools/preflight_migracion.sql"
 AUDIT_SCRIPT = "db/tools/auditoria_final_migracion.sql"
+FULL_CORE_AUTH_SCRIPT = "db/tools/habilitar_reconstruccion_core.sql"
+
+# El catálogo técnico de Access puede venir de ODBC o de DAO. Sus representaciones no son
+# comparables campo a campo: ODBC usa nombres como VARCHAR y posiciones 1-based, mientras DAO
+# usa códigos numéricos y posiciones 0-based. La comparación de refrescos debe usar una forma
+# canónica, no el hash bruto producido por el backend del inspector.
+_DAO_TIPOS: dict[int, str] = {
+    1: "BOOLEAN",
+    2: "BYTE",
+    3: "SMALLINT",
+    4: "INTEGER",
+    5: "CURRENCY",
+    6: "REAL",
+    7: "DOUBLE",
+    8: "DATETIME",
+    9: "BINARY",
+    10: "TEXT",
+    11: "LONGBINARY",
+    12: "MEMO",
+    15: "GUID",
+    16: "BIGINT",
+    17: "VARBINARY",
+    18: "CHAR",
+    19: "NUMERIC",
+    20: "DECIMAL",
+    21: "FLOAT",
+    22: "TIME",
+    23: "TIMESTAMP",
+}
+_ODBC_TIPOS: dict[int, str] = {
+    -7: "BOOLEAN",
+    -11: "GUID",
+    -9: "TEXT",
+    -4: "LONGBINARY",
+    -3: "VARBINARY",
+    -2: "BINARY",
+    -1: "MEMO",
+    1: "CHAR",
+    2: "NUMERIC",
+    3: "DECIMAL",
+    4: "INTEGER",
+    5: "SMALLINT",
+    6: "FLOAT",
+    7: "REAL",
+    8: "DOUBLE",
+    91: "DATE",
+    92: "TIME",
+    93: "DATETIME",
+}
+_TIPOS_EQUIVALENTES: dict[str, str] = {
+    "BIT": "BOOLEAN",
+    "VARCHAR": "TEXT",
+    "NVARCHAR": "TEXT",
+    "LONGVARCHAR": "MEMO",
+    "LONGCHAR": "MEMO",
+    "COUNTER": "INTEGER",
+    "YESNO": "BOOLEAN",
+    "DATETIME2": "DATETIME",
+}
+
+
+def _tipo_canonico(columna: Mapping[str, Any]) -> str | None:
+    tipo = columna.get("tipo")
+    tipo_codigo = columna.get("tipo_codigo")
+    if isinstance(tipo, str):
+        texto = tipo.strip().upper()
+        if texto.isdigit():
+            return _DAO_TIPOS.get(int(texto), texto)
+        if texto:
+            return _TIPOS_EQUIVALENTES.get(texto, texto)
+    if isinstance(tipo_codigo, int):
+        return _ODBC_TIPOS.get(tipo_codigo) or _DAO_TIPOS.get(tipo_codigo)
+    return None
+
+
+def _entero(valor: Any) -> int | None:
+    try:
+        return int(valor) if valor is not None and str(valor).strip() else None
+    except (TypeError, ValueError):
+        return None
+
+
+def huella_esquema_canonica(columnas: Any) -> str | None:
+    """Normaliza columnas ODBC/DAO para comparar estructura entre snapshots.
+
+    Se excluyen atributos propios del inspector (`radix`, `atributos`, `validacion`) y
+    métricas de índice que pueden cambiar al compactar Access. Sí se conservan nombre, orden,
+    tipo canónico y longitud cuando aplica; esos son los cambios que afectan al contrato CSV.
+    """
+    if not isinstance(columnas, list):
+        return None
+    ordenadas: list[tuple[int, int, Mapping[str, Any]]] = []
+    for indice, columna in enumerate(columnas):
+        if not isinstance(columna, Mapping):
+            continue
+        nombre = str(columna.get("nombre") or "").strip()
+        if not nombre:
+            continue
+        posicion = _entero(columna.get("posicion"))
+        ordenadas.append((posicion if posicion is not None else indice, indice, columna))
+
+    canonicas: list[dict[str, Any]] = []
+    for _, _, columna in sorted(ordenadas):
+        tipo = _tipo_canonico(columna)
+        longitud = _entero(columna.get("tamano"))
+        if tipo not in {"TEXT", "CHAR", "BINARY", "VARBINARY"}:
+            longitud = None
+        canonicas.append(
+            {
+                "nombre": str(columna.get("nombre") or "").strip().casefold(),
+                "tipo": tipo,
+                "longitud": longitud,
+            }
+        )
+    return json.dumps(canonicas, ensure_ascii=False, separators=(",", ":"))
 
 
 @dataclass(frozen=True, slots=True)
 class DeltaTabla:
-    """Delta persistido en ``raw.source_table_delta`` para una tabla."""
+    """Delta persistido o recalculado contra la publicación vigente."""
 
     tabla_raw: str
     filas_anteriores: int = 0
@@ -76,6 +192,7 @@ class ContratoTabla:
     tabla_raw: str
     bloque: str | None
     decision: str
+    core_objetos: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -448,7 +565,7 @@ def _modelo_desde_bd(cur) -> tuple[str, tuple[ContratoTabla, ...], tuple[Contrat
     )
     cur.execute(
         """
-        SELECT tabla_raw, bloque, decision
+        SELECT tabla_raw, bloque, decision, core_objetos
         FROM raw.migracion_modelo_tabla
         WHERE modelo_version = %s
         ORDER BY tabla_raw
@@ -456,7 +573,12 @@ def _modelo_desde_bd(cur) -> tuple[str, tuple[ContratoTabla, ...], tuple[Contrat
         (modelo_version,),
     )
     tablas = tuple(
-        ContratoTabla(str(fila[0]), str(fila[1]) if fila[1] is not None else None, str(fila[2]))
+        ContratoTabla(
+            str(fila[0]),
+            str(fila[1]) if fila[1] is not None else None,
+            str(fila[2]),
+            tuple(fila[3] or ()),
+        )
         for fila in cur.fetchall()
     )
     if not bloques or not tablas:
@@ -464,6 +586,120 @@ def _modelo_desde_bd(cur) -> tuple[str, tuple[ContratoTabla, ...], tuple[Contrat
             f"El modelo vigente {modelo_version!r} no tiene bloques y tablas registradas."
         )
     return modelo_version, tablas, bloques
+
+
+def _core_tiene_datos(cur, tablas: Sequence[ContratoTabla]) -> bool:
+    """Comprueba datos físicos en los destinos core declarados por el modelo vigente.
+
+    El ledger es la evidencia principal de una ejecución previa, pero no basta para una base
+    que pudo haberse cargado antes de registrar el ledger. Consultar los destinos del contrato
+    evita proponer un refresco parcial que deje hechos de bloques posteriores mezclados con un
+    maestro nuevo. Los identificadores provienen de metadata del modelo y se citan como SQL.
+    """
+    from psycopg import sql
+
+    destinos = sorted(
+        {
+            objeto.strip()
+            for tabla in tablas
+            if tabla.decision == "core"
+            for objeto in tabla.core_objetos
+            if objeto and objeto.strip()
+        }
+    )
+    for destino in destinos:
+        partes = destino.split(".", 1)
+        if len(partes) != 2 or partes[0].casefold() != "core":
+            raise RuntimeError(
+                f"Destino core inválido en el modelo semántico: {destino!r}. "
+                "Se exige el formato core.tabla."
+            )
+        esquema, tabla = partes
+        cur.execute("SELECT to_regclass(%s)", (destino,))
+        if not cur.fetchone()[0]:
+            raise RuntimeError(
+                f"El destino core declarado por el modelo no existe en PostgreSQL: {destino}."
+            )
+        cur.execute(
+            sql.SQL("SELECT EXISTS (SELECT 1 FROM {} LIMIT 1)").format(
+                sql.Identifier(esquema, tabla)
+            )
+        )
+        if bool(cur.fetchone()[0]):
+            return True
+    return False
+
+
+def _deltas_por_huella(
+    cur, *, snapshot_objetivo_id: int, snapshot_anterior_id: int | None,
+    tablas: Sequence[ContratoTabla]
+) -> dict[str, DeltaTabla]:
+    """Calcula el delta exacto cuando el delta persistido usa otra publicación base.
+
+    `raw.source_table_delta` queda como evidencia histórica de la carga, pero no siempre puede
+    reutilizarse: al promover una rebase de contrato cambia el snapshot publicado contra el que
+    debe compararse un candidato que ya estaba cargado. Recalcular aquí evita reportar como
+    cambios de negocio las columnas nuevas o una base anterior.
+    """
+    from psycopg import sql
+
+    resultado: dict[str, DeltaTabla] = {}
+    for contrato in tablas:
+        tabla = contrato.tabla_raw
+        identificador = sql.Identifier(tabla)
+        if snapshot_anterior_id is None:
+            cur.execute(
+                sql.SQL(
+                    "SELECT count(*) FROM raw.{} WHERE source_snapshot_id = %s"
+                ).format(identificador),
+                (snapshot_objetivo_id,),
+            )
+            fila = cur.fetchone()
+            actuales = int(fila[0]) if fila else 0
+            resultado[tabla] = DeltaTabla(
+                tabla_raw=tabla,
+                filas_actuales=actuales,
+                filas_nuevas=actuales,
+            )
+            continue
+
+        cur.execute(
+            sql.SQL(
+                """
+                WITH anterior AS (
+                    SELECT source_row_hash AS huella, count(*)::bigint AS n
+                    FROM raw.{}
+                    WHERE source_snapshot_id = %s
+                    GROUP BY 1
+                ), actual AS (
+                    SELECT source_row_hash AS huella, count(*)::bigint AS n
+                    FROM raw.{}
+                    WHERE source_snapshot_id = %s
+                    GROUP BY 1
+                ), diferencia AS (
+                    SELECT coalesce(actual.n, 0) - coalesce(anterior.n, 0) AS delta
+                    FROM actual
+                    FULL JOIN anterior USING (huella)
+                )
+                SELECT
+                    coalesce((SELECT sum(n) FROM anterior), 0),
+                    coalesce((SELECT sum(n) FROM actual), 0),
+                    coalesce(sum(greatest(delta, 0)), 0),
+                    coalesce(sum(greatest(-delta, 0)), 0)
+                FROM diferencia
+                """
+            ).format(identificador, identificador),
+            (snapshot_anterior_id, snapshot_objetivo_id),
+        )
+        fila = cur.fetchone() or (0, 0, 0, 0)
+        resultado[tabla] = DeltaTabla(
+            tabla_raw=tabla,
+            filas_anteriores=int(fila[0] or 0),
+            filas_actuales=int(fila[1] or 0),
+            filas_nuevas=int(fila[2] or 0),
+            filas_eliminadas=int(fila[3] or 0),
+        )
+    return resultado
 
 
 def construir_plan(
@@ -509,61 +745,89 @@ def construir_plan(
         modelo_version, tablas_modelo, bloques_modelo = _modelo_desde_bd(cur)
         cur.execute(
             """
-            SELECT tabla_destino, filas_anteriores, filas_actuales,
+            SELECT tabla_destino, snapshot_anterior_id, filas_anteriores, filas_actuales,
                    filas_nuevas, filas_eliminadas, filas_modificadas
             FROM raw.source_table_delta
             WHERE source_snapshot_id = %s
             """,
             (objetivo_id,),
         )
+        filas_delta = cur.fetchall()
         deltas = {
             str(fila[0]): DeltaTabla(
                 tabla_raw=str(fila[0]),
-                filas_anteriores=int(fila[1]),
-                filas_actuales=int(fila[2]),
-                filas_nuevas=int(fila[3]),
-                filas_eliminadas=int(fila[4]),
-                filas_modificadas=int(fila[5]),
+                filas_anteriores=int(fila[2]),
+                filas_actuales=int(fila[3]),
+                filas_nuevas=int(fila[4]),
+                filas_eliminadas=int(fila[5]),
+                filas_modificadas=int(fila[6]),
             )
-            for fila in cur.fetchall()
+            for fila in filas_delta
         }
+        tablas_esperadas = {tabla.tabla_raw for tabla in tablas_modelo}
+        bases_persistidas = {fila[1] for fila in filas_delta}
+        if (
+            tablas_esperadas != set(deltas)
+            or (anterior_id is not None and bases_persistidas != {anterior_id})
+        ):
+            deltas = _deltas_por_huella(
+                cur,
+                snapshot_objetivo_id=int(objetivo_id),
+                snapshot_anterior_id=anterior_id,
+                tablas=tablas_modelo,
+            )
         cur.execute(
             """
-            SELECT tabla_destino, schema_hash
-            FROM raw.source_table_snapshot
-            WHERE source_snapshot_id = %s
+            SELECT ts.tabla_destino,
+                   ts.schema_hash,
+                   c.columnas
+            FROM raw.source_table_snapshot ts
+            LEFT JOIN raw.access_schema_catalog c
+              ON c.source_snapshot_id = ts.source_snapshot_id
+             AND c.tabla_destino = ts.tabla_destino
+            WHERE ts.source_snapshot_id = %s
             """,
             (objetivo_id,),
         )
-        hashes_objetivo = {str(fila[0]): fila[1] for fila in cur.fetchall()}
+        hashes_objetivo = {
+            str(fila[0]): huella_esquema_canonica(fila[2]) or fila[1]
+            for fila in cur.fetchall()
+        }
         hashes_anterior: dict[str, str | None] = {}
         if anterior_id is not None:
             cur.execute(
                 """
-                SELECT tabla_destino, schema_hash
-                FROM raw.source_table_snapshot
-                WHERE source_snapshot_id = %s
+                SELECT ts.tabla_destino,
+                       ts.schema_hash,
+                       c.columnas
+                FROM raw.source_table_snapshot ts
+                LEFT JOIN raw.access_schema_catalog c
+                  ON c.source_snapshot_id = ts.source_snapshot_id
+                 AND c.tabla_destino = ts.tabla_destino
+                WHERE ts.source_snapshot_id = %s
                 """,
                 (anterior_id,),
             )
-            hashes_anterior = {str(fila[0]): fila[1] for fila in cur.fetchall()}
+            hashes_anterior = {
+                str(fila[0]): huella_esquema_canonica(fila[2]) or fila[1]
+                for fila in cur.fetchall()
+            }
 
-        core_poblado = False
-        if anterior_id is not None:
-            cur.execute(
-                """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM raw.migracion_tabla mt
-                    JOIN raw.migracion_run mr USING (migracion_run_id)
-                    WHERE mr.source_snapshot_id = %s
-                      AND mr.capa_destino = 'core'
-                      AND mt.estado IN ('migrada', 'migrada_con_observaciones')
-                )
-                """,
-                (anterior_id,),
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM raw.migracion_tabla mt
+                JOIN raw.migracion_run mr USING (migracion_run_id)
+                WHERE mr.capa_destino = 'core'
+                  AND mr.modelo_version = %s
+                  AND mr.estado IN ('completada', 'completada_con_observaciones')
+                  AND mt.estado IN ('migrada', 'migrada_con_observaciones')
             )
-            core_poblado = bool(cur.fetchone()[0])
+            """,
+            (modelo_version,),
+        )
+        core_poblado = bool(cur.fetchone()[0]) or _core_tiene_datos(cur, tablas_modelo)
 
     return calcular_plan(
         snapshot_objetivo_id=int(objetivo_id),
@@ -606,6 +870,27 @@ def _entorno_postgres(config: Config) -> dict[str, str]:
     return entorno
 
 
+def _imprimir_salida(texto: str) -> None:
+    """Escribe salida UTF-8 sin dejar que la página de códigos de Windows aborte el ETL.
+
+    `psql` devuelve UTF-8, pero una consola Windows puede anunciar `cp1252`/`charmap` y no
+    representar símbolos de los mensajes SQL. La salida es diagnóstico: si la consola no puede
+    mostrar un carácter, se reemplaza; el código de retorno del proceso sigue siendo la fuente de
+    verdad para decidir si la operación pasó o falló.
+    """
+    contenido = texto.rstrip()
+    if not contenido:
+        return
+    try:
+        print(contenido)
+    except UnicodeEncodeError:
+        codificacion = getattr(sys.stdout, "encoding", None) or "utf-8"
+        seguro = contenido.encode(codificacion, errors="replace").decode(
+            codificacion, errors="replace"
+        )
+        print(seguro)
+
+
 def _ejecutar_psql(
     config: Config,
     archivos: Sequence[Path],
@@ -644,8 +929,7 @@ def _ejecutar_psql(
         check=False,
     )
     salida = "\n".join(parte for parte in (resultado.stdout, resultado.stderr) if parte)
-    if salida.strip():
-        print(salida.rstrip())
+    _imprimir_salida(salida)
     if resultado.returncode != 0:
         nombres = ", ".join(archivo.name for archivo in archivos)
         raise RuntimeError(
@@ -689,8 +973,7 @@ def _crear_guardas(config: Config) -> tuple[Path, Path]:
         errors="replace",
         check=False,
     )
-    if resultado.stdout.strip():
-        print(resultado.stdout.rstrip())
+    _imprimir_salida(resultado.stdout)
     if resultado.returncode != 0:
         if dump.exists():
             dump.unlink()
@@ -715,7 +998,13 @@ def _ejecutar_core(plan: PlanRefresco, config: Config) -> bool:
             "Los scripts de bloques actuales están parametrizados para C2026; "
             f"no se ejecuta core para {plan.campania}."
         )
-    archivos = [_ruta_script(BLOCK_SCRIPTS[codigo]) for codigo in plan.bloques_ejecucion]
+    archivos: list[Path] = []
+    if plan.requiere_reconstruccion_completa:
+        # Los procedimientos por bloque conservan guards contra reconstrucciones parciales.
+        # En una reconstrucción completa autorizada deben recibir una señal explícita dentro
+        # de la misma transacción; nunca se activa por defecto ni desde el SQL manual.
+        archivos.append(_ruta_script(FULL_CORE_AUTH_SCRIPT))
+    archivos.extend(_ruta_script(BLOCK_SCRIPTS[codigo]) for codigo in plan.bloques_ejecucion)
     archivos.append(_ruta_script(RAW_ONLY_SCRIPT))
     auditoria_final = set(BLOCK_SCRIPTS).issubset(plan.bloques_ejecucion)
     if auditoria_final:

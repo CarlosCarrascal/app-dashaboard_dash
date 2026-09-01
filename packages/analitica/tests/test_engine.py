@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pandas as pd
 import pytest
 
@@ -8,13 +10,14 @@ from analitica.aplicacion.procesos.engine import (
     ProjectionScenario,
     proyectar_desde_corte,
 )
+from analitica.aplicacion.procesos.gauss_estado_integrado import NOMBRE_MODELO
 from analitica.dominio.modelos.componentes import FEATURES_FRUTOS, FEATURES_PESO
 
 
 def _r09() -> pd.DataFrame:
     filas = []
     emision = pd.Timestamp("2026-08-03")
-    for horizonte in (1, 2, 6, 11):
+    for horizonte in (1, 2, 3, 4, 5, 6, 11):
         objetivo = emision + pd.Timedelta(weeks=horizonte)
         filas.append(
             {
@@ -55,6 +58,61 @@ def test_el_motor_permite_horizonte_y_semanas_explicitas():
     assert salida.calendario_fuente.eq("R09_publicado").all()
 
 
+def test_el_motor_emite_el_challenger_estado_oleadas_en_seis_semanas():
+    tabla = _r09()[lambda t: t.horizonte_semanas < 6].copy()
+    salida = proyectar_desde_corte(
+        tabla,
+        config=ProjectionConfig(
+            fecha_emision="2026-08-03",
+            horizonte_semanas=6,
+            modelo="HibridoEstadoOleadas_v1",
+            horizontes=(1, 2, 6),
+        ),
+    )
+
+    assert set(salida.horizonte_semanas) == {1, 2, 6}
+    assert salida.modelo.eq("HibridoEstadoOleadas_v1").all()
+    assert salida.factor_estado_asof.eq(1.0).all()
+    assert salida.loc[salida.horizonte_semanas.eq(6), "horizonte_extendido"].all()
+    assert salida.componentes.map(lambda valor: "trazabilidad_proyeccion" in valor).all()
+
+
+def test_el_motor_emite_el_integrado_gauss_estado_con_datos_del_lote():
+    tabla = _r09()[lambda t: t.horizonte_semanas <= 6].copy()
+    tabla["turno"] = "T1"
+    tabla["lote_id"] = "M1|T1|L010"
+    lotes = pd.DataFrame(
+        {
+            "campania": ["C2026"],
+            "fundo": ["F1"],
+            "modulo": ["M1"],
+            "turno": ["T1"],
+            "lote": ["L010"],
+            "area": [1.0],
+            "n_plantas": [1000],
+            "fecha_inicio": ["2025-10-01"],
+        }
+    )
+    datos = SimpleNamespace(lotes=lotes, poda=pd.DataFrame(), cosecha=pd.DataFrame())
+
+    salida = proyectar_desde_corte(
+        tabla,
+        datos=datos,
+        panel_asof=tabla,
+        config=ProjectionConfig(
+            fecha_emision="2026-08-03",
+            horizonte_semanas=6,
+            modelo=NOMBRE_MODELO,
+        ),
+    )
+
+    assert set(salida.horizonte_semanas) == {1, 2, 3, 4, 5, 6}
+    assert salida.modelo.eq(NOMBRE_MODELO).all()
+    assert salida.componentes.map(
+        lambda valor: "resumen_integracion_gauss_estado" in valor
+    ).all()
+
+
 def test_r09_operativo_conserva_la_semana_de_emision_sin_relajar_el_replay():
     tabla = _r09()
     actual = tabla.iloc[[0]].copy()
@@ -89,6 +147,22 @@ def test_el_escenario_recalcula_las_piezas_y_deja_trazabilidad():
     assert fila.peso_baya_g == pytest.approx(5.25)
     assert fila.p50_kg == pytest.approx(100 * 1.10 * 1.05)
     assert fila.componentes["escenario"]["interpretacion"] == "escenario mecánico, no efecto causal"
+
+
+def test_el_escenario_neutro_conserva_el_p50_del_challenger():
+    tabla = _r09().copy()
+    tabla["plantas"] = 2000.0
+    salida = proyectar_desde_corte(
+        tabla,
+        config=ProjectionConfig(
+            fecha_emision="2026-08-03",
+            horizonte_semanas=2,
+            modelo="HibridoEstadoOleadas_v1",
+        ),
+    )
+
+    assert salida.p50_kg.eq(100.0).all()
+    assert salida.loc[salida.horizonte_semanas.eq(1), "p50_base_kg"].eq(100.0).all()
 
 
 def test_el_modelo_nuevo_no_usa_los_componentes_publicados_por_r09():

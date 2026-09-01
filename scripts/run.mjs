@@ -23,7 +23,6 @@ const SQL_DIR = join(ROOT, 'db', 'sql')
 // Los paquetes Python del monorepo, en orden de instalación. Las aplicaciones se instalan
 // después de sus librerías; el dashboard Streamlit legado no forma parte del entorno oficial.
 const PAQUETES_PYTHON = [
-  'domain',
   'etl',
   join('backend', 'campo-api'),
   join('packages', 'analitica'),
@@ -369,8 +368,7 @@ function cmdSetup() {
   }
 
   // Fuera del bloque de conda a propósito: sin conda se usa el Python del PATH, pero los
-  // paquetes hay que instalarlos igual. `domain` va primero porque los otros dos lo importan
-  // (ADR-0006), y pip debe resolver esa dependencia contra la copia local del monorepo.
+  // paquetes del monorepo hay que instalarlos igualmente.
   step('Paquetes Python del monorepo')
   for (const pkg of PAQUETES_PYTHON) {
     run(findPython(), ['-m', 'pip', 'install', '-e', join(ROOT, pkg)])

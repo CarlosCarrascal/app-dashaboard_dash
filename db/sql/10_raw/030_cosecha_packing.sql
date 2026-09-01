@@ -61,7 +61,8 @@ COMMENT ON COLUMN raw.h01_prod_historica.kg IS
     '[KG] — SUM crudo 33.441.319,22; sin las 2 filas basura, 32.445.986,02.';
 
 -- ── H02_BDElifab ────────────────────────────────────────────────────────────
--- 117.536 filas y 35 columnas, 34 de ellas texto en el origen (H-10).
+-- 117.536 filas y 37 columnas en la copia actual. Todas se conservan en raw aunque solo una
+-- parte tenga destino core confirmado (H-10).
 -- Su grano NO baja a lote: `lote` es una nota de packing (N-2).
 CREATE TABLE IF NOT EXISTS raw.h02_bd_elifab (
     clases                     text,
@@ -98,8 +99,14 @@ CREATE TABLE IF NOT EXISTS raw.h02_bd_elifab (
     clasificacion              text,
     anio                       text,
     calibres                   text,
-    mes                        text
+    mes                        text,
+    operador                   text,
+    acdt_china                 text
 );
+
+ALTER TABLE raw.h02_bd_elifab
+    ADD COLUMN IF NOT EXISTS operador text,
+    ADD COLUMN IF NOT EXISTS acdt_china text;
 
 COMMENT ON TABLE raw.h02_bd_elifab IS
     'H02_BDElifab — 117.536 filas. Resultado de la empacadora externa: cierra el ciclo '
@@ -135,6 +142,12 @@ COMMENT ON COLUMN raw.h02_bd_elifab.productor1 IS
     'AQUA, AQU I). M_EquivalenciaElifab existe para resolverlo.';
 COMMENT ON COLUMN raw.h02_bd_elifab.productor IS
     '[Productor] — la versión ya normalizada: AQUA II / AQUA. Par duplicado de [Productor1].';
+COMMENT ON COLUMN raw.h02_bd_elifab.operador IS
+    '[Operador] — operador registrado por la empacadora. Se conserva en raw para trazabilidad '
+    'operativa y no se confunde con el evaluador de campo.';
+COMMENT ON COLUMN raw.h02_bd_elifab.acdt_china IS
+    '[ACDTChina] — atributo independiente de [ACDT] presente en Access. Se conserva separado '
+    'hasta confirmar su definición de negocio y unidad.';
 COMMENT ON COLUMN raw.h02_bd_elifab.hora_inicio IS
     '[Hora de inicio] — 47,8% nula: cualquier análisis de duración de packing cubre la '
     'mitad de los datos.';

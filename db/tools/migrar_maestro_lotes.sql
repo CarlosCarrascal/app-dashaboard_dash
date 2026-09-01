@@ -158,6 +158,11 @@ CALL raw.sp_registrar_bloque(
     'B01_IDENTIDAD publicado en core para el snapshot Access validado.'
 );
 
+-- B01 también debe cerrar la cobertura de linaje. La tabla M_Lotes tiene una correspondencia
+-- directa con core.m_lote y derivaciones hacia el resto del maestro; sin este paso el cierre
+-- check-to-check parece correcto, pero la auditoría final detecta sus filas como no trazadas.
+CALL raw.sp_registrar_lineage_b01();
+
 \echo ''
 \echo '════════ Resumen de avance ════════'
 SELECT migracion_run_id, source_snapshot_id, campania, capa_destino, estado,

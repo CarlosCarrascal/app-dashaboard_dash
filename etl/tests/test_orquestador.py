@@ -3,6 +3,7 @@ from aquanqa_etl.orquestador import (
     ContratoTabla,
     DeltaTabla,
     calcular_plan,
+    huella_esquema_canonica,
 )
 
 
@@ -129,3 +130,43 @@ def test_mismo_snapshot_es_no_op_aunque_el_delta_historico_tenga_filas():
     assert plan.estado == "sin_cambios"
     assert plan.tablas_cambiadas == ()
     assert plan.bloques_ejecucion == ()
+
+
+def test_hash_canonico_no_confunde_metadata_odbc_con_dao():
+    odbc = [
+        {
+            "nombre": "Fundo",
+            "tipo": "VARCHAR",
+            "tipo_codigo": -9,
+            "tamano": 50,
+            "posicion": 1,
+            "nullable": 1,
+            "radix": None,
+        },
+        {
+            "nombre": "Area",
+            "tipo": "REAL",
+            "tipo_codigo": 7,
+            "tamano": 24,
+            "posicion": 2,
+        },
+    ]
+    dao = [
+        {
+            "nombre": "Fundo",
+            "tipo": "10",
+            "tamano": 50,
+            "posicion": "0",
+            "requerido": False,
+            "atributos": 2,
+        },
+        {
+            "nombre": "Area",
+            "tipo": "6",
+            "tamano": 4,
+            "posicion": "1",
+            "requerido": False,
+        },
+    ]
+
+    assert huella_esquema_canonica(odbc) == huella_esquema_canonica(dao)

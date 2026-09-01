@@ -1,70 +1,68 @@
-# backend/campo-api · la puerta de entrada de los datos nuevos
+# backend/campo-api · API de campo
 
-Servicio FastAPI. Dos clientes, un solo destino:
+Monolito modular FastAPI que recibe las evaluaciones de Flutter y las persiste en PostgreSQL
+`core`. El contrato móvil se mantiene en `/v1`; la estructura interna sigue ADR-0016.
 
+## Flujo
+
+```text
+Flutter -> Router HTTP -> Servicio -> Puerto (Protocol) -> Adaptador psycopg -> PostgreSQL
 ```
-App Flutter (evaluadores)  ──▶┐
-                              ├──▶  domain/  ──▶  PostgreSQL (core)
-Excel de proyecciones      ──▶┘
-   (ingenieros de oficina)
+
+- `main.py` compone FastAPI y el router versionado.
+- `api/v1/router.py` reúne las nueve operaciones públicas.
+- `modules/*/router.py` traduce HTTP y documenta errores.
+- `modules/*/service.py` implementa los casos de uso.
+- `modules/*/repository.py` declara los puertos que necesita cada módulo.
+- `infrastructure/postgres/*` contiene las consultas SQL explícitas.
+- `core/` centraliza configuración, errores, logging y OpenAPI.
+
+La API no importa el ETL ni extrae Access. Las reglas de evaluaciones permanecen dentro de su
+módulo hasta que exista un segundo consumidor real. El esquema se gobierna en `db/sql`; no se
+duplica con un ORM ni con migraciones Alembic.
+
+## Contrato y Swagger
+
+Con el servidor levantado:
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+- OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
+- Copia versionada: `docs/api/openapi-v1.json`
+
+Para regenerar la copia después de un cambio deliberado de contrato:
+
+```powershell
+python backend/campo-api/scripts/export_openapi.py
+python -m pytest backend/campo-api/tests/contract -q
 ```
 
-Es lo que sustituye al flujo actual —capturar en Excel o AppSheet y que alguien consolide a
-mano en Access—: el dato entra validado y queda en `core` casi en tiempo real.
+## Levantar en local
 
-## La app Flutter no vive aquí
+La configuración rechaza cualquier base distinta de `aquanqa_migracion` para evitar escrituras
+accidentales sobre la base del dashboard.
 
-Vive en **su propio repositorio** y consume este servicio solo por contrato: el OpenAPI que
-FastAPI publica en `/docs`. El ciclo de release de una app móvil —revisión de tiendas, firmas,
-versionado de builds— no comparte ritmo con el de un backend de datos (ADR-0006).
-
-"Fácil de identificar" no exige que el código esté en este repo; exige que el contrato esté
-publicado.
-
-## Regla del paquete
-
-**Aquí no se decide nada de negocio.** Una ruta recibe, llama a `aquanqa_domain`, devuelve.
-
-El día que aparezca un segundo consumidor —un panel de administración, un socio— no reescribe la
-validación de un diámetro imposible: importa la misma de `domain/`. Si una regla acaba viviendo
-en un archivo de rutas, está en el sitio equivocado.
-
-Tampoco importa nada de `etl/`. Si esta API necesitara algo de la extracción del Access
-histórico, es señal de que esa lógica pertenecía a `domain/` desde el principio.
-
-## Por qué no lleva `pyodbc`
-
-Este paquete se empaqueta en un contenedor **Linux** para AWS, y el driver ODBC de Access solo
-existe en Windows. La extracción del histórico se queda en `etl/`, que corre en local. Mismo
-lenguaje no significa mismo desplegable — es la razón por la que `etl/` y `backend/` son dos
-paquetes y no dos carpetas del mismo.
-
-## Estado
-
-Andamiaje. Sin implementar todavía; es la etapa E9 del plan.
-
-| Archivo | Qué llevará |
-|---|---|
-| `main.py` | La aplicación FastAPI y su configuración |
-| `routes_mediciones.py` | Captura de campo desde Flutter: conteo de flores, calibres, bayas |
-| `routes_proyecciones.py` | Subida del Excel de proyecciones ya calibrado |
-
-## Sobre las proyecciones y el Excel
-
-El objetivo **no** es quitarle el Excel al ingeniero. Ese archivo es un simulador: ajusta
-parámetros a mano —factor de clima, cuaje, semanas de descarte— hasta que la curva calza con lo
-que ve en el campo, y esa flexibilidad es real y necesaria.
-
-Lo que se automatiza primero es solo la **extracción del resultado final**, para que nadie copie
-y pegue cifras entre archivos. Llevar la matemática de las macros a `domain/rules/` es una etapa
-posterior, y empieza por levantar la fórmula con el ingeniero: eso es descubrimiento de negocio,
-no trabajo de código, y suele tardar más que programarlo.
-
-## Levantarlo en local
-
-Cuando exista `main.py`:
-
-```bash
-npm run setup                                    # instala domain, etl y este paquete en editable
-uvicorn aquanqa_campo_api.main:app --reload      # y el OpenAPI queda en /docs
+```powershell
+python -m pip install -e "backend/campo-api[dev]"
+$env:AQUANQA_API_DATABASE_URL = "postgresql://aquanqa_app:<password>@localhost:5432/aquanqa_migracion"
+python -m uvicorn aquanqa_campo_api.main:app --host 0.0.0.0 --port 8000
 ```
+
+Variables opcionales:
+
+- `AQUANQA_API_PREFIX` (por defecto `/v1`)
+- `AQUANQA_API_ENVIRONMENT` (por defecto `local`)
+- `AQUANQA_API_PUBLIC_URL` (URL que Swagger mostrará como servidor)
+- `AQUANQA_API_LOG_LEVEL` (por defecto `INFO`)
+
+## Pruebas
+
+```powershell
+python -m pytest backend/campo-api/tests -q
+python -m ruff check backend/campo-api/src backend/campo-api/tests backend/campo-api/scripts
+$env:AQUANQA_RUN_DB_TESTS = "1"
+python -m pytest backend/campo-api/tests/integration -q
+```
+
+La resolución del evaluador por DNI es temporal y no equivale a autenticación. JWT/OAuth2 se
+incorporará cuando el panel administrativo defina usuarios, credenciales y asignaciones.

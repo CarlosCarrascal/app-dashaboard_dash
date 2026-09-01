@@ -5,25 +5,48 @@ from __future__ import annotations
 import datetime as dt
 import json
 from pathlib import Path
+from collections.abc import Sequence
 
 from aquanqa_etl.config import Config, raiz_repo
 
 
-def registrar_baseline(config: Config, output: str | Path | None = None) -> Path:
-    """Guarda conteos exactos de las tablas de usuario para comprobar no regresión."""
+def registrar_baseline(
+    config: Config,
+    output: str | Path | None = None,
+    *,
+    schemas: Sequence[str] | None = None,
+) -> Path:
+    """Guarda conteos exactos de tablas para comprobar no regresión.
+
+    Sin ``schemas`` conserva el comportamiento histórico y registra todas las tablas
+    de usuario. Con ``schemas=('core',)`` permite congelar una línea base de un
+    esquema concreto sin mezclarla con raw/stg/qua.
+    """
     import psycopg
     from psycopg import sql
 
     with psycopg.connect(config.dsn) as conexion, conexion.cursor() as cur:
-        cur.execute(
-            """
-            SELECT table_schema, table_name
-            FROM information_schema.tables
-            WHERE table_type = 'BASE TABLE'
-              AND table_schema NOT IN ('pg_catalog', 'information_schema')
-            ORDER BY table_schema, table_name
-            """
-        )
+        if schemas:
+            cur.execute(
+                """
+                SELECT table_schema, table_name
+                FROM information_schema.tables
+                WHERE table_type = 'BASE TABLE'
+                  AND table_schema = ANY(%s)
+                ORDER BY table_schema, table_name
+                """,
+                (list(schemas),),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT table_schema, table_name
+                FROM information_schema.tables
+                WHERE table_type = 'BASE TABLE'
+                  AND table_schema NOT IN ('pg_catalog', 'information_schema')
+                ORDER BY table_schema, table_name
+                """
+            )
         tablas = cur.fetchall()
         filas = []
         for esquema, tabla in tablas:
@@ -68,6 +91,7 @@ def registrar_baseline(config: Config, output: str | Path | None = None) -> Path
     ruta.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "tipo": "postgresql_baseline",
+        "alcance": list(schemas) if schemas else "todas_las_tablas_de_usuario",
         "capturado_en": dt.datetime.now(dt.UTC).isoformat(),
         "database": config.pg_database,
         "host": config.pg_host,

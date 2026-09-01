@@ -7,7 +7,12 @@ con corchetes al construir el SELECT.
 
 `filas_esperadas` viene de `docs/historico-access/evidencia/04_metricas_validacion.txt` §1. No es
 decorativo: si la extracción trae otra cifra, la carga lo marca como desviación y hay que
-repetirla antes de seguir.
+revisarla antes de seguir.
+
+El orden de `columnas` es el orden canónico del CSV y de `raw`, no una promesa de conservar el
+orden físico de Access. Las columnas nuevas se agregan al final para que ampliar el contrato sea
+compatible con las tablas raw ya creadas. El nombre físico de Access queda documentado en el
+primer elemento de cada par.
 """
 
 from __future__ import annotations
@@ -22,12 +27,19 @@ class Tabla:
     origen: str
     destino: str
     columnas: tuple[tuple[str, str], ...]
-    """Pares (nombre en el origen, nombre en raw), en el orden del origen."""
+    """Pares (nombre en el origen, nombre canónico en raw)."""
     filas_esperadas: int | None = None
     nota: str = ""
     origen_alternativas: tuple[str, ...] = ()
     columnas_alternativas: tuple[tuple[str, tuple[str, ...]], ...] = ()
     columnas_opcionales: tuple[str, ...] = ()
+    columnas_excluidas: tuple[tuple[str, str], ...] = ()
+    """Columnas físicas excluidas de raw solo cuando existe una decisión explícita.
+
+    Actualmente el catálogo no excluye ninguna columna de las tablas de negocio. El campo
+    existe para que una exclusión futura sea visible, justificada y comprobable, en lugar de
+    desaparecer silenciosamente por no estar en el mapeo.
+    """
 
     @property
     def cols_origen(self) -> tuple[str, ...]:
@@ -97,6 +109,11 @@ E02_CONTEO_FLORES = Tabla(
         ("YA", "ya"),
         ("YP", "yp"),
         ("Hora", "hora"),
+        # Campos que Access sí conserva y que antes quedaban fuera del contrato raw. Se
+        # agregan al final para no reordenar las columnas físicas ya existentes en PostgreSQL.
+        ("YMuertas", "y_muertas"),
+        ("BrtTiernos", "brt_tiernos"),
+        ("Des1", "des1"),
     ),
 )
 
@@ -164,6 +181,9 @@ E05_DIAMETROS_BAYAS = Tabla(
         ("Hilera", "hilera"),
         ("Diametro", "diametro"),
         ("Fecha", "fecha"),
+        # La copia actual trae Fundo. Es importante para no resolver E05 solo por (módulo,
+        # lote), combinación ambigua entre fundos. Se agrega al final por compatibilidad raw.
+        ("Fundo", "fundo"),
     ),
 )
 
@@ -299,6 +319,9 @@ H02_BD_ELIFAB = Tabla(
         ("Año", "anio"),
         ("Calibres", "calibres"),
         ("Mes", "mes"),
+        # Atributos físicos presentes en Access, antes no transportados a raw.
+        ("Operador", "operador"),
+        ("ACDTChina", "acdt_china"),
     ),
 )
 
@@ -378,6 +401,10 @@ M_TIME = Tabla(
         ("SEvConteo", "sev_conteo"),
         ("AQII", "aqii"),
         ("MesSem", "mes_sem"),
+        ("nMesSem", "n_mes_sem"),
+        ("Feriados", "feriados"),
+        ("CampProAra", "camp_pro_ara"),
+        ("Trimestre", "trimestre"),
     ),
 )
 
@@ -412,6 +439,7 @@ M_EVALUADORES = Tabla(
         ("Zona", "zona"),
         ("Celular", "celular"),
         ("Estado", "estado"),
+        ("TallaPolo", "talla_polo"),
     ),
 )
 
@@ -609,6 +637,12 @@ CATALOGO_ACCESS: tuple[Tabla, ...] = (
 )
 """Las tablas base Access que se migran a raw. Las cifras históricas solo sirven como referencia;
 el conteo contractual de cada snapshot se obtiene directamente de la extracción."""
+
+# Se incrementa cuando cambia el contrato físico Access → raw. El número no identifica una
+# versión de datos: identifica qué columnas fueron inspeccionadas y transportadas. Un snapshot
+# extraído con una versión anterior no se reutiliza como si tuviera las columnas nuevas.
+CATALOGO_VERSION = 5
+"""Versión del contrato completo de columnas de las tablas Access catalogadas."""
 
 DESCARTADAS: dict[str, str] = {
     "Errores de pegado": (

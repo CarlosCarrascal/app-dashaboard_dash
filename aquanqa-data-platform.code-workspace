@@ -1,0 +1,29 @@
+{
+  "folders": [
+    {
+      "name": "aquanqa-data-platform",
+      "path": "."
+    },
+    {
+      "name": "app-campo",
+      "path": "C:\\Users\\CCARRASCAL\\Downloads\\app-campo\\new_app_campo"
+    },
+    {
+      "name": "React",
+      "path": "C:\\Users\\CCARRASCAL\\Documents\\Admin_React"
+    }
+  ],
+  "settings": {
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/etl/src"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "etl/tests"
+    ],
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.pytest_cache": true
+    }
+  }
+}

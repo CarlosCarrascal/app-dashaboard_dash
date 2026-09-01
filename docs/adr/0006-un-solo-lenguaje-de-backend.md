@@ -1,7 +1,9 @@
 # ADR-0006 · Un solo lenguaje de backend: `domain/` en Python, sin Drizzle ni Next.js
 
-- **Estado:** aceptado
+- **Estado:** superado parcialmente por [ADR-0016](0016-monolito-modular-api-campo.md)
 - **Fecha:** 2026-08-05
+- **Nota:** sigue vigente la elección de Python y la separación ETL/API. ADR-0016 sustituye
+  únicamente la decisión de mantener `domain/` como paquete compartido sin un segundo consumidor.
 - **Supera:** la tabla de capas de [ADR-0001](0001-monorepo-por-capas.md), en lo que asignaba a
   Drizzle, Zod y Next.js. El resto de ADR-0001 —un solo repositorio, una regla por capa, el
   esquema como código— sigue vigente y es lo que sostiene esta decisión.

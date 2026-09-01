@@ -7,15 +7,16 @@ requires-python = ">=3.12"
 # driver ODBC de Access no existe. La extracción del Access histórico vive en `etl/`, que solo
 # corre en Windows (ADR-0006).
 dependencies = [
-    "aquanqa-domain",       # las reglas de negocio y el acceso a core; se resuelve en editable
     "fastapi>=0.115",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.9",  # subida del Excel de proyecciones
     "openpyxl>=3.1",            # lectura de ese Excel
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27"]  # httpx: cliente de prueba de FastAPI
+dev = ["pytest>=8", "ruff>=0.6", "httpx2>=0.1"]
 
 [build-system]
 requires = ["setuptools>=68"]

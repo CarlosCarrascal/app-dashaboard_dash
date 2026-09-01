@@ -35,6 +35,14 @@ from analitica.dominio.modelos.ocurrencia import (
 )
 from analitica.dominio.versiones import banda_horizonte
 
+from .estado_oleadas import NOMBRE_MODELO as NOMBRE_MODELO_ESTADO_OLEADAS
+from .estado_oleadas import proyectar_estado_oleadas_asof
+from .gauss_estado_integrado import NOMBRE_MODELO as NOMBRE_MODELO_GAUSS_ESTADO
+from .gauss_estado_integrado import (
+    construir_lotes_gauss_estado,
+    proyectar_gauss_estado_asof,
+)
+
 
 class ProjectionNotReady(RuntimeError):
     """La solicitud es válida, pero la historia disponible no permite emitir."""
@@ -96,6 +104,7 @@ class ProjectionConfig:
     horizontes: tuple[int, ...] | None = None
     minimo_entrenamiento: int = 300
     escenario: ProjectionScenario = field(default_factory=ProjectionScenario)
+    peso_forma_gaussiana: float = 1.0
 
     def __post_init__(self) -> None:
         if not 1 <= int(self.horizonte_semanas) <= 52:
@@ -104,10 +113,24 @@ class ProjectionConfig:
             invalidos = [h for h in self.horizontes if not 1 <= int(h) <= 52]
             if invalidos:
                 raise ValueError(f"horizontes inválidos: {invalidos}")
-        if self.modelo not in {"Componentes_identidad", "R09_publicado"}:
-            raise ValueError("modelo debe ser Componentes_identidad o R09_publicado")
+        if self.modelo not in {
+            "Componentes_identidad",
+            "R09_publicado",
+            NOMBRE_MODELO_ESTADO_OLEADAS,
+            NOMBRE_MODELO_GAUSS_ESTADO,
+        }:
+            raise ValueError(
+                "modelo debe ser Componentes_identidad, R09_publicado, "
+                f"{NOMBRE_MODELO_ESTADO_OLEADAS} o {NOMBRE_MODELO_GAUSS_ESTADO}"
+            )
         if self.calendario not in {"ocurrencia", "r09_publicado"}:
             raise ValueError("calendario debe ser ocurrencia o r09_publicado")
+        if self.modelo == NOMBRE_MODELO_GAUSS_ESTADO and int(self.horizonte_semanas) < 6:
+            raise ValueError(
+                f"{NOMBRE_MODELO_GAUSS_ESTADO} requiere un horizonte de al menos seis semanas"
+            )
+        if not 0 <= float(self.peso_forma_gaussiana) <= 1:
+            raise ValueError("peso_forma_gaussiana debe estar entre cero y uno")
 
 
 def variables_de_modelo() -> dict[str, list[str]]:
@@ -161,6 +184,13 @@ def _aplicar_escenario(predicciones: pd.DataFrame, escenario: ProjectionScenario
     for columna in ("plantas", "frutos_por_planta", "peso_baya_g", "p10_kg", "p50_kg", "p90_kg"):
         if columna not in salida:
             salida[columna] = np.nan
+    if (
+        np.isclose(escenario.factor_frutos, 1.0)
+        and np.isclose(escenario.factor_peso, 1.0)
+        and np.isclose(escenario.factor_plantas, 1.0)
+        and int(escenario.desplazamiento_semanas) == 0
+    ):
+        return salida
     salida["plantas"] = pd.to_numeric(salida.plantas, errors="coerce") * escenario.factor_plantas
     salida["frutos_por_planta"] = (
         pd.to_numeric(salida.frutos_por_planta, errors="coerce") * escenario.factor_frutos
@@ -170,13 +200,17 @@ def _aplicar_escenario(predicciones: pd.DataFrame, escenario: ProjectionScenario
     )
     identidad = salida.plantas * salida.frutos_por_planta * salida.peso_baya_g / 1000
     base_p50 = pd.to_numeric(salida.p50_kg, errors="coerce")
-    factor = identidad / base_p50.replace(0, np.nan)
-    factor = factor.replace([np.inf, -np.inf], np.nan).fillna(escenario.factor_kg)
+    modelos = salida.get("modelo", pd.Series("", index=salida.index)).astype(str)
+    factor_componentes = identidad / base_p50.replace(0, np.nan)
+    factor_componentes = factor_componentes.replace([np.inf, -np.inf], np.nan)
+    factor = factor_componentes.where(
+        modelos.eq("Componentes_identidad"), escenario.factor_kg
+    ).fillna(escenario.factor_kg)
     for columna in ("p10_kg", "p50_kg", "p90_kg"):
         salida[columna] = pd.to_numeric(salida[columna], errors="coerce") * factor
     # Para un modelo que sí publica componentes, el P50 debe salir de la identidad. Para R09
     # se conserva su P50 publicado porque no estamos fingiendo tener componentes propios.
-    if (salida.modelo == "Componentes_identidad").all():
+    if "modelo" in salida and salida.modelo.eq("Componentes_identidad").all():
         salida["p50_kg"] = identidad.clip(lower=0)
     salida["p10_kg"] = np.minimum(salida.p10_kg, salida.p50_kg).clip(lower=0)
     salida["p90_kg"] = np.maximum(salida.p90_kg, salida.p50_kg)
@@ -217,6 +251,7 @@ def _anotar_trazabilidad(
             "parametros": dict(escenario.parametros),
             "interpretacion": "escenario mecánico, no efecto causal",
         },
+        "peso_forma_gaussiana": float(config.peso_forma_gaussiana),
         "informacion_no_usada": [
             "resultados posteriores a la emisión",
             "clima futuro observado",
@@ -226,7 +261,20 @@ def _anotar_trazabilidad(
     salida["modo_proyeccion"] = "ciega_asof"
     salida["corte_asof"] = emision
     salida["calendario_fuente"] = calendario_fuente
-    salida["componentes"] = [metadatos.copy() for _ in range(len(salida))]
+    if config.modelo in {
+        NOMBRE_MODELO_ESTADO_OLEADAS,
+        NOMBRE_MODELO_GAUSS_ESTADO,
+    } and "componentes" in salida:
+        salida["componentes"] = salida["componentes"].map(
+            lambda valor: {
+                **valor,
+                "trazabilidad_proyeccion": metadatos.copy(),
+            }
+            if isinstance(valor, dict)
+            else metadatos.copy()
+        )
+    else:
+        salida["componentes"] = [metadatos.copy() for _ in range(len(salida))]
     return salida
 
 
@@ -255,8 +303,18 @@ def _adjuntar_real_para_evaluacion(salida: pd.DataFrame, base: pd.DataFrame) -> 
         .groupby(claves, as_index=False, dropna=False)
         .agg({c: "max" for c in disponibles})
     )
-    salida = salida.drop(columns=[c for c in disponibles if c in salida], errors="ignore")
-    return salida.merge(observado, on=claves, how="left", validate="1:1")
+    izquierda = salida.copy()
+    derecha = observado.copy()
+    # R09 de PostgreSQL suele traer lote_id numérico; los adaptadores exportados lo
+    # representan como texto (y el integrado normaliza siempre a texto). La identidad
+    # es la misma aunque el dtype no lo sea, por lo que se normaliza solo en esta unión.
+    for columna in claves:
+        izquierda[columna] = izquierda[columna].astype("string")
+        derecha[columna] = derecha[columna].astype("string")
+    izquierda = izquierda.drop(
+        columns=[c for c in disponibles if c in izquierda], errors="ignore"
+    )
+    return izquierda.merge(derecha, on=claves, how="left", validate="1:1")
 
 
 def proyectar_desde_corte(
@@ -264,6 +322,7 @@ def proyectar_desde_corte(
     *,
     datos=None,
     panel_asof: pd.DataFrame | None = None,
+    panel_oleadas: pd.DataFrame | None = None,
     config: ProjectionConfig | None = None,
 ) -> pd.DataFrame:
     """Emite una proyección desde una fecha conocida sin entrenar con su futuro.
@@ -288,6 +347,91 @@ def proyectar_desde_corte(
     )
     if config.modelo == "R09_publicado":
         salida = base[base.fecha_emision == emision].copy()
+    elif config.modelo == NOMBRE_MODELO_ESTADO_OLEADAS:
+        # El challenger necesita el panel completo para aprender de cierres anteriores,
+        # pero solo se entrega al usuario la emisión solicitada. Los horizontes 0 de R09
+        # no son válidos para el contrato as-of y se excluyen antes de normalizar.
+        base_estado = base[base.fecha_objetivo.gt(base.fecha_emision)].copy()
+        salida_estado, _ = proyectar_estado_oleadas_asof(
+            base_estado,
+            panel_oleadas=panel_oleadas,
+            horizonte_semanas=config.horizonte_semanas,
+        )
+        salida = salida_estado[salida_estado.fecha_emision == emision].copy()
+        calendario_fuente = "R09_publicado"
+        calendario_limitacion = (
+            "El nivel y el calendario vienen de R09; el estado reciente se corrige con "
+            "cierres estrictamente anteriores y las oleadas son una descomposición opcional."
+        )
+    elif config.modelo == NOMBRE_MODELO_GAUSS_ESTADO:
+        if datos is None:
+            raise ProjectionNotReady(
+                f"{NOMBRE_MODELO_GAUSS_ESTADO} requiere datos con maestro de lotes y poda."
+            )
+        maestro = getattr(datos, "lotes", pd.DataFrame())
+        poda = getattr(datos, "poda", pd.DataFrame())
+        try:
+            lotes_gauss, metadata_lotes = construir_lotes_gauss_estado(
+            base,
+            maestro_lotes=maestro,
+            poda=poda,
+            cosecha=getattr(datos, "cosecha", pd.DataFrame()),
+        )
+        except (TypeError, ValueError) as exc:
+            raise ProjectionNotReady(
+                f"{NOMBRE_MODELO_GAUSS_ESTADO} no puede reconstruir lotes: {exc}"
+            ) from exc
+        salida, metadata_gauss = proyectar_gauss_estado_asof(
+            base,
+            lotes_gauss,
+            getattr(datos, "cosecha", pd.DataFrame()),
+            emision,
+            semanas=config.horizonte_semanas,
+            peso_forma_gaussiana=config.peso_forma_gaussiana,
+            config_estado=None,
+            panel_oleadas_manual=(
+                panel_oleadas
+                if panel_oleadas is not None
+                and {
+                    "campania",
+                    "modulo",
+                    "turno",
+                    "lote",
+                    "fecha_emision",
+                    "fecha_objetivo",
+                    "horizonte_semanas",
+                    "kg",
+                    "kg_ola_1",
+                    "kg_ola_2",
+                    "kg_ola_3",
+                }
+                <= set(panel_oleadas.columns)
+                else None
+            ),
+        )
+        # La información del adaptador queda en cada fila para que una proyección viva
+        # pueda explicar por qué un lote quedó fuera del universo Gaussiano.
+        metadata_gauss["lotes"] = metadata_lotes
+        resumen_integracion = {
+            "lotes_panel": metadata_lotes["lotes_panel"],
+            "lotes_validos": metadata_lotes["lotes_validos"],
+            "lotes_descartados": metadata_lotes["lotes_descartados"],
+            "filas_h6_extendido": metadata_gauss["filas_h6_extendido"],
+            "etiqueta_causal": False,
+        }
+        salida["componentes"] = salida.componentes.map(
+            lambda valor: {
+                **valor,
+                "resumen_integracion_gauss_estado": resumen_integracion,
+            }
+            if isinstance(valor, dict)
+            else {"resumen_integracion_gauss_estado": resumen_integracion}
+        )
+        calendario_fuente = "R09_publicado + forma_gaussiana_asof"
+        calendario_limitacion = (
+            "El nivel operativo viene de R09; la forma H1-H6 se construye con la curva "
+            "Gaussiana as-of y el estado reciente usa solo cierres anteriores."
+        )
     else:
         base_modelo = base.assign(modelo="R09_publicado")
         if config.calendario == "ocurrencia":
