@@ -22,6 +22,9 @@ class Settings:
     environment: str = "local"
     public_api_url: str | None = None
     log_level: str = "INFO"
+    database_pool_min_size: int = 1
+    database_pool_max_size: int = 10
+    database_pool_timeout_seconds: float = 5.0
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -48,6 +51,11 @@ class Settings:
             environment=os.getenv("AQUANQA_API_ENVIRONMENT", "local"),
             public_api_url=os.getenv("AQUANQA_API_PUBLIC_URL") or None,
             log_level=os.getenv("AQUANQA_API_LOG_LEVEL", "INFO").upper(),
+            database_pool_min_size=int(os.getenv("AQUANQA_API_DATABASE_POOL_MIN_SIZE", "1")),
+            database_pool_max_size=int(os.getenv("AQUANQA_API_DATABASE_POOL_MAX_SIZE", "10")),
+            database_pool_timeout_seconds=float(
+                os.getenv("AQUANQA_API_DATABASE_POOL_TIMEOUT_SECONDS", "5")
+            ),
         )
 
 

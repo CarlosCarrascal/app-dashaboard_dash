@@ -2,9 +2,8 @@
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 
-from ..core.settings import Settings, get_settings
 from ..infrastructure.postgres.catalogos_repository import PostgresCatalogRepository
 from ..infrastructure.postgres.connection import (
     PostgresConnectionFactory,
@@ -22,10 +21,8 @@ from ..modules.identidad.repository import IdentityRepository
 from ..modules.identidad.service import IdentityService
 
 
-def get_connection_factory(
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> PostgresConnectionFactory:
-    return PostgresConnectionFactory(settings.database_url)
+def get_connection_factory(request: Request) -> PostgresConnectionFactory:
+    return request.app.state.postgres_connections
 
 
 def get_catalog_repository(
