@@ -297,7 +297,8 @@ class PostgresEvaluationRepository:
                                    'm2_flores', x.n_flores, 'm2_cuajos', x.cuajo,
                                    'm2_yp', x.yemas_por_abrir,
                                    'm2_ya', x.yemas_abiertas,
-                                   'm2_ymuerta', x.yemas_muertas
+                                   'm2_ymuerta', x.yemas_muertas,
+                                   'm2_brotes_tiernos', x.brotes_tiernos
                                )
                         FROM core.ev_flores AS x
                         WHERE x.evaluador_id = %s
@@ -584,8 +585,9 @@ class PostgresEvaluationRepository:
                 INSERT INTO core.ev_flores
                     (lote_id, fecha, cortina, hilera, planta, evaluador_id,
                      n_flores, cuajo, yemas_abiertas, yemas_por_abrir, yemas_muertas,
+                     brotes_tiernos,
                      hora, item)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING flores_id
                 """,
                 (
@@ -593,6 +595,7 @@ class PostgresEvaluationRepository:
                     evaluador_id,
                     data["n_flores"], data["cuajo"], data["yemas_abiertas"],
                     data["yemas_por_abrir"], data["yemas_muertas"],
+                    data["brotes_tiernos"],
                     data["hora"], data["item"],
                 ),
             )

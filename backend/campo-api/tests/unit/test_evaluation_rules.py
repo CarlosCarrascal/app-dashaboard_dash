@@ -79,3 +79,24 @@ def test_brotes_exige_piso_explicito():
     )
     with pytest.raises(EvaluationValidationError, match="requiere piso"):
         normalize_evaluation(evaluation)
+
+
+def test_flores_normaliza_yemas_muertas_y_brotes_tiernos():
+    evaluation = EvaluationCreate.model_validate(
+        _payload(
+            module_key="flores",
+            valores={
+                "m2_flores": 12,
+                "m2_cuajos": 4,
+                "m2_yp": 3,
+                "m2_ya": 2,
+                "m2_ymuerta": 1,
+                "m2_brotes_tiernos": 5,
+            },
+        )
+    )
+
+    normalized = normalize_evaluation(evaluation)
+
+    assert normalized.data["yemas_muertas"] == 1
+    assert normalized.data["brotes_tiernos"] == 5

@@ -151,6 +151,7 @@ def normalize_evaluation(source: EvaluationCreate) -> NormalizedEvaluation:
                 "yemas_por_abrir": _count(values, "m2_yp"),
                 "yemas_abiertas": _count(values, "m2_ya"),
                 "yemas_muertas": _count(values, "m2_ymuerta"),
+                "brotes_tiernos": _count(values, "m2_brotes_tiernos"),
                 "hora": _hora(source, values),
                 "item": _item(source, values),
             },
