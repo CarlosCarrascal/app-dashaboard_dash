@@ -127,7 +127,7 @@ WITH evaluaciones AS (
     UNION ALL
 
     SELECT
-        'ev_evaluacion_baya', x.evaluacion_baya_id, 
+        'ev_evaluacion_baya', x.evaluacion_baya_id,
         CASE WHEN x.tipo = 'peso' THEN 'pesos' ELSE 'baya' END,
         x.tipo, x.origen, x.fecha, x.creado_en,
         x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, x.evaluador_id,
