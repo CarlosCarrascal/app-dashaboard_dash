@@ -73,6 +73,46 @@ def test_rechaza_medida_negativa():
         normalize_evaluation(evaluation)
 
 
+@pytest.mark.parametrize(
+    "state,expected",
+    [
+        ("Flor", "FLOR"),
+        ("Cuajo", "CUAJO"),
+        ("E1", "E1"),
+        ("E2", "E2"),
+        ("E3", "E3"),
+        ("E4", "E4"),
+        ("E5", "E5"),
+        ("Desh", "DESH"),
+        ("Caído", "CAIDO"),
+        ("CAIDO", "CAIDO"),
+        ("X", "X"),
+    ],
+)
+def test_estados_fruto_con_y_sin_diametro(state, expected):
+    evaluation = EvaluationCreate.model_validate(
+        _payload(
+            module_key="baya",
+            valores={"m4_est01": state, "m4_diam01": 12.5, "m4_est50": state},
+        )
+    )
+    observations = normalize_evaluation(evaluation).data["observaciones"]
+    assert [row["estado_codigo"] for row in observations] == [expected, expected]
+    assert observations[0]["diametro_mm"] == Decimal("12.5")
+    assert observations[1]["diametro_mm"] is None
+
+
+def test_rechaza_estado_fruto_desconocido():
+    evaluation = EvaluationCreate.model_validate(
+        _payload(
+            module_key="baya",
+            valores={"m4_est01": "INVALIDO"},
+        )
+    )
+    with pytest.raises(EvaluationValidationError, match="no es un estado válido"):
+        normalize_evaluation(evaluation)
+
+
 def test_brotes_exige_piso_explicito():
     evaluation = EvaluationCreate.model_validate(
         _payload(module_key="brotes", valores={"m6_brotes": 4})

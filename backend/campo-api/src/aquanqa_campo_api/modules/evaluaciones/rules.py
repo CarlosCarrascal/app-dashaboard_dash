@@ -9,7 +9,7 @@ from typing import Any
 
 from .schemas import EvaluationCreate
 
-_ESTADOS_BAYA = {"E1", "E2", "E3", "E4", "E5", "DESH", "X"}
+_ESTADOS_BAYA = {"FLOR", "CUAJO", "E1", "E2", "E3", "E4", "E5", "DESH", "CAIDO", "X"}
 
 
 class EvaluationValidationError(ValueError):
@@ -99,6 +99,8 @@ def _observaciones_baya(values: dict[str, Any]) -> list[dict[str, Any]]:
         state = _text(values.get(f"m4_est{suffix}"))
         if state:
             state = state.upper()
+            if state == "CAÍDO":
+                state = "CAIDO"
             if state not in _ESTADOS_BAYA:
                 raise EvaluationValidationError(f"m4_est{suffix} no es un estado válido: {state}")
         if diameter is None and state is None:

@@ -181,6 +181,48 @@ def test_swagger_redoc_y_openapi_estan_disponibles():
     assert client.get("/openapi.json").status_code == 200
 
 
+def test_fruto_recibe_nueve_estados_en_creacion_y_edicion():
+    repository = FakeRepository()
+    client = _client(repository)
+    states = ["Flor", "Cuajo", "E1", "E2", "E3", "E4", "E5", "Desh", "Caído"]
+    payload = {
+        "client_id": "33333333-3333-4333-8333-333333333333",
+        "module_key": "baya",
+        "fecha": "2026-09-04",
+        "lote_id": 12,
+        "cortina": 1,
+        "hilera": 2,
+        "planta": 3,
+        "evaluador_dni": "60876954",
+        "valores": {f"m4_est{number:02d}": state for number, state in enumerate(states, 1)},
+    }
+    payload["valores"]["m4_diam01"] = 12.5
+    try:
+        created = client.post("/v1/evaluaciones", json=payload)
+        assert created.status_code == 201, created.text
+        assert created.json()["status"] == "accepted"
+        assert [row["estado_codigo"] for row in repository.saved[0].data["observaciones"]] == [
+            "FLOR",
+            "CUAJO",
+            "E1",
+            "E2",
+            "E3",
+            "E4",
+            "E5",
+            "DESH",
+            "CAIDO",
+        ]
+        history = client.get("/v1/evaluaciones/historial?evaluador_dni=60876954")
+        assert history.status_code == 200
+        assert history.json()["items"][0]["valores"] == payload["valores"]
+        payload["valores"]["m4_est01"] = "Cuajo"
+        edited = client.patch(f"/v1/evaluaciones/{payload['client_id']}", json=payload)
+        assert edited.status_code == 200, edited.text
+        assert repository.updated[0].data["observaciones"][0]["estado_codigo"] == "CUAJO"
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_historial_requiere_identidad_del_evaluador():
     repository = FakeRepository()
     client = _client(repository)
