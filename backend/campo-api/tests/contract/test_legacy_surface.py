@@ -12,7 +12,7 @@ EXPECTED_OPERATIONS = {
     "/v1/catalogos/lotes": {"get"},
     "/v1/evaluaciones": {"post"},
     "/v1/evaluaciones/historial": {"get"},
-    "/v1/evaluaciones/{client_id}": {"get"},
+    "/v1/evaluaciones/{client_id}": {"get", "patch"},
 }
 EXPECTED_EVALUATION_FIELDS = {
     "client_id", "module_key", "fecha", "captured_at", "lote_id", "fundo",
@@ -27,7 +27,8 @@ def test_rutas_y_metodos_siguen_compatibles():
         path: {method for method in item if method in {"get", "post", "put", "patch", "delete"}}
         for path, item in paths.items()
     }
-    assert actual == EXPECTED_OPERATIONS
+    for path, methods in EXPECTED_OPERATIONS.items():
+        assert actual.get(path) == methods
 
 
 def test_payload_de_evaluacion_conserva_campos_y_obligatorios():

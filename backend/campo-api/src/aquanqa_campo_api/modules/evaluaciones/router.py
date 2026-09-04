@@ -8,6 +8,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, st
 from ...api.dependencies import get_evaluation_service
 from ...core.errors import error_response, validation_error_response
 from .repository import (
+    EvaluationConflictError,
+    EvaluationNotFoundError,
     EvaluationRepositoryError,
     EvaluatorNotFoundError,
     IdempotencyConflictError,
@@ -18,11 +20,21 @@ from .schemas import (
     EvaluationCreate,
     EvaluationHistoryPage,
     EvaluationHistoryQuery,
+    EvaluationPatch,
     EvaluationReceipt,
 )
 from .service import EvaluationService
 
-router = APIRouter(prefix="/evaluaciones", tags=["Evaluaciones"])
+router = APIRouter(
+    prefix="/evaluaciones",
+    tags=["Evaluaciones"],
+    responses={
+        503: error_response(
+            "PostgreSQL no está disponible o la transacción falló.",
+            "No se pudo guardar la evaluación en PostgreSQL",
+        ),
+    },
+)
 EVALUATION_EXAMPLE = {
     "captura_estadios": {
         "summary": "Evaluación de estadios creada por Flutter",
@@ -96,8 +108,8 @@ def registrar_evaluacion(
     summary="Lista el historial completo de un evaluador",
     description=(
         "Consulta las evaluaciones históricas y móviles guardadas en las tablas core, "
-        "sin duplicar reintentos de la app. Mientras no exista SSO, Flutter envía la "
-        "identidad de su sesión; al incorporar JWT se obtendrá del token."
+        "sin duplicar reintentos de la app. Flutter envía el evaluador resuelto por "
+        "la sesión interna de DNI; el panel administrativo usa JWT/RBAC por separado."
     ),
     operation_id="listarHistorialEvaluaciones",
     responses={
@@ -120,6 +132,62 @@ def listar_historial(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
         ) from error
+    except EvaluationRepositoryError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)
+        ) from error
+
+
+@router.patch(
+    "/{client_id}",
+    response_model=EvaluationReceipt,
+    summary="Actualiza una evaluación móvil aceptada",
+    description=(
+        "Actualiza el recurso existente identificado por client_id dentro de una única "
+        "transacción. Conserva la fecha y hora originales de captura y registra la fecha de "
+        "modificación en PostgreSQL. Solo se pueden editar capturas móviles aceptadas."
+    ),
+    operation_id="actualizarEvaluacion",
+    responses={
+        404: error_response(
+            "La captura no existe o no corresponde a una evaluación móvil editable.",
+            "No existe una evaluación móvil editable con ese client_id",
+        ),
+        409: error_response(
+            "La edición entra en conflicto con otro registro o con el client_id enviado.",
+            "La edición entra en conflicto con una evaluación existente",
+        ),
+        422: validation_error_response(
+            "La captura o sus referencias de maestro no son válidas.",
+            "lote_id no existe o no es elegible para captura",
+        ),
+        503: error_response(
+            "PostgreSQL no está disponible o la transacción falló.",
+            "No se pudo actualizar la evaluación en PostgreSQL",
+        ),
+    },
+)
+def actualizar_evaluacion(
+    client_id: UUID,
+    payload: Annotated[EvaluationPatch, Body()],
+    service: Annotated[EvaluationService, Depends(get_evaluation_service)],
+) -> EvaluationReceipt:
+    if payload.client_id != client_id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="el client_id de la ruta y del payload no coinciden",
+        )
+    try:
+        return service.update(payload)
+    except (EvaluationValidationError, LocationNotFoundError, EvaluatorNotFoundError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    except EvaluationNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except EvaluationConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
     except EvaluationRepositoryError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)

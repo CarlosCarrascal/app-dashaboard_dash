@@ -36,7 +36,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description=(
             "API interna para registrar evaluaciones de app-campo en PostgreSQL. "
-            "El plan de distribución y el panel admin quedan fuera de esta primera versión."
+            "Incluye autenticación administrativa y lectura paginada para el panel Angular."
         ),
         openapi_tags=OPENAPI_TAGS,
         servers=openapi_servers(settings),
@@ -46,6 +46,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.postgres_connections = connections
+    application.state.settings = settings
     application.include_router(api_v1_router, prefix=settings.api_prefix)
     return application
 

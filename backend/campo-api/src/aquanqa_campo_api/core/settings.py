@@ -25,11 +25,20 @@ class Settings:
     database_pool_min_size: int = 1
     database_pool_max_size: int = 10
     database_pool_timeout_seconds: float = 5.0
+    jwt_secret: str = "local-development-secret-change-me"
+    jwt_access_minutes: int = 15
+    jwt_refresh_days: int = 7
 
     @classmethod
     def from_env(cls) -> Settings:
         load_dotenv()
         expected = os.getenv("AQUANQA_API_DATABASE", "aquanqa_migracion")
+        environment = os.getenv("AQUANQA_API_ENVIRONMENT", "local").lower()
+        jwt_secret = os.getenv("AQUANQA_JWT_SECRET")
+        if environment not in {"local", "test"} and not jwt_secret:
+            raise SettingsError(
+                "AQUANQA_JWT_SECRET es obligatorio fuera de los entornos local y test"
+            )
         database_url = os.getenv("AQUANQA_API_DATABASE_URL") or os.getenv("DATABASE_URL")
         if not database_url:
             host = os.getenv("PGHOST", "localhost")
@@ -48,7 +57,7 @@ class Settings:
             database_url=database_url,
             expected_database=expected,
             api_prefix=os.getenv("AQUANQA_API_PREFIX", "/v1").rstrip("/"),
-            environment=os.getenv("AQUANQA_API_ENVIRONMENT", "local"),
+            environment=environment,
             public_api_url=os.getenv("AQUANQA_API_PUBLIC_URL") or None,
             log_level=os.getenv("AQUANQA_API_LOG_LEVEL", "INFO").upper(),
             database_pool_min_size=int(os.getenv("AQUANQA_API_DATABASE_POOL_MIN_SIZE", "1")),
@@ -56,6 +65,9 @@ class Settings:
             database_pool_timeout_seconds=float(
                 os.getenv("AQUANQA_API_DATABASE_POOL_TIMEOUT_SECONDS", "5")
             ),
+            jwt_secret=jwt_secret or "local-development-secret-change-me",
+            jwt_access_minutes=int(os.getenv("AQUANQA_JWT_ACCESS_MINUTES", "15")),
+            jwt_refresh_days=int(os.getenv("AQUANQA_JWT_REFRESH_DAYS", "7")),
         )
 
 

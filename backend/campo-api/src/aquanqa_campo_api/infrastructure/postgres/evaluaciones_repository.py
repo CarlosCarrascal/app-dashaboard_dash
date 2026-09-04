@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-from datetime import UTC, date, datetime, time
-from decimal import Decimal
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -13,6 +11,8 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ...modules.evaluaciones.repository import (
+    EvaluationConflictError,
+    EvaluationNotFoundError,
     EvaluationRepositoryError,
     EvaluatorNotFoundError,
     IdempotencyConflictError,
@@ -28,70 +28,7 @@ from ...modules.evaluaciones.schemas import (
     ModuleKey,
 )
 from .connection import PostgresConnectionFactory
-
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, (datetime, UUID)):
-        return value.isoformat() if isinstance(value, datetime) else str(value)
-    if isinstance(value, (date, time)):
-        return value.isoformat()
-    if isinstance(value, Decimal):
-        return format(value, "f")
-    if isinstance(value, dict):
-        return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(item) for item in value]
-    return value
-
-
-def _payload_hash(normalized: NormalizedEvaluation) -> str:
-    source = normalized.source
-    payload = {
-        "client_id": str(source.client_id),
-        "module_key": source.module_key,
-        "fecha": source.fecha.isoformat(),
-        "captured_at": source.captured_at.isoformat() if source.captured_at else None,
-        "lote_id": source.lote_id,
-        "fundo": source.fundo,
-        "modulo": source.modulo,
-        "lote": source.lote,
-        "cortina": source.cortina,
-        "hilera": source.hilera,
-        "planta": source.planta,
-        "evaluador_id": source.evaluador_id,
-        "evaluador_dni": source.evaluador_dni,
-        "item": source.item,
-        "piso": source.piso,
-        "hora": source.hora.isoformat() if source.hora else None,
-        "data": normalized.data,
-    }
-    serialized = json.dumps(
-        _json_safe(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
-    return hashlib.sha256(serialized).hexdigest()
-
-
-def _history_payload(normalized: NormalizedEvaluation) -> dict[str, Any]:
-    source = normalized.source
-    return _json_safe(
-        {
-            "id": source.client_id,
-            "module_key": source.module_key,
-            "fecha": source.fecha,
-            "captured_at": source.captured_at,
-            "evaluador": source.evaluador or "",
-            "evaluador_id": source.evaluador_id,
-            "evaluador_dni": source.evaluador_dni or "",
-            "lote_id": source.lote_id,
-            "fundo": source.fundo or "",
-            "modulo": source.modulo or "",
-            "lote": source.lote or "",
-            "cortina": source.cortina,
-            "hilera": source.hilera,
-            "planta": source.planta,
-            "valores": source.valores,
-        }
-    )
+from .evaluaciones_payload import _history_payload, _payload_hash
 
 
 class PostgresEvaluationRepository:
@@ -101,105 +38,9 @@ class PostgresEvaluationRepository:
         self._connections = connections
 
     def save(self, normalized: NormalizedEvaluation) -> StoredEvaluation:
-        source = normalized.source
-        digest = _payload_hash(normalized)
-        history_payload = _history_payload(normalized)
-        client_id = str(source.client_id)
         try:
             with self._connections.connect() as connection, connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO core.api_evaluacion_ingesta
-                        (client_id, module_key, payload_hash, payload,
-                         evaluador_id, evaluador_dni, fecha, captured_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (client_id) DO NOTHING
-                    """,
-                    (
-                        client_id,
-                        source.module_key,
-                        digest,
-                        Jsonb(history_payload),
-                        source.evaluador_id,
-                        source.evaluador_dni,
-                        source.fecha,
-                        source.captured_at,
-                    ),
-                )
-                cursor.execute(
-                    """
-                    SELECT client_id, module_key, payload_hash, resource_table,
-                           resource_id, status
-                    FROM core.api_evaluacion_ingesta
-                    WHERE client_id = %s
-                    FOR UPDATE
-                    """,
-                    (client_id,),
-                )
-                ingest = cursor.fetchone()
-                if ingest is None:
-                    raise EvaluationRepositoryError("No se pudo registrar la idempotencia")
-                if ingest["module_key"] != source.module_key or ingest["payload_hash"] != digest:
-                    raise IdempotencyConflictError(
-                        "client_id ya fue utilizado con otro módulo o contenido"
-                    )
-                lote_id = self._resolve_lote(cursor, source)
-                evaluador_id = self._resolve_evaluador(cursor, source)
-                history_payload["lote_id"] = lote_id
-                history_payload["evaluador_id"] = evaluador_id
-                cursor.execute(
-                    """
-                    UPDATE core.api_evaluacion_ingesta
-                    SET payload = %s,
-                        evaluador_id = %s,
-                        evaluador_dni = COALESCE(%s, evaluador_dni),
-                        fecha = %s,
-                        captured_at = %s,
-                        actualizado_en = now()
-                    WHERE client_id = %s
-                    """,
-                    (
-                        Jsonb(history_payload),
-                        evaluador_id,
-                        source.evaluador_dni,
-                        source.fecha,
-                        source.captured_at,
-                        client_id,
-                    ),
-                )
-                if ingest["status"] == "accepted" and ingest["resource_id"] is not None:
-                    return StoredEvaluation(
-                        EvaluationReceipt(
-                            client_id=source.client_id,
-                            evaluation_id=int(ingest["resource_id"]),
-                            module_key=source.module_key,
-                            status="duplicate",
-                            received_at=datetime.now(UTC),
-                        )
-                    )
-                resource_table, resource_id, duplicate = self._persist(
-                    cursor, normalized, lote_id, evaluador_id, digest
-                )
-                cursor.execute(
-                    """
-                    UPDATE core.api_evaluacion_ingesta
-                    SET resource_table = %s,
-                        resource_id = %s,
-                        status = 'accepted',
-                        actualizado_en = now()
-                    WHERE client_id = %s
-                    """,
-                    (resource_table, resource_id, client_id),
-                )
-                return StoredEvaluation(
-                    EvaluationReceipt(
-                        client_id=source.client_id,
-                        evaluation_id=resource_id,
-                        module_key=source.module_key,
-                        status="duplicate" if duplicate else "accepted",
-                        received_at=datetime.now(UTC),
-                    )
-                )
+                return self._save_with_cursor(cursor, normalized)
         except (
             EvaluationRepositoryError,
             LocationNotFoundError,
@@ -211,6 +52,440 @@ class PostgresEvaluationRepository:
             raise EvaluationRepositoryError(
                 "No se pudo guardar la evaluación en PostgreSQL"
             ) from exc
+
+    def save_many(
+        self, normalized: Sequence[NormalizedEvaluation]
+    ) -> list[StoredEvaluation]:
+        """Guarda un lote completo en una sola transacción PostgreSQL."""
+        try:
+            with self._connections.connect() as connection, connection.cursor() as cursor:
+                return [self._save_with_cursor(cursor, item) for item in normalized]
+        except (
+            EvaluationRepositoryError,
+            LocationNotFoundError,
+            EvaluatorNotFoundError,
+            IdempotencyConflictError,
+        ):
+            raise
+        except psycopg.Error as exc:
+            raise EvaluationRepositoryError(
+                "No se pudo guardar la carga masiva en PostgreSQL"
+            ) from exc
+
+    def _save_with_cursor(self, cursor: Any, normalized: NormalizedEvaluation) -> StoredEvaluation:
+        source = normalized.source
+        digest = _payload_hash(normalized)
+        history_payload = _history_payload(normalized)
+        client_id = str(source.client_id)
+        cursor.execute(
+            """
+            INSERT INTO core.api_evaluacion_ingesta
+                (client_id, module_key, payload_hash, payload,
+                 evaluador_id, evaluador_dni, fecha, captured_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (client_id) DO NOTHING
+            """,
+            (
+                client_id,
+                source.module_key,
+                digest,
+                Jsonb(history_payload),
+                source.evaluador_id,
+                source.evaluador_dni,
+                source.fecha,
+                source.captured_at,
+            ),
+        )
+        cursor.execute(
+            """
+            SELECT client_id, module_key, payload_hash, resource_table,
+                   resource_id, status
+            FROM core.api_evaluacion_ingesta
+            WHERE client_id = %s
+            FOR UPDATE
+            """,
+            (client_id,),
+        )
+        ingest = cursor.fetchone()
+        if ingest is None:
+            raise EvaluationRepositoryError("No se pudo registrar la idempotencia")
+        if ingest["module_key"] != source.module_key or ingest["payload_hash"] != digest:
+            raise IdempotencyConflictError(
+                "client_id ya fue utilizado con otro módulo o contenido"
+            )
+        lote_id = self._resolve_lote(cursor, source)
+        evaluador_id = self._resolve_evaluador(cursor, source)
+        history_payload["lote_id"] = lote_id
+        history_payload["evaluador_id"] = evaluador_id
+        cursor.execute(
+            """
+            UPDATE core.api_evaluacion_ingesta
+            SET payload = %s,
+                evaluador_id = %s,
+                evaluador_dni = COALESCE(%s, evaluador_dni),
+                fecha = %s,
+                captured_at = %s,
+                actualizado_en = now()
+            WHERE client_id = %s
+            """,
+            (
+                Jsonb(history_payload),
+                evaluador_id,
+                source.evaluador_dni,
+                source.fecha,
+                source.captured_at,
+                client_id,
+            ),
+        )
+        if ingest["status"] == "accepted" and ingest["resource_id"] is not None:
+            return StoredEvaluation(
+                EvaluationReceipt(
+                    client_id=source.client_id,
+                    evaluation_id=int(ingest["resource_id"]),
+                    module_key=source.module_key,
+                    status="duplicate",
+                    received_at=datetime.now(UTC),
+                )
+            )
+        resource_table, resource_id, duplicate = self._persist(
+            cursor, normalized, lote_id, evaluador_id, digest
+        )
+        cursor.execute(
+            """
+            UPDATE core.api_evaluacion_ingesta
+            SET resource_table = %s,
+                resource_id = %s,
+                status = 'accepted',
+                actualizado_en = now()
+            WHERE client_id = %s
+            """,
+            (resource_table, resource_id, client_id),
+        )
+        return StoredEvaluation(
+            EvaluationReceipt(
+                client_id=source.client_id,
+                evaluation_id=resource_id,
+                module_key=source.module_key,
+                status="duplicate" if duplicate else "accepted",
+                received_at=datetime.now(UTC),
+            )
+        )
+
+    def update(self, normalized: NormalizedEvaluation) -> StoredEvaluation:
+        """Actualiza una captura móvil sin cambiar su identidad ni su instante original."""
+        try:
+            with self._connections.connect() as connection, connection.cursor() as cursor:
+                return self._update_with_cursor(cursor, normalized)
+        except (
+            EvaluationConflictError,
+            EvaluationNotFoundError,
+            EvaluationRepositoryError,
+            LocationNotFoundError,
+            EvaluatorNotFoundError,
+        ):
+            raise
+        except psycopg.errors.UniqueViolation as exc:
+            raise EvaluationConflictError(
+                "la edición entra en conflicto con una evaluación existente"
+            ) from exc
+        except psycopg.Error as exc:
+            raise EvaluationRepositoryError(
+                "No se pudo actualizar la evaluación en PostgreSQL"
+            ) from exc
+
+    def _update_with_cursor(
+        self, cursor: Any, normalized: NormalizedEvaluation
+    ) -> StoredEvaluation:
+        source = normalized.source
+        client_id = str(source.client_id)
+        digest = _payload_hash(normalized)
+        cursor.execute(
+            """
+            SELECT client_id, module_key, resource_table, resource_id,
+                   status, evaluador_id, evaluador_dni, fecha, captured_at
+            FROM core.api_evaluacion_ingesta
+            WHERE client_id = %s
+            FOR UPDATE
+            """,
+            (client_id,),
+        )
+        ingest = cursor.fetchone()
+        if (
+            ingest is None
+            or ingest["status"] != "accepted"
+            or ingest["resource_id"] is None
+            or ingest["resource_table"] is None
+        ):
+            raise EvaluationNotFoundError(
+                "No existe una evaluación móvil editable con ese client_id"
+            )
+
+        resource_table = str(ingest["resource_table"])
+        expected_table = {
+            "estadios": "ev_estados",
+            "flores": "ev_flores",
+            "brotes": "ev_brotes",
+            "ramas": "ev_evaluacion_ramas",
+            "baya": "ev_evaluacion_baya",
+            "pesos": "ev_evaluacion_baya",
+        }[source.module_key]
+        if ingest["module_key"] != source.module_key or resource_table != expected_table:
+            raise EvaluationConflictError(
+                "el client_id pertenece a otro módulo de evaluación"
+            )
+
+        resource_meta = {
+            "ev_estados": ("estados_id", True),
+            "ev_flores": ("flores_id", True),
+            "ev_brotes": ("brotes_id", True),
+            "ev_evaluacion_ramas": ("evaluacion_ramas_id", False),
+            "ev_evaluacion_baya": ("evaluacion_baya_id", False),
+        }.get(resource_table)
+        if resource_meta is None:
+            raise EvaluationRepositoryError("el recurso asociado no es editable por la API")
+
+        resource_id_column, has_hour = resource_meta
+        columns = "fecha, hora" if has_hour else "fecha"
+        cursor.execute(
+            f"""
+            SELECT {columns}
+            FROM core.{resource_table}
+            WHERE {resource_id_column} = %s
+            FOR UPDATE
+            """,
+            (int(ingest["resource_id"]),),
+        )
+        original = cursor.fetchone()
+        if original is None:
+            raise EvaluationNotFoundError(
+                "el recurso asociado a la captura ya no existe en PostgreSQL"
+            )
+
+        lote_id = self._resolve_lote(cursor, source)
+        evaluator_id = self._resolve_evaluador(cursor, source)
+        stored_evaluator_id = ingest["evaluador_id"]
+        if stored_evaluator_id is not None and evaluator_id != int(stored_evaluator_id):
+            raise EvaluationConflictError("no se puede cambiar el evaluador de una captura")
+        evaluator_id = int(stored_evaluator_id) if stored_evaluator_id is not None else evaluator_id
+        if evaluator_id is None:
+            raise EvaluatorNotFoundError("la captura no tiene un evaluador válido")
+
+        original_date = original["fecha"]
+        original_hour = original.get("hora") if has_hour else None
+        self._update_resource(
+            cursor,
+            normalized,
+            lote_id=lote_id,
+            evaluator_id=evaluator_id,
+            resource_table=resource_table,
+            resource_id=int(ingest["resource_id"]),
+            original_date=original_date,
+            original_hour=original_hour,
+            digest=digest,
+        )
+
+        history_payload = _history_payload(normalized)
+        history_payload["fecha"] = original_date.isoformat()
+        history_payload["lote_id"] = lote_id
+        history_payload["evaluador_id"] = evaluator_id
+        history_payload["evaluador_dni"] = (
+            ingest["evaluador_dni"] or source.evaluador_dni or ""
+        )
+        if ingest["captured_at"] is not None:
+            history_payload["captured_at"] = ingest["captured_at"].isoformat()
+        cursor.execute(
+            """
+            UPDATE core.api_evaluacion_ingesta
+            SET payload_hash = %s,
+                payload = %s,
+                evaluador_id = %s,
+                evaluador_dni = %s,
+                fecha = %s,
+                captured_at = %s,
+                actualizado_en = now()
+            WHERE client_id = %s
+            """,
+            (
+                digest,
+                Jsonb(history_payload),
+                evaluator_id,
+                history_payload["evaluador_dni"],
+                original_date,
+                ingest["captured_at"],
+                client_id,
+            ),
+        )
+        return StoredEvaluation(
+            EvaluationReceipt(
+                client_id=source.client_id,
+                evaluation_id=int(ingest["resource_id"]),
+                module_key=source.module_key,
+                status="accepted",
+                received_at=datetime.now(UTC),
+            )
+        )
+
+    def _update_resource(
+        self,
+        cursor: Any,
+        normalized: NormalizedEvaluation,
+        *,
+        lote_id: int,
+        evaluator_id: int,
+        resource_table: str,
+        resource_id: int,
+        original_date: Any,
+        original_hour: Any,
+        digest: str,
+    ) -> None:
+        source = normalized.source
+        data = normalized.data
+        location = (lote_id, original_date, source.cortina, source.hilera, source.planta)
+
+        if resource_table == "ev_estados":
+            cursor.execute(
+                """
+                UPDATE core.ev_estados
+                SET lote_id = %s, fecha = %s, cortina = %s, hilera = %s, planta = %s,
+                    evaluador_id = %s, e1 = %s, e2 = %s, e3 = %s, e4 = %s, e5 = %s,
+                    total_origen = %s, hora = %s, item = %s
+                WHERE estados_id = %s
+                """,
+                (
+                    *location,
+                    evaluator_id,
+                    data["e1"],
+                    data["e2"],
+                    data["e3"],
+                    data["e4"],
+                    data["e5"],
+                    data["total_origen"],
+                    original_hour,
+                    data["item"],
+                    resource_id,
+                ),
+            )
+            return
+
+        if resource_table == "ev_flores":
+            cursor.execute(
+                """
+                UPDATE core.ev_flores
+                SET lote_id = %s, fecha = %s, cortina = %s, hilera = %s, planta = %s,
+                    evaluador_id = %s, n_flores = %s, cuajo = %s, yemas_abiertas = %s,
+                    yemas_por_abrir = %s, yemas_muertas = %s, brotes_tiernos = %s,
+                    hora = %s, item = %s
+                WHERE flores_id = %s
+                """,
+                (
+                    *location,
+                    evaluator_id,
+                    data["n_flores"],
+                    data["cuajo"],
+                    data["yemas_abiertas"],
+                    data["yemas_por_abrir"],
+                    data["yemas_muertas"],
+                    data["brotes_tiernos"],
+                    original_hour,
+                    data["item"],
+                    resource_id,
+                ),
+            )
+            return
+
+        if resource_table == "ev_brotes":
+            cursor.execute(
+                """
+                UPDATE core.ev_brotes
+                SET lote_id = %s, fecha = %s, piso = %s, cortina = %s, hilera = %s,
+                    planta = %s, evaluador_id = %s, brotes = %s, des1 = %s, des2 = %s,
+                    des3 = %s, hora = %s
+                WHERE brotes_id = %s
+                """,
+                (
+                    lote_id,
+                    original_date,
+                    data["piso"],
+                    source.cortina,
+                    source.hilera,
+                    source.planta,
+                    evaluator_id,
+                    data["brotes"],
+                    data["des1"],
+                    data["des2"],
+                    data["des3"],
+                    original_hour,
+                    resource_id,
+                ),
+            )
+            return
+
+        if resource_table == "ev_evaluacion_ramas":
+            cursor.execute(
+                """
+                UPDATE core.ev_evaluacion_ramas
+                SET lote_id = %s, fecha = %s, cortina = %s, hilera = %s, planta = %s,
+                    evaluador_id = %s, ramas_menor5 = %s, ramas_mayor5 = %s
+                WHERE evaluacion_ramas_id = %s
+                """,
+                (
+                    *location,
+                    evaluator_id,
+                    data["ramas_menor5"],
+                    data["ramas_mayor5"],
+                    resource_id,
+                ),
+            )
+            cursor.execute(
+                "DELETE FROM core.ev_rama_medicion WHERE evaluacion_ramas_id = %s",
+                (resource_id,),
+            )
+            for measurement in data["mediciones"]:
+                cursor.execute(
+                    """
+                    INSERT INTO core.ev_rama_medicion
+                        (evaluacion_ramas_id, nro_rama, diametro, id_origen)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (
+                        resource_id,
+                        measurement["nro_rama"],
+                        measurement["diametro"],
+                        str(source.client_id),
+                    ),
+                )
+            return
+
+        cursor.execute(
+            """
+            UPDATE core.ev_evaluacion_baya
+            SET lote_id = %s, fecha = %s, cortina = %s, hilera = %s, planta = %s,
+                evaluador_id = %s, tipo = %s, source_row_hash = %s
+            WHERE evaluacion_baya_id = %s
+            """,
+            (*location, evaluator_id, data["tipo"], digest, resource_id),
+        )
+        cursor.execute(
+            "DELETE FROM core.ev_baya_observacion WHERE evaluacion_baya_id = %s",
+            (resource_id,),
+        )
+        for observation in data["observaciones"]:
+            cursor.execute(
+                """
+                INSERT INTO core.ev_baya_observacion
+                    (evaluacion_baya_id, numero_muestra, numero_medicion,
+                     estado_codigo, diametro_mm, peso_g)
+                VALUES (%s, %s, 1, %s, %s, %s)
+                """,
+                (
+                    resource_id,
+                    observation["numero_muestra"],
+                    observation.get("estado_codigo"),
+                    observation.get("diametro_mm"),
+                    observation.get("peso_g"),
+                ),
+            )
+        return
 
     def get_by_client_id(self, client_id: UUID) -> StoredEvaluation | None:
         try:

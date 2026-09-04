@@ -147,6 +147,19 @@ class EvaluationCreate(BaseModel):
         return self
 
 
+class EvaluationPatch(EvaluationCreate):
+    """Contrato completo para editar una evaluación móvil ya aceptada."""
+
+    updated_at: datetime | None = Field(
+        default=None,
+        validation_alias=AliasChoices("updated_at", "actualizado_en"),
+        description=(
+            "Instante local de modificación. El backend conserva la captura original y "
+            "registra su propio actualizado_en."
+        ),
+    )
+
+
 class EvaluationReceipt(BaseModel):
     client_id: UUID
     evaluation_id: int
@@ -204,6 +217,7 @@ class EvaluationHistoryPage(BaseModel):
 
 __all__ = [
     "EvaluationCreate",
+    "EvaluationPatch",
     "EvaluationHistoryItem",
     "EvaluationHistoryPage",
     "EvaluationHistoryQuery",

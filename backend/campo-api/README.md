@@ -10,16 +10,25 @@ Flutter -> Router HTTP -> Servicio -> Puerto (Protocol) -> Adaptador psycopg -> 
 ```
 
 - `main.py` compone FastAPI y el router versionado.
-- `api/v1/router.py` reúne las nueve operaciones públicas.
+- `api/v1/router.py` reúne las operaciones públicas de Flutter y la superficie administrativa.
 - `modules/*/router.py` traduce HTTP y documenta errores.
 - `modules/*/service.py` implementa los casos de uso.
 - `modules/*/repository.py` declara los puertos que necesita cada módulo.
 - `infrastructure/postgres/*` contiene las consultas SQL explícitas.
 - `core/` centraliza configuración, errores, logging y OpenAPI.
+- `modules/seguridad` implementa JWT corto + refresh y RBAC por permiso para el panel Angular.
 
 La API no importa el ETL ni extrae Access. Las reglas de evaluaciones permanecen dentro de su
 módulo hasta que exista un segundo consumidor real. El esquema se gobierna en `db/sql`; no se
 duplica con un ORM ni con migraciones Alembic.
+
+La superficie administrativa expone lecturas paginadas de evaluaciones, maestros, cuarentena,
+usuarios, roles y `GET /v1/admin/cargas`. Las correcciones, altas y decisiones de QA del panel
+pasan por funciones allowlisted `SECURITY DEFINER`, con validación de permisos y auditoría
+append-only. Las cargas
+masivas siguen `POST /v1/admin/evaluaciones/previsualizar` y `POST /v1/admin/evaluaciones/cargar`:
+el primer paso guarda un manifiesto en `core.admin_carga` y el segundo confirma por UUID + SHA-256
+en una transacción única sobre las tablas `ev_*`.
 
 ## Contrato y Swagger
 
@@ -54,6 +63,31 @@ Variables opcionales:
 - `AQUANQA_API_ENVIRONMENT` (por defecto `local`)
 - `AQUANQA_API_PUBLIC_URL` (URL que Swagger mostrará como servidor)
 - `AQUANQA_API_LOG_LEVEL` (por defecto `INFO`)
+- `AQUANQA_JWT_SECRET` (obligatorio fuera de `local` y `test`)
+- `AQUANQA_JWT_ACCESS_MINUTES` (por defecto `15`)
+- `AQUANQA_JWT_REFRESH_DAYS` (por defecto `7`)
+
+Para crear el primer usuario del panel, usa una conexión privilegiada separada de la conexión
+normal de la API:
+
+```powershell
+$env:AQUANQA_PROVISION_DATABASE_URL = "postgresql://postgres:<password>@localhost:5432/aquanqa_migracion"
+python backend/campo-api/scripts/provision_user.py --email admin@empresa.local `
+    --nombre "Administrador" --rol admin
+```
+
+Para un rol no administrador, el alta exige al menos un alcance de datos; por ejemplo:
+
+```powershell
+python backend/campo-api/scripts/provision_user.py --email agronomo@empresa.local `
+    --nombre "Agrónomo" --rol agronomo --scope-empresa-id 1
+```
+
+El provisioning privilegiado solo es necesario para crear la primera identidad cuando todavía no
+existe una sesión administrativa. Después, el panel puede crear, editar, desactivar usuarios y
+reemplazar sus alcances mediante las funciones allowlisted; la conexión de la API sigue sin DML
+directo sobre las tablas de identidad/RBAC. El backend aplica los permisos aunque el frontend
+oculte una opción del menú.
 
 ## Pruebas
 
@@ -64,5 +98,5 @@ $env:AQUANQA_RUN_DB_TESTS = "1"
 python -m pytest backend/campo-api/tests/integration -q
 ```
 
-La resolución del evaluador por DNI es temporal y no equivale a autenticación. JWT/OAuth2 se
-incorporará cuando el panel administrativo defina usuarios, credenciales y asignaciones.
+La resolución del evaluador por DNI sigue siendo el mecanismo de identidad de captura móvil; no se
+usa como contraseña ni reemplaza la autenticación administrativa.

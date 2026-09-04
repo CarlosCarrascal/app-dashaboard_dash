@@ -1,6 +1,1299 @@
 {
   "components": {
     "schemas": {
+      "AccessScope": {
+        "additionalProperties": false,
+        "properties": {
+          "empresa_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa Id"
+          },
+          "fundo_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundo Id"
+          },
+          "lote_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote Id"
+          },
+          "modulo_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modulo Id"
+          }
+        },
+        "title": "AccessScope",
+        "type": "object"
+      },
+      "AdminEvaluationCorrection": {
+        "properties": {
+          "evaluacion": {
+            "$ref": "#/components/schemas/AdminEvaluationDetail"
+          },
+          "mutation": {
+            "$ref": "#/components/schemas/AdminMutation"
+          }
+        },
+        "required": [
+          "mutation",
+          "evaluacion"
+        ],
+        "title": "AdminEvaluationCorrection",
+        "type": "object"
+      },
+      "AdminEvaluationDetail": {
+        "description": "Detalle normalizado; mantiene el mismo contrato que una fila de grilla.",
+        "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "detalle": {
+            "additionalProperties": true,
+            "title": "Detalle",
+            "type": "object"
+          },
+          "empresa": {
+            "default": "",
+            "title": "Empresa",
+            "type": "string"
+          },
+          "evaluador": {
+            "default": "",
+            "title": "Evaluador",
+            "type": "string"
+          },
+          "evaluador_dni": {
+            "default": "",
+            "title": "Evaluador Dni",
+            "type": "string"
+          },
+          "evaluador_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Id"
+          },
+          "fecha": {
+            "format": "date",
+            "title": "Fecha",
+            "type": "string"
+          },
+          "fundo": {
+            "default": "",
+            "title": "Fundo",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lote": {
+            "default": "",
+            "title": "Lote",
+            "type": "string"
+          },
+          "lote_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote Id"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "modulo": {
+            "default": "",
+            "title": "Modulo",
+            "type": "string"
+          },
+          "origen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origen"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "integer"
+          },
+          "source_table": {
+            "title": "Source Table",
+            "type": "string"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "variedad": {
+            "default": "",
+            "title": "Variedad",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_table",
+          "source_id",
+          "module_key",
+          "fecha"
+        ],
+        "title": "AdminEvaluationDetail",
+        "type": "object"
+      },
+      "AdminEvaluationFamilySummary": {
+        "properties": {
+          "desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desde"
+          },
+          "evaluadores": {
+            "default": 0,
+            "title": "Evaluadores",
+            "type": "integer"
+          },
+          "hasta": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasta"
+          },
+          "indicadores": {
+            "$ref": "#/components/schemas/AdminEvaluationIndicatorValues"
+          },
+          "lotes": {
+            "default": 0,
+            "title": "Lotes",
+            "type": "integer"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "muestras": {
+            "default": 0,
+            "title": "Muestras",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "ultima_captura": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Captura"
+          }
+        },
+        "required": [
+          "module_key",
+          "total"
+        ],
+        "title": "AdminEvaluationFamilySummary",
+        "type": "object"
+      },
+      "AdminEvaluationIndicatorValues": {
+        "description": "Indicadores tipados; cada familia completa únicamente sus magnitudes aplicables.",
+        "properties": {
+          "brotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brotes"
+          },
+          "brotes_tiernos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brotes Tiernos"
+          },
+          "cuajos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cuajos"
+          },
+          "diametro_promedio_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diametro Promedio Mm"
+          },
+          "e1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "E1"
+          },
+          "e2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "E2"
+          },
+          "e3": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "E3"
+          },
+          "e4": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "E4"
+          },
+          "e5": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "E5"
+          },
+          "flores": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flores"
+          },
+          "peso_promedio_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peso Promedio G"
+          },
+          "piso_1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso 1"
+          },
+          "piso_2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso 2"
+          },
+          "piso_3": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso 3"
+          },
+          "ramas_mayor_5mm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ramas Mayor 5Mm"
+          },
+          "ramas_menor_5mm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ramas Menor 5Mm"
+          },
+          "sospechosas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sospechosas"
+          },
+          "yemas_abiertas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yemas Abiertas"
+          },
+          "yemas_muertas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yemas Muertas"
+          },
+          "yemas_por_abrir": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yemas Por Abrir"
+          }
+        },
+        "title": "AdminEvaluationIndicatorValues",
+        "type": "object"
+      },
+      "AdminEvaluationItem": {
+        "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "detalle": {
+            "additionalProperties": true,
+            "title": "Detalle",
+            "type": "object"
+          },
+          "empresa": {
+            "default": "",
+            "title": "Empresa",
+            "type": "string"
+          },
+          "evaluador": {
+            "default": "",
+            "title": "Evaluador",
+            "type": "string"
+          },
+          "evaluador_dni": {
+            "default": "",
+            "title": "Evaluador Dni",
+            "type": "string"
+          },
+          "evaluador_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Id"
+          },
+          "fecha": {
+            "format": "date",
+            "title": "Fecha",
+            "type": "string"
+          },
+          "fundo": {
+            "default": "",
+            "title": "Fundo",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lote": {
+            "default": "",
+            "title": "Lote",
+            "type": "string"
+          },
+          "lote_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote Id"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "modulo": {
+            "default": "",
+            "title": "Modulo",
+            "type": "string"
+          },
+          "origen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origen"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "integer"
+          },
+          "source_table": {
+            "title": "Source Table",
+            "type": "string"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "variedad": {
+            "default": "",
+            "title": "Variedad",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_table",
+          "source_id",
+          "module_key",
+          "fecha"
+        ],
+        "title": "AdminEvaluationItem",
+        "type": "object"
+      },
+      "AdminEvaluationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminEvaluationItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "AdminEvaluationPage",
+        "type": "object"
+      },
+      "AdminEvaluationSummary": {
+        "properties": {
+          "desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desde"
+          },
+          "evaluadores": {
+            "title": "Evaluadores",
+            "type": "integer"
+          },
+          "hasta": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasta"
+          },
+          "lotes": {
+            "title": "Lotes",
+            "type": "integer"
+          },
+          "por_modulo": {
+            "items": {
+              "$ref": "#/components/schemas/AdminEvaluationFamilySummary"
+            },
+            "title": "Por Modulo",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "ultima_captura": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Captura"
+          }
+        },
+        "required": [
+          "total",
+          "por_modulo",
+          "evaluadores",
+          "lotes"
+        ],
+        "title": "AdminEvaluationSummary",
+        "type": "object"
+      },
+      "AdminLoadItem": {
+        "properties": {
+          "archivo_nombre": {
+            "title": "Archivo Nombre",
+            "type": "string"
+          },
+          "archivo_sha256": {
+            "title": "Archivo Sha256",
+            "type": "string"
+          },
+          "carga_id": {
+            "format": "uuid",
+            "title": "Carga Id",
+            "type": "string"
+          },
+          "creado_en": {
+            "format": "date-time",
+            "title": "Creado En",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "estado": {
+            "enum": [
+              "pending_confirmation",
+              "processing",
+              "accepted",
+              "failed"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "filas_aceptadas": {
+            "title": "Filas Aceptadas",
+            "type": "integer"
+          },
+          "filas_duplicadas": {
+            "title": "Filas Duplicadas",
+            "type": "integer"
+          },
+          "filas_invalidas": {
+            "title": "Filas Invalidas",
+            "type": "integer"
+          },
+          "filas_total": {
+            "title": "Filas Total",
+            "type": "integer"
+          },
+          "filas_validas": {
+            "title": "Filas Validas",
+            "type": "integer"
+          },
+          "finalizado_en": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalizado En"
+          },
+          "iniciado_en": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iniciado En"
+          },
+          "usuario": {
+            "title": "Usuario",
+            "type": "string"
+          },
+          "usuario_id": {
+            "title": "Usuario Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "carga_id",
+          "archivo_nombre",
+          "archivo_sha256",
+          "usuario_id",
+          "usuario",
+          "estado",
+          "filas_total",
+          "filas_validas",
+          "filas_invalidas",
+          "filas_aceptadas",
+          "filas_duplicadas",
+          "creado_en"
+        ],
+        "title": "AdminLoadItem",
+        "type": "object"
+      },
+      "AdminLoadPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminLoadItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "AdminLoadPage",
+        "type": "object"
+      },
+      "AdminMasterPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "AdminMasterPage",
+        "type": "object"
+      },
+      "AdminMutation": {
+        "description": "Resultado auditable de una mutación administrativa.",
+        "properties": {
+          "accion": {
+            "enum": [
+              "crear",
+              "actualizar",
+              "desactivar",
+              "corregir"
+            ],
+            "title": "Accion",
+            "type": "string"
+          },
+          "antes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Antes"
+          },
+          "cambio_id": {
+            "title": "Cambio Id",
+            "type": "integer"
+          },
+          "despues": {
+            "additionalProperties": true,
+            "title": "Despues",
+            "type": "object"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "mensaje": {
+            "title": "Mensaje",
+            "type": "string"
+          },
+          "recurso": {
+            "title": "Recurso",
+            "type": "string"
+          },
+          "recurso_id": {
+            "title": "Recurso Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cambio_id",
+          "recurso",
+          "recurso_id",
+          "accion",
+          "despues",
+          "idempotency_key",
+          "mensaje"
+        ],
+        "title": "AdminMutation",
+        "type": "object"
+      },
+      "AdminQABulkResolution": {
+        "properties": {
+          "accion": {
+            "const": "confirmar_duplicados",
+            "default": "confirmar_duplicados",
+            "title": "Accion",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "procesados": {
+            "title": "Procesados",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "procesados",
+          "idempotency_key"
+        ],
+        "title": "AdminQABulkResolution",
+        "type": "object"
+      },
+      "AdminQAPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQARejectItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "AdminQAPage",
+        "type": "object"
+      },
+      "AdminQARejectItem": {
+        "properties": {
+          "bloque_ejecucion_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bloque Ejecucion Id"
+          },
+          "cargado_en": {
+            "format": "date-time",
+            "title": "Cargado En",
+            "type": "string"
+          },
+          "comentario_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario Revision"
+          },
+          "detalle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalle"
+          },
+          "estado_revision": {
+            "default": "pendiente",
+            "enum": [
+              "pendiente",
+              "aceptado",
+              "descartado",
+              "corregir"
+            ],
+            "title": "Estado Revision",
+            "type": "string"
+          },
+          "excede_umbral": {
+            "default": false,
+            "title": "Excede Umbral",
+            "type": "boolean"
+          },
+          "fila": {
+            "additionalProperties": true,
+            "title": "Fila",
+            "type": "object"
+          },
+          "hallazgo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hallazgo"
+          },
+          "migracion_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Migracion Run Id"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          },
+          "rechazo_id": {
+            "title": "Rechazo Id",
+            "type": "integer"
+          },
+          "revisado_en": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revisado En"
+          },
+          "revisado_por": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revisado Por"
+          },
+          "source_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Snapshot Id"
+          },
+          "tabla_destino": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tabla Destino"
+          },
+          "tabla_origen": {
+            "title": "Tabla Origen",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rechazo_id",
+          "tabla_origen",
+          "motivo",
+          "fila",
+          "cargado_en"
+        ],
+        "title": "AdminQARejectItem",
+        "type": "object"
+      },
+      "AdminQAReview": {
+        "properties": {
+          "comentario_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario Revision"
+          },
+          "estado_revision": {
+            "enum": [
+              "pendiente",
+              "aceptado",
+              "descartado",
+              "corregir"
+            ],
+            "title": "Estado Revision",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "rechazo_id": {
+            "title": "Rechazo Id",
+            "type": "integer"
+          },
+          "revisado_en": {
+            "format": "date-time",
+            "title": "Revisado En",
+            "type": "string"
+          },
+          "revisado_por": {
+            "title": "Revisado Por",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rechazo_id",
+          "estado_revision",
+          "idempotency_key",
+          "revisado_en",
+          "revisado_por"
+        ],
+        "title": "AdminQAReview",
+        "type": "object"
+      },
+      "AdminQASummary": {
+        "properties": {
+          "alertas": {
+            "title": "Alertas",
+            "type": "integer"
+          },
+          "motivos": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQASummaryItem"
+            },
+            "title": "Motivos",
+            "type": "array"
+          },
+          "total_rechazos": {
+            "title": "Total Rechazos",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_rechazos",
+          "motivos",
+          "alertas"
+        ],
+        "title": "AdminQASummary",
+        "type": "object"
+      },
+      "AdminQASummaryItem": {
+        "properties": {
+          "excede_umbral": {
+            "default": false,
+            "title": "Excede Umbral",
+            "type": "boolean"
+          },
+          "explicacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicacion"
+          },
+          "filas": {
+            "title": "Filas",
+            "type": "integer"
+          },
+          "hallazgo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hallazgo"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          },
+          "tablas": {
+            "default": "",
+            "title": "Tablas",
+            "type": "string"
+          },
+          "tope": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tope"
+          }
+        },
+        "required": [
+          "motivo",
+          "filas"
+        ],
+        "title": "AdminQASummaryItem",
+        "type": "object"
+      },
       "ApiError": {
         "description": "Error legible para la app y para Swagger.",
         "example": {
@@ -17,6 +1310,63 @@
           "detail"
         ],
         "title": "ApiError",
+        "type": "object"
+      },
+      "AuthUser": {
+        "properties": {
+          "alcances": {
+            "items": {
+              "$ref": "#/components/schemas/AccessScope"
+            },
+            "title": "Alcances",
+            "type": "array"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "nombre": {
+            "title": "Nombre",
+            "type": "string"
+          },
+          "permisos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permisos",
+            "type": "array"
+          },
+          "rol": {
+            "title": "Rol",
+            "type": "string"
+          },
+          "usuario_id": {
+            "title": "Usuario Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "usuario_id",
+          "email",
+          "nombre",
+          "rol"
+        ],
+        "title": "AuthUser",
+        "type": "object"
+      },
+      "Body_previsualizarEvaluacionesAdmin": {
+        "properties": {
+          "archivo": {
+            "contentMediaType": "application/octet-stream",
+            "description": "Libro .xlsx de evaluaciones",
+            "title": "Archivo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "archivo"
+        ],
+        "title": "Body_previsualizarEvaluacionesAdmin",
         "type": "object"
       },
       "EvaluadorCatalogo": {
@@ -144,6 +1494,164 @@
           "nombre"
         ],
         "title": "EvaluadorSesion",
+        "type": "object"
+      },
+      "EvaluationCorrectionRequest": {
+        "additionalProperties": false,
+        "description": "Valores completos de una corrección individual, no un parche SQL arbitrario.",
+        "properties": {
+          "comentario": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "cortina": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 32767.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cortina"
+          },
+          "evaluador_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Id"
+          },
+          "fecha": {
+            "format": "date",
+            "title": "Fecha",
+            "type": "string"
+          },
+          "hilera": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 32767.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hilera"
+          },
+          "hora": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hora"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item"
+          },
+          "lote_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Lote Id",
+            "type": "integer"
+          },
+          "nro_muestra": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 32767.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nro Muestra"
+          },
+          "piso": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso"
+          },
+          "planta": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 32767.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planta"
+          },
+          "source_table": {
+            "enum": [
+              "ev_estados",
+              "ev_flores",
+              "ev_brotes",
+              "ev_baya_medicion",
+              "ev_evaluacion_baya",
+              "ev_evaluacion_ramas"
+            ],
+            "title": "Source Table",
+            "type": "string"
+          },
+          "valores": {
+            "additionalProperties": true,
+            "title": "Valores",
+            "type": "object"
+          }
+        },
+        "required": [
+          "source_table",
+          "fecha",
+          "lote_id",
+          "idempotency_key"
+        ],
+        "title": "EvaluationCorrectionRequest",
         "type": "object"
       },
       "EvaluationCreate": {
@@ -477,6 +1985,212 @@
         "title": "EvaluationHistoryPage",
         "type": "object"
       },
+      "EvaluationPatch": {
+        "additionalProperties": false,
+        "description": "Contrato completo para editar una evaluación móvil ya aceptada.",
+        "example": {
+          "client_id": "11111111-1111-4111-8111-111111111111",
+          "cortina": 1,
+          "evaluador_dni": "10616663",
+          "fecha": "2026-08-31",
+          "hilera": 2,
+          "lote_id": 12,
+          "module_key": "estadios",
+          "planta": 3,
+          "valores": {
+            "m1_e1": 1,
+            "m1_e2": 2,
+            "m1_e3": 3
+          }
+        },
+        "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "client_id": {
+            "format": "uuid",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "cortina": {
+            "title": "Cortina",
+            "type": "integer"
+          },
+          "evaluador": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador"
+          },
+          "evaluador_dni": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Dni"
+          },
+          "evaluador_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Id"
+          },
+          "fecha": {
+            "format": "date",
+            "title": "Fecha",
+            "type": "string"
+          },
+          "fundo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundo"
+          },
+          "hilera": {
+            "title": "Hilera",
+            "type": "integer"
+          },
+          "hora": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hora"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item"
+          },
+          "lote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote"
+          },
+          "lote_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote Id"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "modulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modulo"
+          },
+          "piso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piso"
+          },
+          "planta": {
+            "title": "Planta",
+            "type": "integer"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Instante local de modificación. El backend conserva la captura original y registra su propio actualizado_en.",
+            "title": "Updated At"
+          },
+          "valores": {
+            "additionalProperties": true,
+            "title": "Valores",
+            "type": "object"
+          }
+        },
+        "required": [
+          "client_id",
+          "module_key",
+          "fecha",
+          "cortina",
+          "hilera",
+          "planta"
+        ],
+        "title": "EvaluationPatch",
+        "type": "object"
+      },
       "EvaluationReceipt": {
         "properties": {
           "client_id": {
@@ -576,6 +2290,207 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportConfirmRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "file_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "File Sha256",
+            "type": "string"
+          },
+          "preview_id": {
+            "format": "uuid",
+            "title": "Preview Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preview_id",
+          "file_sha256"
+        ],
+        "title": "ImportConfirmRequest",
+        "type": "object"
+      },
+      "ImportPreview": {
+        "properties": {
+          "file_sha256": {
+            "title": "File Sha256",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "invalid_rows": {
+            "title": "Invalid Rows",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "preview_id": {
+            "format": "uuid",
+            "title": "Preview Id",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ImportPreviewRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "string"
+          },
+          "state": {
+            "const": "pending_confirmation",
+            "default": "pending_confirmation",
+            "title": "State",
+            "type": "string"
+          },
+          "total_rows": {
+            "title": "Total Rows",
+            "type": "integer"
+          },
+          "valid_rows": {
+            "title": "Valid Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "preview_id",
+          "file_sha256",
+          "filename",
+          "sheet",
+          "total_rows",
+          "valid_rows",
+          "invalid_rows",
+          "rows",
+          "message"
+        ],
+        "title": "ImportPreview",
+        "type": "object"
+      },
+      "ImportPreviewRow": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "row": {
+            "title": "Row",
+            "type": "integer"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "row",
+          "valid"
+        ],
+        "title": "ImportPreviewRow",
+        "type": "object"
+      },
+      "ImportResult": {
+        "properties": {
+          "accepted_rows": {
+            "title": "Accepted Rows",
+            "type": "integer"
+          },
+          "atomic": {
+            "default": true,
+            "title": "Atomic",
+            "type": "boolean"
+          },
+          "carga_id": {
+            "format": "uuid",
+            "title": "Carga Id",
+            "type": "string"
+          },
+          "duplicate_rows": {
+            "title": "Duplicate Rows",
+            "type": "integer"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "receipts": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationReceipt"
+            },
+            "title": "Receipts",
+            "type": "array"
+          },
+          "total_rows": {
+            "title": "Total Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "carga_id",
+          "filename",
+          "total_rows",
+          "accepted_rows",
+          "duplicate_rows",
+          "receipts",
+          "message"
+        ],
+        "title": "ImportResult",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
       "LoteCatalogo": {
         "properties": {
           "codigo": {
@@ -649,6 +2564,38 @@
         "title": "LoteCatalogo",
         "type": "object"
       },
+      "MasterMutationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "comentario": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "valores": {
+            "additionalProperties": true,
+            "title": "Valores",
+            "type": "object"
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "MasterMutationRequest",
+        "type": "object"
+      },
       "ModuloCatalogo": {
         "properties": {
           "codigo": {
@@ -685,6 +2632,276 @@
           "codigo"
         ],
         "title": "ModuloCatalogo",
+        "type": "object"
+      },
+      "PageInfo": {
+        "properties": {
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "pages": {
+            "title": "Pages",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "page_size",
+          "total",
+          "pages"
+        ],
+        "title": "PageInfo",
+        "type": "object"
+      },
+      "QABulkDuplicateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "comentario": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "rechazo_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Rechazo Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rechazo_ids",
+          "idempotency_key"
+        ],
+        "title": "QABulkDuplicateRequest",
+        "type": "object"
+      },
+      "QAReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "comentario": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "estado": {
+            "enum": [
+              "aceptado",
+              "descartado",
+              "corregir"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "estado",
+          "idempotency_key"
+        ],
+        "title": "QAReviewRequest",
+        "type": "object"
+      },
+      "RefreshRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "refresh_token": {
+            "minLength": 20,
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshRequest",
+        "type": "object"
+      },
+      "TokenPair": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "TokenPair",
+        "type": "object"
+      },
+      "UserMutationRequest": {
+        "additionalProperties": false,
+        "description": "Datos editables de una identidad; la contraseña nunca viaja como hash al cliente.",
+        "properties": {
+          "activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activo"
+          },
+          "alcances": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AccessScope"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alcances"
+          },
+          "comentario": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "evaluador_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluador Id"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "rol": {
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "agronomo",
+                  "evaluador",
+                  "lectura"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rol"
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "UserMutationRequest",
         "type": "object"
       },
       "ValidationError": {
@@ -727,15 +2944,3917 @@
         "title": "ValidationError",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
-    "description": "API interna para registrar evaluaciones de app-campo en PostgreSQL. El plan de distribución y el panel admin quedan fuera de esta primera versión.",
+    "description": "API interna para registrar evaluaciones de app-campo en PostgreSQL. Incluye autenticación administrativa y lectura paginada para el panel Angular.",
     "title": "Aqu Anqa · API de campo",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/v1/admin/cargas": {
+      "get": {
+        "description": "Consulta el manifiesto de cada carga Excel con su hash, usuario, estado y resultado. Los usuarios no administradores solo ven las cargas que ellos mismos iniciaron.",
+        "operationId": "listarCargasAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending_confirmation",
+                    "processing",
+                    "accepted",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoadPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista el historial de cargas masivas",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones": {
+      "get": {
+        "description": "Consulta server-side las seis familias de evaluación y aplica filtros por ubicación, evaluador, módulo y fecha. La ruta es de lectura; la autorización RBAC se integra antes de publicar el panel fuera de la red interna.",
+        "operationId": "listarEvaluacionesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista evaluaciones para administración",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/cargar": {
+      "post": {
+        "description": "Confirma un preview por su UUID y SHA-256. El backend recupera las filas validadas, las guarda en una sola transacción y registra el resultado del manifiesto. Si una fila no puede persistirse, se revierte todo el lote. Repetir la confirmación es idempotente.",
+        "operationId": "cargarEvaluacionesAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "client_id ya fue utilizado con otro módulo o contenido"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Una fila usa un client_id con contenido diferente."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "el lote no existe o no es elegible para captura"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Una fila no cumple las reglas del dominio agrícola."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirma una carga masiva de evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/indicadores": {
+      "get": {
+        "operationId": "consultarIndicadoresEvaluacionesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Calcula indicadores con los mismos filtros y alcances de la grilla",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/plantilla": {
+      "get": {
+        "operationId": "descargarPlantillaEvaluacionesAdmin",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "error"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "La plantilla no pudo generarse."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Descarga la plantilla Excel de evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/previsualizar": {
+      "post": {
+        "description": "Valida hasta 5.000 filas contra el contrato canónico de captura. Devuelve errores por fila y guarda un manifiesto de preview; todavía no escribe las tablas ev_* ni ejecuta procedimientos ETL.",
+        "operationId": "previsualizarEvaluacionesAdmin",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_previsualizarEvaluacionesAdmin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "Faltan columnas"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El libro no cumple la plantilla."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El archivo supera el límite de 10 MB"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "El libro supera 10 MB."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Previsualiza una carga Excel sin escribir datos",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/registros": {
+      "get": {
+        "description": "Contrato estable del workspace; la ruta histórica se conserva durante la transición.",
+        "operationId": "listarRegistrosEvaluacionesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista registros administrativos con grano consistente",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/registros/{record_id}": {
+      "get": {
+        "operationId": "consultarRegistroEvaluacionAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 3,
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Evaluación no encontrada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La evaluación no existe."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "Identificador inválido"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El identificador no es válido."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Consulta un registro por su identificador administrativo",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/resumen": {
+      "get": {
+        "operationId": "resumirEvaluacionesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Resume las evaluaciones filtradas",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/{module_key}/{source_id}": {
+      "get": {
+        "operationId": "consultarDetalleEvaluacionAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "estadios",
+                "flores",
+                "baya",
+                "pesos",
+                "brotes",
+                "ramas"
+              ],
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ID de la tabla de origen",
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "description": "ID de la tabla de origen",
+              "exclusiveMinimum": 0,
+              "title": "Source Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Tabla física; obligatorio para distinguir las dos fuentes de baya",
+            "in": "query",
+            "name": "source_table",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tabla física; obligatorio para distinguir las dos fuentes de baya",
+              "title": "Source Table"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Evaluación no encontrada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La evaluación no existe."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Consulta el detalle normalizado de una evaluación",
+        "tags": [
+          "Administración"
+        ]
+      },
+      "patch": {
+        "description": "Valida el payload con las reglas del módulo y aplica una mutación allowlisted en una transacción PostgreSQL. Conserva antes/después, actor, comentario e idempotency_key.",
+        "operationId": "corregirEvaluacionAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "estadios",
+                "flores",
+                "baya",
+                "pesos",
+                "brotes",
+                "ramas"
+              ],
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Source Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationCorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationCorrection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "La evaluación no existe o está fuera de alcance"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La evaluación no existe."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "idempotency_key ya fue utilizado para otro cambio"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La operación entra en conflicto."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "La corrección requiere valores"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Los valores no cumplen las reglas del módulo."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Corrige una evaluación individual",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/maestros/{resource}": {
+      "get": {
+        "description": "Expone maestros paginados de ubicación, evaluadores, campañas y configuración de muestreo. La respuesta nunca incluye credenciales.",
+        "operationId": "listarMaestroAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "enum": [
+                "empresas",
+                "fundos",
+                "modulos",
+                "lotes",
+                "evaluadores",
+                "campanias",
+                "variedades",
+                "turnos",
+                "muestreo"
+              ],
+              "title": "Resource",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "activo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Activo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMasterPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista un maestro administrativo",
+        "tags": [
+          "Administración"
+        ]
+      },
+      "post": {
+        "operationId": "crearRegistroMaestroAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "enum": [
+                "empresas",
+                "fundos",
+                "modulos",
+                "lotes",
+                "evaluadores",
+                "campanias",
+                "variedades",
+                "turnos",
+                "muestreo"
+              ],
+              "title": "Resource",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterMutationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "llave duplicada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "El registro entra en conflicto."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "nombre es obligatorio"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El maestro no cumple las reglas."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Crea un registro de maestro",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/maestros/{resource}/{resource_id}": {
+      "patch": {
+        "operationId": "actualizarRegistroMaestroAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "enum": [
+                "empresas",
+                "fundos",
+                "modulos",
+                "lotes",
+                "evaluadores",
+                "campanias",
+                "variedades",
+                "turnos",
+                "muestreo"
+              ],
+              "title": "Resource",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resource_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Resource Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterMutationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "llave duplicada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "El registro entra en conflicto."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "El registro no existe"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El maestro no cumple las reglas."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Actualiza o desactiva un registro de maestro",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/qa/duplicados/confirmar": {
+      "post": {
+        "description": "Confirma hasta 500 duplicados exactos sin reinsertarlos. La función PostgreSQL exige simultáneamente permisos de gestión QA y corrección de evaluaciones; cada evidencia recibe un evento append-only con la misma clave idempotente.",
+        "operationId": "confirmarDuplicadosCalidadAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QABulkDuplicateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQABulkResolution"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Permisos insuficientes"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Faltan permisos de corrección."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "Sólo se permiten duplicados exactos de Evaluaciones"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "La selección contiene incidencias incompatibles."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirma duplicados exactos de Evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/qa/rechazos": {
+      "get": {
+        "operationId": "listarRechazosCalidadAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "motivo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Motivo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tabla_origen",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tabla Origen"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hallazgo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hallazgo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "excede_umbral",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Excede Umbral"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado_revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pendiente",
+                    "aceptado",
+                    "descartado",
+                    "corregir"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQAPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista filas de cuarentena",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/qa/rechazos/{rechazo_id}/revision": {
+      "patch": {
+        "description": "Agrega un evento de revisión a la cuarentena. La fila original de qua.rechazos no se modifica y el historial conserva usuario, estado, comentario y fecha.",
+        "operationId": "revisarRechazoCalidadAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rechazo_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Rechazo Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QAReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQAReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "La incidencia de calidad no existe"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La incidencia no existe."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Registra una decisión sobre un rechazo",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/qa/resumen": {
+      "get": {
+        "operationId": "resumirCalidadAdmin",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQASummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Resume cuarentena y alertas de calidad",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/roles": {
+      "get": {
+        "operationId": "listarRolesAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "activo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Activo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMasterPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista roles administrativos",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/usuarios": {
+      "get": {
+        "operationId": "listarUsuariosAdmin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "activo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Activo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMasterPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lista usuarios del panel sin exponer hashes",
+        "tags": [
+          "Administración"
+        ]
+      },
+      "post": {
+        "description": "Crea una identidad administrativa con un rol existente. La contraseña se transforma a hash dentro del backend y nunca se incluye en la respuesta ni en la auditoría.",
+        "operationId": "crearUsuarioAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMutationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "llave duplicada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "El usuario ya existe o la operación entra en conflicto."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "Un usuario nuevo requiere email, nombre y rol"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El usuario no cumple las reglas."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Crea un usuario del panel",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/usuarios/{usuario_id}": {
+      "patch": {
+        "operationId": "actualizarUsuarioAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usuario_id",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Usuario Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMutationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "llave duplicada"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "El usuario ya existe o la operación entra en conflicto."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "La mutación del usuario requiere al menos un campo"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "El usuario no cumple las reglas."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar la superficie administrativa"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la consulta administrativa falló."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Actualiza o desactiva un usuario del panel",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "iniciarSesionAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Email o contraseña incorrectos"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Credenciales inválidas o sesión vencida."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar usuarios"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Base no disponible."
+          }
+        },
+        "summary": "Inicia sesión administrativa",
+        "tags": [
+          "Autenticación"
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "obtenerSesionAdmin",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUser"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Email o contraseña incorrectos"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Credenciales inválidas o sesión vencida."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar usuarios"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Base no disponible."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Devuelve la identidad activa",
+        "tags": [
+          "Autenticación"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "renovarSesionAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Email o contraseña incorrectos"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Credenciales inválidas o sesión vencida."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo consultar usuarios"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Base no disponible."
+          }
+        },
+        "summary": "Renueva una sesión administrativa",
+        "tags": [
+          "Autenticación"
+        ]
+      }
+    },
     "/v1/catalogos/fundos": {
       "get": {
         "description": "Devuelve los fundos activos que la app puede presentar al evaluador.",
@@ -1036,7 +7155,7 @@
     },
     "/v1/evaluaciones/historial": {
       "get": {
-        "description": "Consulta las evaluaciones históricas y móviles guardadas en las tablas core, sin duplicar reintentos de la app. Mientras no exista SSO, Flutter envía la identidad de su sesión; al incorporar JWT se obtendrá del token.",
+        "description": "Consulta las evaluaciones históricas y móviles guardadas en las tablas core, sin duplicar reintentos de la app. Flutter envía el evaluador resuelto por la sesión interna de DNI; el panel administrativo usa JWT/RBAC por separado.",
         "operationId": "listarHistorialEvaluaciones",
         "parameters": [
           {
@@ -1260,6 +7379,126 @@
         "tags": [
           "Evaluaciones"
         ]
+      },
+      "patch": {
+        "description": "Actualiza el recurso existente identificado por client_id dentro de una única transacción. Conserva la fecha y hora originales de captura y registra la fecha de modificación en PostgreSQL. Solo se pueden editar capturas móviles aceptadas.",
+        "operationId": "actualizarEvaluacion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No existe una evaluación móvil editable con ese client_id"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La captura no existe o no corresponde a una evaluación móvil editable."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "La edición entra en conflicto con una evaluación existente"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La edición entra en conflicto con otro registro o con el client_id enviado."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_invalido": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {},
+                          "loc": [
+                            "body",
+                            "module_key"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  },
+                  "regla_negocio": {
+                    "value": {
+                      "detail": "lote_id no existe o no es elegible para captura"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "La captura o sus referencias de maestro no son válidas."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No se pudo actualizar la evaluación en PostgreSQL"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "PostgreSQL no está disponible o la transacción falló."
+          }
+        },
+        "summary": "Actualiza una evaluación móvil aceptada",
+        "tags": [
+          "Evaluaciones"
+        ]
       }
     },
     "/v1/health/live": {
@@ -1447,7 +7686,7 @@
       "name": "Salud"
     },
     {
-      "description": "Resolución temporal del evaluador contra el maestro. No es autenticación definitiva y no emite JWT; será sustituida al integrar el panel administrativo.",
+      "description": "Resolución temporal del evaluador contra el maestro. No es autenticación administrativa y no emite JWT; la captura móvil mantiene su propio flujo.",
       "name": "Sesión interna"
     },
     {
@@ -1457,6 +7696,14 @@
     {
       "description": "Registro idempotente y consulta de evaluaciones capturadas por la app Flutter.",
       "name": "Evaluaciones"
+    },
+    {
+      "description": "Lectura paginada de evaluaciones, maestros y cuarentena, más previsualización de plantillas Excel. Todas las rutas exigen identidad y permisos RBAC; la previsualización no escribe datos productivos.",
+      "name": "Administración"
+    },
+    {
+      "description": "Login, renovación y consulta de la sesión administrativa Angular.",
+      "name": "Autenticación"
     }
   ]
 }

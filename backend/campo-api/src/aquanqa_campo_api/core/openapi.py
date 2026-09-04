@@ -13,7 +13,7 @@ OPENAPI_TAGS = [
         "name": "Sesión interna",
         "description": (
             "Resolución temporal del evaluador contra el maestro. No es autenticación "
-            "definitiva y no emite JWT; será sustituida al integrar el panel administrativo."
+            "administrativa y no emite JWT; la captura móvil mantiene su propio flujo."
         ),
     },
     {
@@ -25,6 +25,18 @@ OPENAPI_TAGS = [
         "description": (
             "Registro idempotente y consulta de evaluaciones capturadas por la app Flutter."
         ),
+    },
+    {
+        "name": "Administración",
+        "description": (
+            "Lectura paginada de evaluaciones, maestros y cuarentena, más previsualización "
+            "de plantillas Excel. Todas las rutas exigen identidad y permisos RBAC; la "
+            "previsualización no escribe datos productivos."
+        ),
+    },
+    {
+        "name": "Autenticación",
+        "description": "Login, renovación y consulta de la sesión administrativa Angular.",
     },
 ]
 
