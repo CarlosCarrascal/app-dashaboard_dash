@@ -26,6 +26,7 @@ MasterResource = Literal[
     "muestreo",
 ]
 EvaluationSourceTable = Literal[
+    "ev_evaluacion",
     "ev_estados",
     "ev_flores",
     "ev_brotes",

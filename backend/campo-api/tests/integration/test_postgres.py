@@ -114,7 +114,10 @@ def test_rol_api_conserva_solo_privilegios_necesarios():
         cursor.execute(
             """
             SELECT current_user,
-                       has_table_privilege(current_user, 'core.ev_estados', 'INSERT') AS captura,
+                       has_table_privilege(current_user, 'core.ev_evaluacion', 'INSERT') AS captura,
+                       CASE WHEN to_regclass('core.ev_estados') IS NULL THEN false
+                         ELSE has_table_privilege(current_user, 'core.ev_estados', 'INSERT')
+                       END AS legacy,
                        has_table_privilege(current_user, 'core.m_empresa', 'INSERT') AS maestros,
                        has_table_privilege(
                            current_user, 'qua.rechazo_revision_evento', 'INSERT'
@@ -135,6 +138,7 @@ def test_rol_api_conserva_solo_privilegios_necesarios():
 
     assert privileges["current_user"] == "aquanqa_app"
     assert privileges["captura"] is True
+    assert privileges["legacy"] is False
     assert privileges["maestros"] is False
     assert privileges["qa_revision_direct"] is False
     assert privileges["resolver"] is True

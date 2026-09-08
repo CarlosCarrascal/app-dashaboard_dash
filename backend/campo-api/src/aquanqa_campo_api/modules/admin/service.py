@@ -108,6 +108,14 @@ class AdminService:
             raise EvaluationNotFoundError("La evaluación no existe o está fuera de su alcance")
         if detail.module_key != module_key or detail.source_table != request.source_table:
             raise EvaluationNotFoundError("La tabla de origen no coincide con la evaluación")
+        if (
+            detail.source_table == "ev_evaluacion"
+            and detail.detalle.get("publicacion_id") is not None
+        ):
+            raise ValueError(
+                "Histórico verificado: requiere conciliación; "
+                "no se sobrescribe la publicación raw-core"
+            )
         values = _correction_values(module_key, source_id, request)
         mutation = self._repository.correct_evaluation(
             module_key, source_id, request, values, usuario_id

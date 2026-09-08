@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import time
 from decimal import Decimal, InvalidOperation
@@ -42,7 +43,7 @@ def _decimal(value: Any, field: str) -> Decimal | None:
     return number
 
 
-def _count(values: dict[str, Any], key: str, *, default: int | None = 0) -> int | None:
+def _count(values: dict[str, Any], key: str, *, default: int | None = None) -> int | None:
     number = _decimal(values.get(key), key)
     if number is None:
         return default
@@ -50,7 +51,7 @@ def _count(values: dict[str, Any], key: str, *, default: int | None = 0) -> int 
         raise EvaluationValidationError(f"{key} debe ser un entero")
     if number < 0:
         raise EvaluationValidationError(f"{key} no puede ser negativo")
-    if number > 32767:
+    if number > 2147483647:
         raise EvaluationValidationError(f"{key} supera el máximo permitido")
     return int(number)
 
@@ -93,7 +94,8 @@ def _item(
 
 def _observaciones_baya(values: dict[str, Any]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
-    for number in range(1, 51):
+    values = _sample_values(values, "baya")
+    for number in _sample_numbers(values, ("m4_diam", "m4_est")):
         suffix = f"{number:02d}"
         diameter = _measure(values.get(f"m4_diam{suffix}"), f"m4_diam{suffix}")
         state = _text(values.get(f"m4_est{suffix}"))
@@ -105,9 +107,7 @@ def _observaciones_baya(values: dict[str, Any]) -> list[dict[str, Any]]:
                 raise EvaluationValidationError(f"m4_est{suffix} no es un estado válido: {state}")
         if diameter is None and state is None:
             continue
-        result.append(
-            {"numero_muestra": number, "estado_codigo": state, "diametro_mm": diameter}
-        )
+        result.append({"numero_muestra": number, "estado_codigo": state, "diametro_mm": diameter})
     if not result:
         raise EvaluationValidationError("baya requiere al menos una observación")
     return result
@@ -115,17 +115,63 @@ def _observaciones_baya(values: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _observaciones_peso(values: dict[str, Any]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
-    for number in range(1, 26):
+    values = _sample_values(values, "pesos")
+    for number in _sample_numbers(values, ("m5_peso", "m5_diam")):
         suffix = f"{number:02d}"
         weight = _measure(values.get(f"m5_peso{suffix}"), f"m5_peso{suffix}")
         diameter = _measure(values.get(f"m5_diam{suffix}"), f"m5_diam{suffix}")
         if weight is None and diameter is None:
             continue
-        result.append(
-            {"numero_muestra": number, "peso_g": weight, "diametro_mm": diameter}
-        )
+        if weight is None or diameter is None:
+            raise EvaluationValidationError(f"muestra {number} requiere peso y diámetro")
+        result.append({"numero_muestra": number, "peso_g": weight, "diametro_mm": diameter})
     if not result:
         raise EvaluationValidationError("pesos requiere al menos una muestra")
+    return result
+
+
+def _sample_numbers(values, prefixes):
+    numbers = set()
+    for key in values:
+        for prefix in prefixes:
+            if key.startswith(prefix):
+                suffix = key[len(prefix) :]
+                if not re.fullmatch(r"[0-9]+", suffix):
+                    raise EvaluationValidationError(f"{key}: ordinal inválido")
+                number = int(suffix)
+                if not 1 <= number <= 2147483647 or suffix != f"{number:02d}":
+                    raise EvaluationValidationError(f"{key}: ordinal inválido")
+                numbers.add(number)
+    return sorted(numbers)
+
+
+def _sample_values(values, module):
+    """Acepta listas sin columnas numeradas; no mezcla dos representaciones."""
+    if "muestras" not in values:
+        return values
+    prefixes = ("m4_diam", "m4_est") if module == "baya" else ("m5_peso", "m5_diam")
+    if any(key.startswith(prefixes) for key in values if key != "muestras"):
+        raise EvaluationValidationError("no mezcle muestras con campos numerados")
+    rows = values["muestras"]
+    if not isinstance(rows, list) or not rows:
+        raise EvaluationValidationError("muestras debe ser una lista no vacía")
+    result, seen = {}, set()
+    for row in rows:
+        allowed = {
+            "numero_muestra",
+            "diametro_mm",
+            "estado_codigo" if module == "baya" else "peso_g",
+        }
+        if not isinstance(row, dict) or set(row) - allowed:
+            raise EvaluationValidationError("campos de muestra no válidos")
+        number = row.get("numero_muestra")
+        if type(number) is not int or not 1 <= number <= 2147483647 or number in seen:
+            raise EvaluationValidationError("numero_muestra debe ser positivo y único")
+        seen.add(number)
+        prefix = "m4" if module == "baya" else "m5"
+        result[f"{prefix}_diam{number:02d}"] = row.get("diametro_mm")
+        metric, field = ("est", "estado_codigo") if module == "baya" else ("peso", "peso_g")
+        result[f"{prefix}_{metric}{number:02d}"] = row.get(field)
     return result
 
 
@@ -133,6 +179,13 @@ def normalize_evaluation(source: EvaluationCreate) -> NormalizedEvaluation:
     """Valida los valores de Flutter y los transforma al grano de core."""
 
     values = source.valores
+    required_counts = {
+        "estadios": [f"m1_e{i}" for i in range(1, 6)],
+        "flores": ["m2_flores", "m2_cuajos", "m2_yp", "m2_ya", "m2_ymuerta", "m2_brotes_tiernos"],
+        "brotes": ["m6_brotes"],
+    }.get(source.module_key)
+    if required_counts and all(values.get(key) in (None, "") for key in required_counts):
+        raise EvaluationValidationError("se requiere al menos un conteo explícito; cero es válido")
     if source.module_key == "estadios":
         counts = {f"e{i}": _count(values, f"m1_e{i}") for i in range(1, 6)}
         return NormalizedEvaluation(
@@ -187,7 +240,7 @@ def normalize_evaluation(source: EvaluationCreate) -> NormalizedEvaluation:
         )
     if source.module_key == "ramas":
         mediciones: list[dict[str, Any]] = []
-        for number in range(1, 26):
+        for number in _sample_numbers(values, ("m7_diam",)):
             suffix = f"{number:02d}"
             diameter = _measure(values.get(f"m7_diam{suffix}"), f"m7_diam{suffix}")
             if diameter is not None:

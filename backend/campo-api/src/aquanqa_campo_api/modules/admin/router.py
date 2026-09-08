@@ -205,6 +205,7 @@ def consultar_registro_evaluacion_admin(
         "ev_estados": ("estadios",),
         "ev_flores": ("flores",),
         "ev_brotes": ("brotes",),
+        "ev_evaluacion": ("estadios", "flores", "brotes", "ramas", "baya", "pesos"),
         "ev_baya_medicion": ("baya",),
         "ev_evaluacion_baya": ("baya", "pesos"),
         "ev_evaluacion_ramas": ("ramas",),

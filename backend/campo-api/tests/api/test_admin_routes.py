@@ -319,7 +319,7 @@ def test_plantilla_y_carga_masiva_son_auditables():
                 "valores_json",
             ]
         )
-        sheet.append(["estadios", "2026-09-02", 12, 1, 2, 3, "10616663", '{"e1": 2}'])
+        sheet.append(["estadios", "2026-09-02", 12, 1, 2, 3, "10616663", '{"m1_e1": 2}'])
         buffer = BytesIO()
         workbook.save(buffer)
         preview = client.post(

@@ -75,9 +75,9 @@ class EvaluationCreate(BaseModel):
     fundo: str | None = None
     modulo: str | None = None
     lote: str | None = None
-    cortina: int
-    hilera: int
-    planta: int
+    cortina: int | None
+    hilera: int | None
+    planta: int | None
     evaluador: str | None = None
     evaluador_id: int | None = None
     evaluador_dni: str | None = Field(

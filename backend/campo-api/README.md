@@ -1,5 +1,11 @@
 # backend/campo-api · API de campo
 
+> Corte canónico 2026-09-08: esta versión escribe en `core.ev_evaluacion` y sus detalles.
+> Requiere las migraciones `db/migrations/evaluaciones_v1/005_api_canonica.sql` y
+> `006_admin_canonico.sql`, después de la publicación verificada del modelo v1.
+> No desplegar contra una copia remota que conserve únicamente el modelo anterior.
+> Estado y pruebas: `docs/modelo/corte_api_evaluaciones_2026-09-08.md`.
+
 Monolito modular FastAPI que recibe las evaluaciones de Flutter y las persiste en PostgreSQL
 `core`. El contrato móvil se mantiene en `/v1`; la estructura interna sigue ADR-0016.
 

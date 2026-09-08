@@ -9,185 +9,50 @@ from __future__ import annotations
 
 EVALUATIONS_CTE = """
 WITH evaluaciones AS (
-    SELECT
-        'ev_estados'::text AS source_table,
-        x.estados_id::bigint AS source_id,
-        'estadios'::text AS module_key,
-        NULL::text AS tipo,
-        'core'::text AS origen,
-        x.fecha,
-        (x.fecha::timestamp + COALESCE(x.hora, time '00:00'))
-            AT TIME ZONE 'America/Lima' AS captured_at,
-        x.lote_id,
-        emp.empresa_id,
-        f.fundo_id,
-        mo.modulo_id,
-        x.evaluador_id,
-        emp.nombre AS empresa,
-        f.codigo AS fundo,
-        mo.codigo AS modulo,
-        l.codigo AS lote,
-        v.nombre AS variedad,
-        btrim(concat_ws(' ', ev.nombres, ev.apellidos)) AS evaluador,
-        COALESCE(ev.dni, '') AS evaluador_dni,
-        jsonb_build_object(
-            'e1', x.e1, 'e2', x.e2, 'e3', x.e3, 'e4', x.e4, 'e5', x.e5,
-            'total', x.total, 'total_origen', x.total_origen,
-            'cortina', x.cortina, 'hilera', x.hilera, 'planta', x.planta,
-            'item', x.item, 'hora', x.hora
-        ) AS detalle
-    FROM core.ev_estados x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    LEFT JOIN core.m_evaluador ev ON ev.evaluador_id = x.evaluador_id
-
-    UNION ALL
-
-    SELECT
-        'ev_flores', x.flores_id::bigint, 'flores', NULL::text, 'core', x.fecha,
-        (x.fecha::timestamp + COALESCE(x.hora, time '00:00'))
-            AT TIME ZONE 'America/Lima',
-        x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, x.evaluador_id,
-        emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre,
-        btrim(concat_ws(' ', ev.nombres, ev.apellidos)), COALESCE(ev.dni, ''),
-        jsonb_build_object(
-            'n_flores', x.n_flores, 'cuajo', x.cuajo,
-            'yemas_abiertas', x.yemas_abiertas, 'yemas_por_abrir', x.yemas_por_abrir,
-            'brotes_tiernos', x.brotes_tiernos, 'yemas_muertas', x.yemas_muertas,
-            'cortina', x.cortina, 'hilera', x.hilera, 'planta', x.planta,
-            'item', x.item, 'hora', x.hora
-        )
-    FROM core.ev_flores x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    LEFT JOIN core.m_evaluador ev ON ev.evaluador_id = x.evaluador_id
-
-    UNION ALL
-
-    SELECT
-        'ev_brotes', x.brotes_id::bigint, 'brotes', NULL::text, 'core', x.fecha,
-        (x.fecha::timestamp + COALESCE(x.hora, time '00:00'))
-            AT TIME ZONE 'America/Lima',
-        x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, x.evaluador_id,
-        emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre,
-        btrim(concat_ws(' ', ev.nombres, ev.apellidos)), COALESCE(ev.dni, ''),
-        jsonb_build_object(
-            'piso', x.piso, 'brotes', x.brotes, 'des1', x.des1,
-            'des2', x.des2, 'des3', x.des3,
-            'cortina', x.cortina, 'hilera', x.hilera, 'planta', x.planta,
-            'hora', x.hora
-        )
-    FROM core.ev_brotes x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    LEFT JOIN core.m_evaluador ev ON ev.evaluador_id = x.evaluador_id
-
-    UNION ALL
-
-    SELECT
-        'ev_baya_medicion', min(x.baya_medicion_id)::bigint,
-        'baya', 'crecimiento', 'access', x.fecha,
-        (x.fecha::timestamp) AT TIME ZONE 'America/Lima',
-        x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, NULL::smallint,
-        emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre,
-        ''::text, ''::text,
-        jsonb_build_object(
-            'cantidad_muestras', count(*),
-            'diametro_promedio', round(avg(x.diametro)::numeric, 2),
-            'diametro_minimo', min(x.diametro),
-            'diametro_maximo', max(x.diametro),
-            'mediciones_sospechosas', count(*) FILTER (WHERE x.sospechoso),
-            'cortina', x.cortina, 'hilera', x.hilera,
-            'observaciones', jsonb_agg(jsonb_build_object(
-                'source_id', x.baya_medicion_id,
-                'numero_muestra', x.nro_muestra,
-                'diametro_mm', x.diametro,
-                'sospechoso', x.sospechoso
-            ) ORDER BY x.nro_muestra, x.baya_medicion_id)
-        )
-    FROM core.ev_baya_medicion x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    GROUP BY x.fecha, x.lote_id, x.cortina, x.hilera,
-             emp.empresa_id, f.fundo_id, mo.modulo_id,
-             emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre
-
-    UNION ALL
-
-    SELECT
-        'ev_evaluacion_baya', x.evaluacion_baya_id,
-        CASE WHEN x.tipo = 'peso' THEN 'pesos' ELSE 'baya' END,
-        x.tipo, x.origen, x.fecha, x.creado_en,
-        x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, x.evaluador_id,
-        emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre,
-        btrim(concat_ws(' ', ev.nombres, ev.apellidos)), COALESCE(ev.dni, ''),
-        jsonb_build_object(
-            'idempotency_key', x.idempotency_key,
-            'source_snapshot_id', x.source_snapshot_id,
-            'source_row_hash', x.source_row_hash,
-            'observaciones', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'numero_muestra', o.numero_muestra,
-                    'numero_medicion', o.numero_medicion,
-                    'estado_codigo', o.estado_codigo,
-                    'diametro_mm', o.diametro_mm,
-                    'peso_g', o.peso_g,
-                    'deshoje', o.deshoje,
-                    'valor_x', o.valor_x,
-                    'observacion', o.observacion
-                ) ORDER BY o.numero_muestra, o.numero_medicion)
-                FROM core.ev_baya_observacion o
-                WHERE o.evaluacion_baya_id = x.evaluacion_baya_id
-            ), '[]'::jsonb)
-        )
-    FROM core.ev_evaluacion_baya x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    LEFT JOIN core.m_evaluador ev ON ev.evaluador_id = x.evaluador_id
-
-    UNION ALL
-
-    SELECT
-        'ev_evaluacion_ramas', x.evaluacion_ramas_id::bigint, 'ramas', NULL::text, 'core', x.fecha,
-        x.creado_en, x.lote_id, emp.empresa_id, f.fundo_id, mo.modulo_id, x.evaluador_id,
-        emp.nombre, f.codigo, mo.codigo, l.codigo, v.nombre,
-        btrim(concat_ws(' ', ev.nombres, ev.apellidos)), COALESCE(ev.dni, ''),
-        jsonb_build_object(
-            'ramas_menor5', x.ramas_menor5, 'ramas_mayor5', x.ramas_mayor5,
-            'mediciones', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'nro_rama', r.nro_rama, 'diametro', r.diametro,
-                    'sospechoso', r.sospechoso, 'id_origen', r.id_origen
-                ) ORDER BY r.nro_rama, r.rama_medicion_id)
-                FROM core.ev_rama_medicion r
-                WHERE r.evaluacion_ramas_id = x.evaluacion_ramas_id
-            ), '[]'::jsonb)
-        )
-    FROM core.ev_evaluacion_ramas x
-    JOIN core.m_lote l ON l.lote_id = x.lote_id
-    JOIN core.m_modulo mo ON mo.modulo_id = l.modulo_id
-    JOIN core.m_fundo f ON f.fundo_id = mo.fundo_id
-    JOIN core.m_empresa emp ON emp.empresa_id = f.empresa_id
-    LEFT JOIN core.m_variedad v ON v.variedad_id = l.variedad_id
-    LEFT JOIN core.m_evaluador ev ON ev.evaluador_id = x.evaluador_id
+ SELECT 'ev_evaluacion'::text source_table,x.evaluacion_id source_id,
+   CASE x.tipo WHEN 'desarrollo' THEN 'baya' WHEN 'peso' THEN 'pesos' ELSE x.tipo END module_key,
+   x.tipo,x.origen,x.fecha,
+   COALESCE(x.captured_at,(x.fecha::timestamp+COALESCE(x.hora,time '00:00'))
+       AT TIME ZONE 'America/Lima') captured_at,
+   x.lote_id,emp.empresa_id,f.fundo_id,mo.modulo_id,x.evaluador_id,
+   emp.nombre empresa,f.codigo fundo,mo.codigo modulo,l.codigo lote,v.nombre variedad,
+   btrim(concat_ws(' ',ev.nombres,ev.apellidos)) evaluador,COALESCE(ev.dni,'') evaluador_dni,
+   jsonb_build_object('cortina',x.cortina,'hilera',x.hilera,'planta',x.planta,
+      'hora',x.hora,'grano',x.grano,'publicacion_id',x.publicacion_id,'revision',x.revision)
+   || CASE x.tipo
+     WHEN 'estadios' THEN (to_jsonb(s)-'tipo'-'evaluacion_id') ||
+       jsonb_build_object('total',s.total_calculado,'item',s.item_origen)
+     WHEN 'flores' THEN (to_jsonb(c)-'tipo'-'evaluacion_id') ||
+       jsonb_build_object('item',c.item_origen)
+     WHEN 'brotes' THEN (to_jsonb(b)-'tipo'-'evaluacion_id') ||
+       jsonb_build_object('des1',b.des1_origen,'des2',b.des2_origen,'des3',b.des3_origen)
+     WHEN 'ramas' THEN (to_jsonb(r)-'tipo'-'evaluacion_id') ||
+       jsonb_build_object('mediciones',COALESCE((SELECT jsonb_agg(
+         jsonb_build_object('nro_rama',o.numero_rama,'numero_medicion',o.numero_medicion,
+          'diametro',o.diametro_mm,'sospechoso',o.sospechoso,'id_origen',o.id_origen)
+         ORDER BY o.numero_rama,o.numero_medicion)
+         FROM core.ev_rama_observacion o WHERE o.evaluacion_id=x.evaluacion_id),'[]'::jsonb))
+     ELSE (SELECT jsonb_build_object(
+         'cantidad_muestras',count(*),'diametro_promedio',avg(o.diametro_mm),
+         'diametro_minimo',min(o.diametro_mm),'diametro_maximo',max(o.diametro_mm),
+         'observaciones',COALESCE(jsonb_agg(to_jsonb(o)-'evaluacion_id'-'tipo'
+            ORDER BY o.numero_muestra,o.numero_medicion),'[]'::jsonb))
+         FROM core.ev_fruto_observacion o WHERE o.evaluacion_id=x.evaluacion_id)
+   END detalle
+ FROM core.ev_evaluacion x
+ JOIN core.m_lote l ON l.lote_id=x.lote_id
+ JOIN core.m_modulo mo ON mo.modulo_id=l.modulo_id
+ JOIN core.m_fundo f ON f.fundo_id=mo.fundo_id
+ JOIN core.m_empresa emp ON emp.empresa_id=f.empresa_id
+ LEFT JOIN core.m_variedad v ON v.variedad_id=l.variedad_id
+ LEFT JOIN core.m_evaluador ev ON ev.evaluador_id=x.evaluador_id
+ LEFT JOIN core.ev_estadios s ON s.evaluacion_id=x.evaluacion_id
+ LEFT JOIN core.ev_conteo_flores c ON c.evaluacion_id=x.evaluacion_id
+ LEFT JOIN core.ev_conteo_brotes b ON b.evaluacion_id=x.evaluacion_id
+ LEFT JOIN core.ev_conteo_ramas r ON r.evaluacion_id=x.evaluacion_id
+ WHERE x.estado_registro='vigente'
 )
 """
-
 
 EVALUATION_ORDER = {
     "captured_at": "captured_at",

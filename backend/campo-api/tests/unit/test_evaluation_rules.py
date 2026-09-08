@@ -140,3 +140,32 @@ def test_flores_normaliza_yemas_muertas_y_brotes_tiernos():
 
     assert normalized.data["yemas_muertas"] == 1
     assert normalized.data["brotes_tiernos"] == 5
+
+
+def test_no_inventa_ceros_para_conteos_ausentes():
+    result = normalize_evaluation(EvaluationCreate.model_validate(_payload(valores={"m1_e1": 0})))
+    assert result.data["e1"] == 0
+    assert result.data["e2"] is None
+
+
+def test_rechaza_campos_fuera_del_contrato_en_vez_de_guardar_ceros():
+    with pytest.raises(EvaluationValidationError, match="conteo explícito"):
+        normalize_evaluation(EvaluationCreate.model_validate(_payload(valores={"e1": 2})))
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"muestras": [{"numero_muestra": 1, "peso_g": 2, "diametro_mm": 3}], "m5_peso01": 2},
+        {"muestras": [{"numero_muestra": 1, "peso_g": 2, "diametro_mm": 3}] * 2},
+        {"muestras": [{"numero_muestra": True, "peso_g": 2, "diametro_mm": 3}]},
+        {"m5_peso01": 2},
+        {"m5_diam01": 3},
+        {"m5_peso01": "NaN", "m5_diam01": 3},
+    ],
+)
+def test_rechaza_muestras_ambiguas_o_incompletas(values):
+    with pytest.raises(EvaluationValidationError):
+        normalize_evaluation(
+            EvaluationCreate.model_validate(_payload(module_key="pesos", valores=values))
+        )
