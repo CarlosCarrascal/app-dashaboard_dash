@@ -37,6 +37,9 @@ class TransactionFactory:
             self.connection.execute("SET CONSTRAINTS ALL IMMEDIATE")
             self.connection.execute("SET CONSTRAINTS ALL DEFERRED")
 
+    read = connect
+
+
 
 @pytest.fixture
 def real_api():

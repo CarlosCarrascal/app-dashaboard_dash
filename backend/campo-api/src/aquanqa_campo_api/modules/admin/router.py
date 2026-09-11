@@ -69,6 +69,8 @@ from .schemas import (
     UserMutationRequest,
 )
 from .service import AdminService
+from .analytics import AnalyticsQuery, EvaluationTrend, EvaluationAnalytics, ObservationPage
+from fastapi.responses import StreamingResponse
 
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 UNAVAILABLE = error_response(
@@ -116,6 +118,73 @@ def listar_evaluaciones_admin(
 ) -> AdminEvaluationPage:
     try:
         return service.list_evaluations(query)
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get("/evaluaciones/analitica/tendencia", response_model=EvaluationTrend,
+    dependencies=[Depends(require_permission("admin:evaluaciones:leer"))])
+def tendencia_evaluaciones(query: Annotated[AnalyticsQuery, Query()], service: Annotated[AdminService, Depends(get_admin_service)]) -> EvaluationTrend:
+    if not query.module_key or not query.desde or not query.hasta or not query.grano:
+        raise HTTPException(422, "Selecciona familia, periodo y unidad de origen")
+    if query.desde > query.hasta:
+        raise HTTPException(422, "Intervalo de fechas inválido")
+    if query.weight_min is not None and query.weight_max is not None and query.weight_min > query.weight_max:
+        raise HTTPException(422, "Intervalo de peso inválido")
+    try:
+        return service.evaluation_trend(query)
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get("/evaluaciones/analitica", response_model=EvaluationAnalytics,
+    dependencies=[Depends(require_permission("admin:evaluaciones:leer"))])
+def analizar_evaluaciones(query: Annotated[AnalyticsQuery, Query()], service: Annotated[AdminService, Depends(get_admin_service)]) -> EvaluationAnalytics:
+    if query.module_key is None:
+        raise HTTPException(422, "Selecciona una familia de evaluación")
+    if query.weight_min is not None and query.weight_max is not None and query.weight_min > query.weight_max:
+        raise HTTPException(422, "Intervalo de peso inválido")
+    try:
+        return service.evaluation_analytics(query)
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get('/evaluaciones/exportar', response_class=StreamingResponse,
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def exportar_evaluaciones(query: Annotated[AdminEvaluationQuery, Query()], service: Annotated[AdminService, Depends(get_admin_service)]):
+    return StreamingResponse(service.export_evaluations(query), media_type='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename="evaluaciones.csv"'})
+
+
+@router.get('/evaluaciones/ficha/{module_key}/{source_id}', response_model=AdminEvaluationDetail,
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def ficha_evaluacion(module_key: ModuleKey, source_id: int,
+    service: Annotated[AdminService, Depends(get_admin_service)], source_table: str = 'ev_evaluacion'):
+    try:
+        detail = service.get_evaluation(module_key, source_id, source_table)
+        if detail is None:
+            raise HTTPException(404, 'Evaluación no encontrada')
+        data = dict(detail.detalle)
+        samples = data.pop('mediciones' if module_key == 'ramas' else 'observaciones', [])
+        data['total_observaciones'] = len(samples or [])
+        return detail.model_copy(update={'detalle': data})
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get('/evaluaciones/observaciones/{module_key}/{source_id}', response_model=ObservationPage,
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def observaciones_evaluacion(module_key: ModuleKey, source_id: int,
+    service: Annotated[AdminService, Depends(get_admin_service)],
+    page: Annotated[int, Query(ge=1)] = 1, page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+    source_table: str = 'ev_evaluacion'):
+    try:
+        detail = service.get_evaluation(module_key, source_id, source_table)
+        if detail is None:
+            raise HTTPException(404, 'Evaluación no encontrada')
+        samples = detail.detalle.get('mediciones' if module_key == 'ramas' else 'observaciones') or []
+        return ObservationPage(items=samples[(page-1)*page_size:page*page_size],total=len(samples),page=page,page_size=page_size)
     except AdminRepositoryError as error:
         raise _unavailable(error) from error
 

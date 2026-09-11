@@ -46,6 +46,7 @@ from .schemas import (
     QAReviewRequest,
     UserMutationRequest,
 )
+from .analytics import AnalyticsQuery, EvaluationTrend, EvaluationAnalytics
 
 TEMPLATE_HEADERS = [
     "client_id",
@@ -88,6 +89,15 @@ class AdminService:
 
     def evaluation_summary(self, query: AdminEvaluationQuery) -> AdminEvaluationSummary:
         return self._repository.evaluation_summary(query)
+
+    def evaluation_trend(self, query: AnalyticsQuery) -> EvaluationTrend:
+        return self._repository.evaluation_trend(query)
+
+    def evaluation_analytics(self, query: AnalyticsQuery) -> EvaluationAnalytics:
+        return self._repository.evaluation_analytics(query)
+
+    def export_evaluations(self, query: AdminEvaluationQuery):
+        return self._repository.export_evaluations(query)
 
     def get_evaluation(
         self, module_key: ModuleKey, source_id: int, source_table: str | None = None

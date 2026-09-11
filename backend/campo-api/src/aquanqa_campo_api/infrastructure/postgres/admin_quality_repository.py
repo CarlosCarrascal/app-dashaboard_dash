@@ -30,7 +30,7 @@ class AdminQualityRepositoryMixin:
 
     def qa_summary(self) -> AdminQASummary:
         try:
-            with self._connections.connect() as connection, connection.cursor() as cursor:
+            with self._connections.read() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT count(*) AS total FROM qua.rechazos")
                 total = int(cursor.fetchone()["total"])
                 cursor.execute(
@@ -99,7 +99,7 @@ class AdminQualityRepositoryMixin:
             "revision.usuario_id AS revisado_por"
         )
         try:
-            with self._connections.connect() as connection, connection.cursor() as cursor:
+            with self._connections.read() as connection, connection.cursor() as cursor:
                 cursor.execute(
                     f"SELECT count(*) AS total FROM {source} WHERE {where}", params
                 )

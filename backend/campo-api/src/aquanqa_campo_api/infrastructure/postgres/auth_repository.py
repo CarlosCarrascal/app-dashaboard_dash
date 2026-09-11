@@ -32,7 +32,7 @@ class PostgresAuthRepository:
 
     def _find(self, predicate: str, params: tuple[Any, ...]) -> dict[str, Any] | None:
         try:
-            with self._connections.connect() as connection, connection.cursor() as cursor:
+            with self._connections.read() as connection, connection.cursor() as cursor:
                 cursor.execute(
                     f"""
                     SELECT u.usuario_id, u.email, u.nombre, u.hash_password, u.activo,
