@@ -1,0 +1,8 @@
+{
+  "/v1": {
+    "target": "https://aquanqa-campo-api.onrender.com",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
+  }
+}

@@ -1,0 +1,128 @@
+@if (vm.detailLoading()) {
+  <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/20" role="status">
+    <span class="field-panel p-6">Cargando evaluación…</span>
+  </div>
+}
+@if (vm.selected(); as detail) {
+  <button
+    class="fixed inset-0 z-40 bg-black/25"
+    aria-label="Cerrar detalle"
+    (click)="vm.selected.set(null); vm.editing.set(false)"
+  ></button>
+  <aside
+    class="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col bg-white shadow-xl"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="vm.editing() ? 'Corregir evaluación' : 'Detalle de evaluación'"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    (keydown.escape)="vm.selected.set(null); vm.editing.set(false)"
+  >
+    <header class="flex items-center justify-between gap-3 border-b border-line p-5">
+      <div>
+        <p class="mb-1 text-xs text-muted">
+          {{ detail.fundo }} · {{ detail.modulo }} · {{ detail.lote }}
+        </p>
+        <h2 class="!m-0 !text-xl !font-medium">
+          {{ vm.editing() ? 'Corregir evaluación' : vm.title() }}
+        </h2>
+        <p class="mt-1 text-xs text-muted">
+          {{ detail.fecha }} · {{ detail.evaluador || 'Sin evaluador' }}
+        </p>
+      </div>
+      <button
+        appFieldButton
+        aria-label="Cerrar evaluación"
+        (click)="vm.selected.set(null); vm.editing.set(false)"
+      >
+        <app-icon name="close" />
+      </button>
+    </header>
+    <div class="min-h-0 flex-1 overflow-y-auto p-5">
+      @if (!vm.editing()) {
+        <div class="mb-5 flex flex-wrap gap-2">
+          @if (vm.canCorrectDetail(detail)) {
+            <button appFieldButton (click)="vm.startCorrection(detail)">
+              <app-icon name="edit" />Corregir
+            </button>
+          }
+          <button appFieldButton (click)="vm.focusOnLot(detail)">Historial del lote</button>
+          @if (detail.evaluador_id) {
+            <button appFieldButton (click)="vm.focusOnEvaluator(detail)">
+              Registros del evaluador
+            </button>
+          }
+        </div>
+        @if (vm.errorMessage()) {
+          <p class="mb-3 text-red-700" role="alert">{{ vm.errorMessage() }}</p>
+        }
+        <dl class="grid grid-cols-2 gap-x-5 gap-y-4">
+          @for (field of vm.detailEntries(detail); track field.label) {
+            <div class="min-w-0 border-b border-line pb-3">
+              <dt class="text-xs text-muted">{{ field.label }}</dt>
+              <dd class="mt-1 break-words text-sm font-medium">{{ field.value }}</dd>
+            </div>
+          }
+        </dl>
+        @if (vm.observationTotal()) {
+          <h3 class="!mb-3 !mt-6 !text-sm !font-medium">
+            Observaciones · {{ vm.observationTotal() }}
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-line text-xs text-muted">
+                  <th class="py-3 font-medium">Muestra</th>
+                  <th class="font-medium">Estado</th>
+                  <th class="text-right font-medium">Diámetro mm</th>
+                  <th class="text-right font-medium">Peso g</th>
+                  <th class="font-medium">Revisión</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of vm.pagedObservations(detail); track $index) {
+                  <tr class="border-b border-line">
+                    <td class="py-3">{{ item['numero_muestra'] ?? item['nro_rama'] ?? '—' }}</td>
+                    <td>{{ item['estado_codigo'] ?? '—' }}</td>
+                    <td class="text-right">
+                      {{ vm.formatCell(item['diametro_mm'] ?? item['diametro']) }}
+                    </td>
+                    <td class="text-right">{{ vm.formatCell(item['peso_g']) }}</td>
+                    <td class="pl-3 text-xs">
+                      {{
+                        item['sospechoso'] || vm.numberValuePublic(item['numero_medicion']) > 1
+                          ? 'Con incidencia'
+                          : '—'
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-4 flex items-center justify-between gap-2 text-xs">
+            <button
+              appFieldButton
+              [disabled]="vm.observationsLoading() || vm.observationPage() <= 1"
+              (click)="vm.loadObservationPage(vm.observationPage() - 1)"
+            >
+              Anterior</button
+            ><span>Página {{ vm.observationPage() }}</span
+            ><button
+              appFieldButton
+              [disabled]="
+                vm.observationsLoading() ||
+                vm.observationPage() * vm.observationSize >= vm.observationTotal()
+              "
+              (click)="vm.loadObservationPage(vm.observationPage() + 1)"
+            >
+              Siguiente
+            </button>
+          </div>
+        }
+      } @else {
+        <app-evaluation-correction />
+      }
+    </div>
+  </aside>
+}

@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  color: #89928e;
+  font-size: 0.61rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  margin: 5px 0 4px;
+  color: var(--aa-ink);
+  font-size: clamp(1.48rem, 2.2vw, 2rem);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--aa-muted);
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-actions {
+    justify-content: flex-start;
+  }
+}

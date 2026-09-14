@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.qa-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.qa-queue {
+  min-height: 280px;
+  max-height: calc(100dvh - 375px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.qa-reasons {
+  max-height: calc(100dvh - 350px);
+  overflow-y: auto;
+}
+.qa-inspector {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset: 12px 12px 12px auto;
+  width: min(420px, calc(100% - 24px));
+  z-index: 50;
+}
+.qa-inspector-body {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100dvh - 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (min-width: 1280px) {
+  .qa-grid {
+    grid-template-columns: 216px minmax(0, 1fr);
+  }
+  .qa-grid.has-selection {
+    grid-template-columns: 216px minmax(0, 1fr) 340px;
+  }
+  .qa-inspector {
+    position: static;
+    width: auto;
+    z-index: auto;
+  }
+  .qa-inspector-body {
+    max-height: calc(100dvh - 310px);
+  }
+}
+@media (max-width: 767px) {
+  .qa-queue {
+    max-height: max(280px, calc(100dvh - 445px));
+  }
+}

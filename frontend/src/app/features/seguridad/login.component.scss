@@ -1,0 +1,11 @@
+:host { display: block; height: 100dvh; overflow-y: auto; }
+.login-help summary::-webkit-details-marker { display: none; }
+.login-title { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; letter-spacing: -.035em; color: var(--color-ink); }
+.login-input { display: block; width: 100%; min-height: 48px; border: 1px solid #dce2dc; border-radius: 8px; padding: 12px 14px; background: white; color: var(--color-ink); font-size: 16px; line-height: 22px; transition: border-color .15s; }
+.login-input::placeholder { color: #737d76; }
+.login-input:hover { border-color: #adbbb1; }
+.login-input:focus { border-color: var(--color-meadow); }
+.login-input[aria-invalid='true'] { border-color: #bb4747; }
+.login-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px white inset; -webkit-text-fill-color: var(--color-ink); caret-color: var(--color-ink); }
+@media (min-width: 640px) { .login-input { font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { .login-input { transition: none; } }

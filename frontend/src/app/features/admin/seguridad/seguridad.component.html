@@ -1,0 +1,697 @@
+<div class="field-workspace min-w-0 min-h-dvh bg-canvas">
+  <header
+    class="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-3 md:px-6"
+  >
+    <div class="flex min-w-0 items-center gap-3">
+      <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-forest text-lime"
+        ><app-icon name="users" class="text-lg"
+      /></span>
+      <div>
+        <h1 class="!m-0 !text-[22px] !font-semibold !leading-tight">Usuarios y accesos</h1>
+        <p class="mt-1 text-xs text-muted">Administración · Roles y permisos</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button
+        class="field-button"
+        aria-label="Actualizar accesos"
+        [disabled]="loading()"
+        (click)="refresh()"
+      >
+        <app-icon name="refresh" />
+      </button>
+      @if (canManage()) {
+        <button class="field-primary" (click)="newUser()">
+          <app-icon name="person" />Nuevo usuario
+        </button>
+      }
+    </div>
+  </header>
+  <nav
+    aria-label="Administración de accesos"
+    class="flex gap-1 border-b border-line bg-white px-4 md:px-6"
+  >
+    @for (item of navigation; track item.label; let i = $index) {
+      <button
+        class="access-tab"
+        [class.is-active]="selectedTab() === i"
+        [attr.aria-pressed]="selectedTab() === i"
+        (click)="selectTab(i)"
+      >
+        <app-icon [name]="item.icon" /><span>{{ item.label }}</span>
+      </button>
+    }
+  </nav>
+  <div class="min-w-0 p-4 md:p-6">
+    @if (errorMessage() && !editorOpen()) {
+      <p role="alert" class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+        {{ errorMessage() }}
+      </p>
+    }
+    @if (successMessage()) {
+      <p role="status" class="mb-4 rounded-xl bg-meadow/10 p-4 text-sm text-forest">
+        {{ successMessage() }}
+      </p>
+    }
+    @if (selectedTab() === 0) {
+      <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="!m-0 !text-lg !font-semibold">Directorio</h2>
+          <p class="mt-1 text-xs text-muted">
+            Personas, perfiles y acceso a la estructura agrícola.
+          </p>
+        </div>
+        <p class="text-xs text-muted">
+          <strong class="text-lg font-medium text-ink">{{ users()?.meta?.total ?? '—' }}</strong>
+          usuarios en la consulta
+        </p>
+      </div>
+      <div class="access-directory">
+        <section
+          class="field-panel min-w-0 self-start overflow-hidden"
+          aria-label="Directorio de usuarios"
+          [attr.aria-busy]="loading()"
+        >
+          <form
+            [formGroup]="filters"
+            (ngSubmit)="applyFilters()"
+            class="flex flex-wrap items-center gap-2 border-b border-line p-3"
+          >
+            <label class="flex min-w-0 flex-1 items-center gap-3 rounded-lg bg-canvas px-3"
+              ><app-icon name="search" class="text-muted" /><input
+                class="min-h-11 w-full min-w-0 bg-transparent text-sm"
+                formControlName="search"
+                placeholder="Nombre o correo"
+                aria-label="Buscar usuarios"
+            /></label>
+            <button class="field-button" type="submit">Buscar</button>
+            @if (filters.controls.search.value) {
+              <button
+                class="field-button"
+                type="button"
+                aria-label="Limpiar búsqueda"
+                (click)="clearFilters()"
+              >
+                <app-icon name="close" />
+              </button>
+            }
+          </form>
+          <div
+            class="flex min-h-10 items-center justify-between gap-2 border-b border-line bg-canvas/40 px-4 text-xs text-muted"
+          >
+            <span>{{
+              loading()
+                ? 'Actualizando directorio…'
+                : 'Selecciona una persona para revisar su acceso'
+            }}</span
+            ><app-icon name="users" />
+          </div>
+          @if (loading() && !users()) {
+            <div role="status" class="p-8 text-sm text-muted">Cargando usuarios…</div>
+          }
+          <ul class="divide-y divide-line">
+            @for (row of users()?.items ?? []; track row['usuario_id']) {
+              <li>
+                <button
+                  class="access-user-row"
+                  [class.is-active]="selectedUser()?.['usuario_id'] === row['usuario_id']"
+                  [attr.aria-pressed]="selectedUser()?.['usuario_id'] === row['usuario_id']"
+                  [attr.aria-label]="'Ver acceso de ' + row['nombre']"
+                  (click)="selectUser(row)"
+                >
+                  <span class="access-avatar">{{ initials(row) }}</span>
+                  <span class="min-w-0 flex-1"
+                    ><strong class="block break-words text-sm font-medium">{{
+                      display(row['nombre'])
+                    }}</strong
+                    ><span class="mt-1 block break-all text-xs text-muted">{{
+                      display(row['email'])
+                    }}</span
+                    ><span class="mt-2 flex flex-wrap items-center gap-2 text-xs"
+                      ><span class="text-forest">{{ roleLabel(row['rol']) }}</span
+                      ><span class="text-muted"
+                        >·
+                        {{
+                          scopes(row).length
+                            ? scopes(row).length + ' alcance(s)'
+                            : 'Sin alcance explícito'
+                        }}</span
+                      ></span
+                    ></span
+                  >
+                  <span class="access-status" [class.inactive]="!row['activo']"
+                    ><span class="size-1.5 rounded-full bg-current"></span
+                    >{{ row['activo'] ? 'Activo' : 'Inactivo' }}</span
+                  >
+                  <app-icon name="chevronRight" class="text-xs text-muted" />
+                </button>
+              </li>
+            } @empty {
+              @if (!loading()) {
+                <li class="px-5 py-14 text-center">
+                  <app-icon name="search" class="mb-4 text-3xl text-muted" />
+                  <p class="font-medium">Sin coincidencias</p>
+                  <p class="mt-2 text-xs text-muted">Prueba con otro nombre o correo.</p>
+                  <button class="field-button mt-4" (click)="clearFilters()">
+                    Restablecer búsqueda
+                  </button>
+                </li>
+              }
+            }
+          </ul>
+          <footer
+            class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-xs text-muted"
+          >
+            <span>Página {{ users()?.meta?.page ?? 1 }} de {{ users()?.meta?.pages || 1 }}</span>
+            <div class="flex gap-2">
+              <button
+                class="field-button"
+                aria-label="Página anterior"
+                [disabled]="loading() || (users()?.meta?.page ?? 1) <= 1"
+                (click)="page((users()?.meta?.page ?? 1) - 1)"
+              >
+                <app-icon name="chevronLeft" /></button
+              ><button
+                class="field-button"
+                aria-label="Página siguiente"
+                [disabled]="loading() || (users()?.meta?.page ?? 1) >= (users()?.meta?.pages ?? 1)"
+                (click)="page((users()?.meta?.page ?? 1) + 1)"
+              >
+                <app-icon name="chevronRight" />
+              </button>
+            </div>
+          </footer>
+        </section>
+        <aside
+          id="access-inspector"
+          tabindex="-1"
+          class="access-inspector field-panel self-start overflow-hidden"
+          [class.has-selection]="selectedUser()"
+          aria-label="Ficha de acceso"
+        >
+          @if (selectedUser(); as row) {
+            <div class="flex items-center justify-between border-b border-line px-5 py-3">
+              <span class="text-xs font-medium text-muted">FICHA DE ACCESO</span
+              ><button
+                class="field-button"
+                aria-label="Cerrar ficha"
+                (click)="selectedUser.set(null)"
+              >
+                <app-icon name="close" />
+              </button>
+            </div>
+            <div class="border-b border-line bg-forest p-5 text-white">
+              <span
+                class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-white/10 text-lg text-lime"
+                >{{ initials(row) }}</span
+              >
+              <h3 class="!m-0 break-words !text-lg !font-semibold !text-white">
+                {{ display(row['nombre']) }}
+              </h3>
+              <p class="mt-2 break-all text-xs text-white/80">{{ display(row['email']) }}</p>
+              <div class="mt-4 flex items-center gap-2 text-xs">
+                <span
+                  class="size-2 rounded-full"
+                  [class.bg-lime]="row['activo']"
+                  [class.bg-white]="!row['activo']"
+                ></span
+                >{{ row['activo'] ? 'Usuario activo' : 'Usuario inactivo' }}
+              </div>
+            </div>
+            <div class="p-5">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs text-muted">Rol asignado</p>
+                  <p class="mt-1 font-medium">{{ roleLabel(row['rol']) }}</p>
+                </div>
+                <button
+                  class="field-button"
+                  aria-label="Consultar rol del usuario"
+                  (click)="inspectRole(row['rol'])"
+                >
+                  <app-icon name="arrowRight" />
+                </button>
+              </div>
+              <dl class="mt-5 space-y-4 border-t border-line pt-5 text-sm">
+                <div>
+                  <dt class="text-xs text-muted">Evaluador vinculado</dt>
+                  <dd class="mt-1">{{ display(row['evaluador']) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-muted">Último acceso</dt>
+                  <dd class="mt-1">
+                    {{
+                      row['ultimo_acceso']
+                        ? (display(row['ultimo_acceso']) | date: 'dd/MM/yyyy HH:mm')
+                        : 'Sin acceso registrado'
+                    }}
+                  </dd>
+                </div>
+              </dl>
+              <h4 class="mb-3 mt-5 border-t border-line pt-5 text-sm font-semibold">
+                Alcance agrícola
+              </h4>
+              @for (scope of scopes(row); track $index) {
+                <p class="mb-2 flex gap-2 rounded-lg bg-canvas p-3 text-xs leading-5">
+                  <app-icon name="structure" class="mt-1 shrink-0 text-forest" />{{
+                    scopeLabel(scope)
+                  }}
+                </p>
+              } @empty {
+                <p class="text-xs leading-5 text-muted">
+                  Sin alcances explícitos registrados. El acceso efectivo depende del rol y de las
+                  reglas del sistema.
+                </p>
+              }
+              <details class="mt-5 border-t border-line pt-2">
+                <summary
+                  class="flex min-h-11 cursor-pointer items-center justify-between text-sm font-medium"
+                >
+                  Capacidades del rol
+                  <span class="rounded-lg bg-canvas px-2 py-1 text-xs">{{
+                    userPermissions(row).length
+                  }}</span>
+                </summary>
+                @for (permission of userPermissions(row); track permission.codigo) {
+                  <p class="flex gap-2 border-t border-line py-3 text-xs leading-5">
+                    <app-icon name="check" class="mt-1 shrink-0 text-meadow" />{{
+                      permission.descripcion || permission.codigo
+                    }}
+                  </p>
+                }
+              </details>
+              @if (canManage()) {
+                <button class="field-primary mt-5 w-full" (click)="editUser(row)">
+                  <app-icon name="edit" />Editar usuario y acceso
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="bg-forest p-6 text-white">
+              <app-icon name="quality" class="text-3xl text-lime" />
+              <h3 class="!mb-0 !mt-5 !text-lg !font-medium !text-white">El acceso, en contexto</h3>
+              <p class="mt-2 text-xs leading-6 text-white/80">
+                Selecciona una persona para consultar su rol, sus capacidades y su alcance agrícola.
+              </p>
+            </div>
+            <div class="p-5">
+              <p class="mb-3 text-xs font-medium text-muted">PERFILES DISPONIBLES</p>
+              @for (role of roles()?.items ?? []; track role['codigo']) {
+                <button
+                  class="flex min-h-14 w-full items-center justify-between gap-3 border-b border-line text-left"
+                  (click)="inspectRole(role['codigo'])"
+                >
+                  <span class="text-sm">{{ roleLabel(role['codigo']) }}</span
+                  ><span class="text-xs text-muted"
+                    >{{ permissions(role).length }} permisos <app-icon name="chevronRight"
+                  /></span>
+                </button>
+              }
+              <button class="field-button mt-5 w-full" (click)="selectTab(2)">
+                <app-icon name="grid" />Comparar permisos
+              </button>
+            </div>
+          }
+        </aside>
+      </div>
+    } @else if (selectedTab() === 1) {
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="!m-0 !text-lg !font-semibold">Roles de acceso</h2>
+          <p class="mt-1 text-xs text-muted">Selecciona un perfil y revisa qué puede hacer.</p>
+        </div>
+        <button class="field-button" (click)="selectTab(2)">
+          <app-icon name="grid" />Comparar todos
+        </button>
+      </div>
+      <div class="grid min-w-0 items-start gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <nav aria-label="Roles disponibles" class="grid grid-cols-2 gap-2 lg:grid-cols-1">
+          @for (role of roles()?.items ?? []; track role['rol_id']) {
+            <button
+              class="access-role"
+              [class.is-active]="selectedRole() === role"
+              [attr.aria-pressed]="selectedRole() === role"
+              (click)="chooseRole(display(role['codigo']))"
+            >
+              <app-icon name="quality" class="text-xl" /><strong
+                class="mt-3 block text-sm font-medium"
+                >{{ roleLabel(role['codigo']) }}</strong
+              ><span class="mt-1 block text-xs"
+                >{{ permissions(role).length }} permisos asignados</span
+              >
+            </button>
+          }
+        </nav>
+        @if (selectedRole(); as role) {
+          <section class="field-panel overflow-hidden" aria-label="Permisos del rol">
+            <div class="flex flex-wrap items-start justify-between gap-4 bg-forest p-6 text-white">
+              <div>
+                <p class="mb-2 text-xs text-lime">PERFIL DE ACCESO</p>
+                <h3 class="!m-0 !text-[22px] !font-semibold !text-white">
+                  {{ roleLabel(role['codigo']) }}
+                </h3>
+                <p class="mt-3 max-w-xl text-sm leading-6 text-white/80">
+                  {{ display(role['descripcion']) }}
+                </p>
+              </div>
+              <span class="rounded-lg border border-white/20 px-3 py-2 text-xs"
+                >Configuración de solo lectura</span
+              >
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
+              <label class="flex min-w-0 flex-1 basis-full items-center gap-3 sm:basis-0"
+                ><app-icon name="search" class="text-muted" /><input
+                  class="field-input max-w-md"
+                  placeholder="Buscar capacidad"
+                  aria-label="Buscar permiso del rol"
+                  [value]="permissionSearch()"
+                  (input)="permissionSearch.set($any($event.target).value)" /></label
+              ><span class="text-xs text-muted"
+                >{{ permissions(role).length }} permisos del perfil</span
+              >
+            </div>
+            <div class="grid gap-5 p-5 xl:grid-cols-2">
+              @for (group of permissionGroups(); track group.name) {
+                <section>
+                  <h4 class="mb-2 flex items-center gap-2 text-xs font-semibold text-forest">
+                    <app-icon name="grid" />{{ permissionArea(group.items[0].codigo) }}
+                  </h4>
+                  @for (permission of group.items; track permission.codigo) {
+                    <div class="flex items-start gap-3 border-b border-line py-3">
+                      <span
+                        class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-meadow/10 text-xs text-forest"
+                        ><app-icon name="check"
+                      /></span>
+                      <div class="min-w-0">
+                        <p class="text-sm leading-5">
+                          {{ permission.descripcion || permission.codigo }}
+                        </p>
+                        <code class="mt-1 block break-all text-[11px] text-muted">{{
+                          permission.codigo
+                        }}</code>
+                      </div>
+                    </div>
+                  }
+                </section>
+              } @empty {
+                <p class="py-8 text-sm text-muted">No hay permisos para esta consulta.</p>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    } @else {
+      <div class="mb-5">
+        <h2 class="!m-0 !text-lg !font-semibold">Matriz de permisos</h2>
+        <p class="mt-1 text-xs text-muted">Compara las capacidades asignadas a cada perfil.</p>
+      </div>
+      <section class="field-panel overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
+          <label class="flex min-w-0 flex-1 basis-full items-center gap-3 sm:basis-0"
+            ><app-icon name="search" class="text-muted" /><input
+              class="field-input max-w-md"
+              placeholder="Buscar acción o descripción"
+              aria-label="Buscar en la matriz"
+              [value]="permissionSearch()"
+              (input)="permissionSearch.set($any($event.target).value)" /></label
+          ><span class="text-xs text-muted"
+            >{{ permissionMatrix().length }} capacidades · ✓ Asignado · — No asignado</span
+          >
+        </div>
+        <div
+          class="max-h-[70dvh] overflow-auto"
+          tabindex="0"
+          role="region"
+          aria-label="Comparación de permisos desplazable"
+        >
+          <table
+            class="access-matrix w-full min-w-[680px] text-left text-sm"
+            aria-label="Matriz de permisos por rol"
+          >
+            <thead>
+              <tr>
+                <th class="min-w-64">Capacidad</th>
+                @for (role of roles()?.items ?? []; track role['codigo']) {
+                  <th class="text-center">
+                    <button
+                      class="min-h-11 font-medium hover:underline"
+                      (click)="inspectRole(role['codigo'])"
+                    >
+                      {{ roleLabel(role['codigo']) }}
+                    </button>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (permission of permissionMatrix(); track permission.codigo) {
+                <tr>
+                  <th class="font-normal">
+                    <span class="mb-1 block text-[11px] text-forest">{{
+                      permissionArea(permission.codigo)
+                    }}</span
+                    >{{ permission.descripcion || permission.codigo
+                    }}<code class="mt-1 block text-[10px] text-muted">{{ permission.codigo }}</code>
+                  </th>
+                  @for (role of roles()?.items ?? []; track role['codigo']) {
+                    <td class="text-center">
+                      @if (permission.roles.includes(display(role['codigo']))) {
+                        <span
+                          class="inline-flex size-8 items-center justify-center rounded-full bg-meadow/10 text-forest"
+                          aria-label="Asignado"
+                          ><app-icon name="check"
+                        /></span>
+                      } @else {
+                        <span class="text-muted" aria-label="No asignado">—</span>
+                      }
+                    </td>
+                  }
+                </tr>
+              } @empty {
+                <tr>
+                  <td
+                    [attr.colspan]="(roles()?.items?.length ?? 0) + 1"
+                    class="!p-10 text-center text-muted"
+                  >
+                    No hay permisos que coincidan.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  </div>
+  @if (editorOpen()) {
+    <div class="fixed inset-0 z-40 bg-black/25" (click)="cancelEditor()"></div>
+    <aside
+      class="security-drawer rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Editor de usuario"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      (keydown.escape)="cancelEditor()"
+    >
+      <div class="flex items-center justify-between border-b border-line p-5">
+        <div>
+          <p class="mb-1 text-xs text-muted">Identidad y acceso</p>
+          <h2 class="!m-0 !text-xl !font-semibold">
+            {{ editingUserId() ? 'Editar usuario' : 'Nuevo usuario' }}
+          </h2>
+        </div>
+        <button
+          class="field-button"
+          aria-label="Cerrar editor"
+          [disabled]="saving()"
+          (click)="cancelEditor()"
+        >
+          <app-icon name="close" />
+        </button>
+      </div>
+      <form class="flex min-h-0 flex-1 flex-col" [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <nav aria-label="Secciones del usuario" class="grid grid-cols-3 border-b border-line px-2">
+          @for (section of editorSections; track section; let i = $index) {
+            <button
+              type="button"
+              class="access-tab !px-2 !text-xs"
+              [class.is-active]="editorSection() === i"
+              [attr.aria-pressed]="editorSection() === i"
+              (click)="editorSection.set(i)"
+            >
+              {{ i + 1 }} · {{ section }}
+            </button>
+          }
+        </nav>
+        <div class="min-h-0 flex-1 overflow-auto p-5">
+          @if (errorMessage()) {
+            <p role="alert" class="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+              {{ errorMessage() }}
+            </p>
+          }
+          <section [hidden]="editorSection() !== 0" aria-label="Identidad del usuario">
+            <h3 class="mb-2 text-sm font-semibold">Identidad y estado</h3>
+            <p class="mb-5 text-xs leading-5 text-muted">
+              Datos de la persona y credenciales de acceso.
+            </p>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="field-label"
+                >Nombre completo *<input
+                  class="field-input"
+                  formControlName="nombre"
+                  autocomplete="name" /></label
+              ><label class="field-label"
+                >Correo *<input
+                  class="field-input"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+              /></label>
+              <label class="field-label sm:col-span-2"
+                >{{ editingUserId() ? 'Nueva contraseña (opcional)' : 'Contraseña local (opcional)'
+                }}<input
+                  class="field-input"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="new-password"
+                /><span class="text-xs text-muted">{{
+                  editingUserId()
+                    ? 'Déjala vacía para conservar la contraseña actual.'
+                    : 'Sin contraseña local, el usuario necesitará otro método de autenticación habilitado.'
+                }}</span></label
+              >
+              <label class="flex min-h-11 items-center gap-3 text-sm sm:col-span-2"
+                ><input
+                  class="size-4 accent-forest"
+                  type="checkbox"
+                  formControlName="activo"
+                />Usuario activo</label
+              >
+            </div>
+            @if (userForm.controls.nombre.invalid && userForm.controls.nombre.touched) {
+              <p class="mt-3 text-xs text-red-800">Escribe el nombre de la persona.</p>
+            }
+            @if (userForm.controls.email.invalid && userForm.controls.email.touched) {
+              <p class="mt-3 text-xs text-red-800">Introduce un correo válido.</p>
+            }
+          </section>
+          <section [hidden]="editorSection() !== 1" aria-label="Perfil del usuario">
+            <h3 class="mb-2 text-sm font-semibold">Perfil y vínculo</h3>
+            <p class="mb-5 text-xs leading-5 text-muted">
+              El rol determina las acciones disponibles. Revisa sus capacidades antes de guardar.
+            </p>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="field-label"
+                >Rol *<select class="field-input" formControlName="rol">
+                  @for (role of roles()?.items ?? []; track role['rol_id']) {
+                    <option [ngValue]="role['codigo']">{{ roleLabel(role['codigo']) }}</option>
+                  }
+                </select></label
+              ><label class="field-label"
+                >Evaluador vinculado<select class="field-input" formControlName="evaluador_id">
+                  <option [ngValue]="null">Sin vínculo</option>
+                  @for (option of optionsFor('evaluadores'); track option.value) {
+                    <option [ngValue]="option.value">{{ option.label }}</option>
+                  }
+                </select></label
+              >
+            </div>
+            <details class="mt-4 rounded-xl border border-line bg-canvas p-4">
+              <summary class="min-h-11 cursor-pointer text-sm font-medium text-forest">
+                Ver capacidades del rol seleccionado ({{
+                  userPermissions({ rol: userForm.controls.rol.value }).length
+                }})
+              </summary>
+              @for (
+                permission of userPermissions({ rol: userForm.controls.rol.value });
+                track permission.codigo
+              ) {
+                <p class="flex gap-2 border-t border-line py-3 text-xs">
+                  <app-icon name="check" class="text-meadow" />{{
+                    permission.descripcion || permission.codigo
+                  }}
+                </p>
+              }
+            </details>
+          </section>
+          <section [hidden]="editorSection() !== 2" aria-label="Territorio y auditoría">
+            <section formArrayName="alcances">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <h3 class="text-sm font-semibold">Alcance agrícola</h3>
+                <button class="field-button" type="button" (click)="addScope()">Añadir</button>
+              </div>
+              <p class="mb-4 text-xs text-muted">
+                Selecciona el nivel territorial que corresponda a cada alcance.
+              </p>
+              @if (referenceLoading()) {
+                <p role="status" class="mb-3 text-xs text-muted">Cargando estructura agrícola…</p>
+              }
+              @if (referenceError()) {
+                <button class="field-button mb-3" type="button" (click)="loadReferenceOptions()">
+                  Reintentar carga de catálogos
+                </button>
+              }
+              @for (scope of scopeControls(); track scope; let i = $index) {
+                <div class="mb-3 rounded-xl border border-line bg-canvas p-3" [formGroupName]="i">
+                  <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-medium">Alcance {{ i + 1 }}</span
+                    ><button
+                      class="field-button !bg-white"
+                      type="button"
+                      [attr.aria-label]="'Eliminar alcance ' + (i + 1)"
+                      (click)="removeScope(i)"
+                    >
+                      <app-icon name="close" />
+                    </button>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    @for (field of scopeFields; track field.key) {
+                      <label class="field-label"
+                        >{{ field.label
+                        }}<select class="field-input !bg-white" [formControlName]="field.key">
+                          <option [ngValue]="null">Sin especificar</option>
+                          @for (option of optionsFor(field.resource); track option.value) {
+                            <option [ngValue]="option.value">{{ option.label }}</option>
+                          }
+                        </select></label
+                      >
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+            <label class="field-label mt-5"
+              >Motivo del cambio<textarea
+                class="field-input"
+                rows="3"
+                formControlName="comentario"
+                placeholder="Describe el cambio para el registro de auditoría"
+              ></textarea>
+            </label>
+          </section>
+        </div>
+        <footer class="flex flex-wrap justify-end gap-2 border-t border-line p-4">
+          @if (editorSection() < 2) {
+            <button
+              class="field-button mr-auto"
+              type="button"
+              (click)="editorSection.set(editorSection() + 1)"
+            >
+              Siguiente<app-icon name="arrowRight" />
+            </button>
+          }
+          <button class="field-button" type="button" [disabled]="saving()" (click)="cancelEditor()">
+            Cancelar</button
+          ><button
+            class="field-primary"
+            type="submit"
+            [disabled]="saving() || referenceLoading() || referenceError()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar usuario' }}
+          </button>
+        </footer>
+      </form>
+    </aside>
+  }
+</div>

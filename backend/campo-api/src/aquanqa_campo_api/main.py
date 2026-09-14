@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api.v1.router import router as api_v1_router
+from .api.analytics_compression import AnalyticsCompressionMiddleware
 from .core.logging import configure_logging
 from .core.openapi import OPENAPI_TAGS, openapi_servers
 from .core.settings import Settings, get_settings
@@ -47,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.state.postgres_connections = connections
     application.state.settings = settings
+    application.add_middleware(AnalyticsCompressionMiddleware, api_prefix=settings.api_prefix)
     application.include_router(api_v1_router, prefix=settings.api_prefix)
     return application
 

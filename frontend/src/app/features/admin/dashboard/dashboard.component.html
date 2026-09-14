@@ -1,0 +1,90 @@
+<app-page-header
+  eyebrow="INICIO"
+  title="Panel operativo"
+  subtitle="Seguimiento de captura, cobertura y calidad con información real del periodo disponible."
+>
+  @if (canSeeEvaluations()) {
+    <a mat-flat-button color="primary" routerLink="/admin/evaluaciones">
+      <app-icon name="evaluations" />
+      Abrir evaluaciones
+    </a>
+  }
+</app-page-header>
+
+@if (loading()) {
+  <section class="state-card"><span class="spinner"></span><h2>Preparando tu espacio de trabajo</h2></section>
+} @else if (errorMessage()) {
+  <section class="state-card error-state" role="alert"><app-icon name="warning" /><h2>No se pudo cargar el inicio</h2><p>{{ errorMessage() }}</p></section>
+} @else {
+  @if (summary(); as current) {
+    <section class="metric-strip" aria-label="Actividad de evaluaciones">
+      <article><span>Evaluaciones</span><strong>{{ formatNumber(current.total) }}</strong><small>capturas disponibles</small></article>
+      <article><span>Lotes activos</span><strong>{{ formatNumber(current.lotes) }}</strong><small>con actividad registrada</small></article>
+      <article><span>Evaluadores</span><strong>{{ formatNumber(current.evaluadores) }}</strong><small>participantes del periodo</small></article>
+      <article class="date-metric"><span>Última captura</span><strong>{{ formatDate(current.ultima_captura) }}</strong><small>actividad más reciente</small></article>
+    </section>
+
+    <section class="workspace-grid">
+      <section class="workspace-panel activity-panel">
+        <div class="panel-heading"><div><span class="panel-kicker">COBERTURA DE CAPTURA</span><h2>Estado por tipo de evaluación</h2><p>Cada familia conserva su propio grano; no se comparan muestras individuales con evaluaciones completas.</p></div><span class="panel-total">6 familias</span></div>
+        <div class="family-monitor">
+          @for (family of current.por_modulo; track family.module_key) {
+            <a class="family-monitor-row" [routerLink]="['/admin/evaluaciones']" [queryParams]="{ familia: family.module_key }">
+              <span class="family-symbol"><app-icon name="leaf" /></span>
+              <span class="family-monitor-copy"><strong>{{ familyLabel(family.module_key) }}</strong><small>{{ family.total ? formatNumber(family.total) + ' evaluaciones registradas' : 'Aún no existen capturas válidas' }}</small></span>
+              <span class="family-facts"><small>Lotes</small><strong>{{ formatNumber(family.lotes) }}</strong></span>
+              <span class="family-facts"><small>Evaluadores</small><strong>{{ formatNumber(family.evaluadores) }}</strong></span>
+              <span class="family-facts samples"><small>Muestras</small><strong>{{ formatNumber(family.muestras) }}</strong></span>
+              <span class="family-health" [class.empty]="family.total === 0">{{ family.total === 0 ? 'Sin datos' : 'Disponible' }}</span>
+              <app-icon name="arrowRight" />
+            </a>
+          }
+        </div>
+      </section>
+
+      <aside class="operations-rail">
+        <section class="rail-section queue-panel">
+          <div class="panel-heading compact"><div><span class="panel-kicker">COLA DE TRABAJO</span><h2>Requiere atención</h2></div>@if (quality(); as qa) { <span class="alert-count">{{ qa.alertas }}</span> }</div>
+          <div class="work-queue">
+            @if (quality(); as qa) {
+              @if (qa.total_rechazos > 0) {
+                <a class="queue-item danger" routerLink="/admin/qa"><span><strong>{{ formatNumber(qa.total_rechazos) }} incidencias de calidad</strong><small>{{ qa.alertas }} alertas superan el umbral configurado</small></span><app-icon name="arrowRight" /></a>
+              }
+            }
+            @for (family of current.por_modulo; track family.module_key) {
+              @if (family.total === 0) {
+                <a class="queue-item warning" routerLink="/admin/evaluaciones" [queryParams]="{ familia: family.module_key }"><span><strong>{{ familyLabel(family.module_key) }} sin capturas</strong><small>Revisa la captura móvil o importa una plantilla válida</small></span><app-icon name="arrowRight" /></a>
+              }
+            }
+            @for (item of imports(); track item.carga_id) {
+              @if (item.estado === 'failed' || item.estado === 'pending_confirmation') {
+                <a class="queue-item" routerLink="/admin/evaluaciones" [queryParams]="{ vista: 'importar' }"><span><strong>{{ item.archivo_nombre }}</strong><small>{{ item.estado === 'failed' ? 'La importación falló' : 'Importación pendiente de confirmación' }}</small></span><app-icon name="arrowRight" /></a>
+              }
+            }
+            @if (!hasOperationalAttention()) { <div class="queue-empty"><app-icon name="check" /><span><strong>Sin pendientes críticos</strong><small>La captura y las cargas no requieren intervención inmediata.</small></span></div> }
+          </div>
+        </section>
+        <section class="rail-section period-panel">
+          <div class="panel-heading compact"><div><span class="panel-kicker">VENTANA DE DATOS</span><h2>Periodo disponible</h2></div><app-icon name="calendar" /></div>
+          <div class="period-range"><div><small>Desde</small><strong>{{ formatDate(current.desde) }}</strong></div><app-icon name="arrowRight" /><div><small>Hasta</small><strong>{{ formatDate(current.hasta) }}</strong></div></div>
+          <a routerLink="/admin/evaluaciones">Explorar registros <app-icon name="arrowRight" /></a>
+        </section>
+      </aside>
+    </section>
+  }
+
+  @if (canImport()) {
+    <section class="workspace-panel imports-panel">
+      <div class="panel-heading"><div><span class="panel-kicker">IMPORTACIONES</span><h2>Últimas cargas</h2><p>Seguimiento de archivos incorporados a Evaluaciones.</p></div><a mat-stroked-button routerLink="/admin/evaluaciones" [queryParams]="{ vista: 'importar' }"><app-icon name="upload" /> Importar evaluaciones</a></div>
+      @if (imports().length) {
+        <div class="import-list">
+          @for (item of imports(); track item.carga_id) {
+            <div class="import-row"><span class="file-icon"><app-icon name="evaluations" /></span><div><strong>{{ item.archivo_nombre }}</strong><small>{{ formatDate(item.creado_en) }} · {{ item.usuario }}</small></div><span class="status" [attr.data-state]="item.estado">{{ importStatus(item.estado) }}</span><span>{{ item.filas_aceptadas }} aceptadas</span><span>{{ item.filas_invalidas }} inválidas</span></div>
+          }
+        </div>
+      } @else {
+        <div class="empty-inline"><app-icon name="upload" /><div><strong>Aún no hay importaciones</strong><span>Cuando cargues una plantilla, su progreso y resultado aparecerán aquí.</span></div></div>
+      }
+    </section>
+  }
+}

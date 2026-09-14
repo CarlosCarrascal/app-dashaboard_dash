@@ -55,6 +55,9 @@ class AdminEvaluationQuery(BaseModel):
     evaluador_id: int | None = Field(default=None, gt=0)
     desde: date | None = None
     hasta: date | None = None
+    grano: str | None = Field(default=None, max_length=80)
+    piso: str | None = Field(default=None, max_length=80)
+    estado: str | None = Field(default=None, max_length=30)
     sort_by: EvaluationSort = "captured_at"
     sort_dir: Literal["asc", "desc"] = "desc"
 

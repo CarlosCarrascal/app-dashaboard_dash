@@ -1,0 +1,44 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --proxy-config proxy.deployed.conf.json",
+    "start:local": "ng serve --proxy-config proxy.conf.json",
+    "start:deployed": "ng serve --proxy-config proxy.deployed.conf.json",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "api:types": "openapi-typescript ../docs/api/openapi-v1.json -o src/app/core/api/generated.ts"
+  },
+  "private": true,
+  "packageManager": "npm@11.17.0",
+  "dependencies": {
+    "@angular/cdk": "^22.1.5",
+    "@angular/common": "^22.1.0",
+    "@angular/compiler": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/forms": "^22.1.0",
+    "@angular/material": "^22.1.5",
+    "@angular/platform-browser": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@tanstack/angular-table": "8.21.4",
+    "echarts": "^6.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.1.7",
+    "@angular/cli": "^22.1.7",
+    "@angular/compiler-cli": "^22.1.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "jsdom": "^28.0.0",
+    "openapi-typescript": "^7.13.0",
+    "postcss": "^8.5.28",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vitest": "^4.0.8"
+  }
+}

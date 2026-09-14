@@ -1,0 +1,238 @@
+@if (!embedded()) { <app-page-header
+  eyebrow="INGESTA CONTROLADA"
+  title="Cargas de evaluaciones"
+  subtitle="Valida un Excel y confirma la escritura en una sola transacción sobre las tablas operativas."
+>
+  <button mat-stroked-button type="button" (click)="downloadTemplate()">
+    <app-icon name="download" />
+    Descargar plantilla
+  </button>
+</app-page-header> }
+
+<ol class="import-steps" aria-label="Progreso de importación">
+  <li class="active"><span>1</span><div><strong>Archivo</strong><small>Plantilla o .xlsx</small></div></li>
+  <li [class.active]="!!result()"><span>2</span><div><strong>Validación</strong><small>Previsualizar filas</small></div></li>
+  <li [class.active]="!!result()"><span>3</span><div><strong>Revisión</strong><small>Por familia</small></div></li>
+  <li [class.active]="!!confirmation()"><span>4</span><div><strong>Resultado</strong><small>Confirmación final</small></div></li>
+</ol>
+
+<section class="kpi-grid">
+  <app-kpi-card
+    label="Escritura productiva"
+    value="Atómica"
+    caption="Solo si todas las filas son válidas"
+    icon="quality"
+  />
+  <app-kpi-card
+    label="Formato"
+    value=".xlsx"
+    caption="Máximo 10 MB por archivo"
+    icon="evaluations"
+  />
+  <app-kpi-card
+    label="Límite de filas"
+    value="5.000"
+    caption="Validación acotada por petición"
+    icon="grid"
+  />
+</section>
+
+<mat-card class="upload-card">
+  <div class="upload-copy">
+    <span class="upload-icon"><app-icon name="upload" /></span>
+    <div>
+      <span class="panel-kicker">PASO 1 · SELECCIONA EL LIBRO</span>
+      <h2>Previsualiza antes de confirmar</h2>
+      <p>
+        El backend devuelve las filas válidas y los errores de contrato. La confirmación solo se
+        habilita sin errores y revierte todo el lote si una regla de dominio falla.
+      </p>
+    </div>
+  </div>
+  <div class="upload-actions">
+    <label class="file-picker">
+      <app-icon name="evaluations" />
+      <span>{{ selectedFile()?.name ?? 'Elegir archivo .xlsx' }}</span>
+      <input type="file" accept=".xlsx" (change)="onFileSelected($event)" />
+    </label>
+    <button mat-flat-button color="primary" type="button" [disabled]="loading()" (click)="previewFile()">
+      @if (loading()) {
+        <span class="spin"></span>
+      } @else {
+        <app-icon name="check" />
+      }
+      Validar archivo
+    </button>
+  </div>
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+</mat-card>
+
+@if (errorMessage()) {
+  <section class="error-banner" role="alert"><app-icon name="warning" />{{ errorMessage() }}</section>
+}
+
+@if (result(); as current) {
+  <mat-card class="result-card">
+    <div class="result-heading">
+      <div>
+        <span class="panel-kicker">PASO 2 · RESULTADO</span>
+        <h2>{{ current.filename }} · hoja {{ current.sheet }}</h2>
+        <p>{{ current.message }}</p>
+      </div>
+      <span class="result-status" [class.has-errors]="current.invalid_rows > 0">
+        <app-icon [name]="current.invalid_rows > 0 ? 'warning' : 'check'" />
+        {{ current.invalid_rows > 0 ? 'Revisar errores' : 'Lista para revisión' }}
+      </span>
+    </div>
+    @if (current.invalid_rows === 0 && current.valid_rows > 0) {
+      <div class="confirm-bar">
+        <div>
+          <strong>¿Confirmar esta carga?</strong>
+          <small>{{ current.valid_rows }} filas se guardarán en una sola transacción.</small>
+        </div>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="confirming()"
+          (click)="confirmFile()"
+        >
+          @if (confirming()) {
+            <span class="spin"></span>
+          } @else {
+            <app-icon name="upload" />
+          }
+          Confirmar carga
+        </button>
+      </div>
+    }
+    <div class="result-kpis">
+      <span><small>Total filas</small><strong>{{ current.total_rows }}</strong></span>
+      <span><small>Válidas</small><strong class="valid-text">{{ current.valid_rows }}</strong></span>
+      <span><small>Con errores</small><strong class="error-text">{{ current.invalid_rows }}</strong></span>
+    </div>
+    <section class="preview-groups" aria-label="Filas agrupadas por familia">
+      @for (group of previewGroups(current.rows); track group.key) {
+        <article><span class="family-mark"><app-icon name="leaf" /></span><div><strong>{{ group.label }}</strong><small>{{ group.valid }} válidas · {{ group.invalid }} con error</small></div><b>{{ group.total }}</b></article>
+      }
+    </section>
+    <div class="table-scroll">
+      <table mat-table [dataSource]="current.rows">
+        <ng-container matColumnDef="row">
+          <th mat-header-cell *matHeaderCellDef>Fila</th>
+          <td mat-cell *matCellDef="let row">{{ row.row }}</td>
+        </ng-container>
+        <ng-container matColumnDef="valid">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="state-pill" [class.invalid]="!row.valid">{{ row.valid ? 'Válida' : 'Error' }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="error">
+          <th mat-header-cell *matHeaderCellDef>Detalle</th>
+          <td mat-cell *matCellDef="let row">{{ row.error || 'Contrato correcto' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="payload">
+          <th mat-header-cell *matHeaderCellDef>Detalle técnico</th>
+          <td mat-cell *matCellDef="let row"><details><summary>Ver datos normalizados</summary><code>{{ row.payload | json }}</code></details></td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div>
+  </mat-card>
+}
+
+@if (confirmation(); as current) {
+  <mat-card class="confirmation-card">
+    <app-icon name="check" />
+    <div>
+      <span class="panel-kicker">CARGA CONFIRMADA</span>
+      <h2>{{ current.accepted_rows }} filas insertadas · {{ current.duplicate_rows }} repetidas</h2>
+      <p>{{ current.message }}</p>
+    </div>
+  </mat-card>
+}
+
+<mat-card class="history-card">
+  <div class="history-heading">
+    <div>
+      <span class="panel-kicker">TRAZABILIDAD</span>
+      <h2>Historial de cargas</h2>
+      <p>Manifiestos registrados con hash, usuario, estado y resultado operativo.</p>
+    </div>
+    <div class="history-actions">
+      <select
+        aria-label="Filtrar cargas por estado"
+        [value]="historyState()"
+        (change)="onHistoryStateChanged($event)"
+      >
+        <option value="">Todos los estados</option>
+        <option value="pending_confirmation">Pendientes</option>
+        <option value="processing">Procesando</option>
+        <option value="accepted">Aceptadas</option>
+        <option value="failed">Fallidas</option>
+      </select>
+      <button mat-icon-button type="button" aria-label="Actualizar historial" (click)="refreshHistory()">
+        <app-icon name="refresh" />
+      </button>
+    </div>
+  </div>
+  @if (historyLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (historyError()) {
+    <p class="history-error">{{ historyError() }}</p>
+  }
+  @if (history(); as current) {
+    <div class="table-scroll">
+      <table mat-table [dataSource]="current.items">
+        <ng-container matColumnDef="archivo_nombre">
+          <th mat-header-cell *matHeaderCellDef>Archivo</th>
+          <td mat-cell *matCellDef="let row">
+            <strong>{{ row.archivo_nombre }}</strong>
+            <code title="SHA-256">{{ row.archivo_sha256.slice(0, 12) }}…</code>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="usuario">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let row">{{ row.usuario }}</td>
+        </ng-container>
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="state-pill" [class]="loadStatusClass(row.estado)">
+              {{ loadStatusLabel(row.estado) }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="filas">
+          <th mat-header-cell *matHeaderCellDef>Filas</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.filas_total }} total · {{ row.filas_validas }} válidas
+            <small>{{ row.filas_aceptadas }} aceptadas · {{ row.filas_duplicadas }} repetidas</small>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="creado_en">
+          <th mat-header-cell *matHeaderCellDef>Creada</th>
+          <td mat-cell *matCellDef="let row">{{ row.creado_en | date: 'dd/MM/yyyy HH:mm' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="resultado">
+          <th mat-header-cell *matHeaderCellDef>Observación</th>
+          <td mat-cell *matCellDef="let row">{{ row.error || 'Sin incidencias' }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="current.meta.total"
+      [pageIndex]="current.meta.page - 1"
+      [pageSize]="current.meta.page_size"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="onHistoryPage($event)"
+    />
+  }
+</mat-card>

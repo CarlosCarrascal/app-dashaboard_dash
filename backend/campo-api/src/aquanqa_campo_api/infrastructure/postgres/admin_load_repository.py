@@ -46,7 +46,7 @@ class AdminLoadRepositoryMixin:
             "c.creado_en, c.iniciado_en, c.finalizado_en"
         )
         try:
-            with self._connections.connect() as connection, connection.cursor() as cursor:
+            with self._connections.read() as connection, connection.cursor() as cursor:
                 cursor.execute(
                     f"SELECT count(*) AS total FROM {source} WHERE {where}", params
                 )

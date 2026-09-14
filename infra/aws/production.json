@@ -1,0 +1,849 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Aquanqa API, private PostgreSQL, build and static hosting foundations",
+  "Resources": {
+    "ApiSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Aquanqa ApiSecurityGroup",
+        "VpcId": "vpc-064a8e11f19905e9a",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "DbSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Aquanqa DbSecurityGroup",
+        "VpcId": "vpc-064a8e11f19905e9a",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "AlbSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Aquanqa AlbSecurityGroup",
+        "VpcId": "vpc-064a8e11f19905e9a",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "ApiIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "ApiSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": 8000,
+        "ToPort": 8000,
+        "SourceSecurityGroupId": {
+          "Ref": "AlbSecurityGroup"
+        }
+      }
+    },
+    "DbIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "DbSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": 5432,
+        "ToPort": 5432,
+        "SourceSecurityGroupId": {
+          "Ref": "ApiSecurityGroup"
+        }
+      }
+    },
+    "AlbVpcIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "AlbSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": 80,
+        "ToPort": 80,
+        "CidrIp": "172.31.0.0/16"
+      }
+    },
+    "DbSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Aquanqa private database",
+        "SubnetIds": [
+          "subnet-0a3eab02d96435283",
+          "subnet-0758e90d9474305bf"
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "Database": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceIdentifier": "aquanqa-production",
+        "DBName": "aquanqa",
+        "Engine": "postgres",
+        "EngineVersion": "18.3",
+        "DBInstanceClass": "db.t4g.micro",
+        "AllocatedStorage": "20",
+        "MaxAllocatedStorage": 100,
+        "StorageType": "gp3",
+        "StorageEncrypted": true,
+        "MasterUsername": "aquanqa_owner",
+        "ManageMasterUserPassword": true,
+        "DBSubnetGroupName": {
+          "Ref": "DbSubnetGroup"
+        },
+        "VPCSecurityGroups": [
+          {
+            "Ref": "DbSecurityGroup"
+          }
+        ],
+        "PubliclyAccessible": false,
+        "MultiAZ": false,
+        "BackupRetentionPeriod": 1,
+        "PreferredBackupWindow": "07:00-08:00",
+        "PreferredMaintenanceWindow": "sun:08:00-sun:09:00",
+        "AutoMinorVersionUpgrade": true,
+        "DeletionProtection": true,
+        "CopyTagsToSnapshot": true,
+        "EnableCloudwatchLogsExports": [
+          "postgresql",
+          "upgrade"
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      },
+      "DeletionPolicy": "Snapshot",
+      "UpdateReplacePolicy": "Snapshot"
+    },
+    "Assets": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "aquanqa-021686096399-us-east-1-assets",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "AssetsPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "Assets"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "Assets",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${Assets.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Artifacts": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "aquanqa-021686096399-us-east-1-artifacts",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "ArtifactsPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "Artifacts"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "Artifacts",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${Artifacts.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ApiRepository": {
+      "Type": "AWS::ECR::Repository",
+      "Properties": {
+        "RepositoryName": "aquanqa/api",
+        "ImageTagMutability": "IMMUTABLE",
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true
+        },
+        "EncryptionConfiguration": {
+          "EncryptionType": "AES256"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "MigrationRepository": {
+      "Type": "AWS::ECR::Repository",
+      "Properties": {
+        "RepositoryName": "aquanqa/migration",
+        "ImageTagMutability": "IMMUTABLE",
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true
+        },
+        "EncryptionConfiguration": {
+          "EncryptionType": "AES256"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      },
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "Cluster": {
+      "Type": "AWS::ECS::Cluster",
+      "Properties": {
+        "ClusterName": "aquanqa-production",
+        "ClusterSettings": [
+          {
+            "Name": "containerInsights",
+            "Value": "enabled"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "ApiLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aquanqa/production/api",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "MigrationLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aquanqa/production/migration",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "BuildLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aquanqa/production/build",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "ExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "aquanqa",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "secretsmanager:GetSecretValue"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/*"
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "Database",
+                        "MasterUserSecret.SecretArn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ],
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+        ]
+      }
+    },
+    "MigrationRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "aquanqa",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "secretsmanager:GetSecretValue"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/*"
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "Database",
+                        "MasterUserSecret.SecretArn"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${Artifacts.Arn}/migration/*"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "BuildRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "codebuild.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "aquanqa",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${BuildLogs.Arn}:*"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${Artifacts.Arn}/build/*"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:GetAuthorizationToken"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:InitiateLayerUpload",
+                    "ecr:UploadLayerPart",
+                    "ecr:CompleteLayerUpload",
+                    "ecr:PutImage",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "ApiRepository",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "MigrationRepository",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "Build": {
+      "Type": "AWS::CodeBuild::Project",
+      "Properties": {
+        "Name": "aquanqa-production",
+        "ServiceRole": {
+          "Fn::GetAtt": [
+            "BuildRole",
+            "Arn"
+          ]
+        },
+        "Artifacts": {
+          "Type": "NO_ARTIFACTS"
+        },
+        "Source": {
+          "Type": "S3",
+          "Location": {
+            "Fn::Sub": "${Artifacts}/build/source.zip"
+          },
+          "BuildSpec": "infra/aws/buildspec.yml"
+        },
+        "Environment": {
+          "Type": "LINUX_CONTAINER",
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/standard:7.0",
+          "PrivilegedMode": true
+        },
+        "TimeoutInMinutes": 30,
+        "LogsConfig": {
+          "CloudWatchLogs": {
+            "Status": "ENABLED",
+            "GroupName": {
+              "Ref": "BuildLogs"
+            }
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "LoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Name": "aquanqa-production",
+        "Scheme": "internal",
+        "Type": "application",
+        "Subnets": [
+          "subnet-0a3eab02d96435283",
+          "subnet-0758e90d9474305bf"
+        ],
+        "SecurityGroups": [
+          {
+            "Ref": "AlbSecurityGroup"
+          }
+        ],
+        "LoadBalancerAttributes": [
+          {
+            "Key": "routing.http.drop_invalid_header_fields.enabled",
+            "Value": "true"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "TargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": "aquanqa-api",
+        "VpcId": "vpc-064a8e11f19905e9a",
+        "Port": 8000,
+        "Protocol": "HTTP",
+        "TargetType": "ip",
+        "HealthCheckPath": "/v1/health/ready",
+        "HealthCheckIntervalSeconds": 30,
+        "HealthyThresholdCount": 2,
+        "UnhealthyThresholdCount": 3,
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "aquanqa"
+          },
+          {
+            "Key": "Environment",
+            "Value": "production"
+          }
+        ]
+      }
+    },
+    "Listener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "LoadBalancerArn": {
+          "Ref": "LoadBalancer"
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "Assets": {
+      "Value": {
+        "Ref": "Assets"
+      }
+    },
+    "Artifacts": {
+      "Value": {
+        "Ref": "Artifacts"
+      }
+    },
+    "Cluster": {
+      "Value": {
+        "Ref": "Cluster"
+      }
+    },
+    "ApiSecurityGroup": {
+      "Value": {
+        "Ref": "ApiSecurityGroup"
+      }
+    },
+    "DbSecurityGroup": {
+      "Value": {
+        "Ref": "DbSecurityGroup"
+      }
+    },
+    "AlbSecurityGroup": {
+      "Value": {
+        "Ref": "AlbSecurityGroup"
+      }
+    },
+    "TargetGroup": {
+      "Value": {
+        "Ref": "TargetGroup"
+      }
+    },
+    "LoadBalancer": {
+      "Value": {
+        "Ref": "LoadBalancer"
+      }
+    },
+    "ExecutionRole": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ExecutionRole",
+          "Arn"
+        ]
+      }
+    },
+    "MigrationRole": {
+      "Value": {
+        "Fn::GetAtt": [
+          "MigrationRole",
+          "Arn"
+        ]
+      }
+    },
+    "DbHost": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Database",
+          "Endpoint.Address"
+        ]
+      }
+    },
+    "DbSecret": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Database",
+          "MasterUserSecret.SecretArn"
+        ]
+      }
+    },
+    "AlbHost": {
+      "Value": {
+        "Fn::GetAtt": [
+          "LoadBalancer",
+          "DNSName"
+        ]
+      }
+    }
+  }
+}

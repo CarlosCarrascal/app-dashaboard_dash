@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 414 68" fill="none">
+  <title>AquAnqa</title>
+  <g fill="#145B45">
+    <path d="M7 54 27 12h11L18 54H7Z"/>
+    <path fill-rule="evenodd" d="M76 12h28l10 10v22l-10 10H76L66 44V22l10-10Zm4 11-3 3v14l3 3h20l3-3V26l-3-3H80Z"/>
+    <path d="M128 12h11v28l4 4h16l4-4V12h11v33l-9 9h-28l-9-9V12Z"/>
+    <path transform="translate(-9)" d="m191 54 20-42h11l-20 42h-11Z"/>
+    <path transform="translate(-10)" d="M250 54V12h11l23 25V12h11v42h-11l-23-25v25h-11Z"/>
+    <path transform="translate(-18)" fill-rule="evenodd" d="M322 12h28l10 10v22l-10 10h-28l-10-10V22l10-10Zm4 11-3 3v14l3 3h20l3-3V26l-3-3h-20Z"/>
+    <path transform="translate(-24)" d="m381 54 20-42h11l-20 42h-11Z"/>
+  </g>
+  <g fill="#23946F">
+    <path d="m41 20 16 34H45l-6-12H27l5-10h3l6-12Z"/>
+    <path d="M96 37h12l13 23h-12L96 37Z"/>
+    <path d="M163 12h11v33l-9 9h-18l6-10h6l4-4V12Z"/>
+    <path transform="translate(-9)" d="m225 20 16 34h-12l-6-12h-12l5-10h3l6-12Z"/>
+    <path transform="translate(-10)" d="M284 12h11v42h-11V12Z"/>
+    <path transform="translate(-18)" d="M342 37h12l13 23h-12l-13-23Z"/>
+    <path transform="translate(-24)" d="m415 20 16 34h-12l-6-12h-12l5-10h3l6-12Z"/>
+  </g>
+</svg>
+

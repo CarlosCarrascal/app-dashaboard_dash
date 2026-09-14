@@ -1,0 +1,59 @@
+:host {
+  display: block;
+}
+
+.kpi-card {
+  display: flex;
+  min-height: 118px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border: 1px solid var(--aa-border);
+  border-radius: 9px;
+  background: var(--aa-surface);
+  box-shadow: none;
+}
+
+.kpi-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.kpi-label,
+.kpi-caption {
+  color: var(--aa-muted);
+  font-size: 0.74rem;
+}
+
+.kpi-label {
+  font-weight: 700;
+}
+
+.kpi-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--aa-border);
+  border-radius: 6px;
+  background: #fafbfa;
+  color: #68716d;
+}
+
+.kpi-icon mat-icon {
+  width: 19px;
+  height: 19px;
+  font-size: 19px;
+}
+
+.kpi-card strong {
+  margin-top: 12px;
+  color: var(--aa-ink);
+  font-size: 1.55rem;
+  letter-spacing: -0.05em;
+}
+
+.kpi-caption {
+  margin-top: 4px;
+}

@@ -56,3 +56,29 @@ def test_el_pool_se_abre_una_vez_reutiliza_conexiones_y_se_cierra(monkeypatch):
     assert pool.open_calls == 1
     assert pool.connection_calls == 2
     assert pool.close_calls == 1
+
+
+def test_independent_reads_restore_transaction_mode_even_on_error(monkeypatch):
+    from types import SimpleNamespace
+    import pytest
+
+    connection = SimpleNamespace(autocommit=False, closed=False)
+
+    class Pool(FakePool):
+        @contextmanager
+        def connection(self):
+            yield connection
+
+    monkeypatch.setattr(
+        "aquanqa_campo_api.infrastructure.postgres.connection.ConnectionPool", Pool
+    )
+    factory = PostgresConnectionFactory("postgresql://unused")
+    with factory.read() as read:
+        assert read.autocommit is True
+    assert connection.autocommit is False
+    with pytest.raises(ValueError):
+        with factory.read():
+            raise ValueError("failed SELECT")
+    assert connection.autocommit is False
+    with factory.connect() as transaction:
+        assert transaction.autocommit is False

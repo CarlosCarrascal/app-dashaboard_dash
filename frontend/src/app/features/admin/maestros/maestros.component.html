@@ -1,0 +1,579 @@
+<div class="field-workspace min-w-0 bg-canvas">
+  <header
+    class="flex min-h-16 items-center justify-between gap-3 border-b border-line bg-white px-4 py-3 md:px-6"
+  >
+    <div class="flex items-center gap-3">
+      <span class="flex size-9 items-center justify-center rounded-xl bg-forest text-lime"
+        ><app-icon name="structure"
+      /></span>
+      <div>
+        <h1 class="!m-0 !text-[22px] !font-semibold">Maestros</h1>
+        <p class="mt-0.5 text-xs text-muted">Estructura, personas y configuración</p>
+      </div>
+    </div>
+    <button
+      class="field-button"
+      aria-label="Actualizar catálogo"
+      [disabled]="loading()"
+      (click)="refresh()"
+    >
+      <app-icon name="refresh" /><span class="hidden sm:inline">Actualizar</span>
+    </button>
+  </header>
+  <div class="masters-layout">
+    <aside
+      class="hidden border-r border-line bg-white p-4 lg:block"
+      aria-label="Catálogos maestros"
+    >
+      @for (group of groups; track group.label) {
+        <div class="mb-6">
+          <h2
+            class="!mb-2 !mt-0 px-2 !text-[10px] !font-semibold uppercase tracking-wider text-muted"
+          >
+            {{ group.label }}
+          </h2>
+          @for (resource of group.resources; track resource) {
+            <button
+              class="my-1 flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-[13px] text-muted hover:bg-canvas"
+              [class.!bg-forest]="selectedResource() === resource"
+              [class.!text-white]="selectedResource() === resource"
+              [attr.aria-pressed]="selectedResource() === resource"
+              (click)="selectResource(resource)"
+            >
+              <app-icon [name]="option(resource).icon" class="text-lg" /><span class="flex-1">{{
+                option(resource).label
+              }}</span>
+              @if (counts()[resource] !== undefined) {
+                <span class="text-[11px] opacity-70">{{ counts()[resource] | number }}</span>
+              }
+            </button>
+          }
+        </div>
+      }
+      <p class="border-t border-line px-2 pt-4 text-[11px] leading-5 text-muted">
+        Los catálogos conectan la ubicación y la configuración de las capturas de campo.
+      </p>
+    </aside>
+    <main class="min-w-0 p-3 md:p-6">
+      <label class="field-label mb-4 lg:hidden"
+        >Catálogo<select
+          class="field-input"
+          [value]="selectedResource()"
+          (change)="selectResource($any($event.target).value)"
+        >
+          @for (group of groups; track group.label) {
+            <optgroup [label]="group.label">
+              @for (resource of group.resources; track resource) {
+                <option [value]="resource" [selected]="selectedResource() === resource">{{ option(resource).label }}</option>
+              }
+            </optgroup>
+          }
+        </select></label
+      >
+      @if (['empresas', 'fundos', 'modulos', 'lotes'].includes(selectedResource())) {
+        <nav
+          class="mb-5 grid grid-cols-4 gap-1 rounded-xl border border-line bg-white p-1"
+          aria-label="Niveles de la estructura territorial"
+        >
+          @for (resource of groups[0].resources; track resource; let i = $index) {
+            <button
+              class="flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-lg px-1 text-[11px] text-muted sm:justify-start sm:px-3 sm:text-xs"
+              [class.bg-meadow/10]="selectedResource() === resource"
+              [class.!text-forest]="selectedResource() === resource"
+              (click)="selectResource(resource)"
+            >
+              <span
+                class="hidden size-6 shrink-0 items-center justify-center rounded-full border border-current/20 text-[10px] sm:flex"
+                >{{ i + 1 }}</span
+              ><span>{{ option(resource).label }}</span>
+            </button>
+          }
+        </nav>
+      }
+      <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div class="flex min-w-0 items-start gap-3">
+          <span
+            class="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-line bg-white text-xl text-forest"
+            ><app-icon [name]="option(selectedResource()).icon"
+          /></span>
+          <div>
+            <h2 class="!m-0 !text-[22px] !font-semibold">
+              {{ selectedLabel() }}
+              <span class="ml-1 align-middle text-sm font-normal text-muted">{{
+                response() ? (response()!.meta.total | number) : '—'
+              }}</span>
+            </h2>
+            <p class="mt-1 max-w-xl text-xs leading-5 text-muted">{{ description() }}</p>
+          </div>
+        </div>
+        @if (canManage()) {
+          <button class="field-primary" (click)="newMaster()">
+            <span class="text-lg">+</span>Nuevo registro
+          </button>
+        } @else {
+          <span class="rounded-lg border border-line bg-white px-3 py-2 text-xs text-muted"
+            >Acceso de consulta</span
+          >
+        }
+      </div>
+      @if (errorMessage() && !editorOpen()) {
+        <div
+          class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+          role="alert"
+        >
+          {{ errorMessage() }}<button class="field-button" (click)="refresh()">Reintentar</button>
+        </div>
+      }
+      @if (successMessage()) {
+        <div
+          class="mb-4 flex items-center justify-between gap-2 rounded-xl bg-meadow/10 p-3 text-sm text-forest"
+          role="status"
+        >
+          {{ successMessage()
+          }}<button
+            class="field-button !px-2"
+            aria-label="Cerrar confirmación"
+            (click)="successMessage.set(null)"
+          >
+            <app-icon name="close" />
+          </button>
+        </div>
+      }
+      <section
+        class="field-panel overflow-hidden"
+        aria-label="Registros del catálogo"
+        [attr.aria-busy]="loading()"
+      >
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-3 sm:px-4"
+        >
+          <form class="flex min-w-0 flex-1 gap-2" [formGroup]="filters" (ngSubmit)="applyFilters()">
+            <label class="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-canvas px-3"
+              ><app-icon name="search" /><input
+                class="min-h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
+                formControlName="search"
+                placeholder="Buscar nombre, código o ubicación…"
+                aria-label="Buscar en el catálogo" /></label
+            ><button class="field-button !px-2" type="submit" aria-label="Buscar registros">
+              <app-icon name="arrowRight" />
+            </button>
+          </form>
+          <div class="flex gap-1">
+            <button
+              class="field-button !px-3"
+              aria-label="Vista de fichas"
+              [attr.aria-pressed]="view() === 'cards'"
+              [class.!bg-meadow/10]="view() === 'cards'"
+              (click)="view.set('cards')"
+            >
+              <app-icon name="grid" /></button
+            ><button
+              class="field-button !px-3"
+              aria-label="Vista de tabla"
+              [attr.aria-pressed]="view() === 'table'"
+              [class.!bg-meadow/10]="view() === 'table'"
+              (click)="view.set('table')"
+            >
+              <app-icon name="menu" />
+            </button>
+            @if (view() === 'table') {
+              <button
+                class="field-button !px-3"
+                aria-label="Elegir columnas"
+                [attr.aria-expanded]="columnsOpen()"
+                (click)="columnsOpen.set(!columnsOpen())"
+              >
+                <app-icon name="more" />
+              </button>
+            }
+          </div>
+        </div>
+        @if (columnsOpen() && view() === 'table') {
+          <fieldset class="flex flex-wrap gap-3 border-b border-line bg-canvas px-4 py-3">
+            <legend class="sr-only">Columnas visibles</legend>
+            @for (column of columnsFor(selectedResource()); track column.key) {
+              <label class="flex min-h-8 items-center gap-2 text-xs"
+                ><input
+                  type="checkbox"
+                  class="size-4 accent-forest"
+                  [checked]="!hiddenColumns().includes(column.key)"
+                  (change)="toggleColumn(column.key)"
+                />{{ column.label }}</label
+              >
+            }
+          </fieldset>
+        }
+        @if (loading()) {
+          <div
+            class="flex items-center gap-2 border-b border-line bg-canvas px-4 py-2 text-xs text-muted"
+            role="status"
+          >
+            <span
+              class="size-3 animate-spin rounded-full border-2 border-line border-t-forest"
+            ></span
+            >Consultando catálogo…
+          </div>
+        }
+        @if (response(); as current) {
+          @if (view() === 'cards') {
+            <div class="grid gap-3 bg-canvas/30 p-4 sm:grid-cols-2 2xl:grid-cols-3">
+              @for (row of current.items; track idFor(selectedResource(), row)) {
+                <button
+                  class="group flex min-h-44 min-w-0 flex-col rounded-xl border border-line bg-white p-4 text-left transition-colors hover:border-meadow"
+                  (click)="showDetail(row)"
+                  [attr.aria-label]="'Ver registro ' + idFor(selectedResource(), row)"
+                >
+                  <span class="mb-4 flex w-full items-center justify-between gap-2"
+                    ><span
+                      class="flex size-9 items-center justify-center rounded-xl bg-meadow/10 text-forest"
+                      ><app-icon [name]="option(selectedResource()).icon"
+                    /></span>
+                    @if (row['activo'] !== undefined) {
+                      <span
+                        class="rounded-md bg-canvas px-2 py-1 text-[10px] text-muted"
+                        [class.!bg-meadow/10]="row['activo']"
+                        [class.!text-forest]="row['activo']"
+                        >{{ display(row['activo']) }}</span
+                      >
+                    } @else {
+                      <span class="text-[11px] text-muted"
+                        >#{{ idFor(selectedResource(), row) }}</span
+                      >
+                    }
+                  </span>
+                  <span class="break-words text-base font-semibold">{{ primaryLabel(row) }}</span
+                  ><span class="mt-1 block break-words text-xs leading-5 text-muted">{{
+                    contextLabel(row)
+                  }}</span>
+                  <span
+                    class="mt-auto flex w-full items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted"
+                    ><span class="mt-3">{{
+                      selectedResource() === 'lotes'
+                        ? display(row['area_ha']) + ' ha'
+                        : selectedResource() === 'muestreo'
+                          ? display(row['muestras']) + ' muestras'
+                          : '#' + idFor(selectedResource(), row)
+                    }}</span
+                    ><app-icon name="arrowRight" class="mt-3 text-forest"
+                  /></span>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="masters-table overflow-auto">
+              <table
+                class="w-full border-collapse text-left text-xs"
+                aria-label="Tabla de maestros"
+              >
+                <thead class="sticky top-0 bg-canvas text-[11px] text-muted">
+                  <tr>
+                    @for (column of visibleColumns(); track column.key) {
+                      <th
+                        class="whitespace-nowrap px-4 py-3 font-medium"
+                        [class.text-right]="numeric(column.key)"
+                      >
+                        {{ column.label }}
+                      </th>
+                    }
+                    <th class="sticky right-0 bg-canvas px-4">
+                      <span class="sr-only">Ficha del registro</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-line">
+                  @for (row of current.items; track idFor(selectedResource(), row)) {
+                    <tr class="group hover:bg-canvas/60">
+                      @for (column of visibleColumns(); track column.key) {
+                        <td
+                          class="max-w-72 whitespace-nowrap px-4 py-4"
+                          [class.text-right]="numeric(column.key)"
+                        >
+                          @if (column.key === 'activo') {
+                            <span
+                              class="rounded-md bg-canvas px-2 py-1 text-[11px] text-muted"
+                              [class.!bg-meadow/10]="row[column.key]"
+                              [class.!text-forest]="row[column.key]"
+                              >{{ display(row[column.key]) }}</span
+                            >
+                          } @else {
+                            {{ display(row[column.key]) }}
+                          }
+                        </td>
+                      }
+                      <td class="sticky right-0 bg-white px-2 group-hover:bg-canvas">
+                        <button
+                          class="field-button !min-h-10 !px-2 !text-xs"
+                          (click)="showDetail(row)"
+                          [attr.aria-label]="'Ver registro ' + idFor(selectedResource(), row)"
+                        >
+                          Ver<app-icon name="chevronRight" />
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+          @if (!current.items.length && !loading()) {
+            <div class="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center">
+              <app-icon name="search" class="text-3xl text-muted" />
+              <h3 class="!m-0 !text-base !font-medium">No se encontraron registros</h3>
+              <p class="text-xs text-muted">Prueba otro nombre o código en este catálogo.</p>
+              <button
+                class="field-button"
+                (click)="filters.controls.search.setValue(''); applyFilters()"
+              >
+                Limpiar búsqueda
+              </button>
+            </div>
+          }
+          <footer
+            class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-xs text-muted"
+          >
+            <label class="flex items-center gap-2"
+              >Por página<select
+                class="min-h-11 rounded-lg border border-line bg-white px-2"
+                aria-label="Registros por página"
+                [value]="current.meta.page_size"
+                [disabled]="loading()"
+                (change)="
+                  onPage({
+                    pageIndex: 0,
+                    pageSize: +$any($event.target).value,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select></label
+            ><span
+              >{{ current.meta.total | number }} registros · {{ current.meta.page }} /
+              {{ current.meta.pages || 1 }}</span
+            >
+            <div class="flex gap-1">
+              <button
+                class="field-button !px-2"
+                aria-label="Página anterior"
+                [disabled]="loading() || current.meta.page <= 1"
+                (click)="
+                  onPage({
+                    pageIndex: current.meta.page - 2,
+                    pageSize: current.meta.page_size,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <app-icon name="chevronLeft" /></button
+              ><button
+                class="field-button !px-2"
+                aria-label="Página siguiente"
+                [disabled]="loading() || current.meta.page >= current.meta.pages"
+                (click)="
+                  onPage({
+                    pageIndex: current.meta.page,
+                    pageSize: current.meta.page_size,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <app-icon name="chevronRight" />
+              </button>
+            </div>
+          </footer>
+        }
+      </section>
+      <p class="mt-3 text-[11px] text-muted">
+        {{
+          canManage()
+            ? 'Los cambios de los catálogos conservan su registro de auditoría.'
+            : 'Puedes consultar los registros; la edición requiere permisos de administración.'
+        }}
+      </p>
+    </main>
+  </div>
+
+  @if (detail(); as row) {
+    @if (!editorOpen()) {
+      <button
+        class="fixed inset-0 z-40 bg-black/25"
+        aria-label="Cerrar ficha"
+        (click)="detail.set(null)"
+      ></button>
+      <aside
+        class="masters-drawer field-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ficha del maestro"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="detail.set(null)"
+      >
+        <header class="flex items-start justify-between gap-3 border-b border-line p-5">
+          <div>
+            <p class="mb-1 text-xs text-muted">
+              {{ selectedLabel() }} · #{{ idFor(selectedResource(), row) }}
+            </p>
+            <h2 class="!m-0 !text-xl !font-semibold">{{ primaryLabel(row) }}</h2>
+          </div>
+          <button
+            class="field-button !px-2"
+            aria-label="Cerrar ficha del maestro"
+            (click)="detail.set(null)"
+          >
+            <app-icon name="close" />
+          </button>
+        </header>
+        <div class="min-h-0 flex-1 overflow-y-auto p-5">
+          <p class="mb-5 text-sm text-muted">{{ contextLabel(row) }}</p>
+          <dl class="grid grid-cols-2 gap-x-5 gap-y-5">
+            @for (field of visibleFields(); track field.key) {
+              <div class="min-w-0">
+                <dt class="text-xs capitalize text-muted">{{ field.label }}</dt>
+                <dd class="mt-1 break-words text-sm font-medium">{{ field.value }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+        @if (canManage()) {
+          <footer class="flex justify-end gap-2 border-t border-line p-4">
+            <button class="field-primary" (click)="editMaster(row)">
+              <app-icon name="edit" />Editar registro
+            </button>
+          </footer>
+        }
+      </aside>
+    }
+  }
+  @if (editorOpen()) {
+    <button
+      class="fixed inset-0 z-40 bg-black/25"
+      aria-label="Cerrar editor"
+      (click)="cancelEditor()"
+    ></button>
+    <aside
+      class="masters-drawer field-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Editor de maestro"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+      (keydown.escape)="cancelEditor()"
+    >
+      <header class="flex items-start justify-between gap-3 border-b border-line p-5">
+        <div>
+          <p class="mb-1 text-xs text-muted">
+            {{ selectedLabel() }}
+            @if (editingId()) {
+              · #{{ editingId() }}
+            }
+          </p>
+          <h2 class="!m-0 !text-xl !font-semibold">
+            {{ editingId() ? 'Editar registro' : 'Crear registro' }}
+          </h2>
+        </div>
+        <button
+          class="field-button !px-2"
+          aria-label="Cerrar formulario"
+          [disabled]="saving()"
+          (click)="cancelEditor()"
+        >
+          <app-icon name="close" />
+        </button>
+      </header>
+      <form class="flex min-h-0 flex-1 flex-col" [formGroup]="masterForm" (ngSubmit)="saveMaster()">
+        <div class="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
+          <p class="text-xs leading-5 text-muted">
+            {{ description() }} Los campos con * son obligatorios.
+          </p>
+          @if (referenceLoading()) {
+            <p class="text-xs text-muted" role="status">Cargando catálogos relacionados…</p>
+          }
+          @if (referenceError()) {
+            <div class="rounded-lg bg-amber/10 p-3 text-xs" role="alert">
+              No se pudieron cargar todas las opciones.<button
+                class="field-button mt-2"
+                type="button"
+                (click)="loadReferenceOptions()"
+              >
+                Reintentar opciones
+              </button>
+            </div>
+          }
+          @if (errorMessage()) {
+            <p class="rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">
+              {{ errorMessage() }}
+            </p>
+          }
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            @for (field of activeFields(); track field.key) {
+              @if (field.type === 'toggle') {
+                <label
+                  class="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-line px-3 py-2 sm:col-span-2"
+                  ><input
+                    class="size-4 accent-forest"
+                    type="checkbox"
+                    [formControlName]="field.key"
+                  /><span class="text-sm">{{ field.label }}</span></label
+                >
+              } @else {
+                <label class="field-label"
+                  >{{ field.label }}{{ field.required ? ' *' : '' }}
+                  @if (field.type === 'select') {
+                    <select
+                      class="field-input"
+                      [formControlName]="field.key"
+                      [attr.aria-invalid]="fieldInvalid(field.key)"
+                    >
+                      <option [ngValue]="null">Seleccionar…</option>
+                      @for (option of optionsFor(field); track option.value) {
+                        <option [ngValue]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <input
+                      class="field-input"
+                      [type]="field.type"
+                      [min]="field.min ?? null"
+                      [attr.step]="field.type === 'number' ? 'any' : null"
+                      [formControlName]="field.key"
+                      [attr.aria-invalid]="fieldInvalid(field.key)"
+                    />
+                  }
+                  @if (fieldInvalid(field.key)) {
+                    <span class="text-[11px] text-red-700">{{
+                      field.required
+                        ? 'Completa este campo con un valor válido.'
+                        : 'Revisa el valor ingresado.'
+                    }}</span>
+                  } @else if (field.hint) {
+                    <span class="text-[11px] font-normal leading-4 text-muted">{{
+                      field.hint
+                    }}</span>
+                  }
+                </label>
+              }
+            }
+          </div>
+          <label class="field-label border-t border-line pt-4"
+            >Motivo del cambio<textarea
+              class="field-input py-3"
+              rows="3"
+              formControlName="comentario"
+              placeholder="Describe el motivo para el registro de auditoría"
+            ></textarea>
+          </label>
+        </div>
+        <footer class="flex justify-end gap-2 border-t border-line bg-white p-4">
+          <button class="field-button" type="button" [disabled]="saving()" (click)="cancelEditor()">
+            Cancelar</button
+          ><button class="field-primary" type="submit" [disabled]="saving() || referenceLoading()">
+            <app-icon name="save" />{{ saving() ? 'Guardando…' : 'Guardar registro' }}
+          </button>
+        </footer>
+      </form>
+    </aside>
+  }
+</div>

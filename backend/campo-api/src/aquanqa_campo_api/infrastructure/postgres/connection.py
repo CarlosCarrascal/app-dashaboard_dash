@@ -60,6 +60,23 @@ class PostgresConnectionFactory:
         with self._pool.connection() as connection:
             yield connection
 
+    @contextmanager
+    def read(self) -> Iterator[psycopg.Connection[Any]]:
+        """Independent SELECT statements without implicit BEGIN/COMMIT round trips.
+
+        Do not use for mutations, server-side cursors or multi-statement atomic work.
+        The pool lease is exclusive; restore its mode before another caller can use it.
+        """
+        self.open()
+        with self._pool.connection() as connection:
+            previous = connection.autocommit
+            connection.autocommit = True
+            try:
+                yield connection
+            finally:
+                if not connection.closed:
+                    connection.autocommit = previous
+
 
 class PostgresHealthRepository:
     def __init__(self, connections: PostgresConnectionFactory):

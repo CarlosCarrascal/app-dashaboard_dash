@@ -1,0 +1,56 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/* Keep inactive workspace views mounted without grid/flex overriding native hiding. */
+.field-workspace [hidden] { display: none !important; }
+
+@theme {
+  --font-sans: 'Inter Variable', Inter, sans-serif;
+  --color-canvas: #f2f3f2;
+  --color-ink: #202622;
+  --color-muted: #66716a;
+  --color-forest: #145b45;
+  --color-meadow: #23946f;
+  --color-lime: #b9ed82;
+  --color-line: #e3e7e3;
+  --color-amber: #e9aa48;
+}
+
+/* The new workspace owns its typography, including elements styled by legacy globals. */
+.field-workspace,
+.field-workspace button,
+.field-workspace h1,
+.field-workspace h2,
+.field-workspace h3,
+.field-workspace strong,
+.field-workspace input,
+.field-workspace select {
+  font-family: var(--font-sans);
+}
+.field-workspace {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+.field-workspace :focus-visible {
+  outline: 2px solid var(--color-meadow);
+  outline-offset: 3px;
+}
+
+@layer components {
+  .field-button {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .field-primary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forest px-4 text-sm font-medium text-white hover:bg-meadow disabled:opacity-40;
+  }
+  .field-input {
+    @apply min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-sm text-ink;
+  }
+  .field-panel {
+    @apply min-w-0 rounded-2xl border border-line bg-white;
+  }
+  .field-label {
+    @apply flex min-w-0 flex-col gap-1.5 text-xs font-medium text-muted;
+  }
+}

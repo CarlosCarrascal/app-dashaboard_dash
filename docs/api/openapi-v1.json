@@ -1294,6 +1294,120 @@
         "title": "AdminQASummaryItem",
         "type": "object"
       },
+      "AnalyticsBucket": {
+        "properties": {
+          "availability": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Availability",
+            "type": "object"
+          },
+          "categories": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "integer"
+          },
+          "diameter": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/Distribution"
+          },
+          "evaluations": {
+            "title": "Evaluations",
+            "type": "integer"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "lote_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lote Id"
+          },
+          "observations": {
+            "title": "Observations",
+            "type": "integer"
+          },
+          "sample_categories": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Sample Categories",
+            "type": "object"
+          },
+          "scatter": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Scatter",
+            "type": "array"
+          },
+          "scatter_total": {
+            "title": "Scatter Total",
+            "type": "integer"
+          },
+          "within_weight": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Within Weight"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "evaluations",
+          "observations",
+          "complete",
+          "excluded",
+          "categories",
+          "availability",
+          "distribution",
+          "diameter",
+          "scatter",
+          "scatter_total"
+        ],
+        "title": "AnalyticsBucket",
+        "type": "object"
+      },
       "ApiError": {
         "description": "Error legible para la app y para Swagger.",
         "example": {
@@ -1367,6 +1481,104 @@
           "archivo"
         ],
         "title": "Body_previsualizarEvaluacionesAdmin",
+        "type": "object"
+      },
+      "Distribution": {
+        "properties": {
+          "cv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv"
+          },
+          "histogram": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Histogram",
+            "type": "array"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "n": {
+            "default": 0,
+            "title": "N",
+            "type": "integer"
+          },
+          "p10": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10"
+          },
+          "p90": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90"
+          },
+          "q1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q1"
+          },
+          "q3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q3"
+          }
+        },
+        "title": "Distribution",
         "type": "object"
       },
       "EvaluadorCatalogo": {
@@ -1494,6 +1706,125 @@
           "nombre"
         ],
         "title": "EvaluadorSesion",
+        "type": "object"
+      },
+      "EvaluationAnalytics": {
+        "properties": {
+          "desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desde"
+          },
+          "grains": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Grains",
+            "type": "array"
+          },
+          "grano": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grano"
+          },
+          "hasta": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasta"
+          },
+          "lots": {
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsBucket"
+            },
+            "title": "Lots",
+            "type": "array"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "snapshot": {
+            "title": "Snapshot",
+            "type": "boolean"
+          },
+          "states": {
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsBucket"
+            },
+            "title": "States",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/AnalyticsBucket"
+          },
+          "trend": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AnalyticsBucket"
+                },
+                {
+                  "$ref": "#/components/schemas/SeriesPoint"
+                }
+              ]
+            },
+            "title": "Trend",
+            "type": "array"
+          },
+          "trend_desde": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Desde"
+          }
+        },
+        "required": [
+          "module_key",
+          "desde",
+          "hasta",
+          "trend_desde",
+          "snapshot",
+          "grano",
+          "grains",
+          "summary",
+          "lots",
+          "trend"
+        ],
+        "title": "EvaluationAnalytics",
         "type": "object"
       },
       "EvaluationCorrectionRequest": {
@@ -1629,6 +1960,7 @@
           },
           "source_table": {
             "enum": [
+              "ev_evaluacion",
               "ev_estados",
               "ev_flores",
               "ev_brotes",
@@ -1691,8 +2023,15 @@
             "type": "string"
           },
           "cortina": {
-            "title": "Cortina",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cortina"
           },
           "evaluador": {
             "anyOf": [
@@ -1744,8 +2083,15 @@
             "title": "Fundo"
           },
           "hilera": {
-            "title": "Hilera",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hilera"
           },
           "hora": {
             "anyOf": [
@@ -1827,8 +2173,15 @@
             "title": "Piso"
           },
           "planta": {
-            "title": "Planta",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planta"
           },
           "valores": {
             "additionalProperties": true,
@@ -2022,8 +2375,15 @@
             "type": "string"
           },
           "cortina": {
-            "title": "Cortina",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cortina"
           },
           "evaluador": {
             "anyOf": [
@@ -2075,8 +2435,15 @@
             "title": "Fundo"
           },
           "hilera": {
-            "title": "Hilera",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hilera"
           },
           "hora": {
             "anyOf": [
@@ -2158,8 +2525,15 @@
             "title": "Piso"
           },
           "planta": {
-            "title": "Planta",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planta"
           },
           "updated_at": {
             "anyOf": [
@@ -2236,6 +2610,59 @@
           "received_at"
         ],
         "title": "EvaluationReceipt",
+        "type": "object"
+      },
+      "EvaluationTrend": {
+        "properties": {
+          "desde": {
+            "format": "date",
+            "title": "Desde",
+            "type": "string"
+          },
+          "grano": {
+            "title": "Grano",
+            "type": "string"
+          },
+          "hasta": {
+            "format": "date",
+            "title": "Hasta",
+            "type": "string"
+          },
+          "module_key": {
+            "enum": [
+              "estadios",
+              "flores",
+              "baya",
+              "pesos",
+              "brotes",
+              "ramas"
+            ],
+            "title": "Module Key",
+            "type": "string"
+          },
+          "trend": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AnalyticsBucket"
+                },
+                {
+                  "$ref": "#/components/schemas/SeriesPoint"
+                }
+              ]
+            },
+            "title": "Trend",
+            "type": "array"
+          }
+        },
+        "required": [
+          "module_key",
+          "desde",
+          "hasta",
+          "grano",
+          "trend"
+        ],
+        "title": "EvaluationTrend",
         "type": "object"
       },
       "FundoCatalogo": {
@@ -2634,6 +3061,38 @@
         "title": "ModuloCatalogo",
         "type": "object"
       },
+      "ObservationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "ObservationPage",
+        "type": "object"
+      },
       "PageInfo": {
         "properties": {
           "page": {
@@ -2749,6 +3208,93 @@
           "refresh_token"
         ],
         "title": "RefreshRequest",
+        "type": "object"
+      },
+      "SeriesDistribution": {
+        "properties": {
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "n": {
+            "default": 0,
+            "title": "N",
+            "type": "integer"
+          },
+          "q1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q1"
+          },
+          "q3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q3"
+          }
+        },
+        "title": "SeriesDistribution",
+        "type": "object"
+      },
+      "SeriesPoint": {
+        "properties": {
+          "categories": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/SeriesDistribution"
+          },
+          "evaluations": {
+            "title": "Evaluations",
+            "type": "integer"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "observations": {
+            "title": "Observations",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "evaluations",
+          "observations",
+          "excluded"
+        ],
+        "title": "SeriesPoint",
         "type": "object"
       },
       "TokenPair": {
@@ -3289,6 +3835,57 @@
           },
           {
             "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "in": "query",
             "name": "sort_by",
             "required": false,
             "schema": {
@@ -3394,6 +3991,854 @@
         ]
       }
     },
+    "/v1/admin/evaluaciones/analitica": {
+      "get": {
+        "operationId": "analizar_evaluaciones_v1_admin_evaluaciones_analitica_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "snapshot_series",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Snapshot Series",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "series_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Series Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "snapshot",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Snapshot",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_trend",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Trend",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "schema": {
+              "default": "n_flores",
+              "enum": [
+                "n_flores",
+                "cuajo",
+                "yemas_abiertas",
+                "yemas_por_abrir",
+                "yemas_muertas",
+                "brotes_tiernos"
+              ],
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weight Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weight Max"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationAnalytics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analizar Evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/analitica/tendencia": {
+      "get": {
+        "operationId": "tendencia_evaluaciones_v1_admin_evaluaciones_analitica_tendencia_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "snapshot_series",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Snapshot Series",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "series_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Series Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "snapshot",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Snapshot",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_trend",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Trend",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "schema": {
+              "default": "n_flores",
+              "enum": [
+                "n_flores",
+                "cuajo",
+                "yemas_abiertas",
+                "yemas_por_abrir",
+                "yemas_muertas",
+                "brotes_tiernos"
+              ],
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weight Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "weight_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weight Max"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationTrend"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Tendencia Evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
     "/v1/admin/evaluaciones/cargar": {
       "post": {
         "description": "Confirma un preview por su UUID y SHA-256. El backend recupera las filas validadas, las guarda en una sola transacción y registra el resultado del manifiesto. Si una fila no puede persistirse, se revierte todo el lote. Repetir la confirmación es idempotente.",
@@ -3491,6 +4936,431 @@
           }
         ],
         "summary": "Confirma una carga masiva de evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/exportar": {
+      "get": {
+        "operationId": "exportar_evaluaciones_v1_admin_evaluaciones_exportar_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "module_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "estadios",
+                    "flores",
+                    "baya",
+                    "pesos",
+                    "brotes",
+                    "ramas"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "empresa_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fundo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fundo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "modulo_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modulo Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lote_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lote Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "evaluador_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Evaluador Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desde",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "captured_at",
+              "enum": [
+                "captured_at",
+                "fecha",
+                "module_key",
+                "empresa",
+                "fundo",
+                "modulo",
+                "lote",
+                "evaluador"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Dir",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Exportar Evaluaciones",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/ficha/{module_key}/{source_id}": {
+      "get": {
+        "operationId": "ficha_evaluacion_v1_admin_evaluaciones_ficha__module_key___source_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "estadios",
+                "flores",
+                "baya",
+                "pesos",
+                "brotes",
+                "ramas"
+              ],
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_table",
+            "required": false,
+            "schema": {
+              "default": "ev_evaluacion",
+              "title": "Source Table",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEvaluationDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ficha Evaluacion",
         "tags": [
           "Administración"
         ]
@@ -3685,6 +5555,57 @@
           },
           {
             "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "in": "query",
             "name": "sort_by",
             "required": false,
             "schema": {
@@ -3785,6 +5706,129 @@
           }
         ],
         "summary": "Calcula indicadores con los mismos filtros y alcances de la grilla",
+        "tags": [
+          "Administración"
+        ]
+      }
+    },
+    "/v1/admin/evaluaciones/observaciones/{module_key}/{source_id}": {
+      "get": {
+        "operationId": "observaciones_evaluacion_v1_admin_evaluaciones_observaciones__module_key___source_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "module_key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "estadios",
+                "flores",
+                "baya",
+                "pesos",
+                "brotes",
+                "ramas"
+              ],
+              "title": "Module Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_table",
+            "required": false,
+            "schema": {
+              "default": "ev_evaluacion",
+              "title": "Source Table",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Se requiere un token Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Se requiere una sesión administrativa válida."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "La sesión no tiene permiso para el panel administrativo."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Observaciones Evaluacion",
         "tags": [
           "Administración"
         ]
@@ -4190,6 +6234,57 @@
                 }
               ],
               "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
             }
           },
           {
@@ -4614,6 +6709,57 @@
                 }
               ],
               "title": "Hasta"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grano",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grano"
+            }
+          },
+          {
+            "in": "query",
+            "name": "piso",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Piso"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
             }
           },
           {

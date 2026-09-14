@@ -1,0 +1,376 @@
+@if (vm.analytics(); as data) {
+  <div
+    [hidden]="vm.workspaceView() !== 'analisis'"
+    class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"
+  >
+    <section class="field-panel overflow-hidden">
+      <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
+        <div>
+          <h2 class="!m-0 !text-base !font-semibold">{{ vm.chartTitle() }}</h2>
+          <p class="mt-1 text-xs text-muted">
+            {{ data.lots.length }} lotes · {{ data.summary.evaluations | number }}
+            {{ data.grano?.startsWith('grupo_') ? 'grupos históricos' : 'evaluaciones' }} ·
+            {{ vm.grainLabel(data.grano) }}
+          </p>
+        </div>
+        @if (vm.activeFamily() === 'flores') {
+          <select
+            class="field-input !w-auto"
+            aria-label="Indicador de flores"
+            [value]="vm.metric()"
+            (change)="vm.metric.set($any($event.target).value); vm.applyFilters()"
+          >
+            @for (m of vm.metricOptions; track m.key) {
+              <option [value]="m.key">{{ m.label }}</option>
+            }
+          </select>
+        }
+        @if (vm.activeFamily() === 'baya') {
+          <select
+            class="field-input !w-auto"
+            aria-label="Agrupar diámetros"
+            [value]="vm.chartMode()"
+            (change)="vm.chartMode.set($any($event.target).value)"
+          >
+            <option value="mediciones">Por lote</option>
+            <option value="estados">Por estado</option>
+          </select>
+        }
+        @if (vm.activeFamily() === 'ramas') {
+          <select
+            class="field-input !w-auto"
+            aria-label="Análisis de ramas"
+            [value]="vm.chartMode()"
+            (change)="vm.chartMode.set($any($event.target).value)"
+          >
+            <option value="mediciones">Diámetros medidos</option>
+            <option value="conteos">Conteos declarados</option>
+          </select>
+        }
+      </div>
+      <div class="h-[430px] px-2 pt-3 sm:h-[520px]">
+        <app-evaluation-chart
+          [options]="vm.mainChart()"
+          [label]="vm.chartTitle() + '. También puedes seleccionar un lote en el listado inferior.'"
+          (itemSelected)="vm.selectLot($event)"
+        />
+      </div>
+      <div class="border-t border-line px-5 py-3">
+        <label class="field-label"
+          >Explorar un lote<select
+            class="field-input"
+            [value]="vm.focusedLot()"
+            (change)="vm.selectLot($any($event.target).value)"
+          >
+            <option value="">Consulta completa</option>
+            @for (l of data.lots; track l.key) {
+              <option [value]="l.key">{{ l.label }}</option>
+            }
+          </select></label
+        >
+        <p class="mt-2 text-xs leading-5 text-muted">
+          @switch (vm.activeFamily()) {
+            @case ('estadios') {
+              Porcentajes sobre los cinco conteos completos. Selecciona una celda para explorar su
+              lote.
+            }
+            @case ('brotes') {
+              Cada celda muestra brotes por evaluación, separados por vm.piso.
+            }
+            @case ('pesos') {
+              Cada punto es un fruto con ambas medidas. {{ data.summary.scatter.length }} de
+              {{ data.summary.scatter_total | number }} pares visibles.
+            }
+            @case ('ramas') {
+              Conteos declarados y ramas medidas representan poblaciones diferentes.
+            }
+            @default {
+              Caja: percentiles 25–75; línea central: mediana; extremos: percentiles 10–90.
+            }
+          }
+        </p>
+      </div>
+    </section>
+    @if (vm.context(); as c) {
+      @if (vm.contextOpen()) {
+        <button
+          class="fixed inset-0 z-30 bg-black/25 xl:hidden"
+          aria-label="Cerrar contexto"
+          (click)="vm.contextOpen.set(false)"
+        ></button>
+      }
+      <aside
+        class="flex min-w-0 flex-col gap-4 max-xl:fixed max-xl:inset-y-0 max-xl:right-0 max-xl:z-40 max-xl:w-[min(360px,100%)] max-xl:overflow-y-auto max-xl:bg-canvas max-xl:p-3"
+        [class.max-xl:hidden]="!vm.contextOpen()"
+        [attr.role]="vm.isNarrow() ? 'dialog' : null"
+        [attr.aria-modal]="vm.isNarrow() ? 'true' : null"
+        aria-label="Contexto de la selección"
+        [cdkTrapFocus]="vm.contextOpen() && vm.isNarrow()"
+        (keydown.escape)="vm.contextOpen.set(false)"
+      >
+        <button appFieldButton class="xl:hidden" (click)="vm.contextOpen.set(false)">
+          Cerrar contexto ×
+        </button>
+        <section appFieldPanel class="p-5">
+          <div class="mb-4 flex items-center justify-between gap-2">
+            <h2 class="!m-0 !text-sm !font-medium">{{ c.label }}</h2>
+            @if (vm.focusedLot()) {
+              <button
+                class="field-button !min-h-8 !px-2"
+                aria-label="Quitar selección de lote"
+                (click)="vm.selectLot('')"
+              >
+                ×
+              </button>
+            }
+          </div>
+          <p class="text-xs text-muted">
+            {{ vm.activeFamily() === 'estadios' ? 'Participación E5' : 'Mediana de la selección' }}
+          </p>
+          <div class="my-2 text-[40px] font-medium leading-tight tracking-tight">
+            {{
+              vm.activeFamily() === 'estadios'
+                ? vm.formatMetric(vm.stagePercent(c))
+                : vm.formatMetric(c.distribution.median)
+            }}<span class="ml-2 text-sm text-muted">{{
+              vm.activeFamily() === 'estadios' ? '%' : vm.unit()
+            }}</span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4">
+            <div>
+              <p class="text-xs text-muted">Evaluaciones</p>
+              <strong class="text-lg font-medium">{{ c.evaluations | number }}</strong>
+            </div>
+            <div>
+              <p class="text-xs text-muted">
+                {{
+                  ['baya', 'pesos', 'ramas'].includes(vm.activeFamily())
+                    ? 'Observaciones'
+                    : 'Registros utilizables'
+                }}
+              </p>
+              <strong class="text-lg font-medium">{{
+                (['baya', 'pesos', 'ramas'].includes(vm.activeFamily())
+                  ? c.observations
+                  : c.complete
+                ) | number
+              }}</strong>
+            </div>
+          </div>
+          @if (c.distribution.n) {
+            <dl class="mt-4 space-y-2 text-sm">
+              <div class="flex justify-between">
+                <dt class="text-muted">Promedio</dt>
+                <dd>{{ vm.formatMetric(c.distribution.mean) }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-muted">P10 — P90</dt>
+                <dd>
+                  {{ vm.formatMetric(c.distribution.p10) }} —
+                  {{ vm.formatMetric(c.distribution.p90) }}
+                </dd>
+              </div>
+              @if (vm.activeFamily() === 'pesos') {
+                <div class="flex justify-between">
+                  <dt class="text-muted">Variación (CV)</dt>
+                  <dd>{{ vm.formatMetric(c.distribution.cv) }} %</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-muted">Diámetro mediano</dt>
+                  <dd>{{ vm.formatMetric(c.diameter.median) }} mm</dd>
+                </div>
+              }
+            </dl>
+          }
+          @if (c.lote_id) {
+            <button class="field-primary mt-5 w-full" (click)="vm.openLotRecords()">
+              Abrir registros del lote <app-icon name="arrowRight" />
+            </button>
+          }
+        </section>
+        @if (vm.categoryEntries(c).length) {
+          <section appFieldPanel class="p-5">
+            <h3 class="!m-0 !text-sm !font-medium">
+              {{
+                vm.activeFamily() === 'brotes' ? 'Participación por piso' : 'Composición observada'
+              }}
+            </h3>
+            <div class="my-4 flex h-3 overflow-hidden rounded-full">
+              @for (cat of vm.categoryEntries(c); track cat.label; let i = $index) {
+                <span
+                  [style.width.%]="cat.percent"
+                  [style.background]="vm.palette[i % vm.palette.length]"
+                  [title]="cat.label"
+                ></span>
+              }
+            </div>
+            <div class="space-y-3">
+              @for (cat of vm.categoryEntries(c); track cat.label; let i = $index) {
+                <div class="flex items-center gap-2 text-xs">
+                  <span
+                    class="size-2 shrink-0 rounded-sm"
+                    [style.background]="vm.palette[i % vm.palette.length]"
+                  ></span
+                  ><span class="flex-1 text-muted">{{
+                    vm.activeFamily() === 'estadios' ? vm.stageNames[i] : cat.label
+                  }}</span
+                  ><strong>{{ vm.formatMetric(cat.percent) }} %</strong
+                  ><span class="text-muted">{{ cat.value | number }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+        <section appFieldPanel class="p-5">
+          <h3 class="!m-0 !text-sm !font-medium">Base del análisis</h3>
+          @if (vm.activeFamily() === 'estadios') {
+            <p class="mt-3 text-xs text-muted">
+              E4 + E5:
+              <strong
+                >{{
+                  vm.formatMetric(
+                    vm.percentage(
+                      (c.categories['E4'] || 0) + (c.categories['E5'] || 0),
+                      vm.categoryTotal(c)
+                    )
+                  )
+                }}
+                %</strong
+              >
+              · {{ vm.categoryTotal(c) | number }} frutos contabilizados ·
+              {{ c.complete }} evaluaciones completas.
+            </p>
+          }
+          @if (vm.activeFamily() === 'pesos') {
+            <p class="mt-3 text-xs text-muted">
+              Pares completos: {{ c.complete }} / {{ c.observations }} ·
+              {{ vm.formatMetric(vm.percentage(c.complete, c.observations)) }} %
+            </p>
+          }
+          @if (vm.activeFamily() === 'ramas') {
+            <div class="mt-3 text-xs text-muted">
+              Mediciones utilizables: {{ c.distribution.n }}
+              @for (s of vm.sampleEntries(); track s.label) {
+                <p class="mt-2">{{ s.label }}: {{ s.n }} medidas</p>
+              }
+            </div>
+          }
+          <p class="mt-3 text-xs leading-5 text-muted">
+            @if (vm.activeFamily() === 'estadios') {
+              {{ c.excluded | number }} evaluaciones sin los cinco conteos completos.
+            } @else if (vm.activeFamily() === 'flores' || vm.activeFamily() === 'brotes') {
+              {{ c.distribution.n }} de {{ c.evaluations }} registros con el indicador disponible.
+            } @else {
+              {{ c.excluded }} observaciones apartadas por conflictos o incidencias.
+            }
+            Los datos ausentes no se convierten en cero.
+          </p>
+          @for (a of vm.availabilityEntries(c); track a.label) {
+            <div class="mt-2 flex justify-between gap-2 text-xs">
+              <span class="text-muted">{{ a.label }}</span
+              ><strong>{{ vm.formatMetric(a.percent) }} % · {{ a.n | number }}</strong>
+            </div>
+          }
+        </section>
+      </aside>
+    }
+    <section appFieldPanel class="p-5">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="!m-0 !text-sm !font-medium">
+          Evolución · {{ vm.contextData()?.summary ? vm.context()?.label : 'consulta completa' }}
+        </h3>
+        <span class="text-xs text-muted">{{ data.trend_desde }} — {{ data.hasta }}</span>
+      </div>
+      <div class="h-56">
+        @if (vm.trendLoading() && !vm.contextData()) {
+          <div class="flex h-full items-center justify-center text-sm text-muted" role="status">
+            Cargando evolución…
+          </div>
+        } @else if (vm.trendError() && !vm.contextData()) {
+          <div
+            class="flex h-full items-center justify-center gap-3 text-sm text-muted"
+            role="alert"
+          >
+            No se pudo cargar la evolución.
+            <button appFieldButton (click)="vm.applyFilters()">Reintentar</button>
+          </div>
+        } @else {
+          <app-evaluation-chart
+            [deferOffscreen]="true"
+            [options]="vm.evolution()"
+            label="Evolución de la consulta completa por fecha"
+          />
+        }
+      </div>
+      <p class="mt-2 text-xs text-muted">
+        Muestras observadas en cada fecha; no identifica el mismo fruto entre capturas.
+      </p>
+    </section>
+    @if (vm.context(); as c) {
+      @if (c.distribution.n) {
+        <section appFieldPanel class="p-5">
+          <h3 class="!m-0 !text-sm !font-medium">Distribución · {{ c.label }}</h3>
+          <div class="mt-4 h-48">
+            <app-evaluation-chart
+              [deferOffscreen]="true"
+              [options]="vm.histogram()"
+              label="Histograma de la selección"
+            />
+          </div>
+          <p class="text-xs text-muted">
+            Base: {{ c.distribution.n | number }} valores · {{ vm.unit() }}
+          </p>
+        </section>
+      }
+    }
+    @if (vm.activeFamily() === 'flores') {
+      <section appFieldPanel class="p-5">
+        <h3 class="!text-sm">Flores y cuajos observados</h3>
+        <div class="h-64">
+          <app-evaluation-chart
+            [deferOffscreen]="true"
+            [options]="vm.flowerScatter()"
+            label="Dispersión de flores frente a cuajos"
+          />
+        </div>
+        <p class="text-xs text-muted">
+          Relación de conteos de una captura. No representa una tasa de cuajado.
+        </p>
+      </section>
+    }
+    @if (vm.activeFamily() === 'pesos') {
+      <section appFieldPanel class="p-5">
+        <h3 class="!text-sm">Intervalo de consulta</h3>
+        <div class="my-3 flex gap-2">
+          <label class="field-label"
+            >Mínimo (g)<input
+              type="number"
+              min="0"
+              class="field-input"
+              [value]="vm.weightMin()"
+              (input)="vm.weightMin.set($any($event.target).value)" /></label
+          ><label class="field-label"
+            >Máximo (g)<input
+              type="number"
+              min="0"
+              class="field-input"
+              [value]="vm.weightMax()"
+              (input)="vm.weightMax.set($any($event.target).value)"
+          /></label>
+        </div>
+        <button appFieldButton (click)="vm.applyFilters()">Calcular participación</button>
+        @if (data.summary.within_weight !== null) {
+          <p class="mt-3">
+            {{
+              vm.formatMetric(
+                vm.percentage(data.summary.within_weight!, data.summary.distribution.n)
+              )
+            }}
+            % dentro del intervalo · {{ data.summary.within_weight }} de
+            {{ data.summary.distribution.n }}
+          </p>
+        }
+      </section>
+    }
+  </div>
+}

@@ -1,0 +1,128 @@
+<section [hidden]="vm.workspaceView() !== 'registros'" class="field-panel overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+    <div>
+      <h2 class="!m-0 !text-base !font-medium">Registros de {{ vm.title() }}</h2>
+      <p class="mt-1 text-xs text-muted">
+        {{ vm.meta().total | number }} evaluaciones · mismos filtros del análisis
+      </p>
+    </div>
+    <button
+      appFieldButton
+      (click)="vm.columnMenu.set(!vm.columnMenu())"
+      [attr.aria-expanded]="vm.columnMenu()"
+    >
+      <app-icon name="grid" />Columnas
+    </button>
+  </div>
+  @if (vm.columnMenu()) {
+    <div class="flex flex-wrap gap-4 border-t border-line p-4">
+      @for (col of vm.table.getAllLeafColumns(); track col.id) {
+        <label class="flex items-center gap-2 text-xs"
+          ><input
+            type="checkbox"
+            [checked]="col.getIsVisible()"
+            [disabled]="!col.getCanHide()"
+            (change)="col.toggleVisibility()"
+          />{{ col.columnDef.header }}</label
+        >
+      }
+    </div>
+  }
+  <div class="max-h-[65vh] overflow-auto">
+    <table
+      class="w-full table-fixed border-collapse text-[13px]"
+      [style.min-width.px]="vm.table.getTotalSize() + 90"
+    >
+      <thead class="sticky top-0 z-10 bg-canvas">
+        <tr>
+          @for (col of vm.table.getVisibleLeafColumns(); track col.id) {
+            <th
+              class="relative border-y border-line px-4 py-3 text-left font-medium text-muted"
+              [style.width.px]="col.getSize()"
+            >
+              <button
+                class="min-h-8"
+                [disabled]="!vm.sortableColumn(col.id)"
+                (click)="vm.sortColumn(col.id)"
+              >
+                {{ col.columnDef.header }} {{ vm.sortableColumn(col.id) ? '↕' : '' }}
+              </button>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                tabindex="0"
+                [attr.aria-label]="'Ancho de ' + col.columnDef.header"
+                (mousedown)="vm.resizeColumn($event, col.id)"
+                (touchstart)="vm.resizeColumn($event, col.id)"
+                (keydown.arrowright)="vm.adjustColumn(col.id, 10)"
+                (keydown.arrowleft)="vm.adjustColumn(col.id, -10)"
+                class="absolute inset-y-0 right-0 w-2 cursor-col-resize border-r border-line"
+              ></div>
+            </th>
+          }
+          <th class="sticky right-0 w-[90px] bg-canvas"><span class="sr-only">Detalle</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of vm.table.getRowModel().rows; track row.id) {
+          <tr class="border-b border-line hover:bg-canvas/60">
+            @for (cell of row.getVisibleCells(); track cell.id) {
+              <td
+                class="truncate px-4 py-4"
+                [class.text-right]="vm.isNumeric(cell.getValue())"
+                [title]="cell.getValue()"
+              >
+                {{ vm.formatCell(cell.getValue()) }}
+              </td>
+            }
+            <td class="sticky right-0 bg-white">
+              <button
+                class="field-button !border-0 !bg-transparent"
+                (click)="vm.selectRecord(row.original)"
+                [attr.aria-label]="'Ver evaluación ' + row.id"
+              >
+                <app-icon name="arrowRight" />
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-3 p-4 text-xs text-muted">
+    <span
+      >Página {{ vm.meta().page }} de {{ vm.meta().pages }} ·
+      {{ vm.meta().total | number }} resultados</span
+    >
+    <div class="flex items-center gap-2">
+      @if (vm.loading()) {
+        <span role="status">Cargando página…</span>
+      }
+      <button
+        appFieldButton
+        [disabled]="vm.loading() || vm.meta().page <= 1"
+        (click)="
+          vm.onPage({
+            pageIndex: vm.meta().page - 2,
+            pageSize: vm.meta().page_size,
+            length: vm.meta().total,
+          })
+        "
+      >
+        Anterior</button
+      ><button
+        appFieldButton
+        [disabled]="vm.loading() || vm.meta().page >= vm.meta().pages"
+        (click)="
+          vm.onPage({
+            pageIndex: vm.meta().page,
+            pageSize: vm.meta().page_size,
+            length: vm.meta().total,
+          })
+        "
+      >
+        Siguiente
+      </button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,119 @@
+@if (vm.filtersExpanded()) {
+  <form
+    [formGroup]="vm.filters"
+    (ngSubmit)="vm.applyFilters()"
+    class="field-panel mb-4 grid grid-cols-2 gap-3 p-4 lg:grid-cols-4"
+  >
+    @if (vm.filterCatalogLoading()) {
+      <p role="status" class="col-span-full text-xs text-muted">Cargando opciones de filtros…</p>
+    }
+    @if (vm.filterCatalogError()) {
+      <button type="button" class="field-button col-span-full" (click)="vm.retryFilterCatalog()">
+        Reintentar carga de filtros
+      </button>
+    }
+
+    <label class="field-label"
+      >Consulta<select
+        class="field-input"
+        [value]="vm.snapshot() ? 'ultima' : 'rango'"
+        (change)="vm.snapshot.set($any($event.target).value === 'ultima')"
+      >
+        <option value="ultima">Última fecha disponible</option>
+        <option value="rango">Intervalo de fechas</option>
+      </select></label
+    >
+    <label class="field-label"
+      >Desde<input class="field-input" type="date" formControlName="desde" /></label
+    ><label class="field-label"
+      >Hasta<input class="field-input" type="date" formControlName="hasta"
+    /></label>
+    <label class="field-label"
+      >Buscar<input class="field-input" formControlName="search" placeholder="Lote o evaluador"
+    /></label>
+    <app-field-select
+      label="Fundo"
+      [options]="vm.filteredFundos()"
+      [value]="vm.filters.controls.fundo_id.value"
+      (valueChange)="vm.filters.controls.fundo_id.setValue($event); vm.resetBelow('fundo')"
+    />
+    <app-field-select
+      label="Módulo agrícola"
+      [options]="vm.filteredModulos()"
+      [value]="vm.filters.controls.modulo_id.value"
+      (valueChange)="vm.filters.controls.modulo_id.setValue($event); vm.resetBelow('modulo')"
+    />
+    <app-field-select
+      label="Lote"
+      [options]="vm.filteredLotes()"
+      [value]="vm.filters.controls.lote_id.value"
+      (valueChange)="vm.filters.controls.lote_id.setValue($event)"
+    />
+    <app-field-select
+      label="Evaluador"
+      [options]="vm.evaluadores()"
+      [value]="vm.filters.controls.evaluador_id.value"
+      (valueChange)="vm.filters.controls.evaluador_id.setValue($event)"
+    />
+    @if (vm.activeFamily() === 'brotes') {
+      <label class="field-label"
+        >Piso<select
+          class="field-input"
+          [value]="vm.piso()"
+          (change)="vm.piso.set($any($event.target).value)"
+        >
+          <option value="">Todos</option>
+          <option>BROTE1</option>
+          <option>BROTE2</option>
+          <option>BROTE3</option>
+        </select></label
+      >
+    }
+    @if (vm.activeFamily() === 'baya') {
+      <label class="field-label"
+        >Estado<select
+          class="field-input"
+          [value]="vm.estado()"
+          (change)="vm.estado.set($any($event.target).value)"
+        >
+          <option value="">Todos</option>
+          @for (
+            s of ['FLOR', 'CUAJO', 'E1', 'E2', 'E3', 'E4', 'E5', 'DESH', 'CAIDO', 'X'];
+            track s
+          ) {
+            <option>{{ s }}</option>
+          }
+        </select></label
+      >
+    }
+    @if (vm.analytics()?.grains?.length) {
+      <label class="field-label"
+        >Unidad de origen<select
+          class="field-input"
+          [value]="vm.grain() || vm.analytics()?.grano"
+          (change)="vm.grain.set($any($event.target).value)"
+        >
+          @for (g of vm.analytics()!.grains; track g) {
+            <option>{{ g }}</option>
+          }
+        </select></label
+      >
+    }
+    <div class="col-span-2 flex items-end justify-end gap-2 lg:col-span-4">
+      <button appFieldButton type="button" (click)="vm.clearFilters()">Restablecer</button
+      ><button class="field-primary" type="submit">Aplicar consulta</button>
+    </div>
+  </form>
+}
+@if (vm.appliedFilters().length) {
+  <div class="mb-3 flex flex-wrap gap-2">
+    @for (f of vm.appliedFilters(); track f.key) {
+      <button
+        class="rounded-lg border border-line bg-white px-3 py-2 text-xs"
+        (click)="vm.removeFilter(f.key)"
+      >
+        {{ f.label }}: {{ f.value }} ×
+      </button>
+    }
+  </div>
+}

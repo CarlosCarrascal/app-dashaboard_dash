@@ -1,0 +1,137 @@
+<div class="field-workspace min-w-0">
+  <header
+    class="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-4 py-2 md:px-6"
+  >
+    <div class="flex items-center gap-3">
+      <h1 class="!m-0 !text-[18px] sm:!text-[22px] !font-semibold !tracking-tight">
+        {{ vm.title() }}
+      </h1>
+      <span class="hidden border-l border-line pl-3 text-xs text-muted sm:inline"
+        >Evaluaciones de campo</span
+      >
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        appFieldButton
+        aria-label="Actualizar datos"
+        title="Consultar los datos más recientes"
+        [disabled]="vm.loading()"
+        (click)="vm.refreshData()"
+      >
+        <app-icon name="refresh" />
+      </button>
+      <button
+        appFieldButton
+        aria-label="Exportar consulta"
+        (click)="vm.exportFiltered()"
+        [disabled]="vm.loading() || vm.exporting() || !vm.rows().length"
+      >
+        <app-icon name="download" /><span class="hidden sm:inline">{{
+          vm.exporting() ? 'Exportando…' : 'Exportar'
+        }}</span>
+      </button>
+      @if (vm.canImport()) {
+        <button class="field-primary" aria-label="Importar evaluaciones" (click)="vm.openImport()">
+          <app-icon name="upload" /><span class="hidden sm:inline">Importar</span>
+        </button>
+      }
+    </div>
+  </header>
+  @if (vm.activeView() === 'import') {
+    <div class="p-4">
+      <button class="field-button mb-4" (click)="vm.closeImport()">← Volver</button
+      ><app-cargas [embedded]="true" />
+    </div>
+  } @else {
+    <div class="px-3 py-4 md:px-6">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <nav aria-label="Vista del módulo" class="inline-flex rounded-xl bg-white p-1">
+          <button
+            class="field-button !border-0"
+            [class.!bg-forest]="vm.workspaceView() === 'analisis'"
+            [class.!text-white]="vm.workspaceView() === 'analisis'"
+            [attr.aria-pressed]="vm.workspaceView() === 'analisis'"
+            (click)="vm.setView('analisis')"
+          >
+            <app-icon name="grid" />Análisis</button
+          ><button
+            class="field-button !border-0"
+            [class.!bg-forest]="vm.workspaceView() === 'registros'"
+            [class.!text-white]="vm.workspaceView() === 'registros'"
+            [attr.aria-pressed]="vm.workspaceView() === 'registros'"
+            (click)="vm.setView('registros')"
+          >
+            <app-icon name="evaluations" />Registros
+          </button>
+        </nav>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-muted"
+            >{{ vm.snapshot() ? 'Última fecha' : 'Periodo' }}
+            <strong class="ml-1 text-ink">{{ vm.analytics()?.hasta ?? '—' }}</strong></span
+          ><button
+            appFieldButton
+            (click)="vm.toggleFilters()"
+            [attr.aria-expanded]="vm.filtersExpanded()"
+          >
+            <app-icon name="filter" />Filtros</button
+          ><button
+            class="field-button xl:hidden"
+            (click)="vm.contextOpen.set(!vm.contextOpen())"
+            [attr.aria-expanded]="vm.contextOpen()"
+          >
+            Detalle
+          </button>
+        </div>
+      </div>
+      <app-evaluation-filters />
+      @if (vm.errorMessage()) {
+        <div class="field-panel mb-4 border-amber p-4" role="alert">
+          {{ vm.errorMessage() }}
+          <button class="field-button ml-3" (click)="vm.applyFilters()">Reintentar</button>
+        </div>
+      }
+      @if (vm.summaryLoading() && vm.analytics()) {
+        <p role="status" class="mb-3 text-xs text-muted">Actualizando los datos mostrados…</p>
+      }
+      @if (
+        (vm.summaryLoading() && !vm.analytics()) ||
+        (vm.workspaceView() === 'registros' && vm.loading() && !vm.rows().length)
+      ) {
+        <div
+          class="field-panel flex min-h-80 items-center justify-center gap-3 text-muted"
+          role="status"
+        >
+          <span class="size-5 animate-spin rounded-full border-2 border-line border-t-forest"></span
+          >Consultando evaluaciones…
+        </div>
+      } @else if (vm.analytics(); as data) {
+        @if (!data.summary.evaluations) {
+          <section
+            class="field-panel flex min-h-[440px] flex-col items-center justify-center gap-4 p-8 text-center"
+          >
+            <span
+              class="flex size-16 items-center justify-center rounded-2xl bg-canvas text-3xl text-forest"
+              ><app-icon name="leaf"
+            /></span>
+            <h2 class="!text-xl !font-medium">Sin evaluaciones para esta consulta</h2>
+            <p class="max-w-md text-sm text-muted">
+              {{
+                vm.activeFamily() === 'pesos'
+                  ? 'Cada muestra de peso debe registrar gramos y diámetro en milímetros del mismo fruto.'
+                  : 'Prueba otra fecha, lote o ámbito para explorar los registros disponibles.'
+              }}
+            </p>
+            <button appFieldButton (click)="vm.toggleFilters()">Cambiar filtros</button>
+            @if (vm.canImport()) {
+              <button class="field-primary" (click)="vm.openImport()">Importar evaluaciones</button>
+            }
+          </section>
+        } @else {
+          <app-evaluation-analysis />
+          <app-evaluation-records />
+        }
+      }
+    </div>
+  }
+  <app-evaluation-detail />
+</div>

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from typing import Protocol
+from collections.abc import Iterator
+from .analytics import AnalyticsQuery, EvaluationTrend, EvaluationAnalytics
 
 from ..evaluaciones.schemas import ModuleKey
 from .schemas import (
@@ -68,6 +70,12 @@ class AdminRepository(Protocol):
     def list_evaluations(self, query: AdminEvaluationQuery) -> AdminEvaluationPage: ...
 
     def evaluation_summary(self, query: AdminEvaluationQuery) -> AdminEvaluationSummary: ...
+
+    def evaluation_trend(self, query: AnalyticsQuery) -> EvaluationTrend: ...
+
+    def evaluation_analytics(self, query: AnalyticsQuery) -> EvaluationAnalytics: ...
+
+    def export_evaluations(self, query: AdminEvaluationQuery) -> Iterator[str]: ...
 
     def get_evaluation(
         self, module_key: ModuleKey, source_id: int, source_table: str | None = None

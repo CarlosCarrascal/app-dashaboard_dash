@@ -1,0 +1,649 @@
+<div class="field-workspace min-w-0 bg-canvas">
+  <header
+    class="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-3 md:px-6"
+  >
+    <div class="flex items-center gap-3">
+      <span class="flex size-9 items-center justify-center rounded-xl bg-forest text-lime"
+        ><app-icon name="quality"
+      /></span>
+      <div>
+        <h1 class="!m-0 !text-[22px] !font-semibold !tracking-tight">
+          QA <span class="font-normal text-muted">/ Calidad de datos</span>
+        </h1>
+        <p class="mt-0.5 text-xs text-muted">Incidencias, evidencia y decisiones</p>
+      </div>
+    </div>
+    <button
+      class="field-button"
+      (click)="refresh()"
+      [disabled]="loading()"
+      aria-label="Actualizar QA"
+    >
+      <app-icon name="refresh" /><span class="hidden sm:inline">Actualizar</span>
+    </button>
+  </header>
+
+  <div class="p-3 md:p-5">
+    <section class="mb-4 grid grid-cols-3 gap-2 md:gap-4" aria-label="Resumen global de calidad">
+      <div class="field-panel px-3 py-4 md:px-5">
+        <p class="text-xs text-muted">Evidencias registradas</p>
+        <div class="mt-2 text-2xl font-medium tracking-tight md:text-[32px]">
+          {{ summary() ? (summary()!.total_rechazos | number) : '—' }}
+        </div>
+        <p class="mt-1 hidden text-xs text-muted sm:block">Todos los estados y dominios</p>
+      </div>
+      <button
+        class="field-panel px-3 py-4 text-left transition-colors hover:bg-amber/10 md:px-5"
+        [class.!border-amber]="activePriority()"
+        [attr.aria-pressed]="activePriority()"
+        (click)="togglePriority()"
+      >
+        <p class="text-xs text-muted">Reglas sobre umbral</p>
+        <div
+          class="mt-2 flex items-center gap-3 text-2xl font-medium tracking-tight md:text-[32px]"
+        >
+          {{ summary() ? (summary()!.alertas | number) : '—'
+          }}<span class="size-2 rounded-full bg-amber"></span>
+        </div>
+        <p class="mt-1 hidden text-xs text-muted sm:block">
+          {{ activePriority() ? 'Filtro de prioridad activo' : 'Ver incidencias prioritarias →' }}
+        </p>
+      </button>
+      <div class="field-panel px-3 py-4 md:px-5">
+        <p class="text-xs text-muted">Motivos de revisión</p>
+        <div class="mt-2 text-2xl font-medium tracking-tight md:text-[32px]">
+          {{ summary() ? summary()!.motivos.length : '—' }}
+        </div>
+        <p class="mt-1 hidden text-xs text-muted sm:block">Reglas y hallazgos identificados</p>
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <div
+        class="mb-3 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+        role="alert"
+      >
+        <span>{{ errorMessage() }}</span
+        ><button class="field-button" (click)="refresh()">Reintentar</button>
+      </div>
+    }
+    @if (successMessage()) {
+      <div
+        class="mb-3 flex items-center justify-between gap-3 rounded-xl border border-meadow/25 bg-lime/20 p-3 text-sm text-forest"
+        role="status"
+      >
+        <span>{{ successMessage() }}</span
+        ><button
+          class="field-button"
+          aria-label="Cerrar confirmación"
+          (click)="successMessage.set(null)"
+        >
+          <app-icon name="close" />
+        </button>
+      </div>
+    }
+
+    <div class="qa-grid" [class.has-selection]="selected()">
+      <aside class="field-panel hidden overflow-hidden xl:block" aria-label="Filtrar por motivo">
+        <div class="border-b border-line p-4">
+          <h2 class="!m-0 !text-sm !font-semibold">Motivos</h2>
+          <p class="mt-1 text-xs text-muted">Participación en las evidencias</p>
+          <input
+            class="field-input mt-3 !text-xs"
+            placeholder="Buscar motivo…"
+            aria-label="Buscar motivo"
+            [value]="reasonSearch()"
+            (input)="reasonSearch.set($any($event.target).value)"
+          />
+        </div>
+        <div class="qa-reasons p-2">
+          <button
+            class="mb-1 flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm"
+            [class.bg-forest]="!activeReason()"
+            [class.text-white]="!activeReason()"
+            (click)="filterByReason('')"
+          >
+            <span>Todos los motivos</span><app-icon name="grid" />
+          </button>
+          @for (m of reasons(); track m.motivo + m.hallazgo) {
+            <button
+              class="my-1 w-full rounded-xl p-3 text-left hover:bg-canvas"
+              [class.bg-forest/5]="activeReason() === m.motivo"
+              [class.ring-1]="activeReason() === m.motivo"
+              [class.ring-meadow/40]="activeReason() === m.motivo"
+              (click)="filterByReason(m.motivo)"
+              [attr.aria-pressed]="activeReason() === m.motivo"
+            >
+              <span class="flex items-start justify-between gap-2"
+                ><span class="text-xs font-medium leading-5">{{ reasonLabel(m.motivo) }}</span>
+                @if (m.excede_umbral) {
+                  <span
+                    class="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber"
+                    title="Supera el umbral"
+                  ></span>
+                }
+              </span>
+              <span class="mt-2 flex justify-between text-xs"
+                ><span class="text-muted">{{ m.filas | number }}</span
+                ><span class="font-medium"
+                  >{{ reasonPercent(m.filas) | number: '1.0-1' }}%</span
+                ></span
+              >
+              <span class="mt-1.5 block h-1 overflow-hidden rounded-full bg-canvas"
+                ><span
+                  class="block h-full rounded-full bg-meadow"
+                  [style.width.%]="reasonPercent(m.filas)"
+                ></span
+              ></span>
+            </button>
+          } @empty {
+            <p class="p-3 text-xs text-muted">No hay motivos para esta búsqueda.</p>
+          }
+        </div>
+      </aside>
+
+      <section
+        class="field-panel min-w-0 overflow-hidden"
+        aria-label="Cola de incidencias"
+        [attr.aria-busy]="loading()"
+      >
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-4"
+        >
+          <div>
+            <h2 class="!m-0 !text-base !font-semibold">
+              Cola de revisión
+              <span class="ml-1 rounded-md bg-canvas px-2 py-1 text-xs font-normal text-muted">{{
+                page() ? (page()!.meta.total | number) : '—'
+              }}</span>
+            </h2>
+            <p class="mt-1 text-xs text-muted">
+              {{ activeReason() ? reasonLabel(activeReason()) : 'Todas las incidencias' }}
+            </p>
+          </div>
+          <button
+            class="field-button"
+            [attr.aria-expanded]="filtersOpen()"
+            (click)="filtersOpen.update((v) => !v)"
+          >
+            <app-icon name="filter" />Filtros
+          </button>
+        </div>
+        <div class="overflow-x-auto border-b border-line px-3">
+          <nav class="flex min-w-max gap-1" aria-label="Estado de revisión">
+            @for (state of states; track state.value) {
+              <button
+                class="min-h-12 border-b-2 border-transparent px-3 text-xs font-medium text-muted"
+                [class.!border-forest]="activeState() === state.value"
+                [class.!text-forest]="activeState() === state.value"
+                [attr.aria-pressed]="activeState() === state.value"
+                (click)="setState(state.value)"
+              >
+                {{ state.label }}
+              </button>
+            }
+          </nav>
+        </div>
+        <form [formGroup]="filters" (ngSubmit)="applyFilters()" class="border-b border-line p-3">
+          <div class="flex gap-2">
+            <label class="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-canvas px-3"
+              ><app-icon name="search" /><input
+                class="min-h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
+                formControlName="search"
+                placeholder="Buscar en la evidencia…"
+                aria-label="Buscar incidencias" /></label
+            ><button class="field-button" type="submit" aria-label="Buscar en la cola">
+              <app-icon name="arrowRight" />
+            </button>
+          </div>
+          @if (filtersOpen()) {
+            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label class="field-label"
+                >Motivo<select class="field-input" formControlName="motivo">
+                  <option value="">Todos</option>
+                  @for (m of summary()?.motivos ?? []; track m.motivo + m.hallazgo) {
+                    <option [value]="m.motivo">{{ reasonLabel(m.motivo) }}</option>
+                  }
+                </select></label
+              >
+              <label class="field-label"
+                >Prioridad<select class="field-input" formControlName="excede_umbral">
+                  <option value="">Todas</option>
+                  <option value="true">Sobre umbral</option>
+                  <option value="false">Dentro del umbral</option>
+                </select></label
+              >
+              <label class="field-label"
+                >Tabla de origen<input
+                  class="field-input"
+                  formControlName="tabla_origen"
+                  placeholder="Nombre de la fuente"
+              /></label>
+              <label class="field-label"
+                >Hallazgo<input
+                  class="field-input"
+                  formControlName="hallazgo"
+                  placeholder="Código del hallazgo"
+              /></label>
+              <div class="flex justify-end gap-2 sm:col-span-2">
+                <button class="field-button" type="button" (click)="clearFilters()">
+                  Restablecer</button
+                ><button class="field-primary" type="submit">Aplicar filtros</button>
+              </div>
+            </div>
+          }
+        </form>
+        @if (activeReason() || activePriority()) {
+          <div
+            class="flex flex-wrap items-center gap-2 border-b border-line bg-canvas/50 px-4 py-2 text-xs"
+          >
+            <span class="text-muted">Filtrado</span>
+            @if (activeReason()) {
+              <button class="min-h-8 rounded-md bg-white px-2" (click)="filterByReason('')">
+                {{ reasonLabel(activeReason()) }} ×
+              </button>
+            }
+            @if (activePriority()) {
+              <button class="min-h-8 rounded-md bg-amber/15 px-2" (click)="togglePriority()">
+                Sobre umbral ×
+              </button>
+            }
+          </div>
+        }
+        @if (selectedDuplicateIds().length) {
+          <div
+            class="flex flex-wrap items-center justify-between gap-2 bg-forest px-4 py-3 text-xs text-white"
+          >
+            <span>{{ selectedDuplicateIds().length }} duplicados seleccionados</span
+            ><button
+              class="field-button !min-h-9 !text-xs"
+              [disabled]="bulkReviewing()"
+              (click)="confirmSelectedDuplicates()"
+            >
+              Confirmar duplicados
+            </button>
+          </div>
+        }
+        @if (loading()) {
+          <div
+            class="flex items-center gap-2 border-b border-line bg-canvas px-4 py-2 text-xs text-muted"
+            role="status"
+          >
+            <span
+              class="size-3 animate-spin rounded-full border-2 border-line border-t-forest"
+            ></span
+            >Actualizando incidencias…
+          </div>
+        }
+        <div class="qa-queue">
+          <table
+            class="hidden w-full border-collapse text-left md:table"
+            aria-label="Incidencias de calidad"
+          >
+            <thead class="sticky top-0 z-10 bg-canvas text-[11px] font-medium text-muted">
+              <tr>
+                <th class="w-9 px-3 py-3"><span class="sr-only">Selección</span></th>
+                <th class="min-w-52 py-3 pr-3">Incidencia / evidencia</th>
+                <th class="px-3 py-3">Estado</th>
+                <th class="px-3 py-3">Detectada</th>
+                <th class="w-12"><span class="sr-only">Revisar</span></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              @for (row of page()?.items ?? []; track row.rechazo_id) {
+                <tr
+                  class="group hover:bg-canvas/60"
+                  [class.bg-forest/5]="selected()?.rechazo_id === row.rechazo_id"
+                >
+                  <td class="px-3">
+                    @if (canBulkSelect(row)) {
+                      <input
+                        class="size-4 accent-forest"
+                        type="checkbox"
+                        [checked]="duplicateSelected(row.rechazo_id)"
+                        [attr.aria-label]="'Seleccionar duplicado ' + row.rechazo_id"
+                        (change)="toggleDuplicate(row, $any($event.target).checked)"
+                      />
+                    } @else {
+                      <span
+                        class="block size-1.5 rounded-full bg-line"
+                        [class.!bg-amber]="row.excede_umbral"
+                      ></span>
+                    }
+                  </td>
+                  <td class="py-3 pr-3">
+                    <button
+                      class="min-h-11 w-full text-left"
+                      (click)="selectForReview(row)"
+                      [attr.aria-label]="'Revisar incidencia ' + row.rechazo_id"
+                    >
+                      <span class="block text-[13px] font-medium leading-5">{{
+                        reasonLabel(row.motivo)
+                      }}</span
+                      ><span class="mt-1 block text-[11px] text-muted"
+                        >#{{ row.rechazo_id }} · {{ domainLabel(row) }} ·
+                        {{ row.hallazgo || 'Sin código' }}</span
+                      >
+                    </button>
+                  </td>
+                  <td class="px-3">
+                    <span
+                      class="whitespace-nowrap rounded-md bg-canvas px-2 py-1 text-[11px] text-muted"
+                      [class.!bg-amber/15]="row.estado_revision === 'corregir'"
+                      [class.!text-amber-800]="row.estado_revision === 'corregir'"
+                      [class.!bg-meadow/10]="row.estado_revision === 'aceptado'"
+                      [class.!text-forest]="row.estado_revision === 'aceptado'"
+                      >{{ stateLabel(row.estado_revision) }}</span
+                    >
+                  </td>
+                  <td class="whitespace-nowrap px-3 text-[11px] text-muted">
+                    {{ row.cargado_en | date: 'dd/MM/yyyy'
+                    }}<span class="mt-1 block">{{ row.cargado_en | date: 'HH:mm' }}</span>
+                  </td>
+                  <td class="pr-2">
+                    <button
+                      class="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-white hover:text-forest"
+                      (click)="selectForReview(row)"
+                      [attr.aria-label]="'Abrir evidencia ' + row.rechazo_id"
+                    >
+                      <app-icon name="chevronRight" />
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <div class="divide-y divide-line md:hidden">
+            @for (row of page()?.items ?? []; track row.rechazo_id) {
+              <div
+                class="flex items-center gap-3 px-4"
+                [class.bg-forest/5]="selected()?.rechazo_id === row.rechazo_id"
+              >
+                @if (canBulkSelect(row)) {
+                  <input
+                    class="size-5 accent-forest"
+                    type="checkbox"
+                    [checked]="duplicateSelected(row.rechazo_id)"
+                    [attr.aria-label]="'Seleccionar duplicado ' + row.rechazo_id"
+                    (change)="toggleDuplicate(row, $any($event.target).checked)"
+                  />
+                }
+                <button
+                  class="min-w-0 flex-1 py-4 text-left"
+                  (click)="selectForReview(row)"
+                  [attr.aria-label]="'Revisar incidencia ' + row.rechazo_id"
+                >
+                  <span class="mb-1 block text-[11px] text-muted"
+                    >#{{ row.rechazo_id }} · {{ domainLabel(row) }} ·
+                    {{ row.cargado_en | date: 'dd/MM/yy' }}</span
+                  ><span class="block text-sm font-medium">{{ reasonLabel(row.motivo) }}</span
+                  ><span class="mt-2 block text-xs text-muted"
+                    >{{ stateLabel(row.estado_revision) }}
+                    @if (row.excede_umbral) {
+                      <span class="ml-2 text-amber-800">• Sobre umbral</span>
+                    }
+                  </span></button
+                ><app-icon name="chevronRight" />
+              </div>
+            }
+          </div>
+          @if (!loading() && !page()?.items?.length) {
+            <div class="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center">
+              <span
+                class="flex size-12 items-center justify-center rounded-2xl bg-meadow/10 text-forest"
+                ><app-icon name="check"
+              /></span>
+              <h3 class="!m-0 !text-base !font-medium">Sin incidencias en esta consulta</h3>
+              <p class="text-xs text-muted">Prueba otro estado o restablece los filtros.</p>
+              <button class="field-button" (click)="clearFilters()">Ver todas</button>
+            </div>
+          }
+        </div>
+        @if (page(); as current) {
+          <footer
+            class="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-xs text-muted"
+          >
+            <label class="flex items-center gap-2"
+              >Filas<select
+                class="min-h-11 rounded-lg border border-line bg-white px-2"
+                aria-label="Filas por página"
+                [value]="current.meta.page_size"
+                [disabled]="loading()"
+                (change)="
+                  onPage({
+                    pageIndex: 0,
+                    pageSize: +$any($event.target).value,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select></label
+            ><span>{{ current.meta.page }} / {{ current.meta.pages || 1 }}</span>
+            <div class="flex gap-1">
+              <button
+                class="field-button !px-2"
+                aria-label="Página anterior de incidencias"
+                [disabled]="loading() || current.meta.page <= 1"
+                (click)="
+                  onPage({
+                    pageIndex: current.meta.page - 2,
+                    pageSize: current.meta.page_size,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <app-icon name="chevronLeft" /></button
+              ><button
+                class="field-button !px-2"
+                aria-label="Página siguiente de incidencias"
+                [disabled]="loading() || current.meta.page >= current.meta.pages"
+                (click)="
+                  onPage({
+                    pageIndex: current.meta.page,
+                    pageSize: current.meta.page_size,
+                    length: current.meta.total,
+                  })
+                "
+              >
+                <app-icon name="chevronRight" />
+              </button>
+            </div>
+          </footer>
+        }
+      </section>
+
+      @if (selected(); as row) {
+        <button
+          class="fixed inset-0 z-40 bg-black/25 xl:hidden"
+          aria-label="Cerrar revisión"
+          (click)="cancelReview()"
+        ></button>
+        <aside
+          class="qa-inspector field-panel overflow-hidden"
+          [attr.role]="isCompact() ? 'dialog' : 'region'"
+          [attr.aria-modal]="isCompact() ? 'true' : null"
+          aria-label="Revisión de incidencia"
+          [cdkTrapFocus]="isCompact()"
+          [cdkTrapFocusAutoCapture]="isCompact()"
+          (keydown.escape)="cancelReview()"
+        >
+          <div class="flex items-start justify-between gap-2 border-b border-line p-4">
+            <div>
+              <p class="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted">
+                Evidencia #{{ row.rechazo_id }}
+              </p>
+              <h2 class="!m-0 !text-base !font-semibold !leading-6">
+                {{ reasonLabel(row.motivo) }}
+              </h2>
+            </div>
+            <button
+              class="field-button !px-2"
+              aria-label="Cerrar detalle de incidencia"
+              (click)="cancelReview()"
+            >
+              <app-icon name="close" />
+            </button>
+          </div>
+          <div class="qa-inspector-body space-y-5 p-4">
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="rounded-md bg-canvas px-2 py-1">{{ domainLabel(row) }}</span
+              ><span class="rounded-md bg-canvas px-2 py-1">{{
+                stateLabel(row.estado_revision)
+              }}</span>
+              @if (row.excede_umbral) {
+                <span class="rounded-md bg-amber/15 px-2 py-1 text-amber-800">Sobre umbral</span>
+              }
+            </div>
+            <section>
+              <h3 class="!m-0 !text-xs !font-semibold uppercase tracking-wider text-muted">
+                Hallazgo
+              </h3>
+              <p class="mt-2 text-sm leading-6">{{ findingText(row) }}</p>
+              <p class="mt-2 break-all text-xs text-muted">
+                {{ row.hallazgo }} · {{ row.tabla_origen }}
+              </p>
+            </section>
+            <section class="rounded-xl bg-canvas p-3">
+              <h3 class="!m-0 !text-xs !font-semibold">{{ resolutionTitle(row) }}</h3>
+              <p class="mt-2 text-xs leading-5 text-muted">{{ resolutionDescription(row) }}</p>
+              @if (canBulkSelect(row)) {
+                <button
+                  class="field-primary mt-3 w-full !text-xs"
+                  [disabled]="bulkReviewing()"
+                  (click)="confirmSingleDuplicate(row)"
+                >
+                  Confirmar duplicado exacto
+                </button>
+              }
+            </section>
+            <section>
+              <h3 class="!m-0 !text-xs !font-semibold uppercase tracking-wider text-muted">
+                Datos de la evidencia
+              </h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3">
+                @for (field of humanFields(row); track $index) {
+                  <div class="min-w-0">
+                    <dt class="text-[11px] text-muted">{{ field.label }}</dt>
+                    <dd class="mt-1 break-words text-xs font-medium">{{ field.value }}</dd>
+                  </div>
+                } @empty {
+                  <p class="col-span-2 text-xs text-muted">
+                    Consulta los campos completos en la evidencia original.
+                  </p>
+                }
+              </dl>
+            </section>
+            <details class="rounded-lg border border-line">
+              <summary class="min-h-11 cursor-pointer px-3 py-3 text-xs font-medium">
+                Evidencia original
+              </summary>
+              <pre class="max-h-64 overflow-auto border-t border-line bg-canvas p-3 text-[11px]">{{
+                row.fila | json
+              }}</pre>
+            </details>
+            <section>
+              <h3 class="!m-0 !text-xs !font-semibold uppercase tracking-wider text-muted">
+                Trazabilidad
+              </h3>
+              <dl class="mt-3 space-y-2 text-xs">
+                <div class="flex justify-between gap-3">
+                  <dt class="text-muted">Detectada</dt>
+                  <dd>{{ row.cargado_en | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                  <dt class="text-muted">Snapshot</dt>
+                  <dd>{{ row.source_snapshot_id ?? 'No disponible' }}</dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                  <dt class="text-muted">Destino</dt>
+                  <dd class="min-w-0 break-all text-right">
+                    {{ row.tabla_destino || 'No indicado' }}
+                  </dd>
+                </div>
+                @if (row.revisado_en) {
+                  <div class="flex justify-between gap-3">
+                    <dt class="text-muted">Última revisión</dt>
+                    <dd>{{ row.revisado_en | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                  </div>
+                  <div class="flex justify-between gap-3">
+                    <dt class="text-muted">Responsable</dt>
+                    <dd>Usuario #{{ row.revisado_por }}</dd>
+                  </div>
+                }
+              </dl>
+              @if (row.comentario_revision) {
+                <blockquote class="mt-3 border-l-2 border-meadow pl-3 text-xs leading-5 text-muted">
+                  {{ row.comentario_revision }}
+                </blockquote>
+              }
+            </section>
+            @if (canReview()) {
+              <form
+                class="space-y-3 border-t border-line pt-4"
+                [formGroup]="reviewForm"
+                (ngSubmit)="submitReview()"
+              >
+                <!-- Errors remain visible inside the mobile review dialog. -->
+                @if (errorMessage()) {
+                  <p class="rounded-lg bg-red-50 p-3 text-xs text-red-800" role="alert">
+                    {{ errorMessage() }}
+                  </p>
+                }
+                <fieldset>
+                  <legend class="mb-3 text-xs font-semibold">Decisión de revisión</legend>
+                  <div class="space-y-2">
+                    @for (decision of states.slice(2); track decision.value) {
+                      <label
+                        class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-3 py-2 text-xs"
+                        [class.!border-meadow]="selectedDecision($any(decision.value))"
+                        [class.bg-meadow/5]="selectedDecision($any(decision.value))"
+                        ><input
+                          class="size-4 accent-forest"
+                          type="radio"
+                          formControlName="estado"
+                          [value]="decision.value"
+                        /><span>{{
+                          decision.value === 'corregir'
+                            ? 'Marcar para corrección'
+                            : decision.value === 'aceptado'
+                              ? 'Aceptar evidencia'
+                              : 'Descartar incidencia'
+                        }}</span></label
+                      >
+                    }
+                  </div>
+                </fieldset>
+                <label class="field-label"
+                  >Comentario y criterio<textarea
+                    class="field-input py-3"
+                    rows="3"
+                    formControlName="comentario"
+                    placeholder="Explica el motivo de tu decisión"
+                  ></textarea>
+                </label>
+                <p class="text-[11px] leading-5 text-muted">
+                  Guardar registra la decisión. Marcar para corrección no modifica por sí solo el
+                  dato de origen.
+                </p>
+                <button
+                  class="field-primary w-full"
+                  type="submit"
+                  [disabled]="reviewing() || bulkReviewing()"
+                >
+                  <app-icon name="save" />{{ reviewing() ? 'Guardando…' : 'Guardar decisión' }}
+                </button>
+              </form>
+            } @else {
+              <p class="rounded-lg bg-canvas p-3 text-xs text-muted">
+                Tu acceso permite consultar la evidencia y su trazabilidad.
+              </p>
+            }
+          </div>
+        </aside>
+      }
+    </div>
+  </div>
+</div>

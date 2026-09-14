@@ -1,0 +1,57 @@
+@if (vm.errorMessage()) {
+  <p class="mb-4 text-sm text-red-700" role="alert">{{ vm.errorMessage() }}</p>
+}
+<form
+  [formGroup]="vm.correctionForm"
+  (ngSubmit)="vm.submitCorrection()"
+  class="grid grid-cols-2 gap-4"
+>
+  <label class="field-label"
+    >Fecha<input class="field-input" type="date" formControlName="fecha"
+  /></label>
+  <label class="field-label"
+    >Lote<select class="field-input" formControlName="lote_id">
+      @for (o of vm.lotes(); track o.id) {
+        <option [ngValue]="o.id">{{ o.label }}</option>
+      }
+    </select></label
+  >
+  <label class="field-label"
+    >Cortina<input class="field-input" type="number" formControlName="cortina" /></label
+  ><label class="field-label"
+    >Hilera<input class="field-input" type="number" formControlName="hilera" /></label
+  ><label class="field-label"
+    >Planta<input class="field-input" type="number" formControlName="planta"
+  /></label>
+  <label class="field-label"
+    >Evaluador<select class="field-input" formControlName="evaluador_id">
+      <option [ngValue]="0">Sin asignar</option>
+      @for (o of vm.evaluadores(); track o.id) {
+        <option [ngValue]="o.id">{{ o.label }}</option>
+      }
+    </select></label
+  >
+  <div formArrayName="valores" class="col-span-2 grid grid-cols-2 gap-3">
+    @for (control of vm.correctionForm.controls.valores.controls; track $index) {
+      <div [formGroupName]="$index">
+        <label class="field-label"
+          >{{ control.controls.label.value }}<input class="field-input" formControlName="value"
+        /></label>
+      </div>
+    }
+  </div>
+  <label class="field-label col-span-2"
+    >Motivo de la corrección<textarea
+      class="field-input py-3"
+      rows="3"
+      formControlName="comentario"
+      required
+    ></textarea>
+  </label>
+  <div class="col-span-2 flex justify-end gap-2">
+    <button appFieldButton type="button" (click)="vm.cancelCorrection()">Cancelar</button
+    ><button class="field-primary" type="submit" [disabled]="vm.saving()">
+      Guardar corrección
+    </button>
+  </div>
+</form>
