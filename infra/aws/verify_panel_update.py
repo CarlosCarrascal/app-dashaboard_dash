@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sys
 import time
+from datetime import date, timedelta
 from uuid import uuid4
 import psycopg
 import requests
@@ -50,7 +51,12 @@ if args.http:
         print(base + ': authenticated routes and anonymous denial PASS', flush=True)
     for module in ['estadios','flores','brotes','ramas','baya','pesos']:
         base = 'https://aquanqa.pages.dev/v1/admin/evaluaciones'
-        for suffix, params in [('/analitica', {'module_key':module,'snapshot':'true','include_trend':'false'}),('/analitica/tendencia',{'module_key':module,'series_only':'true'})]:
-            response=requests.get(base+suffix,params=params,headers={'Authorization':'Bearer '+token},timeout=90)
-            assert response.status_code==200,(module,suffix,response.status_code)
+        response=requests.get(base+'/analitica',params={'module_key':module,'snapshot':'true','include_trend':'false'},headers={'Authorization':'Bearer '+token},timeout=90)
+        assert response.status_code==200,(module,'snapshot',response.status_code)
+        snapshot=response.json()
+        if snapshot.get('hasta') and snapshot.get('grano'):
+            end=date.fromisoformat(snapshot['hasta'])
+            params={'module_key':module,'series_only':'true','grano':snapshot['grano'],'desde':str(end-timedelta(days=83)),'hasta':str(end)}
+            response=requests.get(base+'/analitica/tendencia',params=params,headers={'Authorization':'Bearer '+token},timeout=90)
+            assert response.status_code==200,(module,'trend',response.status_code)
         print(module+': dashboard snapshot and trend PASS',flush=True)
