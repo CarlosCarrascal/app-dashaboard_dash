@@ -67,3 +67,7 @@ export type QAQuery = NonNullable<
 export type QAReviewRequest = NonNullable<
   operations['revisarRechazoCalidadAdmin']['requestBody']
 >['content']['application/json'];
+
+export type EvaluationCounts = Pick<AdminEvaluationSummary, 'total' | 'lotes' | 'evaluadores' | 'desde' | 'hasta' | 'ultima_captura'> & {
+  por_modulo: Array<{module_key: string; total: number}>;
+};

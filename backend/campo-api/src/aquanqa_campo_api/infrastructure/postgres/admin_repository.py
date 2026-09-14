@@ -20,6 +20,7 @@ from ...modules.admin.schemas import (
     AdminEvaluationPage,
     AdminEvaluationQuery,
     AdminEvaluationSummary,
+    EvaluationCounts,
     AdminMasterPage,
     AdminMasterQuery,
     AdminMutation,
@@ -32,7 +33,7 @@ from ...modules.evaluaciones.schemas import ModuleKey
 from .admin_load_repository import AdminLoadRepositoryMixin
 from .admin_mappers import evaluation_detail, evaluation_item, mutation, page_info
 from .admin_quality_repository import AdminQualityRepositoryMixin
-from .admin_queries import EVALUATION_ORDER, EVALUATIONS_CTE, MASTER_DEFINITIONS, analytics_cte, analytics_rows_sql, snapshot_rows_sql, series_trend_sql, stage_trend_sql, unpack_analytics_rows
+from .admin_queries import EVALUATION_COUNTS_CTE, EVALUATION_ORDER, EVALUATIONS_CTE, MASTER_DEFINITIONS, analytics_cte, analytics_rows_sql, snapshot_rows_sql, series_trend_sql, stage_trend_sql, unpack_analytics_rows
 from .connection import PostgresConnectionFactory
 
 
@@ -268,6 +269,33 @@ class PostgresAdminRepository(AdminLoadRepositoryMixin, AdminQualityRepositoryMi
                 yield line([*[row[field] for field in fields[:-1]],
                     *[detail.get(field) for field in detail_fields],
                     json.dumps(detail, ensure_ascii=False, default=str)])
+
+    def evaluation_counts(self, query: AdminEvaluationQuery) -> EvaluationCounts:
+        conditions, params = _evaluation_filters(query)
+        self._append_scope(conditions, params, {k: k for k in
+            ('empresa_id', 'fundo_id', 'modulo_id', 'lote_id')})
+        where = ' AND '.join(conditions) or 'TRUE'
+        # Text / observation filters retain the existing record semantics.
+        cte = EVALUATIONS_CTE if query.search or query.piso or query.estado else EVALUATION_COUNTS_CTE
+        try:
+            with self._connections.read() as connection, connection.cursor() as cursor:
+                cursor.execute(f"""{cte}
+                    SELECT module_key, GROUPING(module_key) AS overall, count(*) AS total,
+                        count(DISTINCT lote_id) AS lotes,
+                        count(DISTINCT evaluador_id) AS evaluadores,
+                        min(fecha) AS desde, max(fecha) AS hasta,
+                        max(captured_at) AS ultima_captura
+                    FROM evaluaciones WHERE {where}
+                    GROUP BY GROUPING SETS ((module_key), ())
+                """, params)
+                rows = cursor.fetchall()
+        except psycopg.Error as exc:
+            raise AdminRepositoryError('No se pudieron consultar los indicadores') from exc
+        totals = next(dict(r) for r in rows if r['overall'])
+        return EvaluationCounts(**{k: totals[k] for k in
+            ('total','lotes','evaluadores','desde','hasta','ultima_captura')},
+            por_modulo=[{'module_key':r['module_key'],'total':r['total']}
+                        for r in rows if not r['overall']])
 
     def evaluation_summary(self, query: AdminEvaluationQuery) -> AdminEvaluationSummary:
         conditions, params = _evaluation_filters(query)

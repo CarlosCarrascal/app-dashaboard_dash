@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, JsonPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, DestroyRef, computed, inject, signal } from '@angular/core';
@@ -19,7 +20,7 @@ import { AppIconComponent } from '../../../shared/ui/app-icon.component';
 @Component({
   selector: 'app-qa',
   standalone: true,
-  imports: [AppIconComponent, DecimalPipe, DatePipe, JsonPipe, A11yModule, ReactiveFormsModule],
+  imports: [FormsModule, AppIconComponent, DecimalPipe, DatePipe, JsonPipe, A11yModule, ReactiveFormsModule],
   templateUrl: './qa.component.html',
   styleUrl: './qa.component.scss',
 })

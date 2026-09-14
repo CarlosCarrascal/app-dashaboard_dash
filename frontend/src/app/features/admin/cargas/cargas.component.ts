@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { DatePipe, JsonPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
@@ -17,7 +18,7 @@ type LoadStatus = 'pending_confirmation' | 'processing' | 'accepted' | 'failed';
 @Component({
   selector: 'app-cargas',
   standalone: true,
-  imports: [
+  imports: [FormsModule, 
     AppIconComponent,
     DatePipe,
     JsonPipe,

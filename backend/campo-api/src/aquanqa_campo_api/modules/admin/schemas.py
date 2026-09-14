@@ -543,3 +543,18 @@ __all__ = [
     "QAReviewState",
     "LoadState",
 ]
+
+
+class EvaluationCountFamily(BaseModel):
+    module_key: ModuleKey
+    total: int
+
+
+class EvaluationCounts(BaseModel):
+    total: int
+    lotes: int
+    evaluadores: int
+    desde: date | None = None
+    hasta: date | None = None
+    ultima_captura: datetime | None = None
+    por_modulo: list[EvaluationCountFamily]

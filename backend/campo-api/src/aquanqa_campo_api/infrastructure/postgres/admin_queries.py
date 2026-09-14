@@ -413,3 +413,20 @@ MASTER_DEFINITIONS = {
         "order": "e.nombre, f.codigo, m.codigo, l.codigo, s.evaluacion, s.muestra_id",
     },
 }
+
+
+# Counts deliberately do not materialize observation arrays or measurement JSON.
+EVALUATION_COUNTS_CTE = """
+WITH evaluaciones AS (
+ SELECT CASE x.tipo WHEN 'desarrollo' THEN 'baya' WHEN 'peso' THEN 'pesos' ELSE x.tipo END module_key,
+   x.fecha,x.grano,x.lote_id,x.evaluador_id,mo.modulo_id,f.fundo_id,emp.empresa_id,
+   COALESCE(x.captured_at,(x.fecha::timestamp+COALESCE(x.hora,time '00:00'))
+       AT TIME ZONE 'America/Lima') captured_at
+ FROM core.ev_evaluacion x
+ JOIN core.m_lote l ON l.lote_id=x.lote_id
+ JOIN core.m_modulo mo ON mo.modulo_id=l.modulo_id
+ JOIN core.m_fundo f ON f.fundo_id=mo.fundo_id
+ JOIN core.m_empresa emp ON emp.empresa_id=f.empresa_id
+ WHERE x.estado_registro='vigente'
+)
+"""

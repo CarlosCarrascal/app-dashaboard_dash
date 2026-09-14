@@ -135,7 +135,7 @@
             "Ref": "DbSecurityGroup"
           }
         ],
-        "PubliclyAccessible": false,
+        "PubliclyAccessible": true,
         "MultiAZ": false,
         "BackupRetentionPeriod": 1,
         "PreferredBackupWindow": "07:00-08:00",

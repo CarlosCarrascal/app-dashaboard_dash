@@ -1,6 +1,6 @@
 {
   "/v1": {
-    "target": "https://aquanqa-campo-api.onrender.com",
+    "target": "https://d28iujqq12ix9m.cloudfront.net",
     "secure": true,
     "changeOrigin": true,
     "logLevel": "warn"

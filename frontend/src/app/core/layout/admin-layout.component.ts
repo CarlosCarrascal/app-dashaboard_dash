@@ -24,15 +24,21 @@ import { AppIconComponent } from '../../shared/ui/app-icon.component';
       [cdkTrapFocusAutoCapture]="mobileOpen()"
     >
       <a
-        routerLink="/admin/evaluaciones"
+        routerLink="/admin"
         class="mb-5 flex h-12 items-center gap-3 px-2 text-forest"
-        aria-label="AquAnqa, evaluaciones"
+        aria-label="Aquanqa, inicio"
         ><img src="/brand/aquanqa-symbol.svg" class="size-7 shrink-0" width="28" height="28" alt="" aria-hidden="true" />
         @if (expanded() || mobileOpen()) {
           <strong class="text-base">AquAnqa</strong>
         }
       </a>
-      <nav aria-label="Evaluaciones" class="flex flex-col gap-2">
+      <nav aria-label="Inicio y evaluaciones" class="flex flex-col gap-2">
+        <a routerLink="/admin" routerLinkActive="!bg-forest !text-white" [routerLinkActiveOptions]="{ exact: true }"
+          class="mb-2 flex min-h-11 items-center gap-3 rounded-xl px-3 text-muted hover:bg-canvas"
+          title="Inicio" aria-label="Inicio" (click)="mobileOpen.set(false)">
+          <app-icon name="home" class="text-xl" />
+          @if (expanded() || mobileOpen()) { <span class="text-[13px]">Inicio</span> }
+        </a>
         @if (auth.hasPermission('admin:evaluaciones:leer')) {
           @for (item of modules; track item.key) {
             <a

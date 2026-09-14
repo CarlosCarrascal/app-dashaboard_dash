@@ -2,6 +2,8 @@
 
 from typing import Annotated
 
+from .schemas import EvaluationCounts
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -118,6 +120,16 @@ def listar_evaluaciones_admin(
 ) -> AdminEvaluationPage:
     try:
         return service.list_evaluations(query)
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get('/evaluaciones/conteos', response_model=EvaluationCounts,
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def indicadores_evaluaciones(query: Annotated[AdminEvaluationQuery, Query()],
+    service: Annotated[AdminService, Depends(get_admin_service)]) -> EvaluationCounts:
+    try:
+        return service.evaluation_counts(query)
     except AdminRepositoryError as error:
         raise _unavailable(error) from error
 

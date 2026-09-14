@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,7 +44,7 @@ interface FieldOption {
 @Component({
   selector: 'app-maestros',
   standalone: true,
-  imports: [AppIconComponent, DecimalPipe, A11yModule, ReactiveFormsModule],
+  imports: [FormsModule, AppIconComponent, DecimalPipe, A11yModule, ReactiveFormsModule],
   templateUrl: './maestros.component.html',
   styleUrl: './maestros.component.scss',
 })

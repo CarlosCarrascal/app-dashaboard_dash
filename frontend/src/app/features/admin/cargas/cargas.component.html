@@ -164,9 +164,9 @@
       <p>Manifiestos registrados con hash, usuario, estado y resultado operativo.</p>
     </div>
     <div class="history-actions">
-      <select
+      <select [ngModelOptions]="{standalone: true}"
         aria-label="Filtrar cargas por estado"
-        [value]="historyState()"
+        [ngModel]="historyState()"
         (change)="onHistoryStateChanged($event)"
       >
         <option value="">Todos los estados</option>

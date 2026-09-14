@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
@@ -10,7 +11,7 @@ import { EvaluationWorkspace } from '../evaluation-workspace.service';
   selector: 'app-evaluation-analysis',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [FormsModule, 
     DecimalPipe,
     A11yModule,
     AppIconComponent,

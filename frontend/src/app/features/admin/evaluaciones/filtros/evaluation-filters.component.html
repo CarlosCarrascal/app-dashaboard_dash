@@ -14,9 +14,9 @@
     }
 
     <label class="field-label"
-      >Consulta<select
+      >Consulta<select [ngModelOptions]="{standalone: true}"
         class="field-input"
-        [value]="vm.snapshot() ? 'ultima' : 'rango'"
+        [ngModel]="vm.snapshot() ? 'ultima' : 'rango'"
         (change)="vm.snapshot.set($any($event.target).value === 'ultima')"
       >
         <option value="ultima">Última fecha disponible</option>
@@ -57,9 +57,9 @@
     />
     @if (vm.activeFamily() === 'brotes') {
       <label class="field-label"
-        >Piso<select
+        >Piso<select [ngModelOptions]="{standalone: true}"
           class="field-input"
-          [value]="vm.piso()"
+          [ngModel]="vm.piso()"
           (change)="vm.piso.set($any($event.target).value)"
         >
           <option value="">Todos</option>
@@ -71,9 +71,9 @@
     }
     @if (vm.activeFamily() === 'baya') {
       <label class="field-label"
-        >Estado<select
+        >Estado<select [ngModelOptions]="{standalone: true}"
           class="field-input"
-          [value]="vm.estado()"
+          [ngModel]="vm.estado()"
           (change)="vm.estado.set($any($event.target).value)"
         >
           <option value="">Todos</option>
@@ -88,9 +88,9 @@
     }
     @if (vm.analytics()?.grains?.length) {
       <label class="field-label"
-        >Unidad de origen<select
+        >Unidad de origen<select [ngModelOptions]="{standalone: true}"
           class="field-input"
-          [value]="vm.grain() || vm.analytics()?.grano"
+          [ngModel]="vm.grain() || vm.analytics()?.grano"
           (change)="vm.grain.set($any($event.target).value)"
         >
           @for (g of vm.analytics()!.grains; track g) {

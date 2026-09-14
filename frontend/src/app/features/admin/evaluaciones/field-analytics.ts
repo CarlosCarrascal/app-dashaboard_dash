@@ -240,16 +240,23 @@ export function histogramChart(bucket: Bucket): EChartsOption {
   };
 }
 export function trendChart(data: FieldAnalytics): EChartsOption {
+  const stages = data.module_key === 'estadios';
+  // Place observed dates next to each other; keep straight segment boundaries.
+  const hasSamples = (b: Pick<Bucket, 'categories'>) => Object.values(b.categories).some((n) => n > 0);
+  const observed = stages ? data.trend.filter(hasSamples) : data.trend;
   const series =
     data.module_key === 'estadios'
       ? ['E1', 'E2', 'E3', 'E4', 'E5'].map((k, i) => ({
           name: k,
           type: 'line' as const,
           stack: 'stages',
+          smooth: false,
+          lineStyle: { width: 2 },
           areaStyle: { opacity: 0.8 },
           showSymbol: false,
+          connectNulls: false,
           itemStyle: { color: palette[i] },
-          data: data.trend.map((b) => {
+          data: observed.map((b) => {
             const sum = Object.values(b.categories).reduce((a, c) => a + c, 0);
             return sum ? pct(b.categories[k] || 0, sum) : null;
           }),
@@ -280,9 +287,36 @@ export function trendChart(data: FieldAnalytics): EChartsOption {
         ];
   return {
     ...base,
-    tooltip: { trigger: 'axis', confine: true, renderMode: 'richText' },
+    tooltip: {
+      trigger: 'axis', confine: true, renderMode: 'richText', padding: 12,
+      textStyle: { fontSize: 13, lineHeight: 23 },
+      valueFormatter: (value) => typeof value === 'number'
+        ? value.toLocaleString('es-PE', { maximumFractionDigits: 1 }) : String(value),
+      ...(stages ? { formatter: (params: unknown) => {
+        const rows = (Array.isArray(params) ? params : [params]) as {
+          value: number | null; name: string; seriesName: string; marker: string;
+        }[];
+        if (!rows.length || rows.every((row) => row.value == null || !Number.isFinite(row.value))) return '';
+        const date = new Intl.DateTimeFormat('es-PE', {
+          day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+        }).format(new Date(rows[0].name));
+        return [date, ...rows.filter((row) => row.value != null && Number.isFinite(row.value)).map((row) =>
+          `${row.marker || ''} ${row.seriesName}   ${row.value!.toLocaleString('es-PE', {
+            minimumFractionDigits: 1, maximumFractionDigits: 1,
+          })} %`,
+        )].join('\n');
+      } } : {}),
+    },
     grid: { left: 10, right: 12, top: 15, bottom: 30, containLabel: true },
-    xAxis: {
+    useUTC: stages,
+    xAxis: stages ? {
+      type: 'category',
+      data: observed.map((b) => b.label),
+      axisLabel: { fontSize: 11, hideOverlap: true, formatter: (value: string) =>
+        observed.some((b) => b.label === value && hasSamples(b))
+          ? new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(Date.parse(value)) : '' },
+      axisPointer: { snap: true },
+    } : {
       type: 'category',
       data: data.trend.map((b) => b.label.slice(5)),
       axisLabel: { fontSize: 11 },

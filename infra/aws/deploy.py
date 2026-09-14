@@ -70,7 +70,7 @@ def base_template():
         'DBInstanceClass': 'db.t4g.micro', 'AllocatedStorage': '20', 'MaxAllocatedStorage': 100,
         'StorageType': 'gp3', 'StorageEncrypted': True, 'MasterUsername': 'aquanqa_owner', 'ManageMasterUserPassword': True,
         'DBSubnetGroupName': ref('DbSubnetGroup'), 'VPCSecurityGroups': [ref('DbSecurityGroup')],
-        'PubliclyAccessible': False, 'MultiAZ': False, 'BackupRetentionPeriod': 1,
+        'PubliclyAccessible': True, 'MultiAZ': False, 'BackupRetentionPeriod': 1,
         'PreferredBackupWindow': '07:00-08:00', 'PreferredMaintenanceWindow': 'sun:08:00-sun:09:00',
         'AutoMinorVersionUpgrade': True, 'DeletionProtection': True, 'CopyTagsToSnapshot': True,
         'EnableCloudwatchLogsExports': ['postgresql', 'upgrade'], 'Tags': tags,

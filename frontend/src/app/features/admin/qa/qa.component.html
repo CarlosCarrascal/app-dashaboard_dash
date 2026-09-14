@@ -3,9 +3,7 @@
     class="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-3 md:px-6"
   >
     <div class="flex items-center gap-3">
-      <span class="flex size-9 items-center justify-center rounded-xl bg-forest text-lime"
-        ><app-icon name="quality"
-      /></span>
+      
       <div>
         <h1 class="!m-0 !text-[22px] !font-semibold !tracking-tight">
           QA <span class="font-normal text-muted">/ Calidad de datos</span>
@@ -404,10 +402,10 @@
             class="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-xs text-muted"
           >
             <label class="flex items-center gap-2"
-              >Filas<select
+              >Filas<select [ngModelOptions]="{standalone: true}"
                 class="min-h-11 rounded-lg border border-line bg-white px-2"
                 aria-label="Filas por página"
-                [value]="current.meta.page_size"
+                [ngModel]="current.meta.page_size"
                 [disabled]="loading()"
                 (change)="
                   onPage({

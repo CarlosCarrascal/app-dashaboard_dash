@@ -60,6 +60,10 @@ class FakeAdminRepository:
     def list_evaluations(self, query):
         return AdminEvaluationPage(items=[_evaluation()], meta=_meta())
 
+    def evaluation_counts(self, query):
+        from aquanqa_campo_api.modules.admin.schemas import EvaluationCounts
+        return EvaluationCounts(total=1,lotes=1,evaluadores=1,por_modulo=[{'module_key':'estadios','total':1}])
+
     def evaluation_summary(self, query):
         return AdminEvaluationSummary(
             total=1,
@@ -206,6 +210,7 @@ def test_superficie_admin_lee_sin_postgres():
         assert evaluations.status_code == 200
         assert evaluations.json()["items"][0]["id"] == "ev_estados:7"
         assert client.get("/v1/admin/evaluaciones/resumen").json()["total"] == 1
+        assert client.get("/v1/admin/evaluaciones/conteos").json()["total"] == 1
         records = client.get("/v1/admin/evaluaciones/registros?module_key=estadios")
         assert records.status_code == 200
         assert records.json()["items"][0]["id"] == "ev_estados:7"

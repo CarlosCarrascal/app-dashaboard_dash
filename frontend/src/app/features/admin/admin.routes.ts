@@ -6,9 +6,8 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [permissionGuard('admin:evaluaciones:leer')],
     loadComponent: () =>
-      import('./evaluaciones/evaluation-entry.component').then((module) => module.EvaluationEntryComponent),
+      import('./dashboard/dashboard.component').then((module) => module.DashboardComponent),
   },
   {
     path: 'evaluaciones',

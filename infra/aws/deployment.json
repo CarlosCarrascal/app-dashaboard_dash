@@ -7,8 +7,8 @@
   "docs": "https://d28iujqq12ix9m.cloudfront.net/docs",
   "legacy_api": "https://aquanqa-campo-api.onrender.com/v1",
   "distribution_id": "E1HAFHA0SSH2VO",
-  "api_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:2",
-  "image_release": "r745dc4b4c3c09f8d",
+  "api_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:3",
+  "image_release": "counts-b89e6519eba2920b",
   "database_instance": "aquanqa-production",
   "database_name": "aquanqa_live",
   "database_public": false,
@@ -146,5 +146,39 @@
     "database": "aquanqa_live",
     "legacy": "https://aquanqa-campo-api.onrender.com",
     "url": "d28iujqq12ix9m.cloudfront.net"
+  },
+  "counts_optimization": {
+    "verified_at": "2026-09-14T17:10:23.996192+00:00",
+    "database_proof": [
+      {
+        "fast_seconds": 0.20982105299999887,
+        "old_seconds": 13.464100629,
+        "total": 90667,
+        "lotes": 862,
+        "evaluadores": 41
+      },
+      {
+        "fast_seconds": 0.04262515599999972,
+        "old_seconds": 0.10022092699999519,
+        "total": 285,
+        "lotes": 84,
+        "evaluadores": 5
+      }
+    ],
+    "http_samples": [
+      {
+        "status": 200,
+        "seconds": 0.7501209
+      },
+      {
+        "status": 200,
+        "seconds": 0.5851179
+      },
+      {
+        "status": 200,
+        "seconds": 0.5700472
+      }
+    ],
+    "previous_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:2"
   }
 }

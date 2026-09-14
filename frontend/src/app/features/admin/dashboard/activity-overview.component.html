@@ -1,0 +1,34 @@
+<section class="field-panel overflow-hidden" aria-labelledby="activity-heading">
+  <header class="activity-heading">
+    <div><h2 id="activity-heading">Actividad de evaluación</h2><p>Capturas por semana · comparación entre fundos</p></div>
+    <div class="activity-filters">
+      <select [ngModelOptions]="{standalone: true}" class="field-input" aria-label="Tipo de evaluación" [ngModel]="family()" (change)="changeFamily($any($event.target).value)">@for(f of families;track f.key){<option [value]="f.key">{{f.label}}</option>}</select>
+      <select [ngModelOptions]="{standalone: true}" class="field-input" aria-label="Periodo del gráfico" [ngModel]="weeks()" (change)="changeWeeks($any($event.target).value)"><option value="8">8 semanas</option><option value="12">12 semanas</option><option value="24">24 semanas</option></select>
+    </div>
+  </header>
+  @if(loading()) {
+    <div class="activity-skeleton" role="status" aria-label="Cargando actividad de evaluación">
+      <div class="skeleton-caption" aria-hidden="true"></div>
+      <div class="skeleton-legends" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="skeleton-plot" aria-hidden="true"></div>
+      <div class="skeleton-metrics" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+  }
+  @defer (when !loading(); prefetch on immediate) {
+  @if(failed()) { <div class="activity-status" role="alert">No pudimos consultar la actividad.<button class="field-button" (click)="load()">Reintentar</button></div> }
+  @else if(!loading() && (!summary() || !summary()!.total)) { <div class="activity-status"><app-icon name="evaluations"/><strong>Aún no hay capturas para esta consulta</strong><span>Selecciona otro tipo de evaluación para explorar su actividad.</span></div> }
+  @else if(!loading()) {
+    <div class="activity-body">
+      <div class="activity-period"><span>{{date(start())}} — {{date(end())}} {{end().slice(0,4)}}</span><label>Origen <select [ngModelOptions]="{standalone: true}" [ngModel]="grain()" (change)="changeGrain($any($event.target).value)" aria-label="Unidad de origen">@for(g of grains();track g){<option [value]="g">{{grainLabel(g)}}</option>}</select></label></div>
+      <div class="activity-legend" aria-label="Fundos visibles en el gráfico">@for(line of lines();track line.id){<button [attr.aria-pressed]="!hidden().includes(line.id)" [class.is-muted]="hidden().includes(line.id)" (click)="toggle(line.id)"><span [style.background]="line.color"></span>{{line.name}}<strong>{{number(total(line))}}</strong></button>}</div>
+      <div class="activity-chart"><app-evaluation-chart [options]="options()" label="Cantidad de evaluaciones por semana y fundo. Selecciona un punto para consultar sus registros." (itemSelected)="openPoint($event)" /></div>
+      <div class="activity-footnote"><span>Semanas de lunes a domingo · datos hasta {{date(end())}}</span><span>Selecciona un punto para abrir sus registros <app-icon name="arrowRight"/></span></div>
+      <div class="activity-summary">
+        <div><span>Evaluaciones del periodo</span><strong>{{number(summary()!.total)}}</strong></div>
+        <div><span>Lotes con registros</span><strong>{{number(summary()!.lotes)}}</strong></div>
+        <div><span>Última captura del periodo</span><strong class="summary-date">{{date(summary()!.ultima_captura || '')}}</strong></div>
+      </div>
+    </div>
+  }
+  }
+</section>

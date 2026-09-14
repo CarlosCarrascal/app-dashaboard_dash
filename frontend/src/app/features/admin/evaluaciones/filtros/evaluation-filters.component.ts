@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FieldButtonDirective } from '../../../../shared/ui/field-primitives';
@@ -8,7 +9,7 @@ import { EvaluationWorkspace } from '../evaluation-workspace.service';
   selector: 'app-evaluation-filters',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, FieldSelectComponent, FieldButtonDirective],
+  imports: [FormsModule, ReactiveFormsModule, FieldSelectComponent, FieldButtonDirective],
   templateUrl: './evaluation-filters.component.html',
   styles: [':host {display:contents}'],
 })

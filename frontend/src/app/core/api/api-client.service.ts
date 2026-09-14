@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { ReadCache } from './read-cache';
+import { SessionReadCache } from './session-read-cache';
 import {
+  EvaluationCounts,
   AdminEvaluationDetail,
   AdminEvaluationCorrection,
   AdminEvaluationPage,
@@ -38,7 +40,9 @@ export class ApiClient {
   private readonly baseUrl = '/v1';
   private readonly reads = new ReadCache();
   private readonly evaluationReads = new ReadCache(36);
+  private readonly sessionReads = new SessionReadCache();
   clearReadCache(): void {
+    this.sessionReads.clear();
     this.reads.clear();
     this.evaluationReads.clear();
   }
@@ -52,7 +56,10 @@ export class ApiClient {
         .sort()
         .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params.get(k)!))
         .join('&');
-    return cache.read(key, () => this.http.get<T>(url, { params }), ttl);
+    const aggregate = url.endsWith('/conteos') || url.endsWith('/qa/resumen') || url.endsWith('/maestros/fundos')
+      || (url.includes('/analitica') && (params.get('snapshot') === 'true' || params.get('series_only') === 'true'));
+    const request = () => this.http.get<T>(url, { params });
+    return cache.read(key, () => aggregate ? this.sessionReads.read(key, request, ttl) : request(), ttl);
   }
 
   login(payload: LoginRequest): Observable<TokenPair> {
@@ -82,10 +89,14 @@ export class ApiClient {
     return this.cachedGet<T>(url, query, 600_000, this.evaluationReads);
   }
 
+  evaluationCounts(query: EvaluationQuery = {}): Observable<EvaluationCounts> {
+    return this.cachedGet<EvaluationCounts>(`${this.baseUrl}/admin/evaluaciones/conteos`, query, 600_000).pipe(
+      catchError(error => error.status === 404 ? this.evaluationSummary(query) : throwError(() => error)),
+    );
+  }
+
   evaluationSummary(query: EvaluationQuery = {}): Observable<AdminEvaluationSummary> {
-    return this.http.get<AdminEvaluationSummary>(`${this.baseUrl}/admin/evaluaciones/resumen`, {
-      params: this.toParams(query),
-    });
+    return this.cachedGet<AdminEvaluationSummary>(`${this.baseUrl}/admin/evaluaciones/resumen`, query, 600_000);
   }
 
   evaluationDetail(
@@ -139,7 +150,7 @@ export class ApiClient {
   }
 
   listMaster(resource: MasterResource, query: MasterQuery = {}): Observable<AdminMasterPage> {
-    return this.cachedGet<AdminMasterPage>(`${this.baseUrl}/admin/maestros/${resource}`, query);
+    return this.cachedGet<AdminMasterPage>(`${this.baseUrl}/admin/maestros/${resource}`, query, 300_000);
   }
 
   createMaster(

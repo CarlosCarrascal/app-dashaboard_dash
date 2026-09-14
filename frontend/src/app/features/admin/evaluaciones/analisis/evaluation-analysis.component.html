@@ -14,10 +14,10 @@
           </p>
         </div>
         @if (vm.activeFamily() === 'flores') {
-          <select
+          <select [ngModelOptions]="{standalone: true}"
             class="field-input !w-auto"
             aria-label="Indicador de flores"
-            [value]="vm.metric()"
+            [ngModel]="vm.metric()"
             (change)="vm.metric.set($any($event.target).value); vm.applyFilters()"
           >
             @for (m of vm.metricOptions; track m.key) {
@@ -26,10 +26,10 @@
           </select>
         }
         @if (vm.activeFamily() === 'baya') {
-          <select
+          <select [ngModelOptions]="{standalone: true}"
             class="field-input !w-auto"
             aria-label="Agrupar diámetros"
-            [value]="vm.chartMode()"
+            [ngModel]="vm.chartMode()"
             (change)="vm.chartMode.set($any($event.target).value)"
           >
             <option value="mediciones">Por lote</option>
@@ -37,10 +37,10 @@
           </select>
         }
         @if (vm.activeFamily() === 'ramas') {
-          <select
+          <select [ngModelOptions]="{standalone: true}"
             class="field-input !w-auto"
             aria-label="Análisis de ramas"
-            [value]="vm.chartMode()"
+            [ngModel]="vm.chartMode()"
             (change)="vm.chartMode.set($any($event.target).value)"
           >
             <option value="mediciones">Diámetros medidos</option>
@@ -57,9 +57,9 @@
       </div>
       <div class="border-t border-line px-5 py-3">
         <label class="field-label"
-          >Explorar un lote<select
+          >Explorar un lote<select [ngModelOptions]="{standalone: true}"
             class="field-input"
-            [value]="vm.focusedLot()"
+            [ngModel]="vm.focusedLot()"
             (change)="vm.selectLot($any($event.target).value)"
           >
             <option value="">Consulta completa</option>
@@ -281,7 +281,7 @@
         </h3>
         <span class="text-xs text-muted">{{ data.trend_desde }} — {{ data.hasta }}</span>
       </div>
-      <div class="h-56">
+      <div [style.height.px]="data.module_key === 'estadios' ? 260 : 224">
         @if (vm.trendLoading() && !vm.contextData()) {
           <div class="flex h-full items-center justify-center text-sm text-muted" role="status">
             Cargando evolución…
@@ -303,6 +303,9 @@
         }
       </div>
       <p class="mt-2 text-xs text-muted">
+        @if (data.module_key === 'estadios') {
+          Solo fechas con muestras, igualmente espaciadas; las uniones no representan mediciones intermedias.
+        }
         Muestras observadas en cada fecha; no identifica el mismo fruto entre capturas.
       </p>
     </section>

@@ -87,6 +87,9 @@ class AdminService:
     def list_evaluations(self, query: AdminEvaluationQuery) -> AdminEvaluationPage:
         return self._repository.list_evaluations(query)
 
+    def evaluation_counts(self, query):
+        return self._repository.evaluation_counts(query)
+
     def evaluation_summary(self, query: AdminEvaluationQuery) -> AdminEvaluationSummary:
         return self._repository.evaluation_summary(query)
 
