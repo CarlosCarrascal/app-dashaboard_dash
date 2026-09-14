@@ -90,7 +90,7 @@
         "IpProtocol": "tcp",
         "FromPort": 80,
         "ToPort": 80,
-        "CidrIp": "172.31.0.0/16"
+        "SourceSecurityGroupId": "sg-06204103f9981efdc"
       }
     },
     "DbSubnetGroup": {
@@ -224,6 +224,22 @@
               "Condition": {
                 "Bool": {
                   "aws:SecureTransport": "false"
+                }
+              }
+            },
+            {
+              "Sid": "CloudFrontRead",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Sub": "${Assets.Arn}/*"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": "arn:aws:cloudfront::021686096399:distribution/E1HAFHA0SSH2VO"
                 }
               }
             }
@@ -452,13 +468,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/*"
-                    },
-                    {
-                      "Fn::GetAtt": [
-                        "Database",
-                        "MasterUserSecret.SecretArn"
-                      ]
+                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/api-*"
                     }
                   ]
                 }
@@ -509,7 +519,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/*"
+                      "Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/api-*"
                     },
                     {
                       "Fn::GetAtt": [
@@ -761,6 +771,75 @@
             }
           }
         ]
+      }
+    },
+    "DbCpuAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "aquanqa-CPUUtilization",
+        "Namespace": "AWS/RDS",
+        "MetricName": "CPUUtilization",
+        "Dimensions": [
+          {
+            "Name": "DBInstanceIdentifier",
+            "Value": {
+              "Ref": "Database"
+            }
+          }
+        ],
+        "Statistic": "Average",
+        "Period": 300,
+        "EvaluationPeriods": 2,
+        "Threshold": 80,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "missing"
+      }
+    },
+    "DbStorageAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "aquanqa-FreeStorageSpace",
+        "Namespace": "AWS/RDS",
+        "MetricName": "FreeStorageSpace",
+        "Dimensions": [
+          {
+            "Name": "DBInstanceIdentifier",
+            "Value": {
+              "Ref": "Database"
+            }
+          }
+        ],
+        "Statistic": "Average",
+        "Period": 300,
+        "EvaluationPeriods": 2,
+        "Threshold": 2147483648,
+        "ComparisonOperator": "LessThanThreshold",
+        "TreatMissingData": "missing"
+      }
+    },
+    "ApiErrorsAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "aquanqa-api-5xx",
+        "Namespace": "AWS/ApplicationELB",
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Dimensions": [
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::GetAtt": [
+                "LoadBalancer",
+                "LoadBalancerFullName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 3,
+        "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
       }
     }
   },

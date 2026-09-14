@@ -2,6 +2,26 @@
 
 Despliegue en la cuenta `021686096399`, región `us-east-1`.
 
+## Producción verificada — 2026-09-14
+
+- Frontend: <https://d28iujqq12ix9m.cloudfront.net>
+- API: <https://d28iujqq12ix9m.cloudfront.net/v1>
+- Swagger: <https://d28iujqq12ix9m.cloudfront.net/docs>
+- Compatibilidad móvil: <https://aquanqa-campo-api.onrender.com/v1>
+- Base activa: `aquanqa_live` en RDS `aquanqa-production`.
+- Copia de ensayo: `aquanqa`, separada de producción. Sus seis capturas de prueba
+  nunca se copiaron a la base activa.
+- Neon queda conservado en solo lectura; no es la base de la API activa.
+- Snapshot RDS disponible: `aquanqa-post-migration-20260914`.
+
+Se compararon las 110 tablas mediante conteos y hashes de contenido, incluidas
+90 666 evaluaciones. Pasaron 102 pruebas de API, dos pruebas del proxy y el ciclo
+HTTP de los seis módulos móviles contra el ensayo. En producción se verificaron
+salud, autenticación, catálogos, evaluaciones, cargas, las seis familias analíticas
+y rechazo de acceso administrativo sin token. La URL anterior pasó las mismas
+comprobaciones básicas y confirmó el encabezado `X-Aquanqa-Backend: aws`.
+Identificadores y resultados detallados: `deployment.json`.
+
 ## Arquitectura
 
 CloudFront sirve Angular desde un bucket privado S3. Las rutas `/v1/*`, `/docs*`,
@@ -33,6 +53,8 @@ La instancia es Single-AZ `db.t4g.micro`, con 20 GiB gp3 y crecimiento hasta 100
 La API usa dos tareas de 0,5 vCPU y 1 GiB. Este dimensionamiento inicial no representa
 una garantía de alta disponibilidad de la base; revisar capacidad y plan de cuenta
 según uso. Los logs se conservan 30 días.
+CloudWatch tiene alarmas de CPU/espacio de RDS y errores 5xx de la API; se consultan
+en la consola y no tienen destinatarios de notificación configurados.
 
 ## Operación
 
@@ -53,8 +75,9 @@ en AWS antes de ejecutar cambios. `base` es únicamente para creación inicial.
 
 Para una actualización de código, construir y verificar el Frontend, ejecutar
 `deploy.py build`, comprobar `build_status`, y desplegar la API indicando
-`DB_NAME=aquanqa_live` en el entorno. **No omitir esta selección:** `aquanqa` es
-la restauración de ensayo. `deploy.py frontend` publica los archivos compilados
+`DB_NAME=aquanqa_live` en el entorno (también es el valor predeterminado).
+`aquanqa` es exclusivamente la restauración de ensayo y requiere selección explícita.
+El comando exige evidencia de la restauración verificada. `deploy.py frontend` publica los archivos compilados
 e invalida CloudFront. ECS revierte automáticamente despliegues que no superen
 la comprobación de salud.
 

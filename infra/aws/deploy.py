@@ -62,7 +62,8 @@ def base_template():
         add(name, 'EC2::SecurityGroup', {'GroupDescription': 'Aquanqa ' + name, 'VpcId': vpc, 'Tags': tags})
     add('ApiIngress', 'EC2::SecurityGroupIngress', {'GroupId': ref('ApiSecurityGroup'), 'IpProtocol': 'tcp', 'FromPort': 8000, 'ToPort': 8000, 'SourceSecurityGroupId': ref('AlbSecurityGroup')})
     add('DbIngress', 'EC2::SecurityGroupIngress', {'GroupId': ref('DbSecurityGroup'), 'IpProtocol': 'tcp', 'FromPort': 5432, 'ToPort': 5432, 'SourceSecurityGroupId': ref('ApiSecurityGroup')})
-    add('AlbVpcIngress', 'EC2::SecurityGroupIngress', {'GroupId': ref('AlbSecurityGroup'), 'IpProtocol': 'tcp', 'FromPort': 80, 'ToPort': 80, 'CidrIp': '172.31.0.0/16'})
+    origin_source = {'SourceSecurityGroupId': load('origin-security-group')['id']} if (OUT/'origin-security-group.json').exists() else {'CidrIp':'172.31.0.0/16'}
+    add('AlbVpcIngress', 'EC2::SecurityGroupIngress', {'GroupId': ref('AlbSecurityGroup'), 'IpProtocol': 'tcp', 'FromPort': 80, 'ToPort': 80, **origin_source})
     add('DbSubnetGroup', 'RDS::DBSubnetGroup', {'DBSubnetGroupDescription': 'Aquanqa private database', 'SubnetIds': subnets, 'Tags': tags})
     add('Database', 'RDS::DBInstance', {
         'DBInstanceIdentifier': 'aquanqa-production', 'DBName': 'aquanqa', 'Engine': 'postgres', 'EngineVersion': '18.3',
@@ -82,6 +83,8 @@ def base_template():
             'VersioningConfiguration': {'Status': 'Enabled'}, 'Tags': tags,
         }, DeletionPolicy='Retain', UpdateReplacePolicy='Retain')
         add(name + 'Policy', 'S3::BucketPolicy', {'Bucket': ref(name), 'PolicyDocument': {'Version': '2012-10-17', 'Statement': [{'Effect': 'Deny', 'Principal': '*', 'Action': 's3:*', 'Resource': [att(name, 'Arn'), sub('${' + name + '.Arn}/*')], 'Condition': {'Bool': {'aws:SecureTransport': 'false'}}}]}})
+        if name=='Assets' and (OUT/'distribution.json').exists():
+            resources[name+'Policy']['Properties']['PolicyDocument']['Statement'].append({'Sid':'CloudFrontRead','Effect':'Allow','Principal':{'Service':'cloudfront.amazonaws.com'},'Action':'s3:GetObject','Resource':sub('${Assets.Arn}/*'),'Condition':{'StringEquals':{'AWS:SourceArn':load('distribution')['arn']}}})
     for name in ['ApiRepository', 'MigrationRepository']:
         add(name, 'ECR::Repository', {'RepositoryName': 'aquanqa/' + ('api' if name == 'ApiRepository' else 'migration'), 'ImageTagMutability': 'IMMUTABLE', 'ImageScanningConfiguration': {'ScanOnPush': True}, 'EncryptionConfiguration': {'EncryptionType': 'AES256'}, 'Tags': tags}, DeletionPolicy='Retain', UpdateReplacePolicy='Retain')
     add('Cluster', 'ECS::Cluster', {'ClusterName': STACK, 'ClusterSettings': [{'Name': 'containerInsights', 'Value': 'enabled'}], 'Tags': tags})
@@ -91,8 +94,8 @@ def base_template():
         p = {'AssumeRolePolicyDocument': {'Version': '2012-10-17', 'Statement': [{'Effect': 'Allow', 'Principal': {'Service': service}, 'Action': 'sts:AssumeRole'}]}, 'Policies': [{'PolicyName': 'aquanqa', 'PolicyDocument': {'Version': '2012-10-17', 'Statement': statements}}], 'Tags': tags}
         if managed: p['ManagedPolicyArns'] = managed
         add(name, 'IAM::Role', p)
-    secret_resources = [sub('arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/*'), att('Database', 'MasterUserSecret.SecretArn')]
-    role('ExecutionRole', 'ecs-tasks.amazonaws.com', [{'Effect':'Allow','Action':['secretsmanager:GetSecretValue'],'Resource':secret_resources}], ['arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'])
+    secret_resources = [sub('arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:aquanqa/production/api-*'), att('Database', 'MasterUserSecret.SecretArn')]
+    role('ExecutionRole', 'ecs-tasks.amazonaws.com', [{'Effect':'Allow','Action':['secretsmanager:GetSecretValue'],'Resource':secret_resources[:1]}], ['arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'])
     role('MigrationRole', 'ecs-tasks.amazonaws.com', [
         {'Effect':'Allow','Action':['secretsmanager:GetSecretValue'],'Resource':secret_resources},
         {'Effect':'Allow','Action':['s3:GetObject','s3:PutObject'],'Resource':sub('${Artifacts.Arn}/migration/*')},
@@ -112,6 +115,9 @@ def base_template():
     add('LoadBalancer','ElasticLoadBalancingV2::LoadBalancer',{'Name':STACK,'Scheme':'internal','Type':'application','Subnets':subnets,'SecurityGroups':[ref('AlbSecurityGroup')],'LoadBalancerAttributes':[{'Key':'routing.http.drop_invalid_header_fields.enabled','Value':'true'}],'Tags':tags})
     add('TargetGroup','ElasticLoadBalancingV2::TargetGroup',{'Name':'aquanqa-api','VpcId':vpc,'Port':8000,'Protocol':'HTTP','TargetType':'ip','HealthCheckPath':'/v1/health/ready','HealthCheckIntervalSeconds':30,'HealthyThresholdCount':2,'UnhealthyThresholdCount':3,'TargetGroupAttributes':[{'Key':'deregistration_delay.timeout_seconds','Value':'30'}],'Tags':tags})
     add('Listener','ElasticLoadBalancingV2::Listener',{'LoadBalancerArn':ref('LoadBalancer'),'Port':80,'Protocol':'HTTP','DefaultActions':[{'Type':'forward','TargetGroupArn':ref('TargetGroup')}]})
+    for name,metric,threshold,comparison in [('DbCpuAlarm','CPUUtilization',80,'GreaterThanThreshold'),('DbStorageAlarm','FreeStorageSpace',2147483648,'LessThanThreshold')]:
+        add(name,'CloudWatch::Alarm',{'AlarmName':'aquanqa-'+metric,'Namespace':'AWS/RDS','MetricName':metric,'Dimensions':[{'Name':'DBInstanceIdentifier','Value':ref('Database')}],'Statistic':'Average','Period':300,'EvaluationPeriods':2,'Threshold':threshold,'ComparisonOperator':comparison,'TreatMissingData':'missing'})
+    add('ApiErrorsAlarm','CloudWatch::Alarm',{'AlarmName':'aquanqa-api-5xx','Namespace':'AWS/ApplicationELB','MetricName':'HTTPCode_Target_5XX_Count','Dimensions':[{'Name':'LoadBalancer','Value':att('LoadBalancer','LoadBalancerFullName')}],'Statistic':'Sum','Period':60,'EvaluationPeriods':3,'Threshold':5,'ComparisonOperator':'GreaterThanOrEqualToThreshold','TreatMissingData':'notBreaching'})
     out = {n: {'Value': ref(n)} for n in ['Assets','Artifacts','Cluster','ApiSecurityGroup','DbSecurityGroup','AlbSecurityGroup','TargetGroup','LoadBalancer']}
     out.update({n:{'Value':att(n,'Arn')} for n in ['ExecutionRole','MigrationRole']})
     out.update({'DbHost':{'Value':att('Database','Endpoint.Address')},'DbSecret':{'Value':att('Database','MasterUserSecret.SecretArn')},'AlbHost':{'Value':att('LoadBalancer','DNSName')}})
@@ -142,7 +148,7 @@ def retry(s):
     t = base_template()
     (ROOT/'infra/aws/production.json').write_text(json.dumps(t, indent=2), encoding='utf-8')
     s.client('cloudformation').update_stack(StackName=STACK, TemplateBody=json.dumps(t),
-        Capabilities=['CAPABILITY_IAM'], DisableRollback=True)
+        Capabilities=['CAPABILITY_IAM'], DisableRollback=False)
     print('Infrastructure update started')
 
 
@@ -207,7 +213,7 @@ def restore(s):
     o=outputs(s);release=load('build')['release']; ecs=s.client('ecs')
     backup_name=os_environ('BACKUP','rehearsal-01')
     db=os_environ('DB_NAME','aquanqa')
-    env={'DB_HOST':o['DbHost'],'DB_SECRET':o['DbSecret'],'APP_SECRET':load('app-secret')['arn'],'BUCKET':o['Artifacts'],'BACKUP':backup_name,'DB_NAME':db,'AWS_DEFAULT_REGION':REGION}
+    env={'DB_HOST':o['DbHost'],'DB_SECRET':o['DbSecret'],'APP_SECRET':load('app-secret')['arn'],'BUCKET':o['Artifacts'],'BACKUP':backup_name,'DB_NAME':db,'AWS_DEFAULT_REGION':REGION,'VERIFY_ONLY':os_environ('VERIFY_ONLY','0')}
     task=ecs.register_task_definition(family='aquanqa-migration',networkMode='awsvpc',requiresCompatibilities=['FARGATE'],cpu='1024',memory='2048',executionRoleArn=o['ExecutionRole'],taskRoleArn=o['MigrationRole'],containerDefinitions=[{
         'name':'migration','image':f'{ACCOUNT}.dkr.ecr.{REGION}.amazonaws.com/aquanqa/migration:{release}','essential':True,
         'environment':[{'name':k,'value':v} for k,v in env.items()],
@@ -235,8 +241,12 @@ def restore_status(s):
 
 def api(s):
     o=outputs(s); ecs=s.client('ecs');release=load('build')['release']
-    live=os_environ('DB_NAME','aquanqa')=='aquanqa_live'
+    live=os_environ('DB_NAME','aquanqa_live')=='aquanqa_live'
     db='aquanqa_live' if live else 'aquanqa'
+    restore_info=load('restore-task')
+    if restore_info['db']!=db: raise RuntimeError('The selected database has no matching restore evidence')
+    proof=json.loads(s.client('s3').get_object(Bucket=o['Artifacts'],Key='migration/'+restore_info['backup']+'/restore-'+db+'.json')['Body'].read())
+    if proof.get('status')!='PASS': raise RuntimeError('Database verification did not pass')
     secret=load('app-secret')['arn']
     env={'AQUANQA_API_DATABASE':db,'AQUANQA_API_ENVIRONMENT':'production','AQUANQA_API_DATABASE_POOL_MIN_SIZE':'2','AQUANQA_API_DATABASE_POOL_MAX_SIZE':'8','AQUANQA_API_DATABASE_POOL_TIMEOUT_SECONDS':'15'}
     if (OUT/'distribution.json').exists(): env['AQUANQA_API_PUBLIC_URL']='https://'+load('distribution')['domain']

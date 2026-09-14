@@ -1,0 +1,150 @@
+{
+  "verified_at": "2026-09-14T13:02:53.249853+00:00",
+  "region": "us-east-1",
+  "stack": "aquanqa-production",
+  "frontend": "https://d28iujqq12ix9m.cloudfront.net",
+  "api": "https://d28iujqq12ix9m.cloudfront.net/v1",
+  "docs": "https://d28iujqq12ix9m.cloudfront.net/docs",
+  "legacy_api": "https://aquanqa-campo-api.onrender.com/v1",
+  "distribution_id": "E1HAFHA0SSH2VO",
+  "api_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:2",
+  "image_release": "r745dc4b4c3c09f8d",
+  "database_instance": "aquanqa-production",
+  "database_name": "aquanqa_live",
+  "database_public": false,
+  "database_encrypted": true,
+  "database_automatic_backup_days": 1,
+  "post_migration_snapshot": "aquanqa-post-migration-20260914",
+  "restoration": {
+    "status": "PASS",
+    "database": "aquanqa_live",
+    "tables_verified": 110,
+    "evaluations": 90666,
+    "sha256": "e132faf167309f13def66fafce5c320122fbdca6b3294dec477be0736e4b1d27",
+    "app_role": "aquanqa_app",
+    "privileged": false
+  },
+  "source_neon": "retained_read_only",
+  "rehearsal_database": "aquanqa (not used by production)",
+  "checks": {
+    "backend_tests": 102,
+    "proxy_tests": 2,
+    "mobile_modules_tested": 6,
+    "production": {
+      "base": "https://d28iujqq12ix9m.cloudfront.net",
+      "checks": [
+        {
+          "path": "/v1/health/ready",
+          "status": 200,
+          "seconds": 0.33
+        },
+        {
+          "path": "/v1/auth/me",
+          "status": 200,
+          "seconds": 0.2
+        },
+        {
+          "path": "/v1/catalogos/fundos",
+          "status": 200,
+          "seconds": 0.13
+        },
+        {
+          "path": "/v1/admin/evaluaciones?page_size=1",
+          "status": 200,
+          "seconds": 1.0
+        },
+        {
+          "path": "/v1/admin/cargas?page_size=1",
+          "status": 200,
+          "seconds": 0.25
+        },
+        {
+          "path": "/openapi.json",
+          "status": 200,
+          "seconds": 1.38
+        },
+        {
+          "analytics": "estadios",
+          "status": 200,
+          "seconds": 0.32,
+          "bytes": 50417
+        },
+        {
+          "analytics": "flores",
+          "status": 200,
+          "seconds": 0.37,
+          "bytes": 45751
+        },
+        {
+          "analytics": "brotes",
+          "status": 200,
+          "seconds": 0.9,
+          "bytes": 103347
+        },
+        {
+          "analytics": "ramas",
+          "status": 200,
+          "seconds": 0.88,
+          "bytes": 9646
+        },
+        {
+          "analytics": "baya",
+          "status": 200,
+          "seconds": 0.94,
+          "bytes": 140132
+        },
+        {
+          "analytics": "pesos",
+          "status": 200,
+          "seconds": 0.47,
+          "bytes": 604
+        }
+      ],
+      "unauthorized_status": 401,
+      "mutations": false
+    },
+    "legacy": {
+      "base": "https://aquanqa-campo-api.onrender.com",
+      "checks": [
+        {
+          "path": "/v1/health/ready",
+          "status": 200,
+          "seconds": 0.43
+        },
+        {
+          "path": "/v1/auth/me",
+          "status": 200,
+          "seconds": 0.69
+        },
+        {
+          "path": "/v1/catalogos/fundos",
+          "status": 200,
+          "seconds": 0.43
+        },
+        {
+          "path": "/v1/admin/evaluaciones?page_size=1",
+          "status": 200,
+          "seconds": 1.1
+        },
+        {
+          "path": "/v1/admin/cargas?page_size=1",
+          "status": 200,
+          "seconds": 0.31
+        },
+        {
+          "path": "/openapi.json",
+          "status": 200,
+          "seconds": 0.5
+        }
+      ],
+      "unauthorized_status": 401,
+      "mutations": false
+    }
+  },
+  "cutover": {
+    "time": "2026-09-14T13:00:13.621344+00:00",
+    "database": "aquanqa_live",
+    "legacy": "https://aquanqa-campo-api.onrender.com",
+    "url": "d28iujqq12ix9m.cloudfront.net"
+  }
+}

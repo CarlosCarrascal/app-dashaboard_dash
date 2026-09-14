@@ -15,6 +15,7 @@ def main():
     master = json.loads(sm.get_secret_value(SecretId=os.environ['DB_SECRET'])['SecretString'])
     app = json.loads(sm.get_secret_value(SecretId=os.environ['APP_SECRET'])['SecretString'])
     db = os.environ['DB_NAME']
+    verify_only = os.environ.get('VERIFY_ONLY') == '1'
     if db not in ['aquanqa','aquanqa_live']:
         raise RuntimeError('Target not allowlisted')
     cfg = dict(host=os.environ['DB_HOST'],port=5432,user=master['username'],password=master['password'],dbname=db,sslmode='require')
@@ -24,7 +25,7 @@ def main():
         if not c.execute("SELECT 1 FROM pg_roles WHERE rolname='aquanqa_app'").fetchone():
             c.execute(sql.SQL('CREATE ROLE aquanqa_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}').format(sql.Literal(app['password'])))
     with psycopg.connect(**cfg) as c:
-        if c.execute("SELECT 1 FROM pg_tables WHERE schemaname IN ('core','qua','raw','stg') LIMIT 1").fetchone():
+        if not verify_only and c.execute("SELECT 1 FROM pg_tables WHERE schemaname IN ('core','qua','raw','stg') LIMIT 1").fetchone():
             raise RuntimeError('Target is not empty; refusing overwrite')
     s3 = boto3.client('s3')
     bucket = os.environ['BUCKET']
@@ -35,8 +36,9 @@ def main():
     if hashlib.sha256(Path('/tmp/database.dump').read_bytes()).hexdigest()!=manifest['sha256']:
         raise RuntimeError('Dump integrity failure')
     env = dict(os.environ,PGHOST=cfg['host'],PGPORT='5432',PGUSER=cfg['user'],PGPASSWORD=cfg['password'],PGDATABASE=db,PGSSLMODE='require')
-    result = subprocess.run(['pg_restore','--no-owner','--no-privileges','--exit-on-error','--single-transaction','-d',db,'/tmp/database.dump'],env=env,capture_output=True,text=True)
-    if result.returncode: raise RuntimeError(result.stderr[-2500:])
+    if not verify_only:
+        result = subprocess.run(['pg_restore','--no-owner','--no-privileges','--exit-on-error','--single-transaction','-d',db,'/tmp/database.dump'],env=env,capture_output=True,text=True)
+        if result.returncode: raise RuntimeError(result.stderr[-2500:])
     print('Restore complete; verifying all table fingerprints',flush=True)
     with psycopg.connect(**cfg) as c:
         c.execute("SET TIME ZONE 'UTC'")
@@ -47,6 +49,8 @@ def main():
             schema,table = name.split('.')
             actual = c.execute(sql.SQL("SELECT count(*),md5(coalesce(string_agg(h,'' ORDER BY h),'')) FROM (SELECT md5(to_jsonb(t)::text) h FROM {}.{} t) s").format(sql.Identifier(schema),sql.Identifier(table))).fetchone()
             if list(actual)!=expected: raise RuntimeError('Content mismatch: '+name)
+    # Commit permission changes before ANALYZE to avoid lock inversion with autovacuum.
+    with psycopg.connect(**cfg,autocommit=True) as c:
         c.execute('ANALYZE')
     with psycopg.connect(**{**cfg,'user':'aquanqa_app','password':app['password']}) as c:
         count = c.execute('SELECT count(*) FROM core.ev_evaluacion').fetchone()[0]
