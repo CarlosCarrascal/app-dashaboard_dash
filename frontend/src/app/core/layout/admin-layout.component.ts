@@ -40,6 +40,12 @@ import { AppIconComponent } from '../../shared/ui/app-icon.component';
           @if (expanded() || mobileOpen()) { <span class="text-[13px]">Inicio</span> }
         </a>
         @if (auth.hasPermission('admin:evaluaciones:leer')) {
+          <a routerLink="/admin/presentacion" routerLinkActive="!bg-forest !text-white"
+            class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-muted hover:bg-canvas"
+            title="Presentación de evaluaciones" aria-label="Presentación de evaluaciones" (click)="mobileOpen.set(false)">
+            <app-icon name="evaluations" class="text-xl" />
+            @if (expanded() || mobileOpen()) { <span class="text-[13px]">Presentación</span> }
+          </a>
           @for (item of modules; track item.key) {
             <a
               [routerLink]="'/admin/evaluaciones/' + item.key"

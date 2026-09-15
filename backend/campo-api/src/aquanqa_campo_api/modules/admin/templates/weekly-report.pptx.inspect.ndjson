@@ -1,0 +1,10 @@
+{"kind":"deck","id":"pr/0392nb","name":"Deck"}
+{"kind":"layout","layoutId":"a322b88a-9ffa-4d3e-9d27-006786dd014a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"0c38fa78-4bca-423e-ba1e-3fc5c3eb16fc","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/x74v53","slide":1,"title":"{{TITLE}}","textShapes":4}
+{"kind":"textbox","id":"sh/ru5kfids","slide":1,"text":"{{TITLE}}","textPreview":"{{TITLE}}","textChars":9,"textLines":1,"bbox":[48,24,1184,50]}
+{"kind":"textbox","id":"sh/sve1o3ud","slide":1,"text":"{{PERIOD}}","textPreview":"{{PERIOD}}","textChars":10,"textLines":1,"bbox":[48,82,1184,28]}
+{"kind":"textbox","id":"sh/exgjqdc3","slide":1,"text":"{{BASE}}","textPreview":"{{BASE}}","textChars":8,"textLines":1,"bbox":[48,628,1184,30]}
+{"kind":"textbox","id":"sh/fypkjido","slide":1,"text":"Promedio del conteo observado por evaluación con dato. Sin dato no equivale a cero.","textPreview":"Promedio del conteo observado por evaluación con dato. Sin dato no equivale a cero.","textChars":83,"textLines":1,"bbox":[48,668,1184,24]}
+{"kind":"chart","id":"ch/p4rmpor6","slide":1,"name":"","chartType":"line","bbox":[48,126,1184,480]}
+{"kind":"notes","id":"nt/x74v53","slide":1,"text":"Plantilla para informes semanales. Cada gráfico utiliza las evaluaciones válidas del ámbito y origen seleccionados."}

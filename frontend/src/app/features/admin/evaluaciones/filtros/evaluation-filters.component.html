@@ -94,7 +94,7 @@
           (change)="vm.grain.set($any($event.target).value)"
         >
           @for (g of vm.analytics()!.grains; track g) {
-            <option>{{ g }}</option>
+            <option [value]="g">{{ vm.grainLabel(g) }}</option>
           }
         </select></label
       >

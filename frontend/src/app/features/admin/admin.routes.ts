@@ -3,6 +3,12 @@ import { permissionGuard } from '../../core/guards/permission.guard';
 import { evaluationPrefetch } from './evaluaciones/evaluation-prefetch.resolver';
 
 export const ADMIN_ROUTES: Routes = [
+  { path: 'informes', redirectTo: 'presentacion', pathMatch: 'full' },
+  {
+    path: 'presentacion',
+    canActivate: [permissionGuard('admin:evaluaciones:leer')],
+    loadComponent: () => import('./informes/weekly-report.component').then(m => m.WeeklyReportComponent),
+  },
   {
     path: '',
     pathMatch: 'full',

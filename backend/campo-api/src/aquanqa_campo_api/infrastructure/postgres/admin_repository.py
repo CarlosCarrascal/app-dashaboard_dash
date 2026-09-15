@@ -158,6 +158,39 @@ class PostgresAdminRepository(AdminLoadRepositoryMixin, AdminQualityRepositoryMi
         return EvaluationTrend(module_key=query.module_key, desde=query.desde, hasta=query.hasta,
                                grano=query.grano, trend=trend)
 
+    def weekly_report(self, query):
+        from ...modules.admin.weekly_report import WeeklyReport
+        # Use the same territorial and evaluator scope as the records API.
+        base = query.model_copy(update={'grano': None})
+        conditions, params = _evaluation_filters(base)
+        self._append_scope(conditions, params, {k: k for k in ('empresa_id','fundo_id','modulo_id','lote_id')})
+        where = ' AND '.join(conditions) or 'TRUE'
+        cte = analytics_cte('flores')
+        try:
+            with self._connections.read() as connection, connection.cursor() as cursor:
+                cursor.execute(f"{cte} SELECT grano,max(fecha) fecha FROM evaluaciones WHERE {where} GROUP BY grano ORDER BY fecha DESC NULLS LAST,grano", params)
+                origins = cursor.fetchall()
+                grains = [r['grano'] for r in origins if r['grano']]
+                grain = query.grano or (grains[0] if grains else None)
+                latest = next((r['fecha'] for r in origins if r['grano'] == grain), None)
+                end = query.hasta or latest
+                start = query.desde or (end - timedelta(days=end.weekday() + (query.weeks - 1) * 7) if end else None)
+                if not end or not grain:
+                    return WeeklyReport(metric=query.metric, desde=start, hasta=end, grano=grain, grains=grains, points=[])
+                effective = query.model_copy(update={'grano': grain, 'desde': start, 'hasta': end})
+                conditions, params = _evaluation_filters(effective)
+                self._append_scope(conditions, params, {k: k for k in ('empresa_id','fundo_id','modulo_id','lote_id')})
+                where = ' AND '.join(conditions) or 'TRUE'
+                # Metric is a validated enum; keep it as a SQL parameter nonetheless.
+                cursor.execute(f"""{cte}, measured AS (
+                    SELECT *, (detalle->>%s)::numeric value FROM evaluaciones WHERE {where}
+                ) SELECT date_trunc('week',fecha)::date week,fundo_id,fundo,modulo_id,modulo,
+                    count(*) evaluations,count(value) available,sum(value) total,avg(value) mean
+                  FROM measured GROUP BY 1,2,3,4,5 ORDER BY 2,4,1""", [query.metric, *params])
+                return WeeklyReport(metric=query.metric, desde=start, hasta=end, grano=grain, grains=grains, points=cursor.fetchall())
+        except psycopg.Error as exc:
+            raise AdminRepositoryError('No se pudo consultar el informe semanal') from exc
+
     def evaluation_analytics(self, query: AnalyticsQuery) -> EvaluationAnalytics:
         if query.snapshot and not query.include_trend:
             return self._snapshot_analytics(query)
@@ -168,7 +201,7 @@ class PostgresAdminRepository(AdminLoadRepositoryMixin, AdminQualityRepositoryMi
         where = " AND ".join(conditions) or "TRUE"
         try:
             with self._connections.read() as connection, connection.cursor() as cursor:
-                cursor.execute(f"{cte} SELECT grano, max(fecha) fecha, count(*) n FROM evaluaciones WHERE {where} GROUP BY 1 ORDER BY n DESC, grano", params)
+                cursor.execute(f"{cte} SELECT grano, max(fecha) fecha, count(*) n FROM evaluaciones WHERE {where} GROUP BY 1 ORDER BY fecha DESC NULLS LAST, n DESC, grano", params)
                 available = cursor.fetchall()
                 grains = [r['grano'] for r in available if r['grano']]
                 grano = query.grano or (grains[0] if grains else None)

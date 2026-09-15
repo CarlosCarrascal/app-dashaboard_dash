@@ -16,11 +16,11 @@ Desde `frontend`, ejecutar `npm run build`. Desde la raíz:
 node --test infra/cloudflare/worker.test.mjs
 python infra/cloudflare/package.py
 npx --yes wrangler pages deploy data/salida/cloudflare-pages --project-name aquanqa --branch main --commit-dirty=true
-python infra/cloudflare/verify.py
+python infra/aws/verify_panel_update.py --http
 ```
 
 Requiere sesión de Wrangler en la cuenta propietaria. La publicación es manual (Direct Upload); subir cambios a GitHub no publica automáticamente. El empaquetado mantiene los archivos de Cloudflare fuera del directorio que se usa para publicar en AWS.
 
-`verify.py` hace consultas de solo lectura y comprueba autenticación, catálogos, evaluaciones, cargas, documentación, rechazo de acceso anónimo y ambos frontends. Lee credenciales existentes en memoria sin registrarlas. `deployment.json` contiene resultados sin secretos.
+`infra/aws/verify_panel_update.py --http` utiliza AWS y el acceso de solo lectura configurado para pgAdmin; comprueba consultas, aislamiento por usuario, autenticación, evaluaciones, cargas, documentación, rechazo de acceso anónimo, informes semanales y exportaciones PowerPoint. Lee credenciales existentes en memoria sin registrarlas. `deployment.json` contiene resultados sin secretos.
 
 Para volver al acceso anterior basta usar la URL de CloudFront. Para revertir una actualización de Pages, usar un despliegue anterior desde el panel de Cloudflare. No requiere restaurar ni trasladar PostgreSQL.

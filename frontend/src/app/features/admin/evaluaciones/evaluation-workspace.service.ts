@@ -426,6 +426,11 @@ export class EvaluationWorkspace implements OnInit {
       });
   }
 
+  selectOrigin(value: string): void {
+    this.grain.set(value);
+    this.applyFilters();
+  }
+
   selectFamily(moduleKey: ModuleKey | '') {
     void this.router.navigate(['/admin/evaluaciones', moduleKey || 'estadios']);
   }

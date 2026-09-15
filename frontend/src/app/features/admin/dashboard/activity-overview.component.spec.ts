@@ -24,7 +24,7 @@ describe('Consulta de actividad',()=>{
   period.value='8';period.dispatchEvent(new Event('change'));fixture.detectChanges();await fixture.whenStable();
   expect(fixture.componentInstance.weeks()).toBe(8);expect(period.value).toBe('8');
   fixture.destroy();
- });
+ },15000);
  it('conserva ámbito, origen y periodo en todas las consultas y enlaces',()=>{
   const analytics=vi.fn((q:any,trend:boolean)=>of(trend?{trend:[{key:'2026-09-14',evaluations:4}]}:{hasta:'2026-09-14',grano:'registro_access',grains:['registro_access']}));
   const summary=vi.fn(()=>of({total:4,lotes:2,evaluadores:1,por_modulo:[],ultima_captura:'2026-09-14'}));

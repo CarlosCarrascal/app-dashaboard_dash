@@ -1,3 +1,4 @@
+import { FlowerWeeklyComponent } from './flower-weekly.component';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { DecimalPipe } from '@angular/common';
@@ -11,7 +12,7 @@ import { EvaluationWorkspace } from '../evaluation-workspace.service';
   selector: 'app-evaluation-analysis',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, 
+  imports: [FormsModule, FlowerWeeklyComponent, 
     DecimalPipe,
     A11yModule,
     AppIconComponent,

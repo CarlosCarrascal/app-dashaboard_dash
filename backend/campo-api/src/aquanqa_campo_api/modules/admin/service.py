@@ -96,6 +96,9 @@ class AdminService:
     def evaluation_trend(self, query: AnalyticsQuery) -> EvaluationTrend:
         return self._repository.evaluation_trend(query)
 
+    def weekly_report(self, query):
+        return self._repository.weekly_report(query)
+
     def evaluation_analytics(self, query: AnalyticsQuery) -> EvaluationAnalytics:
         return self._repository.evaluation_analytics(query)
 

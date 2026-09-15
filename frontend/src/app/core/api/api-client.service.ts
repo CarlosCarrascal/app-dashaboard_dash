@@ -89,6 +89,14 @@ export class ApiClient {
     return this.cachedGet<T>(url, query, 600_000, this.evaluationReads);
   }
 
+  exportWeeklyReport(query: Record<string, unknown>): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/evaluaciones/informe-semanal/pptx`, {params:this.toParams(query),responseType:'blob'});
+  }
+
+  weeklyReport<T>(query: Record<string, unknown>): Observable<T> {
+    return this.cachedGet<T>(`${this.baseUrl}/admin/evaluaciones/informe-semanal`, query, 60_000);
+  }
+
   evaluationCounts(query: EvaluationQuery = {}): Observable<EvaluationCounts> {
     return this.cachedGet<EvaluationCounts>(`${this.baseUrl}/admin/evaluaciones/conteos`, query, 600_000).pipe(
       catchError(error => error.status === 404 ? this.evaluationSummary(query) : throwError(() => error)),

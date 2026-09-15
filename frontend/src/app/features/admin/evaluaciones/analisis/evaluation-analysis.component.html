@@ -1,3 +1,25 @@
+@if (vm.activeFamily() === 'flores') {
+  <div [hidden]="vm.workspaceView() !== 'analisis'"><app-flower-weekly /></div>
+} @else if (vm.activeFamily() === 'estadios' && vm.analytics() && (!vm.analytics()!.summary.complete || !vm.categoryTotal(vm.analytics()!.summary))) {
+  <section [hidden]="vm.workspaceView() !== 'analisis'" class="field-panel p-6 md:p-8">
+    <p class="text-xs font-medium text-muted">COMPOSICIÓN DE ESTADIOS · {{ vm.analytics()!.hasta }}</p>
+    <h2 class="mt-3 !text-xl !font-semibold">{{ vm.analytics()!.summary.evaluations }} evaluaciones registradas</h2>
+    <p class="mt-3 max-w-2xl text-sm leading-6 text-muted">
+      @if (!vm.analytics()!.summary.complete) {
+        No hay evaluaciones con los cinco conteos E1–E5 completos en esta consulta. Los registros están disponibles, pero no hay base para calcular su composición porcentual.
+      } @else {
+        Los cinco conteos suman cero. Las evaluaciones son válidas, pero no se puede calcular un porcentaje sobre un total de cero.
+      }
+    </p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <button class="field-primary" (click)="vm.setView('registros')">Revisar conteos registrados</button>
+      @if (vm.analytics()!.grano !== 'registro_access' && vm.analytics()!.grains.includes('registro_access')) {
+        <button class="field-button" (click)="vm.selectOrigin('registro_access')">Consultar registro histórico</button>
+      }
+      <button class="field-button" (click)="vm.toggleFilters()">Cambiar periodo</button>
+    </div>
+  </section>
+} @else {
 @if (vm.analytics(); as data) {
   <div
     [hidden]="vm.workspaceView() !== 'analisis'"
@@ -376,4 +398,6 @@
       </section>
     }
   </div>
+}
+
 }

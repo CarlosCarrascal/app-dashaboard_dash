@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-14T13:02:53.249853+00:00",
+  "verified_at": "2026-09-15T20:37:51.6014074Z",
   "region": "us-east-1",
   "stack": "aquanqa-production",
   "frontend": "https://d28iujqq12ix9m.cloudfront.net",
@@ -7,9 +7,9 @@
   "docs": "https://d28iujqq12ix9m.cloudfront.net/docs",
   "legacy_api": "https://aquanqa-campo-api.onrender.com/v1",
   "distribution_id": "E1HAFHA0SSH2VO",
-  "api_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:4",
-  "image_release": "rf35db28e11ace42c",
-  "latest_panel_update": "panel-update-20260914.md",
+  "api_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:7",
+  "image_release": "re093cef375d18dfd",
+  "latest_panel_update": "panel-update-20260915.md",
   "database_instance": "aquanqa-production",
   "database_name": "aquanqa_live",
   "database_public": true,
@@ -143,13 +143,13 @@
     }
   },
   "cutover": {
-    "time": "2026-09-14T13:00:13.621344+00:00",
+    "time": "2026-09-14T08:00:13.621344-05:00",
     "database": "aquanqa_live",
     "legacy": "https://aquanqa-campo-api.onrender.com",
     "url": "d28iujqq12ix9m.cloudfront.net"
   },
   "counts_optimization": {
-    "verified_at": "2026-09-14T17:10:23.996192+00:00",
+    "verified_at": "2026-09-14T12:10:23.996192-05:00",
     "database_proof": [
       {
         "fast_seconds": 0.20982105299999887,
@@ -181,5 +181,6 @@
       }
     ],
     "previous_task_definition": "arn:aws:ecs:us-east-1:021686096399:task-definition/aquanqa-api:2"
-  }
+  },
+  "latest_evaluation_reports_update": "evaluation-reports-20260915.md"
 }

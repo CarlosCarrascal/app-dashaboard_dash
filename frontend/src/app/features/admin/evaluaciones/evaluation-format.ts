@@ -16,7 +16,8 @@ export function grainLabel(value: string | null) {
   return (
     (
       {
-        registro_access: 'Registro de origen',
+        registro_access: 'Registro histórico',
+        captura: 'Capturas de campo',
         grupo_historico_planta: 'Grupo histórico por planta',
         grupo_historico_hilera: 'Grupo histórico por hilera',
       } as Record<string, string>

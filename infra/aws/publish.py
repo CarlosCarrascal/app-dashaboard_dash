@@ -24,7 +24,7 @@ def main():
     if any('/node_modules/' in n or n.endswith(('.dump','.pgpass','.zip')) or n.split('/')[-1] in ['.env','.env.local','credentials'] for n in names):
         raise RuntimeError('Unexpected artifact in deployment snapshot')
     tree=git('write-tree')
-    commit=git('commit-tree',tree,'-p',parent,input='Update production panel, activity dashboard and evaluation counts API\n')
+    commit=git('commit-tree',tree,'-p',parent,input='Deploy weekly reports and PowerPoint export to AWS and Cloudflare\n')
     git('update-ref','refs/heads/'+BRANCH,commit,parent if existing.returncode==0 else '0'*40)
     git('push','origin',BRANCH)
     save('release',{'branch':BRANCH,'commit':commit,'parent':parent,'changed_files':len(names)})

@@ -36,3 +36,6 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["db: requiere una base PostgreSQL accesible"]
+
+[tool.setuptools.package-data]
+"aquanqa_campo_api.modules.admin" = ["templates/*.pptx"]

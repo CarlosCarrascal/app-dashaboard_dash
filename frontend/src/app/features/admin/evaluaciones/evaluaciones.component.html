@@ -76,6 +76,7 @@
             <app-icon name="filter" />Filtros</button
           ><button
             class="field-button xl:hidden"
+            [hidden]="vm.activeFamily() === 'flores'"
             (click)="vm.contextOpen.set(!vm.contextOpen())"
             [attr.aria-expanded]="vm.contextOpen()"
           >
@@ -83,6 +84,16 @@
           </button>
         </div>
       </div>
+      @if (vm.analytics(); as scope) {
+        <div class="mb-4 flex flex-wrap items-center gap-2" aria-label="Origen de las evaluaciones">
+          <span class="mr-1 text-xs text-muted">Origen</span>
+          @for (g of scope.grains; track g) {
+            <button class="field-button !min-h-11 !text-xs" [class.!bg-forest]="scope.grano === g"
+              [class.!text-white]="scope.grano === g" [attr.aria-pressed]="scope.grano === g"
+              (click)="vm.selectOrigin(g)">{{ vm.grainLabel(g) }}</button>
+          }
+        </div>
+      }
       <app-evaluation-filters />
       @if (vm.errorMessage()) {
         <div class="field-panel mb-4 border-amber p-4" role="alert">

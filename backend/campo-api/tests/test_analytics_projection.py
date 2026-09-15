@@ -101,3 +101,27 @@ def test_sql_column_packing_roundtrips_mixed_nulls_weight_zero_and_empty_evaluat
     assert [s['estado_codigo'] for s in samples] == ['X',None,'X']
     assert rows[1]['detalle']['observaciones'][0]['diametro_mm'] is None
     assert rows[2]['detalle']['observaciones'] == []
+
+
+@pytest.mark.parametrize('requested', [None, 'registro_access'])
+def test_snapshot_uses_newest_origin_and_preserves_explicit_history(requested):
+    class Database:
+        def __init__(self): self.calls = []
+        @contextmanager
+        def read(self): yield self
+        @contextmanager
+        def cursor(self): yield self
+        def execute(self, sql, params): self.calls.append((sql, params))
+        def fetchone(self):
+            return {'available': [
+                {'grano': 'captura', 'fecha': '2026-09-14', 'n': 2},
+                {'grano': 'registro_access', 'fecha': '2026-08-26', 'n': 23000},
+            ], 'groups': [], 'trend': []}
+    db = Database()
+    result = PostgresAdminRepository(db).evaluation_analytics(
+        AnalyticsQuery(module_key='estadios', include_trend=False, grano=requested))
+    assert result.grano == (requested or 'captura')
+    assert result.hasta == (date(2026, 8, 26) if requested else date(2026, 9, 14))
+    sql, params = db.calls[0]
+    assert sql.count('ORDER BY fecha DESC NULLS LAST,n DESC,grano') == 2
+    assert requested in params

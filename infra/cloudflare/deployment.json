@@ -38,5 +38,8 @@
       "status": 401
     }
   ],
-  "production_mutations": false
+  "production_mutations": false,
+  "latest_deployment": "https://01ba044f.aquanqa.pages.dev",
+  "verified_at": "2026-09-15T20:37:51.6446167Z",
+  "latest_update": "../aws/panel-update-20260915.md"
 }

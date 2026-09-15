@@ -201,9 +201,9 @@ def snapshot_rows_sql(cte: str, where: str, module_key: str, *, series_metric: s
       SELECT grano,max(fecha) fecha,count(*) n FROM evaluaciones WHERE {where} GROUP BY grano
     ), chosen AS (
       SELECT grano,fecha FROM available WHERE grano=COALESCE(%s::text,
-        (SELECT grano FROM available WHERE grano IS NOT NULL ORDER BY n DESC,grano LIMIT 1))
+        (SELECT grano FROM available WHERE grano IS NOT NULL ORDER BY fecha DESC NULLS LAST,n DESC,grano LIMIT 1))
     ), packed AS ({separator}{body})
-    SELECT (SELECT jsonb_agg(to_jsonb(a) ORDER BY n DESC,grano) FROM available a) available,
+    SELECT (SELECT jsonb_agg(to_jsonb(a) ORDER BY fecha DESC NULLS LAST,n DESC,grano) FROM available a) available,
            (SELECT jsonb_agg(to_jsonb(p) ORDER BY fecha,lote_id) FROM packed p) groups"""
     if series_metric is not None:
         history_where = (f"({where}) AND grano=(SELECT grano FROM chosen) "

@@ -1,0 +1,33 @@
+<section class="space-y-4">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div><h2 class="!m-0 !text-lg !font-semibold">Evolución semanal</h2><p class="mt-1 text-xs text-muted">Conteos observados por fundo · una serie por módulo agrícola</p></div>
+    <div class="flex flex-wrap items-end gap-2">
+      <label class="field-label">Indicador<select class="field-input" [ngModel]="metric()" (ngModelChange)="metric.set($event)"><option value="n_flores">Flores observadas</option><option value="cuajo">Cuajos observados</option></select></label>
+      @if (vm.snapshot()) {<label class="field-label">Ventana de evolución<select class="field-input" [ngModel]="weeks()" (ngModelChange)="weeks.set(+$event)"><option [ngValue]="8">8 semanas</option><option [ngValue]="12">12 semanas</option><option [ngValue]="26">26 semanas</option><option [ngValue]="53">53 semanas</option></select></label>}
+      <a class="field-button" routerLink="/admin/presentacion" [queryParams]="presentationQuery()">Preparar presentación</a>
+    </div>
+  </header>
+  @if (loading()) {<p role="status" class="text-xs text-muted">Actualizando evolución semanal…</p>}
+  @if (error()) {<div role="alert" class="field-panel p-5 text-sm">No se pudo consultar la evolución.<button class="field-button ml-3" (click)="reload()">Reintentar</button></div>}
+  @if (report(); as r) {
+    <div class="flex flex-wrap items-center justify-between gap-2 border-y border-line py-3 text-xs text-muted">
+      <span>{{title()}} · {{r.desde}} — {{r.hasta}} · {{vm.grainLabel(r.grano)}}</span>
+      <span>Promedio por evaluación con dato. Sin dato ≠ cero.</span>
+    </div>
+    @if (r.grano === 'captura' && r.points.length < 3) {
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4 text-sm">
+        <p class="max-w-2xl text-muted">Las capturas de campo tienen pocas semanas registradas. Se muestran los puntos disponibles; el histórico se consulta por separado.</p>
+        @if(r.grains.includes('registro_access')) {<button class="field-button" (click)="vm.selectOrigin('registro_access')">Ver evolución histórica</button>}
+      </div>
+    }
+    <div class="grid min-w-0 gap-4 xl:grid-cols-2">
+      @for(f of funds(); track f.id) {
+        <section class="field-panel min-w-0 overflow-hidden">
+          <header class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4"><h3 class="!m-0 !text-base !font-semibold">{{f.name}}</h3><span class="text-xs text-muted">{{number(f.available)}} / {{number(f.evaluations)}} con dato</span></header>
+          <div class="h-80 p-2 md:h-96"><app-evaluation-chart [options]="f.options" [label]="title()+' por semana y módulo en '+f.name" (itemSelected)="openPoint($event)" /></div>
+          <details class="border-t border-line px-5 py-2"><summary class="flex min-h-11 cursor-pointer items-center text-xs text-forest">Consultar valores y registros</summary><div class="max-h-64 overflow-auto"><table class="w-full text-xs"><thead><tr><th class="p-2 text-left">Semana</th><th class="p-2 text-left">Módulo</th><th class="p-2 text-right">Promedio</th><th class="p-2 text-right">Base</th><th class="p-2">Registros</th></tr></thead><tbody>@for(p of f.points;track p.modulo_id+'|'+p.week){<tr class="border-t border-line"><td class="p-2">{{p.week}}</td><td class="p-2">{{p.modulo}}</td><td class="p-2 text-right">{{p.mean===null?'—':number(p.mean)}}</td><td class="p-2 text-right">{{p.available}} / {{p.evaluations}}</td><td><button class="min-h-11 px-3 text-forest underline" (click)="openPoint(p.modulo_id+'|'+p.week)">Ver</button></td></tr>}</tbody></table></div></details>
+        </section>
+      } @empty {<p class="field-panel p-8 text-sm text-muted">Sin datos en este periodo y origen. Puedes cambiar el periodo o consultar el histórico.</p>}
+    </div>
+  }
+</section>

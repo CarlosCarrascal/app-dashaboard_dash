@@ -16,13 +16,16 @@ import {
   AriaComponent,
   DataZoomComponent,
   GridComponent,
+  LegendComponent,
   TooltipComponent,
   VisualMapComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
+import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([
+  LabelLayout,
   HeatmapChart,
   BoxplotChart,
   ScatterChart,
@@ -31,6 +34,7 @@ echarts.use([
   AriaComponent,
   DataZoomComponent,
   GridComponent,
+  LegendComponent,
   TooltipComponent,
   VisualMapComponent,
   CanvasRenderer,

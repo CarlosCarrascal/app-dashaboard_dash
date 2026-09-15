@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from .schemas import EvaluationCounts
+from .weekly_report import WeeklyReport, WeeklyReportQuery
 
 from fastapi import (
     APIRouter,
@@ -130,6 +131,34 @@ def indicadores_evaluaciones(query: Annotated[AdminEvaluationQuery, Query()],
     service: Annotated[AdminService, Depends(get_admin_service)]) -> EvaluationCounts:
     try:
         return service.evaluation_counts(query)
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get('/evaluaciones/informe-semanal/pptx',
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def exportar_informe_semanal(query: Annotated[WeeklyReportQuery, Query()],
+    service: Annotated[AdminService, Depends(get_admin_service)]):
+    from .report_pptx import export_weekly_report
+    if query.desde and query.hasta and query.desde > query.hasta:
+        raise HTTPException(422, 'Intervalo de fechas inválido')
+    try:
+        report = service.weekly_report(query)
+        if not report.points: raise HTTPException(422, 'No hay datos para exportar')
+        return Response(export_weekly_report(report), media_type='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            headers={'Content-Disposition': f'attachment; filename="evaluaciones-{query.metric}-{report.hasta}.pptx"'})
+    except AdminRepositoryError as error:
+        raise _unavailable(error) from error
+
+
+@router.get('/evaluaciones/informe-semanal', response_model=WeeklyReport,
+    dependencies=[Depends(require_permission('admin:evaluaciones:leer'))])
+def informe_semanal(query: Annotated[WeeklyReportQuery, Query()],
+    service: Annotated[AdminService, Depends(get_admin_service)]) -> WeeklyReport:
+    if query.desde and query.hasta and query.desde > query.hasta:
+        raise HTTPException(422, 'Intervalo de fechas inválido')
+    try:
+        return service.weekly_report(query)
     except AdminRepositoryError as error:
         raise _unavailable(error) from error
 

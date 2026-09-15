@@ -98,6 +98,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/evaluaciones/conteos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Indicadores Evaluaciones */
+        get: operations["indicadores_evaluaciones_v1_admin_evaluaciones_conteos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/evaluaciones/exportar": {
         parameters: {
             query?: never;
@@ -141,6 +158,40 @@ export interface paths {
         };
         /** Calcula indicadores con los mismos filtros y alcances de la grilla */
         get: operations["consultarIndicadoresEvaluacionesAdmin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/evaluaciones/informe-semanal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Informe Semanal */
+        get: operations["informe_semanal_v1_admin_evaluaciones_informe_semanal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/evaluaciones/informe-semanal/pptx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exportar Informe Semanal */
+        get: operations["exportar_informe_semanal_v1_admin_evaluaciones_informe_semanal_pptx_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1402,6 +1453,33 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** EvaluationCountFamily */
+        EvaluationCountFamily: {
+            /**
+             * Module Key
+             * @enum {string}
+             */
+            module_key: "estadios" | "flores" | "baya" | "pesos" | "brotes" | "ramas";
+            /** Total */
+            total: number;
+        };
+        /** EvaluationCounts */
+        EvaluationCounts: {
+            /** Desde */
+            desde?: string | null;
+            /** Evaluadores */
+            evaluadores: number;
+            /** Hasta */
+            hasta?: string | null;
+            /** Lotes */
+            lotes: number;
+            /** Por Modulo */
+            por_modulo: components["schemas"]["EvaluationCountFamily"][];
+            /** Total */
+            total: number;
+            /** Ultima Captura */
+            ultima_captura?: string | null;
+        };
         /**
          * EvaluationCreate
          * @description Entrada canónica y compatible para una evaluación de campo.
@@ -1965,6 +2043,50 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** WeeklyReport */
+        WeeklyReport: {
+            /** Desde */
+            desde: string | null;
+            /** Grains */
+            grains: string[];
+            /** Grano */
+            grano: string | null;
+            /** Hasta */
+            hasta: string | null;
+            /** Metric */
+            metric: string;
+            /** Points */
+            points: components["schemas"]["WeeklyReportPoint"][];
+            /**
+             * Unit
+             * @default conteo por evaluación
+             */
+            unit: string;
+        };
+        /** WeeklyReportPoint */
+        WeeklyReportPoint: {
+            /** Available */
+            available: number;
+            /** Evaluations */
+            evaluations: number;
+            /** Fundo */
+            fundo: string;
+            /** Fundo Id */
+            fundo_id: number;
+            /** Mean */
+            mean: number | null;
+            /** Modulo */
+            modulo: string;
+            /** Modulo Id */
+            modulo_id: number;
+            /** Total */
+            total: number | null;
+            /**
+             * Week
+             * Format: date
+             */
+            week: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2394,6 +2516,80 @@ export interface operations {
             };
         };
     };
+    indicadores_evaluaciones_v1_admin_evaluaciones_conteos_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                search?: string | null;
+                module_key?: ("estadios" | "flores" | "baya" | "pesos" | "brotes" | "ramas") | null;
+                empresa_id?: number | null;
+                fundo_id?: number | null;
+                modulo_id?: number | null;
+                lote_id?: number | null;
+                evaluador_id?: number | null;
+                desde?: string | null;
+                hasta?: string | null;
+                grano?: string | null;
+                piso?: string | null;
+                estado?: string | null;
+                sort_by?: "captured_at" | "fecha" | "module_key" | "empresa" | "fundo" | "modulo" | "lote" | "evaluador";
+                sort_dir?: "asc" | "desc";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationCounts"];
+                };
+            };
+            /** @description Se requiere una sesión administrativa válida. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "Se requiere un token Bearer"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description La sesión no tiene permiso para el panel administrativo. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     exportar_evaluaciones_v1_admin_evaluaciones_exportar_get: {
         parameters: {
             query?: {
@@ -2612,6 +2808,158 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    informe_semanal_v1_admin_evaluaciones_informe_semanal_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                search?: string | null;
+                module_key?: "flores";
+                empresa_id?: number | null;
+                fundo_id?: number | null;
+                modulo_id?: number | null;
+                lote_id?: number | null;
+                evaluador_id?: number | null;
+                desde?: string | null;
+                hasta?: string | null;
+                grano?: string | null;
+                piso?: string | null;
+                estado?: string | null;
+                sort_by?: "captured_at" | "fecha" | "module_key" | "empresa" | "fundo" | "modulo" | "lote" | "evaluador";
+                sort_dir?: "asc" | "desc";
+                metric?: "n_flores" | "cuajo";
+                weeks?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeeklyReport"];
+                };
+            };
+            /** @description Se requiere una sesión administrativa válida. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "Se requiere un token Bearer"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description La sesión no tiene permiso para el panel administrativo. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exportar_informe_semanal_v1_admin_evaluaciones_informe_semanal_pptx_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                search?: string | null;
+                module_key?: "flores";
+                empresa_id?: number | null;
+                fundo_id?: number | null;
+                modulo_id?: number | null;
+                lote_id?: number | null;
+                evaluador_id?: number | null;
+                desde?: string | null;
+                hasta?: string | null;
+                grano?: string | null;
+                piso?: string | null;
+                estado?: string | null;
+                sort_by?: "captured_at" | "fecha" | "module_key" | "empresa" | "fundo" | "modulo" | "lote" | "evaluador";
+                sort_dir?: "asc" | "desc";
+                metric?: "n_flores" | "cuajo";
+                weeks?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Se requiere una sesión administrativa válida. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "Se requiere un token Bearer"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description La sesión no tiene permiso para el panel administrativo. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "detail": "El usuario no tiene permiso para abrir el panel administrativo"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
